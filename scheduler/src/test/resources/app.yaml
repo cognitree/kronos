@@ -1,0 +1,28 @@
+handlerConfig:
+  default:
+    handlerClass: com.cognitree.tasks.executor.handlers.TestTaskHandler
+    config:
+      topic: taskstatus
+      topicConfig:
+        group.id: taskstatus
+    maxExecutionTime: 1h
+    maxParallelTasks: 16
+
+taskProducerConfig:
+  producerClass: com.cognitree.tasks.queue.producer.InMemoryTaskProducer
+taskConsumerConfig:
+  consumerClass: com.cognitree.tasks.queue.consumer.InMemoryTaskConsumer
+  config:
+    pollInterval: 100
+
+taskStatusProducerConfig:
+  producerClass: com.cognitree.tasks.queue.producer.InMemoryStatusProducer
+taskStatusConsumerConfig:
+  consumerClass: com.cognitree.tasks.queue.consumer.InMemoryStatusConsumer
+  config:
+    pollInterval: 100
+
+# Periodically, tasks older than the specified interval and
+# status as one of the final state are purged from memory to prevent the system from going OOM.
+# check ApplicationConfig.taskPurgeInterval for more details
+taskPurgeInterval: 1d

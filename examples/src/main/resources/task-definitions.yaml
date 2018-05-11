@@ -1,0 +1,20 @@
+- type: typeA
+  name: taskOne
+  schedule: 0 0/1 * 1/1 * ? *
+- type: typeB
+  name: taskTwo
+  schedule: 0 0/1 * 1/1 * ? *
+- type: shell
+  name: taskThree
+  schedule: 0 0/5 * 1/1 * ? *
+  properties:
+    workingDir: /tmp/
+    cmd: date
+    logDir: /tmp/
+  dependsOn:
+    - name: taskTwo
+      duration: 5m
+      mode: all
+    - name: taskOne
+      duration: 5m
+      mode: all
