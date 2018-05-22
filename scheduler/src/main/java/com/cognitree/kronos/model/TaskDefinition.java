@@ -34,7 +34,7 @@ public class TaskDefinition {
      * used to segregate task with same name and type into different group,
      * by default all tasks are part of the same group which is DEFAULT
      */
-    private String group = "DEFAULT";
+    private String group = "default";
     /**
      * type of tasks
      * <p>
