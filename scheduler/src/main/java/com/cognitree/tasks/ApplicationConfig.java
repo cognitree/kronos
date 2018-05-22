@@ -27,6 +27,8 @@ import com.cognitree.tasks.queue.producer.ProducerConfig;
 import com.cognitree.tasks.scheduler.policies.TimeoutPolicyConfig;
 import com.cognitree.tasks.scheduler.readers.TaskDefinitionReader;
 import com.cognitree.tasks.scheduler.readers.TaskDefinitionReaderConfig;
+import com.cognitree.tasks.store.TaskStore;
+import com.cognitree.tasks.store.TaskStoreConfig;
 
 import java.util.Map;
 import java.util.Objects;
@@ -83,9 +85,10 @@ public class ApplicationConfig {
     private ConsumerConfig taskStatusConsumerConfig;
 
     /**
-     * persistence store used by the framework to store its state
+     * {@link TaskStore} configuration, used by the framework to instantiate the task store to be used for storing
+     * the task and their state.
      */
-    private String storeProvider;
+    private TaskStoreConfig taskStoreConfig;
 
     /**
      * Periodically, tasks older than the specified interval and status as one of the final state
@@ -98,34 +101,8 @@ public class ApplicationConfig {
      * <li>1d - 1 day</li>
      * </ul>
      * <p>
-     * <p>
-     * If a store provider is not configured, a special precaution needs to be taken
-     * while configuring this parameter, as this parameter defines a logical boundary between dependent tasks.
-     * <pre>
-     * For example:
-     *      A depends on B
-     *      B depends on C
-     *      C depends on D
-     *
-     *      A is scheduled at FRI (12 AM)
-     *      B is scheduled at WED (12 AM)
-     *      C is scheduled at TUE (12 AM)
-     *      D is scheduler at MON (12 AM)
-     *
-     * </pre>
-     * In the above scenario the taskPurgeInterval should be a min of 6d,
-     * as the first task in tree (`D`) is scheduled on MON (12 AM) and last task in the tree (`A`) will be scheduled on FRI (12 AM).
-     * <p>
-     * Implication of configuring taskPurgeInterval to a lower interval
-     * <p>
-     * Even before `A` is scheduled, the system will purge `D`, `C`, `B` tasks from memory and
-     * when `A` is scheduled system will try to resolve dependency for `A` (first from in memory and
-     * later from the store provider).
-     * As store provider is not configured, framework won't be able to resolve the task dependency and
-     * `A` will be marked as failed due to unresolved dependency
-     * </p>
      */
-    private String taskPurgeInterval;
+    private String taskPurgeInterval = "1d";
 
     public Map<String, TaskDefinitionReaderConfig> getReaderConfig() {
         return readerConfig;
@@ -183,12 +160,12 @@ public class ApplicationConfig {
         this.taskStatusConsumerConfig = taskStatusConsumerConfig;
     }
 
-    public String getStoreProvider() {
-        return storeProvider;
+    public TaskStoreConfig getTaskStoreConfig() {
+        return taskStoreConfig;
     }
 
-    public void setStoreProvider(String storeProvider) {
-        this.storeProvider = storeProvider;
+    public void setTaskStoreConfig(TaskStoreConfig taskStoreConfig) {
+        this.taskStoreConfig = taskStoreConfig;
     }
 
     public String getTaskPurgeInterval() {
@@ -211,7 +188,7 @@ public class ApplicationConfig {
                 Objects.equals(taskConsumerConfig, that.taskConsumerConfig) &&
                 Objects.equals(taskStatusProducerConfig, that.taskStatusProducerConfig) &&
                 Objects.equals(taskStatusConsumerConfig, that.taskStatusConsumerConfig) &&
-                Objects.equals(storeProvider, that.storeProvider) &&
+                Objects.equals(taskStoreConfig, that.taskStoreConfig) &&
                 Objects.equals(taskPurgeInterval, that.taskPurgeInterval);
     }
 
@@ -219,7 +196,7 @@ public class ApplicationConfig {
     public int hashCode() {
 
         return Objects.hash(readerConfig, handlerConfig, timeoutPolicyConfig, taskProducerConfig, taskConsumerConfig,
-                taskStatusProducerConfig, taskStatusConsumerConfig, storeProvider, taskPurgeInterval);
+                taskStatusProducerConfig, taskStatusConsumerConfig, taskStoreConfig, taskPurgeInterval);
     }
 
     @Override
@@ -232,7 +209,7 @@ public class ApplicationConfig {
                 ", taskConsumerConfig=" + taskConsumerConfig +
                 ", taskStatusProducerConfig=" + taskStatusProducerConfig +
                 ", taskStatusConsumerConfig=" + taskStatusConsumerConfig +
-                ", storeProvider='" + storeProvider + '\'' +
+                ", taskStoreConfig='" + taskStoreConfig + '\'' +
                 ", taskPurgeInterval='" + taskPurgeInterval + '\'' +
                 '}';
     }

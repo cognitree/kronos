@@ -33,7 +33,7 @@ public class TimeoutPolicyConfig {
 
     /**
      * Configuration to be passed to timeout policy to instantiate itself.
-     * This will be passed as an arg to the {@link TimeoutPolicy#init(ObjectNode, TimeoutAction)}
+     * This will be passed as an arg to the {@link TimeoutPolicy#init(ObjectNode)}
      * method at the time of instantiation.
      */
     private ObjectNode config;

@@ -30,12 +30,11 @@ public interface TimeoutPolicy {
 
     /**
      * for each configured policy during initialization phase a call is made to initialize policy
-     * using {@link TimeoutPolicyConfig#config} and {@link TimeoutAction}
+     * using {@link TimeoutPolicyConfig#config}
      *
-     * @param policyConfig  configuration used to initialize the policy
-     * @param timeoutAction used to perform actions on task
+     * @param policyConfig configuration used to initialize the policy
      */
-    void init(ObjectNode policyConfig, TimeoutAction timeoutAction);
+    void init(ObjectNode policyConfig);
 
     void handle(Task task);
 }

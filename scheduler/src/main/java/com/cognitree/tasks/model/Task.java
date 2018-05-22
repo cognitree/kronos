@@ -51,6 +51,13 @@ public class Task {
      */
     private String timeoutPolicy;
     /**
+     * max allowed time for task to finish execution same as {@link TaskDefinition#maxExecutionTime}.
+     * <p>
+     * takes precedence over the {@link com.cognitree.tasks.executor.handlers.TaskHandlerConfig#maxExecutionTime}
+     * </p>
+     */
+    private String maxExecutionTime;
+    /**
      * list of tasks it depends on defined same as {@link TaskDefinition#dependsOn}
      */
     private List<TaskDependencyInfo> dependsOn = new ArrayList<>();
@@ -120,6 +127,14 @@ public class Task {
 
     public void setTimeoutPolicy(String timeoutPolicy) {
         this.timeoutPolicy = timeoutPolicy;
+    }
+
+    public String getMaxExecutionTime() {
+        return maxExecutionTime;
+    }
+
+    public void setMaxExecutionTime(String maxExecutionTime) {
+        this.maxExecutionTime = maxExecutionTime;
     }
 
     public List<TaskDependencyInfo> getDependsOn() {
@@ -211,6 +226,7 @@ public class Task {
                 ", group='" + group + '\'' +
                 ", type='" + type + '\'' +
                 ", timeoutPolicy='" + timeoutPolicy + '\'' +
+                ", maxExecutionTime='" + maxExecutionTime + '\'' +
                 ", dependsOn=" + dependsOn +
                 ", properties=" + properties +
                 ", runtimeProperties=" + runtimeProperties +

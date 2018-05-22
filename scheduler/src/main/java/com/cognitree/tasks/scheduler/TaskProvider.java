@@ -21,8 +21,6 @@ import com.cognitree.tasks.ApplicationConfig;
 import com.cognitree.tasks.model.Task;
 import com.cognitree.tasks.model.Task.Status;
 import com.cognitree.tasks.model.TaskDependencyInfo;
-import com.cognitree.tasks.scheduler.policies.TimeoutAction;
-import com.cognitree.tasks.scheduler.policies.TimeoutPolicy;
 import com.cognitree.tasks.store.TaskStore;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.graph.GraphBuilder;
@@ -43,37 +41,33 @@ import static com.cognitree.tasks.util.DateTimeUtil.resolveDuration;
  * Task provider manages/ resolves task dependencies and exposes APIs to add, remove, retrieve tasks in active and
  * ready-to-execute state
  * listen for task status updates and calls the registered {@link TaskStatusHandler} on status change.
- * Also exposes {@link TimeoutAction} taken by a {@link TimeoutPolicy} in case of timeout
  * <p>
  * Internally, task provider is backed by a directed acyclic graph that manages dependencies across these tasks.
  * The task state is stored in a persistent store if provided.
  */
-class TaskProvider implements TimeoutAction {
+class TaskProvider {
     private static final Logger logger = LoggerFactory.getLogger(TaskProvider.class);
 
-    private final MutableGraph<Task> graph;
+    private final MutableGraph<Task> graph = GraphBuilder.directed().build();
     private final TaskStore taskStore;
     private final TaskStatusHandler statusHandler;
 
     TaskProvider(TaskStore store, TaskStatusHandler statusHandler) {
-        this.graph = GraphBuilder.directed().build();
         this.taskStore = store;
         this.statusHandler = statusHandler;
         init();
     }
 
     private void init() {
-        if (taskStore != null) {
-            logger.info("Initializing task provider from task store");
-            final List<Task> tasks = taskStore.load(Arrays.asList(CREATED, WAITING, SUBMITTED, RUNNING));
-            tasks.forEach(this::addTask);
-        }
+        logger.info("Initializing task provider from task store");
+        final List<Task> tasks = taskStore.load(Arrays.asList(CREATED, WAITING, SUBMITTED, RUNNING));
+        tasks.forEach(this::addTask);
     }
 
     /**
      * re initialize task provider from task store
      */
-    public synchronized void reinit() {
+    synchronized void reinit() {
         // clear in memory state
         clearGraph();
         // reinitialize in memory state from backing store
@@ -86,12 +80,10 @@ class TaskProvider implements TimeoutAction {
         nodes.forEach(graph::removeNode);
     }
 
-    public synchronized void addTask(Task task) {
+    synchronized void addTask(Task task) {
         final boolean isAdded = graph.addNode(task);
         if (isAdded) {
-            if (taskStore != null) {
-                taskStore.store(task);
-            }
+            taskStore.store(task);
             final boolean isResolved = resolveDependency(task);
             if (isResolved) {
                 updateTask(task, WAITING, null);
@@ -102,12 +94,6 @@ class TaskProvider implements TimeoutAction {
         } else {
             logger.warn("Task {} already exist with task provider, skip adding", task);
         }
-    }
-
-    @Override
-    public synchronized void reAddTask(Task task) {
-        logger.info("received request to reschedule task {}", task);
-        updateTask(task, WAITING, null, null);
     }
 
     /**
@@ -151,8 +137,7 @@ class TaskProvider implements TimeoutAction {
         candidateDependentTasks.addAll(tasksInMemory);
 
         // retrieve all dependent task in store only if dependency mode is not first and tasks in memory is empty
-        if (taskStore != null &&
-                (candidateDependentTasks.isEmpty() || dependencyInfo.getMode() != TaskDependencyInfo.Mode.first)) {
+        if (candidateDependentTasks.isEmpty() || dependencyInfo.getMode() != TaskDependencyInfo.Mode.first) {
             final List<Task> tasksInStore = taskStore.load(dependentTaskName, taskGroup, createdAt, sentinelTimeStamp);
             candidateDependentTasks.addAll(tasksInStore);
         }
@@ -192,13 +177,10 @@ class TaskProvider implements TimeoutAction {
                 return task;
             }
         }
-        Task task = null;
-        if (taskStore != null) {
-            task = taskStore.load(taskId, taskGroup);
-            // update local cache if not null
-            if (task != null) {
-                addTask(task);
-            }
+        Task task = taskStore.load(taskId, taskGroup);
+        // update local cache if not null
+        if (task != null) {
+            addTask(task);
         }
         return task;
     }
@@ -215,11 +197,11 @@ class TaskProvider implements TimeoutAction {
         return tasks;
     }
 
-    public synchronized List<Task> getReadyTasks() {
+    synchronized List<Task> getReadyTasks() {
         return getTasks(Collections.singletonList(WAITING), true);
     }
 
-    public synchronized List<Task> getActiveTasks() {
+    synchronized List<Task> getActiveTasks() {
         return this.getTasks(Arrays.asList(SUBMITTED, RUNNING), false);
     }
 
@@ -249,8 +231,8 @@ class TaskProvider implements TimeoutAction {
                 .allMatch(t -> t.getStatus().equals(SUCCESSFUL));
     }
 
-    public synchronized void updateTask(String taskId, String taskGroup, Status status,
-                                        String statusMessage, ObjectNode runtimeProperties) {
+    synchronized void updateTask(String taskId, String taskGroup, Status status,
+                                 String statusMessage, ObjectNode runtimeProperties) {
         logger.info("Received request to update status of task with id: {}, group {} as {} " +
                         "with status message {}, runtime properties {}",
                 taskId, taskGroup, status, statusMessage, runtimeProperties);
@@ -263,13 +245,11 @@ class TaskProvider implements TimeoutAction {
         updateTask(task, status, statusMessage, runtimeProperties);
     }
 
-    @Override
-    public synchronized void updateTask(Task task, Status status, String statusMessage) {
+    synchronized void updateTask(Task task, Status status, String statusMessage) {
         updateTask(task, status, statusMessage, null);
     }
 
-    @Override
-    public synchronized void updateTask(Task task, Status status, String statusMessage, ObjectNode runtimeProperties) {
+    private synchronized void updateTask(Task task, Status status, String statusMessage, ObjectNode runtimeProperties) {
         if (!isValidTransition(task, status)) {
             logger.error("Invalid state transition from status {}, to {}", task.getStatus(), status);
             return;
@@ -289,9 +269,7 @@ class TaskProvider implements TimeoutAction {
                 task.setCompletedAt(System.currentTimeMillis());
                 break;
         }
-        if (taskStore != null) {
-            taskStore.update(task);
-        }
+        taskStore.update(task);
         statusHandler.onStatusChange(task);
     }
 
@@ -312,7 +290,7 @@ class TaskProvider implements TimeoutAction {
      * <p>
      * see: {@link ApplicationConfig#taskPurgeInterval} for more details and implication of taskPurgeInterval
      */
-    public synchronized void removeOldTasks(String taskPurgeInterval) {
+    synchronized void removeOldTasks(String taskPurgeInterval) {
         final Set<Task> tasksToDelete = new HashSet<>();
 
         Long cleanUpTimestamp = System.currentTimeMillis() - resolveDuration(taskPurgeInterval);
@@ -336,23 +314,23 @@ class TaskProvider implements TimeoutAction {
         final Set<Task> tasksToDelete = new HashSet<>();
         final LinkedList<Task> tasksToValidate = new LinkedList<>();
         tasksToValidate.add(task);
-        while (tasksToValidate.size() != 0) {
-            task = tasksToValidate.poll();
-            if (task.getCreatedAt() < cleanUpTimestamp &&
-                    (task.getStatus() == SUCCESSFUL || task.getStatus() == FAILED)) {
-                Set<Task> predecessorTasks = graph.predecessors(task);
+        while (!tasksToValidate.isEmpty()) {
+            Task taskToValidate = tasksToValidate.poll();
+            if (taskToValidate != null && taskToValidate.getCreatedAt() < cleanUpTimestamp &&
+                    (taskToValidate.getStatus() == SUCCESSFUL || taskToValidate.getStatus() == FAILED)) {
+                Set<Task> predecessorTasks = graph.predecessors(taskToValidate);
                 for (Task predecessorTask : predecessorTasks) {
                     if (!tasksToDelete.contains(predecessorTask)) {
                         tasksToValidate.add(predecessorTask);
                     }
                 }
-                Set<Task> successorTasks = graph.successors(task);
+                Set<Task> successorTasks = graph.successors(taskToValidate);
                 for (Task successorTask : successorTasks) {
                     if (!tasksToDelete.contains(successorTask)) {
                         tasksToValidate.add(successorTask);
                     }
                 }
-                tasksToDelete.add(task);
+                tasksToDelete.add(taskToValidate);
             } else {
                 return Collections.emptySet();
             }

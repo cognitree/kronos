@@ -26,10 +26,10 @@ import com.cognitree.tasks.model.TaskStatus;
 import com.cognitree.tasks.queue.Subscriber;
 import com.cognitree.tasks.queue.consumer.Consumer;
 import com.cognitree.tasks.queue.producer.Producer;
-import com.cognitree.tasks.scheduler.policies.FailOnTimeoutPolicy;
 import com.cognitree.tasks.scheduler.policies.TimeoutPolicy;
 import com.cognitree.tasks.scheduler.policies.TimeoutPolicyConfig;
 import com.cognitree.tasks.store.TaskStore;
+import com.cognitree.tasks.store.TaskStoreConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +41,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 
 import static com.cognitree.tasks.model.FailureMessage.TASK_SUBMISSION_FAILED;
+import static com.cognitree.tasks.model.FailureMessage.TIMED_OUT;
 import static com.cognitree.tasks.model.Task.Status.FAILED;
 import static com.cognitree.tasks.model.Task.Status.SUBMITTED;
 import static com.cognitree.tasks.util.DateTimeUtil.resolveDuration;
@@ -58,41 +59,35 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 public final class TaskProviderService implements Service, Subscriber<TaskStatus>, TaskStatusHandler {
     private static final Logger logger = LoggerFactory.getLogger(TaskProviderService.class);
 
-    private static final String MAX_EXECUTION_TIME = "maxExecutionTime";
+    private static final String MAX_EXECUTION_TIME = "1d";
 
     private final Producer<Task> taskProducer;
     private final Consumer<TaskStatus> statusConsumer;
     private final Map<String, TaskHandlerConfig> taskTypeToHandlerConfig;
     private final Map<String, TimeoutPolicyConfig> policyIdToPolicyConfig;
-    private final String storeProviderClass;
+    private final TaskStoreConfig taskStoreConfig;
     private final String taskPurgeInterval;
 
-    private final FailOnTimeoutPolicy defaultTimeoutPolicy = new FailOnTimeoutPolicy();
     private final Map<String, TimeoutPolicy> timeoutPolicyMap = new HashMap<>();
     private final Map<String, ScheduledFuture<?>> taskTimeoutHandlersMap = new HashMap<>();
     // used by internal tasks for printing the dag/ delete stale tasks/ executing timeout tasks
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
+    private TaskStore taskStore;
     private TaskProvider taskProvider;
     private boolean isInitialized; // is the task provider service initialized
 
     public TaskProviderService(Producer<Task> taskProducer, Consumer<TaskStatus> statusConsumer,
                                Map<String, TaskHandlerConfig> handlerConfig, Map<String, TimeoutPolicyConfig> policyConfig,
-                               String taskPurgeInterval) {
-        this(taskProducer, statusConsumer, handlerConfig, policyConfig, null, taskPurgeInterval);
-    }
-
-    public TaskProviderService(Producer<Task> taskProducer, Consumer<TaskStatus> statusConsumer,
-                               Map<String, TaskHandlerConfig> handlerConfig, Map<String, TimeoutPolicyConfig> policyConfig,
-                               String storeProviderClass, String taskPurgeInterval) {
+                               TaskStoreConfig taskStoreConfig, String taskPurgeInterval) {
         logger.info("Initializing task provider service with " +
-                        "taskProducer {}, handlerConfig {}, store provider class {}, taskPurgeInterval {}",
-                taskProducer, handlerConfig, storeProviderClass, taskPurgeInterval);
+                        "task producer {}, handler config {}, store provider config {}, task purge interval {}",
+                taskProducer, handlerConfig, taskStoreConfig, taskPurgeInterval);
         this.taskProducer = taskProducer;
         this.statusConsumer = statusConsumer;
         this.taskTypeToHandlerConfig = handlerConfig;
         this.policyIdToPolicyConfig = policyConfig;
-        this.storeProviderClass = storeProviderClass;
+        this.taskStoreConfig = taskStoreConfig;
         this.taskPurgeInterval = taskPurgeInterval;
     }
 
@@ -121,11 +116,11 @@ public final class TaskProviderService implements Service, Subscriber<TaskStatus
         taskProvider.reinit();
     }
 
-    private void initTaskProvider() throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-        TaskStore taskStore = null;
-        if (storeProviderClass != null) {
-            taskStore = (TaskStore) Class.forName(storeProviderClass).newInstance();
-        }
+    private void initTaskProvider() throws Exception {
+        taskStore = (TaskStore) Class.forName(taskStoreConfig.getTaskStoreClass())
+                .getConstructor()
+                .newInstance();
+        taskStore.init(taskStoreConfig.getConfig());
         this.taskProvider = new TaskProvider(taskStore, this);
     }
 
@@ -136,7 +131,7 @@ public final class TaskProviderService implements Service, Subscriber<TaskStatus
                     final TimeoutPolicy timeoutPolicy = (TimeoutPolicy) Class.forName(policyConfig.getPolicyClass())
                             .getConstructor()
                             .newInstance();
-                    timeoutPolicy.init(policyConfig.getConfig(), taskProvider);
+                    timeoutPolicy.init(policyConfig.getConfig());
                     timeoutPolicyMap.put(policyId, timeoutPolicy);
                 } catch (Exception e) {
                     logger.error("Error initializing timeout policy with id {}, config {}", policyId, policyConfig, e);
@@ -162,7 +157,7 @@ public final class TaskProviderService implements Service, Subscriber<TaskStatus
         final long currentTimeMillis = System.currentTimeMillis();
 
         final TimeoutPolicy timeoutPolicy = resolveTimeoutPolicy(task);
-        final Runnable timeoutTask = () -> timeoutPolicy.handle(task);
+        final TimeoutTask timeoutTask = new TimeoutTask(task, timeoutPolicy);
         if (timeoutTaskTime < currentTimeMillis) {
             // submit timeout task now
             scheduledExecutorService.submit(timeoutTask);
@@ -178,7 +173,6 @@ public final class TaskProviderService implements Service, Subscriber<TaskStatus
      * resolve timeout policy for task, policy resolution is done at multiple levels.
      * First policy is checked at task definition level defined as {@link TaskDefinition#timeoutPolicy}
      * If not found then it is checked at the task handler level defined as {@link TaskHandlerConfig#timeoutPolicy}
-     * If still not found then a default policy is applied on task which is {@link FailOnTimeoutPolicy}
      *
      * @param task
      * @return
@@ -190,7 +184,7 @@ public final class TaskProviderService implements Service, Subscriber<TaskStatus
         }
 
         final TaskHandlerConfig taskHandlerConfig = getTaskHandlerConfig(task.getType());
-        return timeoutPolicyMap.getOrDefault(taskHandlerConfig.getTimeoutPolicy(), defaultTimeoutPolicy);
+        return timeoutPolicyMap.get(taskHandlerConfig.getTimeoutPolicy());
     }
 
     @Override
@@ -225,7 +219,7 @@ public final class TaskProviderService implements Service, Subscriber<TaskStatus
             case FAILED:
                 final ScheduledFuture<?> taskTimeoutFuture = taskTimeoutHandlersMap.remove(task.getId());
                 if (taskTimeoutFuture != null) {
-                    taskTimeoutFuture.cancel(true);
+                    taskTimeoutFuture.cancel(false);
                 }
                 // If the task is finished (reached terminal state), proceed to schedule the next set of tasks
                 scheduleReadyTasks();
@@ -261,6 +255,7 @@ public final class TaskProviderService implements Service, Subscriber<TaskStatus
         }
         taskProducer.close();
         statusConsumer.close();
+        taskStore.stop();
     }
 
     private TaskHandlerConfig getTaskHandlerConfig(String taskType) {
@@ -269,14 +264,16 @@ public final class TaskProviderService implements Service, Subscriber<TaskStatus
     }
 
     private long getMaxExecutionTime(Task task) {
-        final String maxExecutionTime;
-        if (task.getProperties().containsKey(MAX_EXECUTION_TIME)) {
-            maxExecutionTime = (String) task.getProperties().get(MAX_EXECUTION_TIME);
-        } else {
-            final TaskHandlerConfig taskHandlerConfig = getTaskHandlerConfig(task.getType());
-            maxExecutionTime = taskHandlerConfig.getMaxExecutionTime();
+        if (task.getMaxExecutionTime() != null) {
+            return resolveDuration(task.getMaxExecutionTime());
         }
-        return resolveDuration(maxExecutionTime);
+
+        final TaskHandlerConfig taskHandlerConfig = getTaskHandlerConfig(task.getType());
+        if (taskHandlerConfig.getMaxExecutionTime() != null) {
+            return resolveDuration(taskHandlerConfig.getMaxExecutionTime());
+        }
+
+        return resolveDuration(MAX_EXECUTION_TIME);
     }
 
     /**
@@ -292,5 +289,26 @@ public final class TaskProviderService implements Service, Subscriber<TaskStatus
     // used in junit
     TaskProvider getTaskProvider() {
         return taskProvider;
+    }
+
+    private class TimeoutTask implements Runnable {
+
+        private final Task task;
+        private final TimeoutPolicy timeoutPolicy;
+
+        TimeoutTask(Task task, TimeoutPolicy timeoutPolicy) {
+            this.task = task;
+            this.timeoutPolicy = timeoutPolicy;
+        }
+
+        @Override
+        public void run() {
+            logger.info("Task {} has timed out, marking task as failed", task);
+            taskProvider.updateTask(task, FAILED, TIMED_OUT);
+            if (timeoutPolicy != null) {
+                logger.info("Applying timeout policy {} on task {}", timeoutPolicy, task);
+                timeoutPolicy.handle(task);
+            }
+        }
     }
 }

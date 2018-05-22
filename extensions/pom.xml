@@ -14,9 +14,10 @@
     <packaging>pom</packaging>
     <version>1.0</version>
     <modules>
-        <module>kafka-queue</module>
+        <module>kafka-message-bus</module>
         <module>shell-handler</module>
-        <module>spark-handler</module>
+        <module>file-reader</module>
+        <module>sqlite-store</module>
     </modules>
 
     <dependencies>
@@ -24,6 +25,7 @@
             <groupId>com.cognitree.scheduler</groupId>
             <artifactId>scheduler</artifactId>
             <version>1.0</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 

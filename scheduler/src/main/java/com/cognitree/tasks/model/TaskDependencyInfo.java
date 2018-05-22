@@ -19,6 +19,8 @@ package com.cognitree.tasks.model;
 
 import java.util.Objects;
 
+import static com.cognitree.tasks.model.TaskDependencyInfo.Mode.all;
+
 /**
  * defines dependency between two tasks
  */
@@ -38,7 +40,7 @@ public class TaskDependencyInfo {
      * mode of dependency whether it depends on the first last or all tasks found in the
      * {@link TaskDependencyInfo#duration} period
      */
-    private Mode mode;
+    private Mode mode = all;
 
     public String getName() {
         return name;

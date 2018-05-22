@@ -28,11 +28,6 @@ import java.util.*;
  */
 public class TaskDefinition {
 
-    /**
-     * used to uniquely identify a task definition in the system, by default is the combination of
-     * group, type and name
-     */
-    private String id;
     private String name;
     /**
      * used to segregate task with same name and type into different group,
@@ -60,6 +55,13 @@ public class TaskDefinition {
      */
     private String timeoutPolicy;
     /**
+     * max allowed time for task to finish execution.
+     * <p>
+     * takes precedence over the {@link com.cognitree.tasks.executor.handlers.TaskHandlerConfig#maxExecutionTime}
+     * </p>
+     */
+    private String maxExecutionTime;
+    /**
      * A dependency list defining tasks, current task depends on
      */
     private List<TaskDependencyInfo> dependsOn = new ArrayList<>();
@@ -73,11 +75,7 @@ public class TaskDefinition {
     private Map<String, Object> additionalProperties = new HashMap<>();
 
     public String getId() {
-        return (id != null) ? id : (getGroup() + ":" + getType() + ":" + getName());
-    }
-
-    public void setId(String id) {
-        this.id = id;
+        return getGroup() + ":" + getType() + ":" + getName();
     }
 
     public String getName() {
@@ -128,6 +126,14 @@ public class TaskDefinition {
         this.timeoutPolicy = timeoutPolicy;
     }
 
+    public String getMaxExecutionTime() {
+        return maxExecutionTime;
+    }
+
+    public void setMaxExecutionTime(String maxExecutionTime) {
+        this.maxExecutionTime = maxExecutionTime;
+    }
+
     public List<TaskDependencyInfo> getDependsOn() {
         return Collections.unmodifiableList(dependsOn);
     }
@@ -154,6 +160,7 @@ public class TaskDefinition {
         task.setName(name);
         task.setType(type);
         task.setTimeoutPolicy(timeoutPolicy);
+        task.setMaxExecutionTime(maxExecutionTime);
         task.setId(UUID.randomUUID().toString());
         task.setProperties(new HashMap<>(getProperties()));
         task.getProperties().putAll(additionalProperties);
@@ -169,12 +176,12 @@ public class TaskDefinition {
         if (!(o instanceof TaskDefinition)) return false;
         TaskDefinition that = (TaskDefinition) o;
         return isEnabled == that.isEnabled &&
-                Objects.equals(id, that.id) &&
                 Objects.equals(name, that.name) &&
                 Objects.equals(group, that.group) &&
                 Objects.equals(type, that.type) &&
                 Objects.equals(schedule, that.schedule) &&
                 Objects.equals(timeoutPolicy, that.timeoutPolicy) &&
+                Objects.equals(maxExecutionTime, that.maxExecutionTime) &&
                 Objects.equals(dependsOn, that.dependsOn) &&
                 Objects.equals(properties, that.properties) &&
                 Objects.equals(additionalProperties, that.additionalProperties);
@@ -183,19 +190,19 @@ public class TaskDefinition {
     @Override
     public int hashCode() {
 
-        return Objects.hash(id, name, group, type, isEnabled, schedule, timeoutPolicy, dependsOn, properties, additionalProperties);
+        return Objects.hash(name, group, type, isEnabled, schedule, timeoutPolicy, maxExecutionTime, dependsOn, properties, additionalProperties);
     }
 
     @Override
     public String toString() {
         return "TaskDefinition{" +
-                "id='" + id + '\'' +
-                ", name='" + name + '\'' +
+                "name='" + name + '\'' +
                 ", group='" + group + '\'' +
                 ", type='" + type + '\'' +
                 ", isEnabled=" + isEnabled +
                 ", schedule='" + schedule + '\'' +
                 ", timeoutPolicy='" + timeoutPolicy + '\'' +
+                ", maxExecutionTime='" + maxExecutionTime + '\'' +
                 ", dependsOn=" + dependsOn +
                 ", properties=" + properties +
                 ", additionalProperties=" + additionalProperties +

@@ -19,6 +19,7 @@ package com.cognitree.tasks.store;
 
 import com.cognitree.tasks.model.Task;
 import com.cognitree.tasks.model.Task.Status;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.List;
 
@@ -26,6 +27,14 @@ import java.util.List;
  * An interface exposing API's to provide {@link Task} persistence
  */
 public interface TaskStore {
+
+    /**
+     * called during initialization phase to initialize the task store using {@link TaskStoreConfig#config}
+     *
+     * @param storeConfig
+     * @throws Exception
+     */
+    void init(ObjectNode storeConfig) throws Exception;
 
     void store(Task task);
 
@@ -36,4 +45,6 @@ public interface TaskStore {
     List<Task> load(List<Status> statuses);
 
     List<Task> load(String taskName, String taskGroup, long createdBefore, long createdAfter);
+
+    void stop();
 }

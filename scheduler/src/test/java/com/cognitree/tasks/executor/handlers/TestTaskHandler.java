@@ -42,7 +42,7 @@ public class TestTaskHandler implements TaskHandler {
     }
 
     @Override
-    public void handleTask(Task task) {
+    public void handle(Task task) {
         int executionCount;
         if (receivedTasks.containsKey(task.getId())) {
             executionCount = receivedTasks.get(task.getId()) + 1;

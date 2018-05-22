@@ -19,7 +19,6 @@ package com.cognitree.tasks.executor.handlers;
 
 import com.cognitree.tasks.executor.TaskStatusListener;
 import com.cognitree.tasks.model.TaskDefinition;
-import com.cognitree.tasks.scheduler.policies.FailOnTimeoutPolicy;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Objects;

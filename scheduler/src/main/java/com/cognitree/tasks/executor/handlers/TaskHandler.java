@@ -58,5 +58,5 @@ public interface TaskHandler {
      * @param task task to handle
      * @throws Exception
      */
-    void handleTask(Task task) throws Exception;
+    void handle(Task task) throws Exception;
 }

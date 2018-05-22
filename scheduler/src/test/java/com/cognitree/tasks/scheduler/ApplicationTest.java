@@ -60,7 +60,7 @@ public class ApplicationTest {
 
         TaskProviderService taskProviderService =
                 new TaskProviderService(taskProducer, statusConsumer, applicationConfig.getHandlerConfig(),
-                        applicationConfig.getTimeoutPolicyConfig(), applicationConfig.getStoreProvider(),
+                        applicationConfig.getTimeoutPolicyConfig(), applicationConfig.getTaskStoreConfig(),
                         applicationConfig.getTaskPurgeInterval());
         ServiceProvider.registerService(taskProviderService);
         taskProviderService.init();

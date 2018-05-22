@@ -50,7 +50,7 @@ public class ShellCommandHandler implements TaskHandler {
     }
 
     @Override
-    public void handleTask(Task task) {
+    public void handle(Task task) {
         logger.info("received request to handle task {}", task);
 
         final Map<String, Object> taskProperties = task.getProperties();

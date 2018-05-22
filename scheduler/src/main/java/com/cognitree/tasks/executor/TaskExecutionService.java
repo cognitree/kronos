@@ -128,7 +128,7 @@ public class TaskExecutionService implements Service, TaskStatusListener, Subscr
             final ThreadPoolExecutor executor = getTaskExecutor(task);
             executor.submit(() -> {
                 try {
-                    handler.handleTask(task);
+                    handler.handle(task);
                 } catch (Exception e) {
                     logger.error("Error executing task {}", task, e);
                     updateStatus(task.getId(), task.getGroup(), FAILED, HANDLER_FAILURE);

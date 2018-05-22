@@ -107,7 +107,7 @@ public class Application implements ComponentLifecycle {
                 .newInstance(statusConsumerConfig.getConfig());
 
         TaskProviderService taskProviderService = new TaskProviderService(taskProducer, statusConsumer, applicationConfig.getHandlerConfig(),
-                applicationConfig.getTimeoutPolicyConfig(), applicationConfig.getStoreProvider(), applicationConfig.getTaskPurgeInterval());
+                applicationConfig.getTimeoutPolicyConfig(), applicationConfig.getTaskStoreConfig(), applicationConfig.getTaskPurgeInterval());
         ServiceProvider.registerService(taskProviderService);
     }
 

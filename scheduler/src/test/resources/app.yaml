@@ -22,6 +22,9 @@ taskStatusConsumerConfig:
   config:
     pollInterval: 100
 
+taskStoreConfig:
+  taskStoreClass: com.cognitree.tasks.store.MockTaskStore
+
 # Periodically, tasks older than the specified interval and
 # status as one of the final state are purged from memory to prevent the system from going OOM.
 # check ApplicationConfig.taskPurgeInterval for more details
