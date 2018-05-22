@@ -1,0 +1,56 @@
+# configure task definition readers
+readerConfig:
+  filereader:
+    readerClass: com.cognitree.examples.tasks.scheduler.readers.FileTaskDefinitionReader
+    config:
+      # absolute path of the file to load task definition from
+      source: /Users/ankitnanglia/workspace/cognitree/scheduler/examples/src/main/resources/task-definitions.yaml
+    # interval in cron to look for changes in the task definition file
+    schedule: 0 0/1 * 1/1 * ? *
+
+# configure task handlers
+handlerConfig:
+  shellCommand:
+    handlerClass: com.cognitree.kronos.executor.handlers.ShellCommandHandler
+    maxExecutionTime: 10m
+    maxParallelTasks: 4
+
+# configure message bus
+taskProducerConfig:
+  producerClass: com.cognitree.kronos.queue.producer.KafkaTaskProducer
+  config:
+    producerConfig:
+      bootstrap.servers : localhost:9092
+      key.serializer : org.apache.kafka.common.serialization.StringSerializer
+      value.serializer : org.apache.kafka.common.serialization.StringSerializer
+taskConsumerConfig:
+  consumerClass: com.cognitree.kronos.queue.consumer.KafkaTaskConsumer
+  config:
+    consumerConfig:
+      bootstrap.servers : localhost:9092
+      group.id: schedulerframework
+      key.deserializer : org.apache.kafka.common.serialization.StringDeserializer
+      value.deserializer : org.apache.kafka.common.serialization.StringDeserializer
+    taskTopics: typeA, typeB, shell
+    pollTimeout: 5s
+    pollInterval: 5s
+taskStatusProducerConfig:
+  producerClass: com.cognitree.kronos.queue.producer.KafkaStatusProducer
+  config:
+    producerConfig:
+      bootstrap.servers : localhost:9092
+      key.serializer : org.apache.kafka.common.serialization.StringSerializer
+      value.serializer : org.apache.kafka.common.serialization.StringSerializer
+taskStatusConsumerConfig:
+  consumerClass: com.cognitree.kronos.queue.consumer.KafkaStatusConsumer
+  config:
+    consumerConfig:
+      bootstrap.servers : localhost:9092
+      group.id: schedulerframework
+      key.deserializer : org.apache.kafka.common.serialization.StringDeserializer
+      value.deserializer : org.apache.kafka.common.serialization.StringDeserializer
+    pollTimeout: 5s
+    pollInterval: 5s
+
+# time to wait before removing executed tasks from memory
+taskPurgeInterval: 1d
