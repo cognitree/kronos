@@ -6,7 +6,7 @@
 
     <parent>
         <groupId>com.cognitree</groupId>
-        <artifactId>cloud</artifactId>
+        <artifactId>kronos</artifactId>
         <version>1.0</version>
     </parent>
 

@@ -8,7 +8,7 @@ Update the `app.yaml` to use Kafka as message bus
 ```
 # configure task producer
 taskProducerConfig:
-  producerClass: com.cognitree.tasks.queue.producer.KafkaTaskProducer
+  producerClass: com.cognitree.kronos.queue.producer.KafkaTaskProducer
   config:
     producerConfig:
       bootstrap.servers : localhost:9092
@@ -17,7 +17,7 @@ taskProducerConfig:
 
 # configure task consumer
 taskConsumerConfig:
-  consumerClass: com.cognitree.tasks.queue.consumer.KafkaTaskConsumer
+  consumerClass: com.cognitree.kronos.queue.consumer.KafkaTaskConsumer
   config:
     consumerConfig:
       bootstrap.servers : localhost:9092
@@ -30,7 +30,7 @@ taskConsumerConfig:
 
 # configure task status producer
 taskStatusProducerConfig:
-  producerClass: com.cognitree.tasks.queue.producer.KafkaTaskStatusProducer
+  producerClass: com.cognitree.kronos.queue.producer.KafkaTaskStatusProducer
   config:
     producerConfig:
       bootstrap.servers : localhost:9092
@@ -39,7 +39,7 @@ taskStatusProducerConfig:
 
 # configure task status consumer
 taskStatusConsumerConfig:
-  consumerClass: com.cognitree.tasks.queue.consumer.KafkaTaskStatusConsumer
+  consumerClass: com.cognitree.kronos.queue.consumer.KafkaTaskStatusConsumer
   config:
     consumerConfig:
       bootstrap.servers : localhost:9092
@@ -50,6 +50,6 @@ taskStatusConsumerConfig:
     pollInterval: 5s
 ```
 
-Here, [KafkaTaskProducer](src/main/java/com/cognitree/tasks/queue/producer/KafkaTaskProducer.java) is used as the producer of task to Kafka and [KafkaTaskConsumer](src/main/java/com/cognitree/tasks/queue/consumer/KafkaTaskConsumer.java) as consumer of task from Kafka. Similarly, [KafkaTaskStatusProducer](src/main/java/com/cognitree/tasks/queue/producer/KafkaTaskStatusProducer.java) is used as the producer of task status to Kafka and [KafkaTaskStatusConsumer](src/main/java/com/cognitree/tasks/queue/consumer/KafkaTaskStatusConsumer.java) as consumer of task status from Kafka.
+Here, [KafkaTaskProducer](src/main/java/com/cognitree/kronos/queue/producer/KafkaTaskProducer.java) is used as the producer of task to Kafka and [KafkaTaskConsumer](src/main/java/com/cognitree/kronos/queue/consumer/KafkaTaskConsumer.java) as consumer of task from Kafka. Similarly, [KafkaTaskStatusProducer](src/main/java/com/cognitree/kronos/queue/producer/KafkaTaskStatusProducer.java) is used as the producer of task status to Kafka and [KafkaTaskStatusConsumer](src/main/java/com/cognitree/kronos/queue/consumer/KafkaTaskStatusConsumer.java) as consumer of task status from Kafka.
 
 Any property passed in `consumerConfig` or `producerConfig` section is passed as it while creating Consumer and Producer in Kafka.

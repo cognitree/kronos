@@ -11,7 +11,7 @@ readerConfig:
   # name to be assigned to the reader
   filereader:
     # fully qualified classname of the TaskDefinitionReader.java implementation
-    readerClass: com.cognitree.tasks.scheduler.readers.FileTaskDefinitionReader
+    readerClass: com.cognitree.kronos.scheduler.readers.FileTaskDefinitionReader
     # additional configuration
     config:
       source: task-definitions.yaml
@@ -19,4 +19,4 @@ readerConfig:
     schedule: 0 0/1 * 1/1 * ? *
 ```
 
-Here, A [FileTaskDefinitionReader](src/main/java/com/cognitree/tasks/scheduler/readers/FileTaskDefinitionReader.java) is configured with a cron schedule to run every minute and load task definitions from `task-defintion.yaml` file in classpath.
+Here, A [FileTaskDefinitionReader](src/main/java/com/cognitree/kronos/scheduler/readers/FileTaskDefinitionReader.java) is configured with a cron schedule to run every minute and load task definitions from `task-defintion.yaml` file in classpath.

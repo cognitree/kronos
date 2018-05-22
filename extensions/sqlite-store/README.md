@@ -8,14 +8,14 @@ Update the `taskStoreConfig` section in `app.yaml` to configure to sqlite task s
 
 ```
 taskStoreConfig:
-  taskStoreClass: com.cognitree.tasks.store.SQLiteTaskStore
+  taskStoreClass: com.cognitree.kronos.store.SQLiteTaskStore
   config:
     connectionURL: jdbc:sqlite:sample.db
     username:
     password:
 ```
 
-Here, A [SQLiteTaskStore](src/main/java/com/cognitree/tasks/store/SQLiteTaskStore.java) is configured. Update the `connectionURL`, `username` and `password` to connect to running sqlite db.
+Here, A [SQLiteTaskStore](src/main/java/com/cognitree/kronos/store/SQLiteTaskStore.java) is configured. Update the `connectionURL`, `username` and `password` to connect to running sqlite db.
 Other configurable parameters are
     - minIdleConnection (minimum number of idle connections in the pool)
     - maxIdleConnection (maximum number of idle connections in the pool)

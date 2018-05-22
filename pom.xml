@@ -6,8 +6,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.cognitree</groupId>
-    <name>cloud</name>
-    <artifactId>cloud</artifactId>
+    <name>kronos</name>
+    <artifactId>kronos</artifactId>
     <packaging>pom</packaging>
     <version>1.0</version>
 
@@ -34,7 +34,6 @@
 
     <modules>
         <module>scheduler</module>
-        <module>examples</module>
         <module>extensions</module>
     </modules>
 </project>

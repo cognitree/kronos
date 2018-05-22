@@ -10,8 +10,8 @@ Update the `handlerConfig` section in `app.yaml` to configure to shell command h
 handlerConfig:
   # type of task to be handled by handler
   shellCommand:
-    handlerClass: com.cognitree.tasks.executor.handlers.ShellCommandHandler
+    handlerClass: com.cognitree.kronos.executor.handlers.ShellCommandHandler
     maxExecutionTime: 10m
 ```
 
-Here, A [ShellCommandHandler](src/main/java/com/cognitree/tasks/executor/handlers/ShellCommandHandler.java) is configured for task type `shellCommand`. Task with `shellCommand` will be executed by shell command handler.
+Here, A [ShellCommandHandler](src/main/java/com/cognitree/kronos/executor/handlers/ShellCommandHandler.java) is configured for task type `shellCommand`. Task with `shellCommand` will be executed by shell command handler.

@@ -1,6 +1,6 @@
 handlerConfig:
   default:
-    handlerClass: com.cognitree.tasks.executor.handlers.TestTaskHandler
+    handlerClass: com.cognitree.kronos.executor.handlers.TestTaskHandler
     config:
       topic: taskstatus
       topicConfig:
@@ -9,21 +9,21 @@ handlerConfig:
     maxParallelTasks: 16
 
 taskProducerConfig:
-  producerClass: com.cognitree.tasks.queue.producer.InMemoryTaskProducer
+  producerClass: com.cognitree.kronos.queue.producer.InMemoryTaskProducer
 taskConsumerConfig:
-  consumerClass: com.cognitree.tasks.queue.consumer.InMemoryTaskConsumer
+  consumerClass: com.cognitree.kronos.queue.consumer.InMemoryTaskConsumer
   config:
     pollInterval: 100
 
 taskStatusProducerConfig:
-  producerClass: com.cognitree.tasks.queue.producer.InMemoryStatusProducer
+  producerClass: com.cognitree.kronos.queue.producer.InMemoryStatusProducer
 taskStatusConsumerConfig:
-  consumerClass: com.cognitree.tasks.queue.consumer.InMemoryStatusConsumer
+  consumerClass: com.cognitree.kronos.queue.consumer.InMemoryStatusConsumer
   config:
     pollInterval: 100
 
 taskStoreConfig:
-  taskStoreClass: com.cognitree.tasks.store.MockTaskStore
+  taskStoreClass: com.cognitree.kronos.store.MockTaskStore
 
 # Periodically, tasks older than the specified interval and
 # status as one of the final state are purged from memory to prevent the system from going OOM.
