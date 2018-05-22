@@ -19,13 +19,13 @@ package com.cognitree.kronos.model;
 
 import com.cognitree.kronos.executor.TaskExecutionService;
 import com.cognitree.kronos.model.Task.Status;
-import com.cognitree.kronos.scheduler.TaskProviderService;
+import com.cognitree.kronos.scheduler.TaskSchedulerService;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Objects;
 
 /**
- * A helper POJO used by {@link TaskProviderService} and {@link TaskExecutionService} to push task status update to queue
+ * A helper POJO used by {@link TaskSchedulerService} and {@link TaskExecutionService} to push task status update to queue
  */
 public class TaskStatus {
     private String taskId;

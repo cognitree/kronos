@@ -145,7 +145,7 @@ public final class TaskSchedulerJob implements org.quartz.Job {
 
     /**
      * a task delegator job is created per task definitions and on trigger creates actual {@link Task}
-     * from {@link TaskDefinition} and submits it to {@link TaskProviderService} for execution
+     * from {@link TaskDefinition} and submits it to {@link TaskSchedulerService} for execution
      */
     public static final class TaskDelegatorJob implements org.quartz.Job {
         @Override
@@ -153,7 +153,7 @@ public final class TaskSchedulerJob implements org.quartz.Job {
             final JobDataMap jobHandlerDataMap = jobExecutionContext.getJobDetail().getJobDataMap();
             logger.trace("received request to execute job with data map {}", jobHandlerDataMap.getWrappedMap());
             final TaskDefinition taskDefinition = (TaskDefinition) jobHandlerDataMap.get("taskDefinition");
-            ServiceProvider.getTaskProviderService().add(taskDefinition.createTask());
+            ServiceProvider.getTaskSchedulerService().add(taskDefinition.createTask());
         }
     }
 }

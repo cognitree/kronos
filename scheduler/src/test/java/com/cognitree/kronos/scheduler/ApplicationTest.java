@@ -58,13 +58,13 @@ public class ApplicationTest {
                 .getConstructor(ObjectNode.class)
                 .newInstance(statusConsumerConfig.getConfig());
 
-        TaskProviderService taskProviderService =
-                new TaskProviderService(taskProducer, statusConsumer, applicationConfig.getHandlerConfig(),
+        TaskSchedulerService taskSchedulerService =
+                new TaskSchedulerService(taskProducer, statusConsumer, applicationConfig.getHandlerConfig(),
                         applicationConfig.getTimeoutPolicyConfig(), applicationConfig.getTaskStoreConfig(),
                         applicationConfig.getTaskPurgeInterval());
-        ServiceProvider.registerService(taskProviderService);
-        taskProviderService.init();
-        taskProviderService.start();
+        ServiceProvider.registerService(taskSchedulerService);
+        taskSchedulerService.init();
+        taskSchedulerService.start();
 
         final ProducerConfig statusProducerConfig = applicationConfig.getTaskStatusProducerConfig();
         Producer<TaskStatus> statusProducer = (Producer<TaskStatus>) Class.forName(statusProducerConfig.getProducerClass())
@@ -86,29 +86,29 @@ public class ApplicationTest {
     @AfterClass
     public static void stop() {
         ServiceProvider.getTaskExecutionService().stop();
-        ServiceProvider.getTaskProviderService().stop();
+        ServiceProvider.getTaskSchedulerService().stop();
     }
 
     @Before
     public void initialize() {
         // reinit will clear all the tasks from task provider
-        ServiceProvider.getTaskProviderService().getTaskProvider().reinit();
+        ServiceProvider.getTaskSchedulerService().getTaskProvider().reinit();
     }
 
     @Test
     public void testAddIndependentJob() {
         Task taskOne = createTask("taskOne", System.currentTimeMillis(),
                 null, new HashMap<>());
-        ServiceProvider.getTaskProviderService().add(taskOne);
+        ServiceProvider.getTaskSchedulerService().add(taskOne);
         waitForTaskToFinishExecution();
-        final TaskProvider taskGraph = ServiceProvider.getTaskProviderService().getTaskProvider();
+        final TaskProvider taskGraph = ServiceProvider.getTaskSchedulerService().getTaskProvider();
         Assert.assertEquals(1, taskGraph.size());
         Assert.assertTrue(TestTaskHandler.isExecuted(taskOne.getId()));
         Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
 
         Task taskTwo = createTask("taskTwo", System.currentTimeMillis(),
                 null, new HashMap<>());
-        ServiceProvider.getTaskProviderService().add(taskTwo);
+        ServiceProvider.getTaskSchedulerService().add(taskTwo);
         waitForTaskToFinishExecution();
         Assert.assertEquals(2, taskGraph.size());
         Assert.assertTrue(TestTaskHandler.isExecuted(taskTwo.getId()));
@@ -116,7 +116,7 @@ public class ApplicationTest {
 
         Task taskThree = createTask("taskThree", System.currentTimeMillis(),
                 null, new HashMap<>());
-        ServiceProvider.getTaskProviderService().add(taskThree);
+        ServiceProvider.getTaskSchedulerService().add(taskThree);
         waitForTaskToFinishExecution();
         Assert.assertEquals(3, taskGraph.size());
         Assert.assertTrue(TestTaskHandler.isExecuted(taskThree.getId()));
@@ -126,12 +126,12 @@ public class ApplicationTest {
     @Test
     public void testDuplicateTasks() {
         Task taskOne = createTask("taskOne", System.currentTimeMillis(), null, new HashMap<>());
-        ServiceProvider.getTaskProviderService().add(taskOne);
-        final TaskProvider taskGraph = ServiceProvider.getTaskProviderService().getTaskProvider();
+        ServiceProvider.getTaskSchedulerService().add(taskOne);
+        final TaskProvider taskGraph = ServiceProvider.getTaskSchedulerService().getTaskProvider();
         Assert.assertEquals(1, taskGraph.size());
         Task taskTwo = createTask("taskOne", System.currentTimeMillis(), null, new HashMap<>());
         taskTwo.setId(taskOne.getId());
-        ServiceProvider.getTaskProviderService().add(taskTwo);
+        ServiceProvider.getTaskSchedulerService().add(taskTwo);
         waitForTaskToFinishExecution();
         Assert.assertEquals(1, taskGraph.size());
         Assert.assertTrue(TestTaskHandler.isExecuted(taskOne.getId()));
@@ -144,7 +144,7 @@ public class ApplicationTest {
         final long createdAt = System.currentTimeMillis() - DAYS.toMillis(2);
         Task dummyIndependentTask = createTask("dummyIndependentTask",
                 createdAt, null, new HashMap<>());
-        ServiceProvider.getTaskProviderService().add(dummyIndependentTask);
+        ServiceProvider.getTaskSchedulerService().add(dummyIndependentTask);
         waitForTaskToFinishExecution();
 
         final Map<String, Object> taskProperties = Collections.singletonMap("status", RUNNING);
@@ -155,42 +155,42 @@ public class ApplicationTest {
         dependencyInfos.add(prepareDependencyInfo("taskTwo", all));
         Task taskThree = createTask("taskThree", createdAt + 5, dependencyInfos, taskProperties);
         Task taskFour = createTask("taskFour", createdAt + 5, dependencyInfos, taskProperties);
-        ServiceProvider.getTaskProviderService().add(taskOne);
+        ServiceProvider.getTaskSchedulerService().add(taskOne);
         waitForTaskToFinishExecution();
-        ServiceProvider.getTaskProviderService().add(taskTwo);
+        ServiceProvider.getTaskSchedulerService().add(taskTwo);
         waitForTaskToFinishExecution();
-        ServiceProvider.getTaskProviderService().add(taskThree);
+        ServiceProvider.getTaskSchedulerService().add(taskThree);
         waitForTaskToFinishExecution();
-        ServiceProvider.getTaskProviderService().add(taskFour);
+        ServiceProvider.getTaskSchedulerService().add(taskFour);
         waitForTaskToFinishExecution();
 
-        final TaskProvider taskProvider = ServiceProvider.getTaskProviderService().getTaskProvider();
+        final TaskProvider taskProvider = ServiceProvider.getTaskSchedulerService().getTaskProvider();
         Assert.assertEquals(5, taskProvider.size());
-        ServiceProvider.getTaskProviderService().deleteStaleTasks();
+        ServiceProvider.getTaskSchedulerService().deleteStaleTasks();
         Assert.assertEquals(4, taskProvider.size());
 
         taskProvider.updateTask(taskOne.getId(), taskOne.getGroup(), SUCCESSFUL, null, null);
-        ServiceProvider.getTaskProviderService().deleteStaleTasks();
+        ServiceProvider.getTaskSchedulerService().deleteStaleTasks();
         Assert.assertEquals(4, taskProvider.size());
 
         taskProvider.updateTask(taskTwo.getId(), taskTwo.getGroup(), SUCCESSFUL, null, null);
-        ServiceProvider.getTaskProviderService().deleteStaleTasks();
+        ServiceProvider.getTaskSchedulerService().deleteStaleTasks();
         Assert.assertEquals(4, taskProvider.size());
 
         taskProvider.updateTask(taskThree.getId(), taskThree.getGroup(), SUBMITTED, null, null);
-        ServiceProvider.getTaskProviderService().deleteStaleTasks();
+        ServiceProvider.getTaskSchedulerService().deleteStaleTasks();
         Assert.assertEquals(4, taskProvider.size());
 
         taskProvider.updateTask(taskThree.getId(), taskThree.getGroup(), SUCCESSFUL, null, null);
-        ServiceProvider.getTaskProviderService().deleteStaleTasks();
+        ServiceProvider.getTaskSchedulerService().deleteStaleTasks();
         Assert.assertEquals(4, taskProvider.size());
 
         taskProvider.updateTask(taskFour.getId(), taskFour.getGroup(), SUBMITTED, null, null);
-        ServiceProvider.getTaskProviderService().deleteStaleTasks();
+        ServiceProvider.getTaskSchedulerService().deleteStaleTasks();
         Assert.assertEquals(4, taskProvider.size());
 
         taskProvider.updateTask(taskFour.getId(), taskFour.getGroup(), SUCCESSFUL, null, null);
-        ServiceProvider.getTaskProviderService().deleteStaleTasks();
+        ServiceProvider.getTaskSchedulerService().deleteStaleTasks();
         Assert.assertEquals(0, taskProvider.size());
     }
 
@@ -203,10 +203,10 @@ public class ApplicationTest {
         dependencyInfos.add(prepareDependencyInfo("taskOne", all));
         dependencyInfos.add(prepareDependencyInfo("taskTwo", all));
         Task taskThree = createTask("taskThree", scheduledAt + 5, dependencyInfos, new HashMap<>());
-        ServiceProvider.getTaskProviderService().add(taskOne);
-        ServiceProvider.getTaskProviderService().add(taskTwo);
+        ServiceProvider.getTaskSchedulerService().add(taskOne);
+        ServiceProvider.getTaskSchedulerService().add(taskTwo);
         waitForTaskToFinishExecution();
-        ServiceProvider.getTaskProviderService().add(taskThree);
+        ServiceProvider.getTaskSchedulerService().add(taskThree);
         waitForTaskToFinishExecution();
         Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
         Assert.assertEquals(SUCCESSFUL, taskTwo.getStatus());
@@ -222,11 +222,11 @@ public class ApplicationTest {
         dependencyInfos.add(prepareDependencyInfo("taskTwo", all));
         Task taskThree = createTask("taskThree", scheduledAt + 5, dependencyInfos, new HashMap<>());
 
-        ServiceProvider.getTaskProviderService().add(taskOne);
-        ServiceProvider.getTaskProviderService().add(taskThree);
+        ServiceProvider.getTaskSchedulerService().add(taskOne);
+        ServiceProvider.getTaskSchedulerService().add(taskThree);
         // wait for few seconds for the task
         waitForTaskToFinishExecution();
-        final TaskProvider taskGraph = ServiceProvider.getTaskProviderService().getTaskProvider();
+        final TaskProvider taskGraph = ServiceProvider.getTaskSchedulerService().getTaskProvider();
         Assert.assertEquals(2, taskGraph.size());
         Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
         Assert.assertEquals(FAILED, taskThree.getStatus());
@@ -242,13 +242,13 @@ public class ApplicationTest {
         dependencyInfos.add(prepareDependencyInfo("taskTwo", all));
         Task taskThree = createTask("taskThree", scheduledAt + 5, dependencyInfos, new HashMap<>());
 
-        ServiceProvider.getTaskProviderService().add(taskOne);
-        final TaskProvider taskGraph = ServiceProvider.getTaskProviderService().getTaskProvider();
+        ServiceProvider.getTaskSchedulerService().add(taskOne);
+        final TaskProvider taskGraph = ServiceProvider.getTaskSchedulerService().getTaskProvider();
         Assert.assertTrue(taskGraph.isDependencyResolved(taskOne));
-        ServiceProvider.getTaskProviderService().add(taskTwo);
+        ServiceProvider.getTaskSchedulerService().add(taskTwo);
         Assert.assertTrue(taskGraph.isDependencyResolved((taskTwo)));
         waitForTaskToFinishExecution();
-        ServiceProvider.getTaskProviderService().add(taskThree);
+        ServiceProvider.getTaskSchedulerService().add(taskThree);
         Assert.assertTrue(taskGraph.isDependencyResolved(taskThree));
         waitForTaskToFinishExecution();
 
@@ -269,11 +269,11 @@ public class ApplicationTest {
         dependencyInfos.add(prepareDependencyInfo("taskTwo", all));
         Task taskThree = createTask("taskThree", scheduledAt + 5, dependencyInfos, new HashMap<>());
 
-        ServiceProvider.getTaskProviderService().add(taskOne);
-        ServiceProvider.getTaskProviderService().add(taskTwo);
+        ServiceProvider.getTaskSchedulerService().add(taskOne);
+        ServiceProvider.getTaskSchedulerService().add(taskTwo);
         waitForTaskToFinishExecution();
         Assert.assertEquals(FAILED, taskTwo.getStatus());
-        ServiceProvider.getTaskProviderService().add(taskThree);
+        ServiceProvider.getTaskSchedulerService().add(taskThree);
         waitForTaskToFinishExecution();
         Assert.assertEquals(FAILED, taskThree.getStatus());
     }

@@ -18,7 +18,7 @@
 package com.cognitree.kronos;
 
 import com.cognitree.kronos.executor.TaskExecutionService;
-import com.cognitree.kronos.scheduler.TaskProviderService;
+import com.cognitree.kronos.scheduler.TaskSchedulerService;
 import com.cognitree.kronos.scheduler.TaskReaderService;
 
 import java.util.HashMap;
@@ -42,8 +42,8 @@ public class ServiceProvider {
         return (TaskReaderService) serviceMap.get(TaskReaderService.class.getSimpleName());
     }
 
-    public static TaskProviderService getTaskProviderService() {
-        return (TaskProviderService) serviceMap.get(TaskProviderService.class.getSimpleName());
+    public static TaskSchedulerService getTaskSchedulerService() {
+        return (TaskSchedulerService) serviceMap.get(TaskSchedulerService.class.getSimpleName());
     }
 
     public static TaskExecutionService getTaskExecutionService() {

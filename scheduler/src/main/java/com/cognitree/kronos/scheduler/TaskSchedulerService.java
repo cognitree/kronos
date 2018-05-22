@@ -49,15 +49,15 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
 /**
- * A task provider service resolves dependency for each submitted task via {@link TaskProvider} and
+ * A task scheduler service resolves dependency for each submitted task via {@link TaskProvider} and
  * submits the task ready for execution to the task queue.
  * <p>
- * A task provider service acts as an producer of task to the task queue and consumer of task status
+ * A task scheduler service acts as an producer of task to the task queue and consumer of task status
  * from the task status queue
  * </p>
  */
-public final class TaskProviderService implements Service, Subscriber<TaskStatus>, TaskStatusHandler {
-    private static final Logger logger = LoggerFactory.getLogger(TaskProviderService.class);
+public final class TaskSchedulerService implements Service, Subscriber<TaskStatus>, TaskStatusHandler {
+    private static final Logger logger = LoggerFactory.getLogger(TaskSchedulerService.class);
 
     private static final String MAX_EXECUTION_TIME = "1d";
 
@@ -75,12 +75,12 @@ public final class TaskProviderService implements Service, Subscriber<TaskStatus
 
     private TaskStore taskStore;
     private TaskProvider taskProvider;
-    private boolean isInitialized; // is the task provider service initialized
+    private boolean isInitialized; // is the task scheduler service initialized
 
-    public TaskProviderService(Producer<Task> taskProducer, Consumer<TaskStatus> statusConsumer,
-                               Map<String, TaskHandlerConfig> handlerConfig, Map<String, TimeoutPolicyConfig> policyConfig,
-                               TaskStoreConfig taskStoreConfig, String taskPurgeInterval) {
-        logger.info("Initializing task provider service with " +
+    public TaskSchedulerService(Producer<Task> taskProducer, Consumer<TaskStatus> statusConsumer,
+                                Map<String, TaskHandlerConfig> handlerConfig, Map<String, TimeoutPolicyConfig> policyConfig,
+                                TaskStoreConfig taskStoreConfig, String taskPurgeInterval) {
+        logger.info("Initializing task scheduler service with " +
                         "task producer {}, handler config {}, store provider config {}, task purge interval {}",
                 taskProducer, handlerConfig, taskStoreConfig, taskPurgeInterval);
         this.taskProducer = taskProducer;
@@ -92,7 +92,7 @@ public final class TaskProviderService implements Service, Subscriber<TaskStatus
     }
 
     /**
-     * Task provider service is initialized in an order to get back to the last known state
+     * Task scheduler service is initialized in an order to get back to the last known state
      * Initialization order:
      * <pre>
      * 1) Initialize task provider

@@ -24,7 +24,7 @@ import com.cognitree.kronos.queue.consumer.Consumer;
 import com.cognitree.kronos.queue.consumer.ConsumerConfig;
 import com.cognitree.kronos.queue.producer.Producer;
 import com.cognitree.kronos.queue.producer.ProducerConfig;
-import com.cognitree.kronos.scheduler.TaskProviderService;
+import com.cognitree.kronos.scheduler.TaskSchedulerService;
 import com.cognitree.kronos.scheduler.TaskReaderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -106,9 +106,9 @@ public class Application implements ComponentLifecycle {
                 .getConstructor(ObjectNode.class)
                 .newInstance(statusConsumerConfig.getConfig());
 
-        TaskProviderService taskProviderService = new TaskProviderService(taskProducer, statusConsumer, applicationConfig.getHandlerConfig(),
+        TaskSchedulerService taskSchedulerService = new TaskSchedulerService(taskProducer, statusConsumer, applicationConfig.getHandlerConfig(),
                 applicationConfig.getTimeoutPolicyConfig(), applicationConfig.getTaskStoreConfig(), applicationConfig.getTaskPurgeInterval());
-        ServiceProvider.registerService(taskProviderService);
+        ServiceProvider.registerService(taskSchedulerService);
     }
 
     @SuppressWarnings("unchecked")
@@ -135,11 +135,11 @@ public class Application implements ComponentLifecycle {
                 break;
             case SCHEDULER_PROFILE:
                 ServiceProvider.getTaskReaderService().init();
-                ServiceProvider.getTaskProviderService().init();
+                ServiceProvider.getTaskSchedulerService().init();
                 break;
             case DEFAULT_PROFILE:
                 ServiceProvider.getTaskReaderService().init();
-                ServiceProvider.getTaskProviderService().init();
+                ServiceProvider.getTaskSchedulerService().init();
                 ServiceProvider.getTaskExecutionService().init();
         }
     }
@@ -152,11 +152,11 @@ public class Application implements ComponentLifecycle {
                 break;
             case SCHEDULER_PROFILE:
                 ServiceProvider.getTaskReaderService().start();
-                ServiceProvider.getTaskProviderService().start();
+                ServiceProvider.getTaskSchedulerService().start();
                 break;
             case DEFAULT_PROFILE:
                 ServiceProvider.getTaskReaderService().start();
-                ServiceProvider.getTaskProviderService().start();
+                ServiceProvider.getTaskSchedulerService().start();
                 ServiceProvider.getTaskExecutionService().start();
         }
     }
@@ -168,8 +168,8 @@ public class Application implements ComponentLifecycle {
                 if (ServiceProvider.getTaskReaderService() != null) {
                     ServiceProvider.getTaskReaderService().stop();
                 }
-                if (ServiceProvider.getTaskProviderService() != null) {
-                    ServiceProvider.getTaskProviderService().stop();
+                if (ServiceProvider.getTaskSchedulerService() != null) {
+                    ServiceProvider.getTaskSchedulerService().stop();
                 }
                 break;
             case EXECUTOR_PROFILE:
@@ -181,8 +181,8 @@ public class Application implements ComponentLifecycle {
                 if (ServiceProvider.getTaskReaderService() != null) {
                     ServiceProvider.getTaskReaderService().stop();
                 }
-                if (ServiceProvider.getTaskProviderService() != null) {
-                    ServiceProvider.getTaskProviderService().stop();
+                if (ServiceProvider.getTaskSchedulerService() != null) {
+                    ServiceProvider.getTaskSchedulerService().stop();
                 }
                 if (ServiceProvider.getTaskExecutionService() != null) {
                     ServiceProvider.getTaskExecutionService().stop();
