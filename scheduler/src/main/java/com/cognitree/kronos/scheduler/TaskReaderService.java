@@ -79,7 +79,7 @@ public final class TaskReaderService implements Service {
             try {
                 JobDataMap jobDataMap = new JobDataMap();
                 jobDataMap.put("taskDefinitionReader", taskReaders.get(readerName));
-                JobDetail jobDetail = newJob(TaskSchedulerJob.class)
+                JobDetail jobDetail = newJob(TaskDefinitionReaderJob.class)
                         .withIdentity(readerName, readerName + "jobScheduler")
                         .usingJobData(jobDataMap)
                         .build();
@@ -97,12 +97,12 @@ public final class TaskReaderService implements Service {
     @Override
     public void stop() {
         try {
-            logger.info("stop: Stopping task reader service...");
+            logger.info("Stopping task reader service...");
             if (scheduler != null && !scheduler.isShutdown()) {
                 scheduler.shutdown();
             }
         } catch (Exception e) {
-            logger.error("stop: Error stopping task reader service...", e);
+            logger.error("Error stopping task reader service...", e);
         }
     }
 }

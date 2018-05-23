@@ -32,13 +32,13 @@ import static org.quartz.JobBuilder.newJob;
 import static org.quartz.TriggerBuilder.newTrigger;
 
 /**
- * TaskSchedulerJob is scheduled by {@link TaskReaderService#scheduleJobs()} for each {@link TaskDefinitionReader} implementation.
+ * TaskDefinitionReaderJob is scheduled by {@link TaskReaderService#scheduleJobs()} for each {@link TaskDefinitionReader} implementation.
  * <p>
  * Any change in the task definition is updated with the framework. Add new tasks definition, remove deleted one
  * and update existing task definition if required
  */
-public final class TaskSchedulerJob implements org.quartz.Job {
-    private static final Logger logger = LoggerFactory.getLogger(TaskSchedulerJob.class);
+public final class TaskDefinitionReaderJob implements org.quartz.Job {
+    private static final Logger logger = LoggerFactory.getLogger(TaskDefinitionReaderJob.class);
 
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
@@ -46,15 +46,15 @@ public final class TaskSchedulerJob implements org.quartz.Job {
         final TaskDefinitionReader taskDefinitionReader = (TaskDefinitionReader) jobReaderDataMap.remove("taskDefinitionReader");
         try {
             final List<TaskDefinition> taskDefinitions = taskDefinitionReader.load();
-            final String jobReaderGroup = getJobReaderGroup(jobExecutionContext);
+            final String taskReaderGroup = getTaskReaderGroup(jobExecutionContext);
             Map<JobKey, TaskDefinition> taskDefinitionMap = new HashMap<>();
             for (TaskDefinition taskDefinition : taskDefinitions) {
-                taskDefinitionMap.put(new JobKey(taskDefinition.getId(), jobReaderGroup), taskDefinition);
+                taskDefinitionMap.put(new JobKey(taskDefinition.getId(), taskReaderGroup), taskDefinition);
             }
 
             updateScheduler(taskDefinitionMap, jobExecutionContext);
         } catch (Exception e) {
-            logger.error("Something went wrong reading jobs", e);
+            logger.error("Error reading task definitions", e);
             throw new JobExecutionException(e);
         }
     }
@@ -62,53 +62,54 @@ public final class TaskSchedulerJob implements org.quartz.Job {
     private void updateScheduler(Map<JobKey, TaskDefinition> taskDefinitionMap,
                                  JobExecutionContext jobExecutionContext) throws Exception {
         final Scheduler scheduler = jobExecutionContext.getScheduler();
-        Set<JobKey> currentlyScheduledJobKeys =
-                scheduler.getJobKeys(GroupMatcher.groupEquals(getJobReaderGroup(jobExecutionContext)));
+        Set<JobKey> currentlyScheduledTaskDefinitionKeys =
+                scheduler.getJobKeys(GroupMatcher.groupEquals(getTaskReaderGroup(jobExecutionContext)));
         if (logger.isTraceEnabled()) {
-            logger.trace("currently scheduled jobs: {}", currentlyScheduledJobKeys);
+            logger.trace("currently scheduled task definitions: {}", currentlyScheduledTaskDefinitionKeys);
         }
 
-        Set<JobKey> jobsToAdd = new HashSet<>(taskDefinitionMap.keySet());
+        Set<JobKey> taskDefinitionsToAdd = new HashSet<>(taskDefinitionMap.keySet());
 
-        // jobsToAdd - jobs to add
-        jobsToAdd.removeAll(currentlyScheduledJobKeys);
-        // jobsToUpdate - jobs to update
-        Set<JobKey> jobsToUpdate = new HashSet<>(taskDefinitionMap.keySet());
-        jobsToUpdate.retainAll(currentlyScheduledJobKeys);
-        // jobsToRemove - jobs to remove
-        Set<JobKey> jobsToRemove = new HashSet<>(currentlyScheduledJobKeys);
-        jobsToRemove.removeAll(taskDefinitionMap.keySet());
-        if (!jobsToAdd.isEmpty()) {
-            logger.info("new jobs to add {}", jobsToAdd);
+        // taskDefinitionsToAdd - jobs to add
+        taskDefinitionsToAdd.removeAll(currentlyScheduledTaskDefinitionKeys);
+        // taskDefinitionsToUpdate - jobs to update
+        Set<JobKey> taskDefinitionsToUpdate = new HashSet<>(taskDefinitionMap.keySet());
+        taskDefinitionsToUpdate.retainAll(currentlyScheduledTaskDefinitionKeys);
+        // taskDefinitionsToRemove - jobs to remove
+        Set<JobKey> taskDefinitionsToRemove = new HashSet<>(currentlyScheduledTaskDefinitionKeys);
+        taskDefinitionsToRemove.removeAll(taskDefinitionMap.keySet());
+        if (!taskDefinitionsToAdd.isEmpty()) {
+            logger.info("adding new task definitions {}", taskDefinitionsToAdd);
             // Add new jobs
-            jobsToAdd.stream().map(taskDefinitionMap::get).distinct().forEach(jobDef ->
+            taskDefinitionsToAdd.stream().map(taskDefinitionMap::get).distinct().forEach(jobDef ->
                     scheduleJob(jobExecutionContext, jobDef));
         }
 
-        if (!jobsToUpdate.isEmpty()) {
-            for (JobKey jobKey : jobsToUpdate) {
+        if (!taskDefinitionsToUpdate.isEmpty()) {
+            for (JobKey jobKey : taskDefinitionsToUpdate) {
                 final JobDetail jobDetail = scheduler.getJobDetail(jobKey);
                 final TaskDefinition existingTaskDefinition =
                         (TaskDefinition) jobDetail.getJobDataMap().get("taskDefinition");
                 final TaskDefinition newTaskDefinition = taskDefinitionMap.get(jobKey);
                 if (!existingTaskDefinition.equals(newTaskDefinition)) {
-                    logger.info("updating job: {}, from {}, to {}", jobKey, existingTaskDefinition, newTaskDefinition);
+                    logger.info("updating task definition {}, from {}, to {}",
+                            jobKey, existingTaskDefinition, newTaskDefinition);
                     scheduler.deleteJob(jobKey);
                     scheduleJob(jobExecutionContext, newTaskDefinition);
                 }
             }
         }
 
-        if (!jobsToRemove.isEmpty()) {
-            logger.info("jobs to remove: {}", jobsToRemove);
+        if (!taskDefinitionsToRemove.isEmpty()) {
+            logger.info("removing task definitions {}", taskDefinitionsToRemove);
             // Remove obsolete jobs
-            for (JobKey jobKey : jobsToRemove) {
+            for (JobKey jobKey : taskDefinitionsToRemove) {
                 scheduler.deleteJob(jobKey);
             }
         }
     }
 
-    private String getJobReaderGroup(JobExecutionContext jobExecutionContext) {
+    private String getTaskReaderGroup(JobExecutionContext jobExecutionContext) {
         return getIdentifier(jobExecutionContext) + "Group";
     }
 
@@ -119,7 +120,7 @@ public final class TaskSchedulerJob implements org.quartz.Job {
     private void scheduleJob(JobExecutionContext jobExecutionContext, TaskDefinition taskDefinition) {
         try {
             final String jobIdentifier = taskDefinition.getId();
-            final String jobGroupIdentifier = getJobReaderGroup(jobExecutionContext);
+            final String jobGroupIdentifier = getTaskReaderGroup(jobExecutionContext);
 
             JobDataMap jobDataMap = new JobDataMap();
             jobDataMap.put("taskDefinition", taskDefinition);
@@ -135,7 +136,7 @@ public final class TaskSchedulerJob implements org.quartz.Job {
                     .build();
             jobExecutionContext.getScheduler().scheduleJob(jobDetail, simpleTrigger);
         } catch (Exception ex) {
-            logger.error("Error scheduling job : {}", taskDefinition, ex);
+            logger.error("Error scheduling task definition {}", taskDefinition, ex);
         }
     }
 
@@ -151,7 +152,7 @@ public final class TaskSchedulerJob implements org.quartz.Job {
         @Override
         public void execute(JobExecutionContext jobExecutionContext) {
             final JobDataMap jobHandlerDataMap = jobExecutionContext.getJobDetail().getJobDataMap();
-            logger.trace("received request to execute job with data map {}", jobHandlerDataMap.getWrappedMap());
+            logger.trace("received request to create task from data map {}", jobHandlerDataMap.getWrappedMap());
             final TaskDefinition taskDefinition = (TaskDefinition) jobHandlerDataMap.get("taskDefinition");
             ServiceProvider.getTaskSchedulerService().add(taskDefinition.createTask());
         }

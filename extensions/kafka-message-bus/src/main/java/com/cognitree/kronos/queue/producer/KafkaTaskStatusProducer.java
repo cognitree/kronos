@@ -45,7 +45,11 @@ public class KafkaTaskStatusProducer implements Producer<TaskStatus> {
         logger.info("Received request to add task status {} to queue", taskStatus);
         ProducerRecord<String, String> record =
                 new ProducerRecord<>(TASK_STATUS_TOPIC, TASK_STATUS_TOPIC, OBJECT_MAPPER.writeValueAsString(taskStatus));
-        kafkaProducer.send(record);
+        kafkaProducer.send(record, (metadata, exception) -> {
+            if (exception != null) {
+                logger.error("Error sending task status {} over kafka", taskStatus, exception);
+            }
+        });
     }
 
     @Override

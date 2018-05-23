@@ -17,9 +17,9 @@
 
 package com.cognitree.kronos.model;
 
-import com.cognitree.kronos.executor.handlers.TaskHandlerConfig;
 import com.cognitree.kronos.executor.TaskStatusListener;
 import com.cognitree.kronos.executor.handlers.TaskHandler;
+import com.cognitree.kronos.executor.handlers.TaskHandlerConfig;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.*;

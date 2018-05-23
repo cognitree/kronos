@@ -61,7 +61,9 @@ class TaskProvider {
     private void init() {
         logger.info("Initializing task provider from task store");
         final List<Task> tasks = taskStore.load(Arrays.asList(CREATED, WAITING, SUBMITTED, RUNNING));
-        tasks.forEach(this::addTask);
+        if (tasks != null && !tasks.isEmpty()) {
+            tasks.forEach(this::addTask);
+        }
     }
 
     /**
@@ -139,7 +141,9 @@ class TaskProvider {
         // retrieve all dependent task in store only if dependency mode is not first and tasks in memory is empty
         if (candidateDependentTasks.isEmpty() || dependencyInfo.getMode() != TaskDependencyInfo.Mode.first) {
             final List<Task> tasksInStore = taskStore.load(dependentTaskName, taskGroup, createdAt, sentinelTimeStamp);
-            candidateDependentTasks.addAll(tasksInStore);
+            if (tasksInStore != null && !tasksInStore.isEmpty()) {
+                candidateDependentTasks.addAll(tasksInStore);
+            }
         }
 
         if (candidateDependentTasks.isEmpty()) return Collections.emptySet();

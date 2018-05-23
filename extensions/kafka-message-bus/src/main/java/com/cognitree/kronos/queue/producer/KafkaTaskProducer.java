@@ -43,7 +43,11 @@ public class KafkaTaskProducer implements Producer<Task> {
         logger.info("Received request to add task {} to queue", task);
         ProducerRecord<String, String> record =
                 new ProducerRecord<>(task.getType(), task.getGroup(), OBJECT_MAPPER.writeValueAsString(task));
-        kafkaProducer.send(record);
+        kafkaProducer.send(record, (metadata, exception) -> {
+            if (exception != null) {
+                logger.error("Error sending task {} over kafka", task, exception);
+            }
+        });
     }
 
     @Override
