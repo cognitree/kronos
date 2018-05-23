@@ -39,7 +39,6 @@ import static com.cognitree.kronos.model.FailureMessage.HANDLER_FAILURE;
 import static com.cognitree.kronos.model.FailureMessage.MISSING_HANDLER;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.RUNNING;
-import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
 /**

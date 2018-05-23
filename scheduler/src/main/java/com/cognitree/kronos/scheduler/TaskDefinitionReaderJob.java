@@ -136,7 +136,7 @@ public final class TaskDefinitionReaderJob implements org.quartz.Job {
                     .build();
             jobExecutionContext.getScheduler().scheduleJob(jobDetail, simpleTrigger);
         } catch (Exception ex) {
-            logger.error("Error scheduling job : {}", taskDefinition, ex);
+            logger.error("Error scheduling task definition {}", taskDefinition, ex);
         }
     }
 
