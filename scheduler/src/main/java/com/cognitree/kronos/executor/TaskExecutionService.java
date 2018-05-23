@@ -38,6 +38,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import static com.cognitree.kronos.model.FailureMessage.HANDLER_FAILURE;
 import static com.cognitree.kronos.model.FailureMessage.MISSING_HANDLER;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
+import static com.cognitree.kronos.model.Task.Status.RUNNING;
 import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
@@ -72,6 +73,7 @@ public class TaskExecutionService implements Service, TaskStatusListener, Subscr
 
     @Override
     public void init() {
+        logger.info("Initializing task execution service");
         initTaskHandlersAndExecutors();
     }
 
@@ -115,8 +117,8 @@ public class TaskExecutionService implements Service, TaskStatusListener, Subscr
      * @param tasks
      */
     private void execute(List<Task> tasks) {
-        logger.trace("Received tasks {} for execution from task queue", tasks);
         for (Task task : tasks) {
+            logger.trace("Received task {} for execution from task queue", task);
             final TaskHandler handler = getTaskHandler(task.getType());
             if (handler == null) {
                 logger.error("No handler found to execute task {} of type {}, skipping task {} and marking it as {}",
@@ -124,10 +126,10 @@ public class TaskExecutionService implements Service, TaskStatusListener, Subscr
                 updateStatus(task.getId(), task.getGroup(), FAILED, MISSING_HANDLER);
                 continue;
             }
-            updateStatus(task.getId(), task.getGroup(), SUBMITTED);
             final ThreadPoolExecutor executor = getTaskExecutor(task);
             executor.submit(() -> {
                 try {
+                    updateStatus(task.getId(), task.getGroup(), RUNNING);
                     handler.handle(task);
                 } catch (Exception e) {
                     logger.error("Error executing task {}", task, e);
@@ -172,15 +174,20 @@ public class TaskExecutionService implements Service, TaskStatusListener, Subscr
 
     @Override
     public void stop() {
+        logger.info("Stopping task execution service");
         taskTypeToExecutorMap.values().forEach(ThreadPoolExecutor::shutdown);
         try {
             for (ThreadPoolExecutor threadPoolExecutor : taskTypeToExecutorMap.values()) {
                 threadPoolExecutor.awaitTermination(1, MINUTES);
             }
         } catch (InterruptedException e) {
-            logger.error("Error stopping taskExecutorService", e);
+            logger.error("Error stopping handler thread pool", e);
         }
-        taskConsumer.close();
-        statusProducer.close();
+        if (taskConsumer != null) {
+            taskConsumer.close();
+        }
+        if (statusProducer != null) {
+            statusProducer.close();
+        }
     }
 }

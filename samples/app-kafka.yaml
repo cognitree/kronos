@@ -1,18 +1,24 @@
 # configure task definition readers
 readerConfig:
+  # name of the reader
   filereader:
-    readerClass: com.cognitree.examples.tasks.scheduler.readers.FileTaskDefinitionReader
+    # reader implementation class name to load tasks
+    readerClass: com.cognitree.kronos.scheduler.readers.FileTaskDefinitionReader
     config:
-      # absolute path of the file to load task definition from
-      source: /Users/ankitnanglia/workspace/cognitree/scheduler/examples/src/main/resources/task-definitions.yaml
+      # file to look in classpath to load task definitions
+      source: task-definitions.yaml
     # interval in cron to look for changes in the task definition file
     schedule: 0 0/1 * 1/1 * ? *
 
 # configure task handlers
 handlerConfig:
+  # type of task to be handled by handler
   shellCommand:
+    # handler implementation used to handle task of type shellCommand
     handlerClass: com.cognitree.kronos.executor.handlers.ShellCommandHandler
+    # max execution time per task
     maxExecutionTime: 10m
+    # max parallel tasks handler is allowed to execute at any point of time
     maxParallelTasks: 4
 
 # configure message bus
@@ -31,18 +37,18 @@ taskConsumerConfig:
       group.id: schedulerframework
       key.deserializer : org.apache.kafka.common.serialization.StringDeserializer
       value.deserializer : org.apache.kafka.common.serialization.StringDeserializer
-    taskTopics: typeA, typeB, shell
+    taskTopics: shellCommand
     pollTimeout: 5s
     pollInterval: 5s
 taskStatusProducerConfig:
-  producerClass: com.cognitree.kronos.queue.producer.KafkaStatusProducer
+  producerClass: com.cognitree.kronos.queue.producer.KafkaTaskStatusProducer
   config:
     producerConfig:
       bootstrap.servers : localhost:9092
       key.serializer : org.apache.kafka.common.serialization.StringSerializer
       value.serializer : org.apache.kafka.common.serialization.StringSerializer
 taskStatusConsumerConfig:
-  consumerClass: com.cognitree.kronos.queue.consumer.KafkaStatusConsumer
+  consumerClass: com.cognitree.kronos.queue.consumer.KafkaTaskStatusConsumer
   config:
     consumerConfig:
       bootstrap.servers : localhost:9092
@@ -51,6 +57,14 @@ taskStatusConsumerConfig:
       value.deserializer : org.apache.kafka.common.serialization.StringDeserializer
     pollTimeout: 5s
     pollInterval: 5s
+
+# configure task store
+taskStoreConfig:
+  taskStoreClass: com.cognitree.kronos.store.SQLiteTaskStore
+  config:
+    connectionURL: jdbc:sqlite:/Users/ankitnanglia/sample.db
+    username:
+    password:
 
 # time to wait before removing executed tasks from memory
 taskPurgeInterval: 1d

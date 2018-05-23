@@ -37,7 +37,7 @@ public class SQLiteTaskStore implements TaskStore {
 
     @Override
     public void init(ObjectNode storeConfig) throws Exception {
-        logger.info("connecting to sqlite database at {}", storeConfig);
+        logger.info("Initializing SQLite task store");
         initDataSource(storeConfig);
         initTaskStore();
     }
@@ -59,7 +59,6 @@ public class SQLiteTaskStore implements TaskStore {
     }
 
     private void initTaskStore() throws SQLException {
-        logger.info("initializing task store");
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement()) {
             statement.setQueryTimeout(30);
@@ -85,7 +84,7 @@ public class SQLiteTaskStore implements TaskStore {
 
     @Override
     public void store(Task task) {
-        logger.debug("received request to store task {}", task);
+        logger.debug("Received request to store task {}", task);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(INSERT_TASK)) {
             preparedStatement.setString(1, task.getId());
@@ -103,13 +102,13 @@ public class SQLiteTaskStore implements TaskStore {
             preparedStatement.setLong(13, task.getCompletedAt());
             preparedStatement.execute();
         } catch (Exception e) {
-            logger.error("error storing task {} into database", task, e);
+            logger.error("Error storing task {} into database", task, e);
         }
     }
 
     @Override
     public void update(Task task) {
-        logger.debug("received request to update task {}", task);
+        logger.debug("Received request to update task {}", task);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_TASK)) {
             preparedStatement.setString(1, task.getStatus().name());
@@ -127,7 +126,7 @@ public class SQLiteTaskStore implements TaskStore {
 
     @Override
     public Task load(String taskId, String taskGroup) {
-        logger.debug("received request to get task with id {}, group {}", taskId, taskGroup);
+        logger.debug("Received request to get task with id {}, group {}", taskId, taskGroup);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_TASK)) {
             preparedStatement.setString(1, taskId);
@@ -144,7 +143,7 @@ public class SQLiteTaskStore implements TaskStore {
 
     @Override
     public List<Task> load(List<Task.Status> statuses) {
-        logger.debug("received request to get all tasks with status in {}", statuses);
+        logger.debug("Received request to get all tasks with status in {}", statuses);
         String placeHolders = String.join(",", Collections.nCopies(statuses.size(), "?"));
         final String sqlQuery = LOAD_TASK_BY_STATUS.replace("$statuses", placeHolders);
         try (Connection connection = dataSource.getConnection();
@@ -159,14 +158,14 @@ public class SQLiteTaskStore implements TaskStore {
             }
             return tasks;
         } catch (Exception e) {
-            logger.error("error fetching task from database", e);
+            logger.error("Rrror fetching task from database", e);
             return Collections.emptyList();
         }
     }
 
     @Override
     public List<Task> load(String taskName, String taskGroup, long createdBefore, long createdAfter) {
-        logger.debug("received request to get all tasks with name {}, group {}, created before {}, " +
+        logger.debug("Received request to get all tasks with name {}, group {}, created before {}, " +
                 "created after {}", taskName, taskGroup, createdBefore, createdAfter);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_TASK_BY_NAME_GROUP)) {
@@ -181,7 +180,7 @@ public class SQLiteTaskStore implements TaskStore {
             }
             return tasks;
         } catch (Exception e) {
-            logger.error("error fetching task from database", e);
+            logger.error("Error fetching task from database", e);
             return Collections.emptyList();
         }
     }
@@ -209,7 +208,7 @@ public class SQLiteTaskStore implements TaskStore {
         try {
             dataSource.close();
         } catch (SQLException e) {
-            logger.error("error closing data source", e);
+            logger.error("Error closing data source", e);
         }
     }
 }

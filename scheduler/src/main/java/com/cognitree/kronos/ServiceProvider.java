@@ -18,8 +18,8 @@
 package com.cognitree.kronos;
 
 import com.cognitree.kronos.executor.TaskExecutionService;
-import com.cognitree.kronos.scheduler.TaskSchedulerService;
 import com.cognitree.kronos.scheduler.TaskReaderService;
+import com.cognitree.kronos.scheduler.TaskSchedulerService;
 
 import java.util.HashMap;
 import java.util.Map;

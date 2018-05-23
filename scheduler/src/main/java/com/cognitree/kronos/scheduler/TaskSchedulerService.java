@@ -59,7 +59,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 public final class TaskSchedulerService implements Service, Subscriber<TaskStatus>, TaskStatusHandler {
     private static final Logger logger = LoggerFactory.getLogger(TaskSchedulerService.class);
 
-    private static final String MAX_EXECUTION_TIME = "1d";
+    private static final String DEFAULT_MAX_EXECUTION_TIME = "1d";
 
     private final Producer<Task> taskProducer;
     private final Consumer<TaskStatus> statusConsumer;
@@ -247,15 +247,22 @@ public final class TaskSchedulerService implements Service, Subscriber<TaskStatu
 
     @Override
     public void stop() {
+        logger.info("Stopping task scheduler service");
         scheduledExecutorService.shutdown();
         try {
             scheduledExecutorService.awaitTermination(1, MINUTES);
         } catch (InterruptedException e) {
-            logger.error("Error stopping taskExecutorService", e);
+            logger.error("Error stopping scheduled thread pool", e);
         }
-        taskProducer.close();
-        statusConsumer.close();
-        taskStore.stop();
+        if (taskProducer != null) {
+            taskProducer.close();
+        }
+        if (statusConsumer != null) {
+            statusConsumer.close();
+        }
+        if (taskStore != null) {
+            taskStore.stop();
+        }
     }
 
     private TaskHandlerConfig getTaskHandlerConfig(String taskType) {
@@ -273,7 +280,7 @@ public final class TaskSchedulerService implements Service, Subscriber<TaskStatu
             return resolveDuration(taskHandlerConfig.getMaxExecutionTime());
         }
 
-        return resolveDuration(MAX_EXECUTION_TIME);
+        return resolveDuration(DEFAULT_MAX_EXECUTION_TIME);
     }
 
     /**
