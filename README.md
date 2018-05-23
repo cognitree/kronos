@@ -1,5 +1,8 @@
 # Kronos
 
+[![Build Status](https://api.travis-ci.com/cognitree/kronos.svg)](#)
+
+
 Kronos is a java based replacement for cron to build, run and monitor complex data pipelines with flexible deployment options. Please view the wiki for usage, information, getting started etc https://github.com/cognitree/kronos/wiki
 
 # Contribute
