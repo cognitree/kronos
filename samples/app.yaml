@@ -39,7 +39,7 @@ taskStatusConsumerConfig:
 taskStoreConfig:
   taskStoreClass: com.cognitree.kronos.store.SQLiteTaskStore
   config:
-    connectionURL: jdbc:sqlite:/Users/ankitnanglia/sample.db
+    connectionURL: jdbc:sqlite:kronos.db
     username:
     password:
 
