@@ -201,8 +201,8 @@ public final class TaskSchedulerService implements Service, Subscriber<TaskStatu
     @Override
     public void consume(List<TaskStatus> tasksStatus) {
         for (TaskStatus taskStatus : tasksStatus) {
-            taskProvider.updateTask(taskStatus.getTaskId(), taskStatus.getTaskGroup(), taskStatus.getStatus(),
-                    taskStatus.getStatusMessage(), taskStatus.getRuntimeProperties());
+            taskProvider.updateTask(taskStatus.getTaskId(), taskStatus.getTaskGroup(),
+                    taskStatus.getStatus(), taskStatus.getStatusMessage());
         }
     }
 

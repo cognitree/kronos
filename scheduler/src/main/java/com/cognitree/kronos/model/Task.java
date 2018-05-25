@@ -17,10 +17,8 @@
 
 package com.cognitree.kronos.model;
 
-import com.cognitree.kronos.executor.TaskStatusListener;
 import com.cognitree.kronos.executor.handlers.TaskHandler;
 import com.cognitree.kronos.executor.handlers.TaskHandlerConfig;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.*;
 
@@ -67,11 +65,7 @@ public class Task {
      * It also includes all the additional task properties {@link TaskDefinition#additionalProperties}
      */
     private Map<String, Object> properties = new HashMap<>();
-    /**
-     * runtime properties/ metadata of the task set while notifying the task status
-     * {@link TaskStatusListener#updateStatus(String, String, Status, String, ObjectNode)}
-     */
-    private ObjectNode runtimeProperties;
+
     private Status status = CREATED;
     /**
      * additional details about task status
@@ -154,14 +148,6 @@ public class Task {
         this.properties = properties;
     }
 
-    public ObjectNode getRuntimeProperties() {
-        return runtimeProperties;
-    }
-
-    public void setRuntimeProperties(ObjectNode runtimeProperties) {
-        this.runtimeProperties = runtimeProperties;
-    }
-
     public Status getStatus() {
         return status;
     }
@@ -207,16 +193,12 @@ public class Task {
         if (this == o) return true;
         if (!(o instanceof Task)) return false;
         Task task = (Task) o;
-        return Objects.equals(id, task.id) &&
-                Objects.equals(name, task.name) &&
-                Objects.equals(group, task.group) &&
-                Objects.equals(type, task.type) &&
-                Objects.equals(dependsOn, task.dependsOn);
+        return Objects.equals(id, task.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, group, type, dependsOn);
+        return Objects.hash(id);
     }
 
     @Override
@@ -230,7 +212,6 @@ public class Task {
                 ", maxExecutionTime='" + maxExecutionTime + '\'' +
                 ", dependsOn=" + dependsOn +
                 ", properties=" + properties +
-                ", runtimeProperties=" + runtimeProperties +
                 ", status=" + status +
                 ", statusMessage='" + statusMessage + '\'' +
                 ", createdAt=" + createdAt +

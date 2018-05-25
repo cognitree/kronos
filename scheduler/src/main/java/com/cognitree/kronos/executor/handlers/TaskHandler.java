@@ -17,46 +17,39 @@
 
 package com.cognitree.kronos.executor.handlers;
 
-import com.cognitree.kronos.executor.TaskStatusListener;
 import com.cognitree.kronos.model.Task;
+import com.cognitree.kronos.model.TaskDefinition;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
- * A handler interface to be implemented for each task type ({@link com.cognitree.kronos.model.TaskDefinition#type}).
+ * A handler defines how a task of given type is handled/ executed and is to be implemented for each task type
+ * ({@link TaskDefinition#type}).
  * <p>
- * A handler defines how a task of given type is handled/ executed and is responsible for notifying the task status back using
- * {@link TaskStatusListener#updateStatus(String, String, Task.Status)} OR
- * {@link TaskStatusListener#updateStatus(String, String, Task.Status, String)} OR
- * {@link TaskStatusListener#updateStatus(String, String, Task.Status, String, ObjectNode)} method.
- * </p>
  * Configuring a TaskHandler
  * <p>
  * A handler configuration is defined by {@link TaskHandlerConfig}.
- * A handler is initialized using {@link TaskHandler#init(ObjectNode, TaskStatusListener)} method
- * The {@link ObjectNode} argument is same as {@link TaskHandlerConfig#config} and is used by the handler to instantiate itself.
- * So any property required by the handler to instantiate itself should be part of {@link TaskHandlerConfig#config}
- * <p>
- * The (@link {@link TaskStatusListener} is the listener interested in the task status, any status update on task
- * should be notified back to the framework via {@link TaskStatusListener}
+ * A handler is initialized using {@link TaskHandler#init(ObjectNode)} method. The {@link ObjectNode}
+ * argument is same as {@link TaskHandlerConfig#config} and is used by the handler to instantiate itself. So any property
+ * required by the handler to instantiate itself should be part of {@link TaskHandlerConfig#config}.
  * </p>
  */
 public interface TaskHandler {
 
     /**
-     * for each handler during initialization phase a call is made to initialize handler using {@link TaskHandlerConfig#config}
-     * and a task status listener which should be used to notify about the task status
+     * initialize the handler
+     * <p>
+     * invoked by framework during initialization phase made to initialize handler with {@link TaskHandlerConfig#config}.
      *
-     * @param handlerConfig  handler configuration used to initialize the handler
-     * @param statusListener a task status listener used to notify about the task status
+     * @param handlerConfig handler configuration used to initialize the handler.
      */
-    void init(ObjectNode handlerConfig, TaskStatusListener statusListener);
+    void init(ObjectNode handlerConfig);
 
     /**
-     * defines how a task is handled/ executed and is called whenever there is a task ready for execution
-     * </p>
+     * defines how to handle/ execute the task. If the execution succeeds without any exception then the task is
+     * marked successful otherwise failed with status message same as exception message.
      *
-     * @param task task to handle
-     * @throws Exception
+     * @param task task to handle.
+     * @throws HandlerException thrown if handler fails to execute the task successfully.
      */
-    void handle(Task task) throws Exception;
+    void handle(Task task) throws HandlerException;
 }

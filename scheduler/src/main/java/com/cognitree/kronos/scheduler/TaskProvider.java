@@ -236,24 +236,20 @@ class TaskProvider {
     }
 
     synchronized void updateTask(String taskId, String taskGroup, Status status,
-                                 String statusMessage, ObjectNode runtimeProperties) {
+                                 String statusMessage) {
         logger.info("Received request to update status of task with id: {}, group {} as {} " +
-                        "with status message {}, runtime properties {}",
-                taskId, taskGroup, status, statusMessage, runtimeProperties);
+                        "with status message {}",
+                taskId, taskGroup, status, statusMessage);
 
         final Task task = getTask(taskId, taskGroup);
         if (task == null) {
             logger.error("No task found with id {}, group {}", taskId, taskGroup);
             return;
         }
-        updateTask(task, status, statusMessage, runtimeProperties);
+        updateTask(task, status, statusMessage);
     }
 
     synchronized void updateTask(Task task, Status status, String statusMessage) {
-        updateTask(task, status, statusMessage, null);
-    }
-
-    private synchronized void updateTask(Task task, Status status, String statusMessage, ObjectNode runtimeProperties) {
         if (!isValidTransition(task, status)) {
             logger.error("Invalid state transition from status {}, to {}", task.getStatus(), status);
             return;
@@ -261,7 +257,6 @@ class TaskProvider {
 
         task.setStatus(status);
         task.setStatusMessage(statusMessage);
-        task.setRuntimeProperties(runtimeProperties);
         switch (status) {
             case SUBMITTED:
                 task.setSubmittedAt(System.currentTimeMillis());

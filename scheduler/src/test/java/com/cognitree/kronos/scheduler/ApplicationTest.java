@@ -169,27 +169,27 @@ public class ApplicationTest {
         ServiceProvider.getTaskSchedulerService().deleteStaleTasks();
         Assert.assertEquals(4, taskProvider.size());
 
-        taskProvider.updateTask(taskOne.getId(), taskOne.getGroup(), SUCCESSFUL, null, null);
+        taskProvider.updateTask(taskOne.getId(), taskOne.getGroup(), SUCCESSFUL, null);
         ServiceProvider.getTaskSchedulerService().deleteStaleTasks();
         Assert.assertEquals(4, taskProvider.size());
 
-        taskProvider.updateTask(taskTwo.getId(), taskTwo.getGroup(), SUCCESSFUL, null, null);
+        taskProvider.updateTask(taskTwo.getId(), taskTwo.getGroup(), SUCCESSFUL, null);
         ServiceProvider.getTaskSchedulerService().deleteStaleTasks();
         Assert.assertEquals(4, taskProvider.size());
 
-        taskProvider.updateTask(taskThree.getId(), taskThree.getGroup(), SUBMITTED, null, null);
+        taskProvider.updateTask(taskThree.getId(), taskThree.getGroup(), SUBMITTED, null);
         ServiceProvider.getTaskSchedulerService().deleteStaleTasks();
         Assert.assertEquals(4, taskProvider.size());
 
-        taskProvider.updateTask(taskThree.getId(), taskThree.getGroup(), SUCCESSFUL, null, null);
+        taskProvider.updateTask(taskThree.getId(), taskThree.getGroup(), SUCCESSFUL, null);
         ServiceProvider.getTaskSchedulerService().deleteStaleTasks();
         Assert.assertEquals(4, taskProvider.size());
 
-        taskProvider.updateTask(taskFour.getId(), taskFour.getGroup(), SUBMITTED, null, null);
+        taskProvider.updateTask(taskFour.getId(), taskFour.getGroup(), SUBMITTED, null);
         ServiceProvider.getTaskSchedulerService().deleteStaleTasks();
         Assert.assertEquals(4, taskProvider.size());
 
-        taskProvider.updateTask(taskFour.getId(), taskFour.getGroup(), SUCCESSFUL, null, null);
+        taskProvider.updateTask(taskFour.getId(), taskFour.getGroup(), SUCCESSFUL, null);
         ServiceProvider.getTaskSchedulerService().deleteStaleTasks();
         Assert.assertEquals(0, taskProvider.size());
     }

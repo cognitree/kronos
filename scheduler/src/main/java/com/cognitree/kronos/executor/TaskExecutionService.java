@@ -18,6 +18,7 @@
 package com.cognitree.kronos.executor;
 
 import com.cognitree.kronos.Service;
+import com.cognitree.kronos.executor.handlers.HandlerException;
 import com.cognitree.kronos.executor.handlers.TaskHandler;
 import com.cognitree.kronos.executor.handlers.TaskHandlerConfig;
 import com.cognitree.kronos.model.Task;
@@ -25,7 +26,6 @@ import com.cognitree.kronos.model.TaskStatus;
 import com.cognitree.kronos.queue.Subscriber;
 import com.cognitree.kronos.queue.consumer.Consumer;
 import com.cognitree.kronos.queue.producer.Producer;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,10 +35,8 @@ import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import static com.cognitree.kronos.model.FailureMessage.HANDLER_FAILURE;
 import static com.cognitree.kronos.model.FailureMessage.MISSING_HANDLER;
-import static com.cognitree.kronos.model.Task.Status.FAILED;
-import static com.cognitree.kronos.model.Task.Status.RUNNING;
+import static com.cognitree.kronos.model.Task.Status.*;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
 /**
@@ -49,7 +47,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
  * task status queue
  * </p>
  */
-public class TaskExecutionService implements Service, TaskStatusListener, Subscriber<Task> {
+public class TaskExecutionService implements Service, Subscriber<Task> {
     private static final Logger logger = LoggerFactory.getLogger(TaskExecutionService.class);
 
     // max idle time in minute for an executor thread
@@ -61,7 +59,6 @@ public class TaskExecutionService implements Service, TaskStatusListener, Subscr
 
     private final Map<String, TaskHandler> taskTypeToHandlerMap = new HashMap<>();
     private final Map<String, ThreadPoolExecutor> taskTypeToExecutorMap = new HashMap<>();
-
 
     public TaskExecutionService(Consumer<Task> taskConsumer, Producer<TaskStatus> statusProducer,
                                 Map<String, TaskHandlerConfig> handlerConfig) {
@@ -82,7 +79,7 @@ public class TaskExecutionService implements Service, TaskStatusListener, Subscr
                 logger.info("Initializing task handler of type {} with config {}", taskType, taskHandlerConfig);
                 final TaskHandler taskHandler = (TaskHandler) Class.forName(taskHandlerConfig.getHandlerClass())
                         .newInstance();
-                taskHandler.init(taskHandlerConfig.getConfig(), this);
+                taskHandler.init(taskHandlerConfig.getConfig());
                 taskTypeToHandlerMap.put(taskType, taskHandler);
 
                 int maxParallelTasks = taskHandlerConfig.getMaxParallelTasks();
@@ -109,11 +106,9 @@ public class TaskExecutionService implements Service, TaskStatusListener, Subscr
     }
 
     /**
-     * executes the submitted list of tasks by calling appropriate {@link TaskHandler} for each task
-     * Also creates a timeout tasks which will be executed if a task status (one of SUCCESSFUL/ FAILED)
-     * is not received before max task execution time
+     * submits the list of tasks for execution to appropriate handler based on task type.
      *
-     * @param tasks
+     * @param tasks tasks to submit for execution
      */
     private void execute(List<Task> tasks) {
         for (Task task : tasks) {
@@ -130,33 +125,26 @@ public class TaskExecutionService implements Service, TaskStatusListener, Subscr
                 try {
                     updateStatus(task.getId(), task.getGroup(), RUNNING);
                     handler.handle(task);
-                } catch (Exception e) {
+                    updateStatus(task.getId(), task.getGroup(), SUCCESSFUL);
+                } catch (HandlerException e) {
                     logger.error("Error executing task {}", task, e);
-                    updateStatus(task.getId(), task.getGroup(), FAILED, HANDLER_FAILURE);
+                    updateStatus(task.getId(), task.getGroup(), FAILED, e.getMessage());
                 }
             });
         }
     }
 
-    @Override
-    public void updateStatus(String taskId, String taskGroup, Task.Status status) {
+    private void updateStatus(String taskId, String taskGroup, Task.Status status) {
         updateStatus(taskId, taskGroup, status, null);
     }
 
-    @Override
-    public void updateStatus(String taskId, String taskGroup, Task.Status status, String statusMessage) {
-        updateStatus(taskId, taskGroup, status, null, null);
-    }
-
-    @Override
-    public void updateStatus(String taskId, String taskGroup, Task.Status status, String statusMessage, ObjectNode properties) {
+    private void updateStatus(String taskId, String taskGroup, Task.Status status, String statusMessage) {
         try {
             TaskStatus taskStatus = new TaskStatus();
             taskStatus.setTaskId(taskId);
             taskStatus.setTaskGroup(taskGroup);
             taskStatus.setStatus(status);
             taskStatus.setStatusMessage(statusMessage);
-            taskStatus.setRuntimeProperties(properties);
             statusProducer.add(taskStatus);
         } catch (Exception e) {
             logger.error("Error adding task status {} to queue", status, e);

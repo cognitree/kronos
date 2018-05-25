@@ -20,13 +20,8 @@ public class SQLiteTaskStore implements TaskStore {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final String INSERT_REPLACE_TASK = "INSERT OR REPLACE INTO tasks VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
-    private static final String UPDATE_TASK = "UPDATE tasks SET " +
-            "status = ?," +
-            "status_message = ?," +
-            "runtime_properties = ?," +
-            "submitted_at = ?," +
-            "completed_at = ?" +
-            " WHERE id = ?";
+    private static final String UPDATE_TASK = "UPDATE tasks SET status = ?, status_message = ?, submitted_at = ?, " +
+            "completed_at = ? WHERE id = ?";
     private static final String LOAD_TASK = "SELECT * FROM tasks WHERE id = ? AND task_group = ?";
     private static final String LOAD_TASK_BY_STATUS = "SELECT * FROM tasks WHERE status IN ($statuses)";
     private static final String LOAD_TASK_BY_NAME_GROUP = "SELECT * FROM tasks WHERE name = ? AND task_group = ? AND " +
@@ -39,7 +34,6 @@ public class SQLiteTaskStore implements TaskStore {
             "timeout_policy string," +
             "depends_on string," +
             "properties string," +
-            "runtime_properties string," +
             "status string," +
             "status_message string," +
             "created_at integer," +
@@ -105,12 +99,11 @@ public class SQLiteTaskStore implements TaskStore {
             preparedStatement.setString(5, task.getTimeoutPolicy());
             preparedStatement.setString(6, MAPPER.writeValueAsString(task.getDependsOn()));
             preparedStatement.setString(7, MAPPER.writeValueAsString(task.getProperties()));
-            preparedStatement.setString(8, MAPPER.writeValueAsString(task.getRuntimeProperties()));
-            preparedStatement.setString(9, task.getStatus().name());
-            preparedStatement.setString(10, task.getStatusMessage());
-            preparedStatement.setLong(11, task.getCreatedAt());
-            preparedStatement.setLong(12, task.getSubmittedAt());
-            preparedStatement.setLong(13, task.getCompletedAt());
+            preparedStatement.setString(8, task.getStatus().name());
+            preparedStatement.setString(9, task.getStatusMessage());
+            preparedStatement.setLong(10, task.getCreatedAt());
+            preparedStatement.setLong(11, task.getSubmittedAt());
+            preparedStatement.setLong(12, task.getCompletedAt());
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error storing task {} into database", task, e);
@@ -124,10 +117,9 @@ public class SQLiteTaskStore implements TaskStore {
              PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_TASK)) {
             preparedStatement.setString(1, task.getStatus().name());
             preparedStatement.setString(2, task.getStatusMessage());
-            preparedStatement.setString(3, MAPPER.writeValueAsString(task.getRuntimeProperties()));
-            preparedStatement.setLong(4, task.getSubmittedAt());
-            preparedStatement.setLong(5, task.getCompletedAt());
-            preparedStatement.setString(6, task.getId());
+            preparedStatement.setLong(3, task.getSubmittedAt());
+            preparedStatement.setLong(4, task.getCompletedAt());
+            preparedStatement.setString(5, task.getId());
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("error updating task {} into database", task, e);
@@ -204,12 +196,11 @@ public class SQLiteTaskStore implements TaskStore {
         task.setTimeoutPolicy(resultSet.getString(5));
         task.setDependsOn(MAPPER.readValue(resultSet.getString(6), DEPENDENCY_INFO_LIST_TYPE_REF));
         task.setProperties(MAPPER.readValue(resultSet.getString(7), PROPERTIES_TYPE_REF));
-        task.setRuntimeProperties(MAPPER.readValue(resultSet.getString(8), ObjectNode.class));
-        task.setStatus(Task.Status.valueOf(resultSet.getString(9)));
-        task.setStatusMessage(resultSet.getString(10));
-        task.setCreatedAt(resultSet.getLong(11));
-        task.setSubmittedAt(resultSet.getLong(12));
-        task.setCompletedAt(resultSet.getLong(13));
+        task.setStatus(Task.Status.valueOf(resultSet.getString(8)));
+        task.setStatusMessage(resultSet.getString(9));
+        task.setCreatedAt(resultSet.getLong(10));
+        task.setSubmittedAt(resultSet.getLong(11));
+        task.setCompletedAt(resultSet.getLong(12));
         return task;
     }
 

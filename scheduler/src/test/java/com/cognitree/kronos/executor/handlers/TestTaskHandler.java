@@ -17,7 +17,6 @@
 
 package com.cognitree.kronos.executor.handlers;
 
-import com.cognitree.kronos.executor.TaskStatusListener;
 import com.cognitree.kronos.model.Task;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -29,7 +28,6 @@ import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
 public class TestTaskHandler implements TaskHandler {
 
     private static final Map<String, Integer> receivedTasks = new HashMap<>();
-    private TaskStatusListener statusListener;
 
     // used for validating test case
     public static boolean isExecuted(String taskId) {
@@ -37,12 +35,11 @@ public class TestTaskHandler implements TaskHandler {
     }
 
     @Override
-    public void init(ObjectNode handlerConfig, TaskStatusListener statusListener) {
-        this.statusListener = statusListener;
+    public void init(ObjectNode handlerConfig) {
     }
 
     @Override
-    public void handle(Task task) {
+    public void handle(Task task) throws HandlerException {
         int executionCount;
         if (receivedTasks.containsKey(task.getId())) {
             executionCount = receivedTasks.get(task.getId()) + 1;
@@ -50,7 +47,9 @@ public class TestTaskHandler implements TaskHandler {
             executionCount = 1;
         }
         receivedTasks.put(task.getId(), executionCount);
-        statusListener.updateStatus(task.getId(), task.getGroup(),
-                (Task.Status) task.getProperties().getOrDefault("status", SUCCESSFUL));
+        final Task.Status status = (Task.Status) task.getProperties().getOrDefault("status", SUCCESSFUL);
+        if (!status.equals(SUCCESSFUL)) {
+            throw new HandlerException("error handling task");
+        }
     }
 }

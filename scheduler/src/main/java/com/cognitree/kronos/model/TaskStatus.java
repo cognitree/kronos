@@ -32,7 +32,6 @@ public class TaskStatus {
     private String taskGroup;
     private Status status;
     private String statusMessage;
-    private ObjectNode runtimeProperties;
 
     public String getTaskId() {
         return taskId;
@@ -66,13 +65,6 @@ public class TaskStatus {
         this.statusMessage = statusMessage;
     }
 
-    public ObjectNode getRuntimeProperties() {
-        return runtimeProperties;
-    }
-
-    public void setRuntimeProperties(ObjectNode runtimeProperties) {
-        this.runtimeProperties = runtimeProperties;
-    }
 
     @Override
     public boolean equals(Object o) {
@@ -82,14 +74,13 @@ public class TaskStatus {
         return Objects.equals(taskId, that.taskId) &&
                 Objects.equals(taskGroup, that.taskGroup) &&
                 status == that.status &&
-                Objects.equals(statusMessage, that.statusMessage) &&
-                Objects.equals(runtimeProperties, that.runtimeProperties);
+                Objects.equals(statusMessage, that.statusMessage);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(taskId, taskGroup, status, statusMessage, runtimeProperties);
+        return Objects.hash(taskId, taskGroup, status, statusMessage);
     }
 
     @Override
@@ -99,7 +90,6 @@ public class TaskStatus {
                 ", taskGroup='" + taskGroup + '\'' +
                 ", status=" + status +
                 ", statusMessage='" + statusMessage + '\'' +
-                ", runtimeProperties=" + runtimeProperties +
                 '}';
     }
 }

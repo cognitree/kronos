@@ -17,7 +17,6 @@
 
 package com.cognitree.kronos.executor.handlers;
 
-import com.cognitree.kronos.executor.TaskStatusListener;
 import com.cognitree.kronos.model.TaskDefinition;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -35,8 +34,7 @@ public class TaskHandlerConfig {
 
     /**
      * Configuration to be passed to handler to instantiate itself.
-     * This will be passed as an arg to the {@link TaskHandler#init(ObjectNode, TaskStatusListener)}
-     * method at the time of instantiation along with {@link TaskStatusListener}
+     * This is passed as an arg to the {@link TaskHandler#init(ObjectNode)} method at the time of instantiation
      */
     private ObjectNode config;
 
@@ -51,8 +49,7 @@ public class TaskHandlerConfig {
     private String maxExecutionTime;
 
     /**
-     * policy to be applied on task in case of timeout. If no policy is configured, then a default policy
-     * ({@link FailOnTimeoutPolicy}) will be applied on the task.
+     * policy to be applied on task in case of timeout.
      */
     private String timeoutPolicy;
 

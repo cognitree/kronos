@@ -17,7 +17,6 @@
 
 package com.cognitree.kronos.executor.handlers;
 
-import com.cognitree.kronos.executor.TaskStatusListener;
 import com.cognitree.kronos.model.Task;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
@@ -27,9 +26,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
-
-import static com.cognitree.kronos.model.Task.Status.FAILED;
-import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
 
 /**
  * Responsible for running shell commands with given arguments
@@ -42,15 +38,12 @@ public class ShellCommandHandler implements TaskHandler {
     private static final String PROPERTY_WORKING_DIR = "workingDir";
     private static final String PROPERTY_LOG_DIR = "logDir";
 
-    private TaskStatusListener statusListener;
-
     @Override
-    public void init(ObjectNode handlerConfig, TaskStatusListener statusListener) {
-        this.statusListener = statusListener;
+    public void init(ObjectNode handlerConfig) {
     }
 
     @Override
-    public void handle(Task task) {
+    public void handle(Task task) throws HandlerException {
         logger.info("received request to handle task {}", task);
 
         final Map<String, Object> taskProperties = task.getProperties();
@@ -67,8 +60,15 @@ public class ShellCommandHandler implements TaskHandler {
             if (taskProperties.containsKey(PROPERTY_WORKING_DIR)) {
                 processBuilder.directory(new File(getProperty(taskProperties, PROPERTY_WORKING_DIR)));
             }
-            String logDir = getProperty(taskProperties, PROPERTY_LOG_DIR,
+            String logDirPath = getProperty(taskProperties, PROPERTY_LOG_DIR,
                     System.getProperty("java.io.tmpdir"));
+            File logDir = new File(logDirPath);
+            // create log directory is does not exist
+            if (!logDir.exists()) {
+                if (!logDir.mkdirs()) {
+                    throw new HandlerException("unable to create directory to store logs");
+                }
+            }
 
             processBuilder.redirectError(new File(logDir, task.getName() + "_" + task.getId() + "_stderr.log"));
             processBuilder.redirectOutput(new File(logDir, task.getName() + "_" + task.getId() + "_stdout.log"));
@@ -76,18 +76,13 @@ public class ShellCommandHandler implements TaskHandler {
                 Process process = processBuilder.start();
                 int exitValue = process.waitFor();
                 logger.info("Process exited with code {} for command {}", exitValue, cmdWithArgs);
-                if (exitValue == 0) {
-                    statusListener.updateStatus(task.getId(), task.getGroup(), SUCCESSFUL);
-                } else {
-                    statusListener.updateStatus(task.getId(), task.getGroup(), FAILED);
+                if (exitValue != 0) {
+                    throw new HandlerException("process exited with code " + exitValue);
                 }
             } catch (Exception e) {
-                logger.error("Error while executing command {}", cmdWithArgs, e);
-                statusListener.updateStatus(task.getId(), task.getGroup(), FAILED);
+                logger.error("Error executing command {}", cmdWithArgs, e);
+                throw new HandlerException(e.getMessage(), e.getCause());
             }
-        } else {
-            logger.error("Missing command to execute for task {}", task);
-            statusListener.updateStatus(task.getId(), task.getGroup(), SUCCESSFUL);
         }
     }
 
