@@ -113,14 +113,14 @@ public class TaskExecutionService implements Service, Subscriber<Task> {
     private void execute(List<Task> tasks) {
         for (Task task : tasks) {
             logger.trace("Received task {} for execution from task queue", task);
-            final TaskHandler handler = getTaskHandler(task.getType());
+            final TaskHandler handler = taskTypeToHandlerMap.get(task.getType());
             if (handler == null) {
                 logger.error("No handler found to execute task {} of type {}, skipping task {} and marking it as {}",
                         task, task.getType(), FAILED);
                 updateStatus(task.getId(), task.getGroup(), FAILED, MISSING_HANDLER);
                 continue;
             }
-            final ThreadPoolExecutor executor = getTaskExecutor(task);
+            final ThreadPoolExecutor executor = taskTypeToExecutorMap.get(task.getType());
             executor.submit(() -> {
                 try {
                     updateStatus(task.getId(), task.getGroup(), RUNNING);
@@ -149,14 +149,6 @@ public class TaskExecutionService implements Service, Subscriber<Task> {
         } catch (Exception e) {
             logger.error("Error adding task status {} to queue", status, e);
         }
-    }
-
-    private TaskHandler getTaskHandler(String taskType) {
-        return taskTypeToHandlerMap.getOrDefault(taskType, taskTypeToHandlerMap.get("default"));
-    }
-
-    private ThreadPoolExecutor getTaskExecutor(Task task) {
-        return taskTypeToExecutorMap.getOrDefault(task.getType(), taskTypeToExecutorMap.get("default"));
     }
 
     @Override

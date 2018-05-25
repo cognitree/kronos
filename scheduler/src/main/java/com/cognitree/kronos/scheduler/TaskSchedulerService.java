@@ -183,7 +183,10 @@ public final class TaskSchedulerService implements Service, Subscriber<TaskStatu
             return timeoutPolicyMap.get(timeoutPolicyId);
         }
 
-        final TaskHandlerConfig taskHandlerConfig = getTaskHandlerConfig(task.getType());
+        final TaskHandlerConfig taskHandlerConfig = taskTypeToHandlerConfig.get(task.getType());
+        if (taskHandlerConfig == null) {
+            return null;
+        }
         return timeoutPolicyMap.get(taskHandlerConfig.getTimeoutPolicy());
     }
 
@@ -265,18 +268,13 @@ public final class TaskSchedulerService implements Service, Subscriber<TaskStatu
         }
     }
 
-    private TaskHandlerConfig getTaskHandlerConfig(String taskType) {
-        return taskTypeToHandlerConfig.getOrDefault(taskType,
-                taskTypeToHandlerConfig.get("default"));
-    }
-
     private long getMaxExecutionTime(Task task) {
         if (task.getMaxExecutionTime() != null) {
             return resolveDuration(task.getMaxExecutionTime());
         }
 
-        final TaskHandlerConfig taskHandlerConfig = getTaskHandlerConfig(task.getType());
-        if (taskHandlerConfig.getMaxExecutionTime() != null) {
+        final TaskHandlerConfig taskHandlerConfig = taskTypeToHandlerConfig.get(task.getType());
+        if (taskHandlerConfig != null && taskHandlerConfig.getMaxExecutionTime() != null) {
             return resolveDuration(taskHandlerConfig.getMaxExecutionTime());
         }
 
