@@ -56,7 +56,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
  * from the task status queue
  * </p>
  */
-public final class TaskSchedulerService implements Service, Subscriber<TaskStatus>, TaskStatusHandler {
+public final class TaskSchedulerService implements Service, Subscriber<TaskStatus>, TaskStatusChangeListener {
     private static final Logger logger = LoggerFactory.getLogger(TaskSchedulerService.class);
 
     private static final String DEFAULT_MAX_EXECUTION_TIME = "1d";
@@ -121,7 +121,8 @@ public final class TaskSchedulerService implements Service, Subscriber<TaskStatu
                 .getConstructor()
                 .newInstance();
         taskStore.init(taskStoreConfig.getConfig());
-        this.taskProvider = new TaskProvider(taskStore, this);
+        this.taskProvider = new TaskProvider(taskStore);
+        this.taskProvider.registerListener(this);
     }
 
     private void initTimeoutPolicies() {
@@ -210,7 +211,7 @@ public final class TaskSchedulerService implements Service, Subscriber<TaskStatu
     }
 
     @Override
-    public void onStatusChange(Task task) {
+    public void statusChanged(Task task) {
         switch (task.getStatus()) {
             case WAITING:
                 scheduleReadyTasks();

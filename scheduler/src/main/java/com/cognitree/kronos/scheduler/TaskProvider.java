@@ -22,7 +22,6 @@ import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskDependencyInfo;
 import com.cognitree.kronos.store.TaskStore;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.graph.GraphBuilder;
 import com.google.common.graph.MutableGraph;
 import org.slf4j.Logger;
@@ -40,7 +39,7 @@ import static com.cognitree.kronos.util.DateTimeUtil.resolveDuration;
 /**
  * Task provider manages/ resolves task dependencies and exposes APIs to add, remove, retrieve tasks in active and
  * ready-to-execute state
- * listen for task status updates and calls the registered {@link TaskStatusHandler} on status change.
+ * listen for task status updates and calls the registered {@link TaskStatusChangeListener} on status change.
  * <p>
  * Internally, task provider is backed by a directed acyclic graph that manages dependencies across these tasks.
  * The task state is stored in a persistent store if provided.
@@ -50,11 +49,10 @@ class TaskProvider {
 
     private final MutableGraph<Task> graph = GraphBuilder.directed().build();
     private final TaskStore taskStore;
-    private final TaskStatusHandler statusHandler;
+    private final Set<TaskStatusChangeListener> statusChangeListeners = new HashSet<>();
 
-    TaskProvider(TaskStore store, TaskStatusHandler statusHandler) {
+    TaskProvider(TaskStore store) {
         this.taskStore = store;
-        this.statusHandler = statusHandler;
         init();
     }
 
@@ -74,6 +72,14 @@ class TaskProvider {
         clearGraph();
         // reinitialize in memory state from backing store
         init();
+    }
+
+    synchronized void registerListener(TaskStatusChangeListener statusChangeListener) {
+        statusChangeListeners.add(statusChangeListener);
+    }
+
+    synchronized void deregisterListener(TaskStatusChangeListener statusChangeListener) {
+        statusChangeListeners.remove(statusChangeListener);
     }
 
     private void clearGraph() {
@@ -209,9 +215,9 @@ class TaskProvider {
         return this.getTasks(Arrays.asList(SUBMITTED, RUNNING), false);
     }
 
-    private List<Task> getTasks(List<Status> statuses, boolean isDepdendancyResolved) {
+    private List<Task> getTasks(List<Status> statuses, boolean isDependencyResolved) {
         final Predicate<Task> statusPredicate = task -> statuses.contains(task.getStatus());
-        if (isDepdendancyResolved) {
+        if (isDependencyResolved) {
             final Predicate<Task> dependencyPredicate = this::isDependencyResolved;
             return getTasks(statusPredicate, dependencyPredicate);
         } else {
@@ -269,7 +275,7 @@ class TaskProvider {
                 break;
         }
         taskStore.update(task);
-        statusHandler.onStatusChange(task);
+        statusChangeListeners.forEach(listener -> listener.statusChanged(task));
     }
 
 

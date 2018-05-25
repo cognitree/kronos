@@ -20,9 +20,10 @@ package com.cognitree.kronos.scheduler;
 import com.cognitree.kronos.model.Task;
 
 /**
- * A task status handler interface subscribed for task status change
+ * An interface implemented by services interested in task status change. To receive notification on task status change
+ * subscribe the listener with {@link TaskProvider}
  */
-public interface TaskStatusHandler {
+public interface TaskStatusChangeListener {
 
-    void onStatusChange(Task task);
+    void statusChanged(Task task);
 }
