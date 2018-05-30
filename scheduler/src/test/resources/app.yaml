@@ -1,12 +1,12 @@
 handlerConfig:
-  default:
+  test:
     handlerClass: com.cognitree.kronos.executor.handlers.TestTaskHandler
     config:
       topic: taskstatus
       topicConfig:
         group.id: taskstatus
     maxExecutionTime: 1h
-    maxParallelTasks: 16
+    maxParallelTasks: 4
 
 taskProducerConfig:
   producerClass: com.cognitree.kronos.queue.producer.InMemoryTaskProducer

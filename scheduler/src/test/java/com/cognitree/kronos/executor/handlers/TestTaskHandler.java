@@ -19,19 +19,19 @@ package com.cognitree.kronos.executor.handlers;
 
 import com.cognitree.kronos.model.Task;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestTaskHandler implements TaskHandler {
+    private static final Logger logger = LoggerFactory.getLogger(TestTaskHandler.class);
 
-    private static final Map<String, Integer> receivedTasks = new HashMap<>();
+    private static final List<String> tasks = new ArrayList<>();
 
-    // used for validating test case
-    public static boolean isExecuted(String taskId) {
-        return receivedTasks.containsKey(taskId) && receivedTasks.get(taskId) == 1;
+    public static void finishExecution(String taskId) {
+        tasks.add(taskId);
     }
 
     @Override
@@ -40,16 +40,23 @@ public class TestTaskHandler implements TaskHandler {
 
     @Override
     public void handle(Task task) throws HandlerException {
-        int executionCount;
-        if (receivedTasks.containsKey(task.getId())) {
-            executionCount = receivedTasks.get(task.getId()) + 1;
-        } else {
-            executionCount = 1;
+        logger.info("Received request to handle task {}", task);
+
+        final boolean waitForCallback = (boolean) task.getProperties().get("waitForCallback");
+        if (waitForCallback) {
+            while (!tasks.contains(task.getId())) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            tasks.remove(task.getId());
         }
-        receivedTasks.put(task.getId(), executionCount);
-        final Task.Status status = (Task.Status) task.getProperties().getOrDefault("status", SUCCESSFUL);
-        if (!status.equals(SUCCESSFUL)) {
-            throw new HandlerException("error handling task");
+
+        final boolean shouldPass = (boolean) task.getProperties().get("shouldPass");
+        if (!shouldPass) {
+            throw new HandlerException("Error executing task");
         }
     }
 }
