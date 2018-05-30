@@ -133,7 +133,8 @@ class TaskProvider {
         return true;
     }
 
-    private Set<Task> getDependentTasks(Task task, TaskDependencyInfo dependencyInfo) {
+    // used in junit test case
+    Set<Task> getDependentTasks(Task task, TaskDependencyInfo dependencyInfo) {
         final TreeSet<Task> candidateDependentTasks = new TreeSet<>(Comparator.comparing(Task::getCreatedAt));
         final long createdAt = task.getCreatedAt();
         final long sentinelTimeStamp = createdAt - resolveDuration(dependencyInfo.getDuration());
@@ -215,17 +216,16 @@ class TaskProvider {
         return this.getTasks(Arrays.asList(SUBMITTED, RUNNING), false);
     }
 
-    private List<Task> getTasks(List<Status> statuses, boolean isDependencyResolved) {
+    private List<Task> getTasks(List<Status> statuses, boolean isReadyForExecution) {
         final Predicate<Task> statusPredicate = task -> statuses.contains(task.getStatus());
-        if (isDependencyResolved) {
-            final Predicate<Task> dependencyPredicate = this::isDependencyResolved;
+        if (isReadyForExecution) {
+            final Predicate<Task> dependencyPredicate = this::isReadyForExecution;
             return getTasks(statusPredicate, dependencyPredicate);
         } else {
             return getTasks(statusPredicate);
         }
     }
 
-    // used in junit
     @SafeVarargs
     private final List<Task> getTasks(Predicate<Task>... predicates) {
         Stream<Task> stream = graph.nodes().stream();
@@ -235,7 +235,7 @@ class TaskProvider {
         return stream.collect(Collectors.toList());
     }
 
-    boolean isDependencyResolved(Task task) {
+    boolean isReadyForExecution(Task task) {
         return graph.predecessors(task)
                 .stream()
                 .allMatch(t -> t.getStatus().equals(SUCCESSFUL));
@@ -257,7 +257,7 @@ class TaskProvider {
 
     synchronized void updateTask(Task task, Status status, String statusMessage) {
         if (!isValidTransition(task, status)) {
-            logger.error("Invalid state transition from status {}, to {}", task.getStatus(), status);
+            logger.error("Invalid state transition for task {} from status {}, to {}", task, task.getStatus(), status);
             return;
         }
 
@@ -268,7 +268,7 @@ class TaskProvider {
                 task.setSubmittedAt(System.currentTimeMillis());
                 break;
             case FAILED:
-                markDependentTasksAsFailed(task, statusMessage);
+                markDependentTasksAsFailed(task);
                 // do not break
             case SUCCESSFUL:
                 task.setCompletedAt(System.currentTimeMillis());
@@ -283,10 +283,8 @@ class TaskProvider {
         return task.getStatus() != SUCCESSFUL && task.getStatus() != FAILED;
     }
 
-    private void markDependentTasksAsFailed(Task task, String statusMessage) {
-        graph.successors(task).forEach(dependentTask -> {
-            updateTask(dependentTask, FAILED, statusMessage);
-        });
+    private void markDependentTasksAsFailed(Task task) {
+        graph.successors(task).forEach(dependentTask -> updateTask(dependentTask, FAILED, FAILED_TO_RESOLVE_DEPENDENCY));
     }
 
     /**

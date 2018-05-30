@@ -84,7 +84,7 @@ public class TaskExecutionService implements Service, Subscriber<Task> {
 
                 int maxParallelTasks = taskHandlerConfig.getMaxParallelTasks();
                 maxParallelTasks = maxParallelTasks > 0 ? maxParallelTasks : Runtime.getRuntime().availableProcessors();
-                ThreadPoolExecutor executor = new ThreadPoolExecutor((int) Math.ceil(maxParallelTasks / 2), maxParallelTasks,
+                ThreadPoolExecutor executor = new ThreadPoolExecutor(maxParallelTasks, maxParallelTasks,
                         KEEP_ALIVE_TIME_IN_MINS, MINUTES, new LinkedBlockingQueue<>());
                 taskTypeToExecutorMap.put(taskType, executor);
             } catch (Exception e) {
@@ -115,7 +115,7 @@ public class TaskExecutionService implements Service, Subscriber<Task> {
             logger.trace("Received task {} for execution from task queue", task);
             final TaskHandler handler = taskTypeToHandlerMap.get(task.getType());
             if (handler == null) {
-                logger.error("No handler found to execute task {} of type {}, skipping task {} and marking it as {}",
+                logger.error("No handler found to execute task {} of type {}, skipping task and marking it as {}",
                         task, task.getType(), FAILED);
                 updateStatus(task.getId(), task.getGroup(), FAILED, MISSING_HANDLER);
                 continue;
@@ -126,7 +126,7 @@ public class TaskExecutionService implements Service, Subscriber<Task> {
                     updateStatus(task.getId(), task.getGroup(), RUNNING);
                     handler.handle(task);
                     updateStatus(task.getId(), task.getGroup(), SUCCESSFUL);
-                } catch (HandlerException e) {
+                } catch (Exception e) {
                     logger.error("Error executing task {}", task, e);
                     updateStatus(task.getId(), task.getGroup(), FAILED, e.getMessage());
                 }
