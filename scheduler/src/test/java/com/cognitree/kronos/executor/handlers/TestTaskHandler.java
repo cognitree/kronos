@@ -23,12 +23,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class TestTaskHandler implements TaskHandler {
     private static final Logger logger = LoggerFactory.getLogger(TestTaskHandler.class);
 
-    private static final List<String> tasks = new ArrayList<>();
+    private static final List<String> tasks = Collections.synchronizedList(new ArrayList<>());
 
     public static void finishExecution(String taskId) {
         tasks.add(taskId);

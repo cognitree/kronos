@@ -18,44 +18,38 @@ public class MockTaskStore implements TaskStore {
 
     private static final Map<String, Task> TASKS_IN_STORE = new HashMap<>();
 
-    static {
-        final long currentTimeMillis = System.currentTimeMillis();
-        final long timeInMillis2HoursBack = currentTimeMillis - HOURS.toMillis(2);
-        final Task mockTaskOneA = TestUtil.getTaskBuilder().setId("mockTaskOne-A").setName("mockTaskOne")
-                .setGroup("mockTask").setStatus(SUCCESSFUL).setCreatedAt(timeInMillis2HoursBack)
-                .setSubmittedAt(timeInMillis2HoursBack).build();
-        TASKS_IN_STORE.put("mockTaskOne-A", mockTaskOneA);
-        final long timeInMillis30MinsBack = currentTimeMillis - MINUTES.toMillis(30);
-        final Task mockTaskOneB = TestUtil.getTaskBuilder().setId("mockTaskOne-B").setName("mockTaskOne")
-                .setGroup("mockTask").setStatus(RUNNING).setMaxExecutionTime("15m")
-                .setCreatedAt(timeInMillis30MinsBack)
-                .setSubmittedAt(timeInMillis30MinsBack).build();
-        TASKS_IN_STORE.put("mockTaskOne-B", mockTaskOneB);
-        final Task mockTaskTwo = TestUtil.getTaskBuilder().setId("mockTaskTwo").setName("mockTaskTwo")
-                .setGroup("mockTask").setStatus(CREATED).waitForCallback(true)
-                .setCreatedAt(timeInMillis30MinsBack)
-                .setSubmittedAt(timeInMillis30MinsBack).build();
-        TASKS_IN_STORE.put("mockTaskTwo", mockTaskTwo);
-        final long timeInMillis20MinsBack = currentTimeMillis - MINUTES.toMillis(20);
-        final List<TaskDependencyInfo> taskDependencyInfos = Arrays.asList(
-                prepareDependencyInfo("mockTaskOne", all, "1h"),
-                prepareDependencyInfo("mockTaskTwo", all, "1h"));
-        final Task mockTaskThree = TestUtil.getTaskBuilder().setId("mockTaskThree").setName("mockTaskThree")
-                .setGroup("mockTask").setStatus(CREATED).setDependsOn(taskDependencyInfos)
-                .setCreatedAt(timeInMillis20MinsBack).setSubmittedAt(timeInMillis20MinsBack).build();
-        TASKS_IN_STORE.put("mockTaskThree", mockTaskThree);
-        final Task mockTaskFour = TestUtil.getTaskBuilder().setId("mockTaskFour").setName("mockTaskFour")
-                .setGroup("mockTask").setStatus(CREATED).setCreatedAt(timeInMillis20MinsBack)
-                .setSubmittedAt(timeInMillis20MinsBack).build();
-        TASKS_IN_STORE.put("mockTaskFour", mockTaskFour);
-    }
-
     public static Task getTask(String id) {
         return TASKS_IN_STORE.get(id);
     }
 
     @Override
     public void init(ObjectNode storeConfig) {
+        final long currentTimeMillis = System.currentTimeMillis();
+        final long timeInMillis2HoursBack = currentTimeMillis - HOURS.toMillis(2);
+        final Task mockTaskOneA = TestUtil.getTaskBuilder().setId("mockTaskOne-A").setName("mockTaskOne")
+                .setGroup("mockTask").setType("test").setStatus(SUCCESSFUL).setCreatedAt(timeInMillis2HoursBack)
+                .setSubmittedAt(timeInMillis2HoursBack).build();
+        TASKS_IN_STORE.put("mockTaskOne-A", mockTaskOneA);
+        final long timeInMillis30MinsBack = currentTimeMillis - MINUTES.toMillis(30);
+        final Task mockTaskOneB = TestUtil.getTaskBuilder().setId("mockTaskOne-B").setName("mockTaskOne")
+                .setGroup("mockTask").setType("test").setStatus(RUNNING).setMaxExecutionTime("15m")
+                .setCreatedAt(timeInMillis30MinsBack)
+                .setSubmittedAt(timeInMillis30MinsBack).build();
+        TASKS_IN_STORE.put("mockTaskOne-B", mockTaskOneB);
+        final Task mockTaskTwo = TestUtil.getTaskBuilder().setId("mockTaskTwo").setName("mockTaskTwo")
+                .setGroup("mockTask").setType("test").setStatus(CREATED).setCreatedAt(timeInMillis30MinsBack).build();
+        TASKS_IN_STORE.put("mockTaskTwo", mockTaskTwo);
+        final long timeInMillis20MinsBack = currentTimeMillis - MINUTES.toMillis(20);
+        final List<TaskDependencyInfo> taskDependencyInfos = Arrays.asList(
+                prepareDependencyInfo("mockTaskOne", all, "1h"),
+                prepareDependencyInfo("mockTaskTwo", all, "1h"));
+        final Task mockTaskThree = TestUtil.getTaskBuilder().setId("mockTaskThree").setName("mockTaskThree")
+                .setGroup("mockTask").setType("test").setStatus(CREATED).setDependsOn(taskDependencyInfos)
+                .setCreatedAt(timeInMillis20MinsBack).build();
+        TASKS_IN_STORE.put("mockTaskThree", mockTaskThree);
+        final Task mockTaskFour = TestUtil.getTaskBuilder().setId("mockTaskFour").setName("mockTaskFour")
+                .setGroup("mockTask").setType("test").setStatus(CREATED).setCreatedAt(timeInMillis20MinsBack).build();
+        TASKS_IN_STORE.put("mockTaskFour", mockTaskFour);
     }
 
     @Override

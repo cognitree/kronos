@@ -12,8 +12,8 @@ import com.cognitree.kronos.queue.producer.ProducerConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 
 import java.io.InputStream;
@@ -76,9 +76,9 @@ public class ApplicationTest {
         ServiceProvider.getTaskSchedulerService().stop();
     }
 
-    @After
+    @Before
     public void initialize() {
         // reinit will clear all the tasks from task provider
-        ServiceProvider.getTaskSchedulerService().getTaskProvider().reinit();
+        ServiceProvider.getTaskSchedulerService().reinitTaskProvider();
     }
 }

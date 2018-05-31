@@ -1,10 +1,14 @@
 handlerConfig:
   test:
     handlerClass: com.cognitree.kronos.executor.handlers.TestTaskHandler
-    config:
-      topic: taskstatus
-      topicConfig:
-        group.id: taskstatus
+    maxExecutionTime: 1h
+    maxParallelTasks: 4
+  typeA:
+    handlerClass: com.cognitree.kronos.executor.handlers.TypeATaskHandler
+    maxExecutionTime: 1h
+    maxParallelTasks: 4
+  typeB:
+    handlerClass: com.cognitree.kronos.executor.handlers.TypeBTaskHandler
     maxExecutionTime: 1h
     maxParallelTasks: 4
 
