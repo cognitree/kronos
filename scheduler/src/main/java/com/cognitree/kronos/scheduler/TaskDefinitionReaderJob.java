@@ -154,7 +154,7 @@ public final class TaskDefinitionReaderJob implements org.quartz.Job {
             final JobDataMap jobHandlerDataMap = jobExecutionContext.getJobDetail().getJobDataMap();
             logger.trace("received request to create task from data map {}", jobHandlerDataMap.getWrappedMap());
             final TaskDefinition taskDefinition = (TaskDefinition) jobHandlerDataMap.get("taskDefinition");
-            ServiceProvider.getTaskSchedulerService().add(taskDefinition.createTask());
+            ServiceProvider.getTaskSchedulerService().schedule(taskDefinition.createTask());
         }
     }
 }

@@ -18,7 +18,6 @@
 package com.cognitree.kronos.executor;
 
 import com.cognitree.kronos.Service;
-import com.cognitree.kronos.executor.handlers.HandlerException;
 import com.cognitree.kronos.executor.handlers.TaskHandler;
 import com.cognitree.kronos.executor.handlers.TaskHandlerConfig;
 import com.cognitree.kronos.model.Task;
@@ -38,6 +37,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import static com.cognitree.kronos.model.FailureMessage.MISSING_HANDLER;
 import static com.cognitree.kronos.model.Task.Status.*;
 import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * A task execution service is responsible for configuring/ initializing each {@link TaskHandler} and
@@ -157,7 +157,7 @@ public class TaskExecutionService implements Service, Subscriber<Task> {
         taskTypeToExecutorMap.values().forEach(ThreadPoolExecutor::shutdown);
         try {
             for (ThreadPoolExecutor threadPoolExecutor : taskTypeToExecutorMap.values()) {
-                threadPoolExecutor.awaitTermination(1, MINUTES);
+                threadPoolExecutor.awaitTermination(10, SECONDS);
             }
         } catch (InterruptedException e) {
             logger.error("Error stopping handler thread pool", e);

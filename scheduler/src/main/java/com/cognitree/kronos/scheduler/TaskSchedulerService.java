@@ -21,6 +21,7 @@ import com.cognitree.kronos.ApplicationConfig;
 import com.cognitree.kronos.Service;
 import com.cognitree.kronos.executor.handlers.TaskHandlerConfig;
 import com.cognitree.kronos.model.Task;
+import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskDefinition;
 import com.cognitree.kronos.model.TaskStatus;
 import com.cognitree.kronos.queue.Subscriber;
@@ -33,20 +34,15 @@ import com.cognitree.kronos.store.TaskStoreConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 
-import static com.cognitree.kronos.model.FailureMessage.TASK_SUBMISSION_FAILED;
-import static com.cognitree.kronos.model.FailureMessage.TIMED_OUT;
-import static com.cognitree.kronos.model.Task.Status.FAILED;
-import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
+import static com.cognitree.kronos.model.FailureMessage.*;
+import static com.cognitree.kronos.model.Task.Status.*;
 import static com.cognitree.kronos.util.DateTimeUtil.resolveDuration;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.*;
 
 /**
  * A task scheduler service resolves dependency for each submitted task via {@link TaskProvider} and
@@ -56,7 +52,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
  * from the task status queue
  * </p>
  */
-public final class TaskSchedulerService implements Service, Subscriber<TaskStatus>, TaskStatusChangeListener {
+public final class TaskSchedulerService implements Service, Subscriber<TaskStatus> {
     private static final Logger logger = LoggerFactory.getLogger(TaskSchedulerService.class);
 
     private static final String DEFAULT_MAX_EXECUTION_TIME = "1d";
@@ -72,6 +68,7 @@ public final class TaskSchedulerService implements Service, Subscriber<TaskStatu
     private final Map<String, ScheduledFuture<?>> taskTimeoutHandlersMap = new HashMap<>();
     // used by internal tasks for printing the dag/ delete stale tasks/ executing timeout tasks
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+    private final Set<TaskStatusChangeListener> statusChangeListeners = new HashSet<>();
 
     private TaskStore taskStore;
     private TaskProvider taskProvider;
@@ -109,11 +106,14 @@ public final class TaskSchedulerService implements Service, Subscriber<TaskStatu
         statusConsumer.subscribe(this);
         initTimeoutPolicies();
         initTimeoutTasks();
+        resolveCreatedTasks();
         isInitialized = true;
     }
 
     public void reinitTaskProvider() {
         taskProvider.reinit();
+        resolveCreatedTasks();
+        scheduleReadyTasks();
     }
 
     private void initTaskProvider() throws Exception {
@@ -121,8 +121,7 @@ public final class TaskSchedulerService implements Service, Subscriber<TaskStatu
                 .getConstructor()
                 .newInstance();
         taskStore.init(taskStoreConfig.getConfig());
-        this.taskProvider = new TaskProvider(taskStore);
-        this.taskProvider.registerListener(this);
+        taskProvider = new TaskProvider(taskStore);
     }
 
     private void initTimeoutPolicies() {
@@ -170,6 +169,12 @@ public final class TaskSchedulerService implements Service, Subscriber<TaskStatu
         }
     }
 
+    private void resolveCreatedTasks() {
+        final List<Task> tasks = taskProvider.getTasks(Collections.singletonList(CREATED));
+        tasks.sort(Comparator.comparing(Task::getCreatedAt));
+        tasks.forEach(this::resolve);
+    }
+
     /**
      * resolve timeout policy for task, policy resolution is done at multiple levels.
      * First policy is checked at task definition level defined as {@link TaskDefinition#timeoutPolicy}
@@ -197,30 +202,78 @@ public final class TaskSchedulerService implements Service, Subscriber<TaskStatu
         scheduledExecutorService.scheduleAtFixedRate(this::deleteStaleTasks, 5, 5, MINUTES);
     }
 
-    public void add(Task task) {
-        logger.info("Received request to add task: {}", task);
-        taskProvider.addTask(task);
+    public void registerListener(TaskStatusChangeListener statusChangeListener) {
+        statusChangeListeners.add(statusChangeListener);
     }
+
+    public void deregisterListener(TaskStatusChangeListener statusChangeListener) {
+        statusChangeListeners.remove(statusChangeListener);
+    }
+
+    public void schedule(Task task) {
+        logger.info("Received request to schedule task: {}", task);
+        add(task);
+        resolve(task);
+    }
+
+    private void add(Task task) {
+        taskProvider.add(task);
+    }
+
+    private void resolve(Task task) {
+        final boolean isResolved = taskProvider.resolveAndUpdateDependency(task);
+        if (isResolved) {
+            updateStatus(task, WAITING, null);
+        } else {
+            logger.error("Unable to resolve dependency for task {}, marking it as {}", task, FAILED);
+            updateStatus(task, FAILED, FAILED_TO_RESOLVE_DEPENDENCY);
+        }
+    }
+
 
     @Override
     public void consume(List<TaskStatus> tasksStatus) {
         for (TaskStatus taskStatus : tasksStatus) {
-            taskProvider.updateTask(taskStatus.getTaskId(), taskStatus.getTaskGroup(),
+            updateStatus(taskStatus.getTaskId(), taskStatus.getTaskGroup(),
                     taskStatus.getStatus(), taskStatus.getStatusMessage());
         }
     }
 
-    @Override
-    public void statusChanged(Task task) {
-        switch (task.getStatus()) {
+    private void updateStatus(String taskId, String taskGroup, Status status,
+                              String statusMessage) {
+        final Task task = taskProvider.getTask(taskId, taskGroup);
+        if (task == null) {
+            logger.error("No task found with id {}, group {}", taskId, taskGroup);
+            return;
+        }
+        updateStatus(task, status, statusMessage);
+    }
+
+    private void updateStatus(Task task, Status status, String statusMessage) {
+        logger.info("Received request to update status of task {} to {} " +
+                "with status message {}", task, status, statusMessage);
+        Status currentStatus = task.getStatus();
+        if (!isValidTransition(currentStatus, status)) {
+            logger.error("Invalid state transition for task {} from status {}, to {}", task, task.getStatus(), status);
+            return;
+        }
+
+        task.setStatus(status);
+        task.setStatusMessage(statusMessage);
+        switch (status) {
+            case CREATED:
             case WAITING:
                 scheduleReadyTasks();
                 break;
             case SUBMITTED:
+                task.setSubmittedAt(System.currentTimeMillis());
                 createTimeoutTask(task);
                 break;
-            case SUCCESSFUL:
             case FAILED:
+                markDependentTasksAsFailed(task);
+                // do not break
+            case SUCCESSFUL:
+                task.setCompletedAt(System.currentTimeMillis());
                 final ScheduledFuture<?> taskTimeoutFuture = taskTimeoutHandlersMap.remove(task.getId());
                 if (taskTimeoutFuture != null) {
                     taskTimeoutFuture.cancel(false);
@@ -229,6 +282,31 @@ public final class TaskSchedulerService implements Service, Subscriber<TaskStatu
                 scheduleReadyTasks();
                 break;
         }
+        taskStore.update(task);
+        statusChangeListeners.forEach(listener -> listener.statusChanged(task, currentStatus, status));
+    }
+
+    private boolean isValidTransition(Status currentStatus, Status desiredStatus) {
+        switch (desiredStatus) {
+            case CREATED:
+                return currentStatus == null;
+            case WAITING:
+                return currentStatus == CREATED;
+            case SUBMITTED:
+                return currentStatus == WAITING;
+            case RUNNING:
+                return currentStatus == SUBMITTED;
+            case SUCCESSFUL:
+            case FAILED:
+                return currentStatus != SUCCESSFUL && currentStatus != FAILED;
+            default:
+                return false;
+        }
+    }
+
+    private void markDependentTasksAsFailed(Task task) {
+        taskProvider.getDependentTasks(task)
+                .forEach(dependentTask -> updateStatus(dependentTask, FAILED, FAILED_TO_RESOLVE_DEPENDENCY));
     }
 
     /**
@@ -240,10 +318,10 @@ public final class TaskSchedulerService implements Service, Subscriber<TaskStatu
             for (Task task : runnableTaskList) {
                 try {
                     taskProducer.add(task);
-                    taskProvider.updateTask(task, SUBMITTED, null);
+                    updateStatus(task, SUBMITTED, null);
                 } catch (Exception e) {
                     logger.error("Error submitting task {} to queue", task, e);
-                    taskProvider.updateTask(task, FAILED, TASK_SUBMISSION_FAILED);
+                    updateStatus(task, FAILED, TASK_SUBMISSION_FAILED);
                 }
             }
         }
@@ -254,7 +332,7 @@ public final class TaskSchedulerService implements Service, Subscriber<TaskStatu
         logger.info("Stopping task scheduler service");
         scheduledExecutorService.shutdown();
         try {
-            scheduledExecutorService.awaitTermination(1, MINUTES);
+            scheduledExecutorService.awaitTermination(10, SECONDS);
         } catch (InterruptedException e) {
             logger.error("Error stopping scheduled thread pool", e);
         }
@@ -310,7 +388,7 @@ public final class TaskSchedulerService implements Service, Subscriber<TaskStatu
         @Override
         public void run() {
             logger.info("Task {} has timed out, marking task as failed", task);
-            taskProvider.updateTask(task, FAILED, TIMED_OUT);
+            updateStatus(task, FAILED, TIMED_OUT);
             if (timeoutPolicy != null) {
                 logger.info("Applying timeout policy {} on task {}", timeoutPolicy, task);
                 timeoutPolicy.handle(task);
