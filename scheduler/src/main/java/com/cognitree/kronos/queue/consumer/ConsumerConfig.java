@@ -38,6 +38,12 @@ public class ConsumerConfig {
      */
     private ObjectNode config;
 
+    /**
+     * time duration between successive poll to queue
+     * example values:  10s, 1m, 5m etc
+     */
+    private String pollInterval;
+
     public String getConsumerClass() {
         return consumerClass;
     }
@@ -54,18 +60,28 @@ public class ConsumerConfig {
         this.config = config;
     }
 
+    public String getPollInterval() {
+        return pollInterval;
+    }
+
+    public void setPollInterval(String pollInterval) {
+        this.pollInterval = pollInterval;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof ConsumerConfig)) return false;
         ConsumerConfig that = (ConsumerConfig) o;
         return Objects.equals(consumerClass, that.consumerClass) &&
-                Objects.equals(config, that.config);
+                Objects.equals(config, that.config) &&
+                Objects.equals(pollInterval, that.pollInterval);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(consumerClass, config);
+
+        return Objects.hash(consumerClass, config, pollInterval);
     }
 
     @Override
@@ -73,6 +89,7 @@ public class ConsumerConfig {
         return "ConsumerConfig{" +
                 "consumerClass='" + consumerClass + '\'' +
                 ", config=" + config +
+                ", pollInterval='" + pollInterval + '\'' +
                 '}';
     }
 }

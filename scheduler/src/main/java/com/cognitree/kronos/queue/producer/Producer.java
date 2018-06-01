@@ -17,18 +17,23 @@
 
 package com.cognitree.kronos.queue.producer;
 
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 /**
  * responsible to store the data of type {@code T} it receives to the underlying queue
  */
-public interface Producer<T> {
+public interface Producer {
+
+    void init(ObjectNode config);
 
     /**
-     * adds data to underlying queue
+     * sends the record to the underlying queue
      *
-     * @param data
-     * @throws Exception
+     * @param topic  topic name to send data
+     * @param record record to send
      */
-    void add(T data) throws Exception;
+    void send(String topic, String record);
 
     void close();
 }

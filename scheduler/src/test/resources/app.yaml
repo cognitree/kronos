@@ -12,19 +12,11 @@ handlerConfig:
     maxExecutionTime: 1h
     maxParallelTasks: 4
 
-taskProducerConfig:
-  producerClass: com.cognitree.kronos.queue.producer.InMemoryTaskProducer
-taskConsumerConfig:
-  consumerClass: com.cognitree.kronos.queue.consumer.InMemoryTaskConsumer
-  config:
-    pollInterval: 100
-
-taskStatusProducerConfig:
-  producerClass: com.cognitree.kronos.queue.producer.InMemoryStatusProducer
-taskStatusConsumerConfig:
-  consumerClass: com.cognitree.kronos.queue.consumer.InMemoryStatusConsumer
-  config:
-    pollInterval: 100
+producerConfig:
+  producerClass: com.cognitree.kronos.queue.producer.InMemoryProducer
+consumerConfig:
+  consumerClass: com.cognitree.kronos.queue.consumer.InMemoryConsumer
+  pollInterval: 100
 
 taskStoreConfig:
   taskStoreClass: com.cognitree.kronos.store.MockTaskStore

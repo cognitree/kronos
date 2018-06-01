@@ -7,13 +7,14 @@ import com.cognitree.kronos.executor.handlers.TypeATaskHandler;
 import com.cognitree.kronos.executor.handlers.TypeBTaskHandler;
 import com.cognitree.kronos.model.Task;
 import org.junit.Assert;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
-import static com.cognitree.kronos.model.Task.Status.RUNNING;
-import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
-import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
+import static com.cognitree.kronos.model.Task.Status.*;
 
-public class ExecutorServiceTest extends ApplicationTest {
+@FixMethodOrder(MethodSorters.JVM)
+public class TaskExecutorServiceTest extends ApplicationTest {
 
     @Test
     public void testMaxParallelTask() {
@@ -28,11 +29,12 @@ public class ExecutorServiceTest extends ApplicationTest {
         Task taskFive = TestUtil.getTaskBuilder().setName("taskFive").waitForCallback(true).setType("test").build();
         ServiceProvider.getTaskSchedulerService().schedule(taskFive);
         TestUtil.waitForTaskToFinishExecution(1000);
+        // TODO what to check here status can be running or submitted depending on executor
         Assert.assertEquals(RUNNING, taskOne.getStatus());
         Assert.assertEquals(RUNNING, taskTwo.getStatus());
         Assert.assertEquals(RUNNING, taskThree.getStatus());
         Assert.assertEquals(RUNNING, taskFour.getStatus());
-        Assert.assertEquals(SUBMITTED, taskFive.getStatus());
+        Assert.assertEquals(SCHEDULED, taskFive.getStatus());
         TestTaskHandler.finishExecution(taskOne.getId());
         TestUtil.waitForTaskToFinishExecution(500);
         Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());

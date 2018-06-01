@@ -26,12 +26,18 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class InMemoryQueueFactory {
 
-    private static final Map<Object, LinkedBlockingQueue> BLOCKING_QUEUE_MAP = new HashMap<>();
+    private static final Map<Object, LinkedBlockingQueue<String>> IN_MEMORY_QUEUE_MAP = new HashMap<>();
 
-    public synchronized static <T> LinkedBlockingQueue<T> getBuffer(Class<T> object) {
-        if (!BLOCKING_QUEUE_MAP.containsKey(object)) {
-            BLOCKING_QUEUE_MAP.put(object, new LinkedBlockingQueue<T>());
+    public static LinkedBlockingQueue<String> getQueue(String topic) {
+        if (!IN_MEMORY_QUEUE_MAP.containsKey(topic)) {
+            createQueue(topic);
         }
-        return BLOCKING_QUEUE_MAP.get(object);
+        return IN_MEMORY_QUEUE_MAP.get(topic);
+    }
+
+    private synchronized static void createQueue(String topic) {
+        if (!IN_MEMORY_QUEUE_MAP.containsKey(topic)) {
+            IN_MEMORY_QUEUE_MAP.put(topic, new LinkedBlockingQueue<>());
+        }
     }
 }

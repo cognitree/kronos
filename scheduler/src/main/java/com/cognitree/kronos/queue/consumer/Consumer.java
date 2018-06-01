@@ -17,19 +17,34 @@
 
 package com.cognitree.kronos.queue.consumer;
 
-import com.cognitree.kronos.queue.Subscriber;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import java.util.List;
 
 /**
  * responsible to provide available data of type {@code T} from the underlying queue to the subscribed subscriber
  */
-public interface Consumer<T> {
+public interface Consumer {
+
+    void init(ObjectNode config);
 
     /**
-     * subscriber to call whenever new data is available in the queue
+     * polls data from the underlying queue
      *
-     * @param subscriber
+     * @param topic topic to poll from
+     * @return
      */
-    void subscribe(Subscriber<T> subscriber);
+    List<String> poll(String topic);
+
+    /**
+     * polls data from the underlying queue
+     *
+     * @param topic topic to poll from
+     * @param maxSize  maximum number of records to poll
+     * @return
+     */
+    List<String> poll(String topic, int maxSize);
 
     void close();
 }

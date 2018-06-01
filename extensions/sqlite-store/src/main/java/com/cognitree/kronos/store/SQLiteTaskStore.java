@@ -92,18 +92,19 @@ public class SQLiteTaskStore implements TaskStore {
         logger.debug("Received request to store task {}", task);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(INSERT_REPLACE_TASK)) {
-            preparedStatement.setString(1, task.getId());
-            preparedStatement.setString(2, task.getName());
-            preparedStatement.setString(3, task.getGroup());
-            preparedStatement.setString(4, task.getType());
-            preparedStatement.setString(5, task.getTimeoutPolicy());
-            preparedStatement.setString(6, MAPPER.writeValueAsString(task.getDependsOn()));
-            preparedStatement.setString(7, MAPPER.writeValueAsString(task.getProperties()));
-            preparedStatement.setString(8, task.getStatus().name());
-            preparedStatement.setString(9, task.getStatusMessage());
-            preparedStatement.setLong(10, task.getCreatedAt());
-            preparedStatement.setLong(11, task.getSubmittedAt());
-            preparedStatement.setLong(12, task.getCompletedAt());
+            int paramIndex = 0;
+            preparedStatement.setString(++paramIndex, task.getId());
+            preparedStatement.setString(++paramIndex, task.getName());
+            preparedStatement.setString(++paramIndex, task.getGroup());
+            preparedStatement.setString(++paramIndex, task.getType());
+            preparedStatement.setString(++paramIndex, task.getTimeoutPolicy());
+            preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(task.getDependsOn()));
+            preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(task.getProperties()));
+            preparedStatement.setString(++paramIndex, task.getStatus().name());
+            preparedStatement.setString(++paramIndex, task.getStatusMessage());
+            preparedStatement.setLong(++paramIndex, task.getCreatedAt());
+            preparedStatement.setLong(++paramIndex, task.getSubmittedAt());
+            preparedStatement.setLong(++paramIndex, task.getCompletedAt());
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error storing task {} into database", task, e);
@@ -115,11 +116,12 @@ public class SQLiteTaskStore implements TaskStore {
         logger.debug("Received request to update task {}", task);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_TASK)) {
-            preparedStatement.setString(1, task.getStatus().name());
-            preparedStatement.setString(2, task.getStatusMessage());
-            preparedStatement.setLong(3, task.getSubmittedAt());
-            preparedStatement.setLong(4, task.getCompletedAt());
-            preparedStatement.setString(5, task.getId());
+            int paramIndex = 0;
+            preparedStatement.setString(++paramIndex, task.getStatus().name());
+            preparedStatement.setString(++paramIndex, task.getStatusMessage());
+            preparedStatement.setLong(++paramIndex, task.getSubmittedAt());
+            preparedStatement.setLong(++paramIndex, task.getCompletedAt());
+            preparedStatement.setString(++paramIndex, task.getId());
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("error updating task {} into database", task, e);
@@ -131,8 +133,9 @@ public class SQLiteTaskStore implements TaskStore {
         logger.debug("Received request to get task with id {}, group {}", taskId, taskGroup);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_TASK)) {
-            preparedStatement.setString(1, taskId);
-            preparedStatement.setString(2, taskGroup);
+            int paramIndex = 0;
+            preparedStatement.setString(++paramIndex, taskId);
+            preparedStatement.setString(++paramIndex, taskGroup);
             final ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.first()) {
                 return getTask(resultSet);
@@ -171,10 +174,11 @@ public class SQLiteTaskStore implements TaskStore {
                 "created after {}", taskName, taskGroup, createdBefore, createdAfter);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_TASK_BY_NAME_GROUP)) {
-            preparedStatement.setString(1, taskName);
-            preparedStatement.setString(2, taskGroup);
-            preparedStatement.setLong(3, createdBefore);
-            preparedStatement.setLong(4, createdAfter);
+            int paramIndex = 0;
+            preparedStatement.setString(++paramIndex, taskName);
+            preparedStatement.setString(++paramIndex, taskGroup);
+            preparedStatement.setLong(++paramIndex, createdBefore);
+            preparedStatement.setLong(++paramIndex, createdAfter);
             final ResultSet resultSet = preparedStatement.executeQuery();
             List<Task> tasks = new ArrayList<>();
             while (resultSet.next()) {
@@ -188,19 +192,20 @@ public class SQLiteTaskStore implements TaskStore {
     }
 
     private Task getTask(ResultSet resultSet) throws Exception {
+        int paramIndex = 0;
         Task task = new Task();
-        task.setId(resultSet.getString(1));
-        task.setName(resultSet.getString(2));
-        task.setGroup(resultSet.getString(3));
-        task.setType(resultSet.getString(4));
-        task.setTimeoutPolicy(resultSet.getString(5));
-        task.setDependsOn(MAPPER.readValue(resultSet.getString(6), DEPENDENCY_INFO_LIST_TYPE_REF));
-        task.setProperties(MAPPER.readValue(resultSet.getString(7), PROPERTIES_TYPE_REF));
-        task.setStatus(Task.Status.valueOf(resultSet.getString(8)));
-        task.setStatusMessage(resultSet.getString(9));
-        task.setCreatedAt(resultSet.getLong(10));
-        task.setSubmittedAt(resultSet.getLong(11));
-        task.setCompletedAt(resultSet.getLong(12));
+        task.setId(resultSet.getString(++paramIndex));
+        task.setName(resultSet.getString(++paramIndex));
+        task.setGroup(resultSet.getString(++paramIndex));
+        task.setType(resultSet.getString(++paramIndex));
+        task.setTimeoutPolicy(resultSet.getString(++paramIndex));
+        task.setDependsOn(MAPPER.readValue(resultSet.getString(++paramIndex), DEPENDENCY_INFO_LIST_TYPE_REF));
+        task.setProperties(MAPPER.readValue(resultSet.getString(++paramIndex), PROPERTIES_TYPE_REF));
+        task.setStatus(Task.Status.valueOf(resultSet.getString(++paramIndex)));
+        task.setStatusMessage(resultSet.getString(++paramIndex));
+        task.setCreatedAt(resultSet.getLong(++paramIndex));
+        task.setSubmittedAt(resultSet.getLong(++paramIndex));
+        task.setCompletedAt(resultSet.getLong(++paramIndex));
         return task;
     }
 

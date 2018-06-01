@@ -5,7 +5,9 @@ import com.cognitree.kronos.TestUtil;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.TaskDependencyInfo;
 import org.junit.Assert;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,11 +19,10 @@ import static com.cognitree.kronos.TestUtil.waitForTaskToFinishExecution;
 import static com.cognitree.kronos.model.FailureMessage.FAILED_TO_RESOLVE_DEPENDENCY;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
-import static com.cognitree.kronos.model.TaskDependencyInfo.Mode.all;
-import static com.cognitree.kronos.model.TaskDependencyInfo.Mode.first;
-import static com.cognitree.kronos.model.TaskDependencyInfo.Mode.last;
+import static com.cognitree.kronos.model.TaskDependencyInfo.Mode.*;
 import static java.util.concurrent.TimeUnit.HOURS;
 
+@FixMethodOrder(MethodSorters.JVM)
 public class TaskDependencyTest extends ApplicationTest {
 
     @Test

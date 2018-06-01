@@ -18,16 +18,9 @@
 package com.cognitree.kronos;
 
 import com.cognitree.kronos.executor.TaskExecutionService;
-import com.cognitree.kronos.model.Task;
-import com.cognitree.kronos.model.TaskStatus;
-import com.cognitree.kronos.queue.consumer.Consumer;
-import com.cognitree.kronos.queue.consumer.ConsumerConfig;
-import com.cognitree.kronos.queue.producer.Producer;
-import com.cognitree.kronos.queue.producer.ProducerConfig;
 import com.cognitree.kronos.scheduler.TaskReaderService;
 import com.cognitree.kronos.scheduler.TaskSchedulerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
@@ -95,35 +88,19 @@ public class Application implements ComponentLifecycle {
     }
 
     @SuppressWarnings("unchecked")
-    private void registerTaskProviderService(ApplicationConfig applicationConfig) throws Exception {
-        final ProducerConfig taskProducerConfig = applicationConfig.getTaskProducerConfig();
-        Producer<Task> taskProducer = (Producer<Task>) Class.forName(taskProducerConfig.getProducerClass())
-                .getConstructor(ObjectNode.class)
-                .newInstance(taskProducerConfig.getConfig());
-
-        final ConsumerConfig statusConsumerConfig = applicationConfig.getTaskStatusConsumerConfig();
-        Consumer<TaskStatus> statusConsumer = (Consumer<TaskStatus>) Class.forName(statusConsumerConfig.getConsumerClass())
-                .getConstructor(ObjectNode.class)
-                .newInstance(statusConsumerConfig.getConfig());
-
-        TaskSchedulerService taskSchedulerService = new TaskSchedulerService(taskProducer, statusConsumer, applicationConfig.getHandlerConfig(),
-                applicationConfig.getTimeoutPolicyConfig(), applicationConfig.getTaskStoreConfig(), applicationConfig.getTaskPurgeInterval());
+    private void registerTaskProviderService(ApplicationConfig applicationConfig) {
+        TaskSchedulerService taskSchedulerService =
+                new TaskSchedulerService(applicationConfig.getProducerConfig(), applicationConfig.getConsumerConfig(),
+                        applicationConfig.getHandlerConfig(), applicationConfig.getTimeoutPolicyConfig(),
+                        applicationConfig.getTaskStoreConfig(), applicationConfig.getTaskPurgeInterval());
         ServiceProvider.registerService(taskSchedulerService);
     }
 
     @SuppressWarnings("unchecked")
-    private void registerTaskExecutionService(ApplicationConfig applicationConfig) throws Exception {
-        final ProducerConfig statusProducerConfig = applicationConfig.getTaskStatusProducerConfig();
-        Producer<TaskStatus> statusProducer = (Producer<TaskStatus>) Class.forName(statusProducerConfig.getProducerClass())
-                .getConstructor(ObjectNode.class)
-                .newInstance(statusProducerConfig.getConfig());
-
-        final ConsumerConfig taskConsumerConfig = applicationConfig.getTaskConsumerConfig();
-        Consumer<Task> taskConsumer = (Consumer<Task>) Class.forName(taskConsumerConfig.getConsumerClass())
-                .getConstructor(ObjectNode.class)
-                .newInstance(taskConsumerConfig.getConfig());
-
-        TaskExecutionService taskExecutionService = new TaskExecutionService(taskConsumer, statusProducer, applicationConfig.getHandlerConfig());
+    private void registerTaskExecutionService(ApplicationConfig applicationConfig) {
+        TaskExecutionService taskExecutionService =
+                new TaskExecutionService(applicationConfig.getConsumerConfig(), applicationConfig.getProducerConfig(),
+                        applicationConfig.getHandlerConfig());
         ServiceProvider.registerService(taskExecutionService);
     }
 

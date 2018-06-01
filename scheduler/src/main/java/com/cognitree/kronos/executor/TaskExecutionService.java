@@ -21,22 +21,28 @@ import com.cognitree.kronos.Service;
 import com.cognitree.kronos.executor.handlers.TaskHandler;
 import com.cognitree.kronos.executor.handlers.TaskHandlerConfig;
 import com.cognitree.kronos.model.Task;
+import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskStatus;
-import com.cognitree.kronos.queue.Subscriber;
 import com.cognitree.kronos.queue.consumer.Consumer;
+import com.cognitree.kronos.queue.consumer.ConsumerConfig;
 import com.cognitree.kronos.queue.producer.Producer;
+import com.cognitree.kronos.queue.producer.ProducerConfig;
+import com.cognitree.kronos.util.DateTimeUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import static com.cognitree.kronos.model.FailureMessage.MISSING_HANDLER;
 import static com.cognitree.kronos.model.Task.Status.*;
-import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
@@ -47,106 +53,141 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * task status queue
  * </p>
  */
-public class TaskExecutionService implements Service, Subscriber<Task> {
+public class TaskExecutionService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(TaskExecutionService.class);
 
-    // max idle time in minute for an executor thread
-    private static final int KEEP_ALIVE_TIME_IN_MINS = 1;
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final String TASK_STATUS_TOPIC = "taskstatus";
 
-    private final Consumer<Task> taskConsumer;
-    private final Producer<TaskStatus> statusProducer;
+    private final ConsumerConfig consumerConfig;
+    private final ProducerConfig producerConfig;
     private final Map<String, TaskHandlerConfig> taskTypeToHandlerConfig;
-
     private final Map<String, TaskHandler> taskTypeToHandlerMap = new HashMap<>();
-    private final Map<String, ThreadPoolExecutor> taskTypeToExecutorMap = new HashMap<>();
+    private final Map<String, Integer> taskTypeToMaxParallelTasksCount = new HashMap<>();
+    private final Map<String, Integer> taskTypeToRunningTasksCount = new HashMap<>();
+    // used by internal tasks
+    private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+    // used to execute tasks
+    private final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    private Consumer consumer;
+    private Producer producer;
 
-    public TaskExecutionService(Consumer<Task> taskConsumer, Producer<TaskStatus> statusProducer,
+    public TaskExecutionService(ConsumerConfig consumerConfig, ProducerConfig producerConfig,
                                 Map<String, TaskHandlerConfig> handlerConfig) {
-        this.taskConsumer = taskConsumer;
-        this.statusProducer = statusProducer;
+        this.consumerConfig = consumerConfig;
+        this.producerConfig = producerConfig;
         this.taskTypeToHandlerConfig = handlerConfig;
     }
 
     @Override
-    public void init() {
-        logger.info("Initializing task execution service");
+    public void init() throws Exception {
+        initConsumer();
+        initProducer();
         initTaskHandlersAndExecutors();
     }
 
-    private void initTaskHandlersAndExecutors() {
-        taskTypeToHandlerConfig.forEach((taskType, taskHandlerConfig) -> {
-            try {
-                logger.info("Initializing task handler of type {} with config {}", taskType, taskHandlerConfig);
-                final TaskHandler taskHandler = (TaskHandler) Class.forName(taskHandlerConfig.getHandlerClass())
-                        .newInstance();
-                taskHandler.init(taskHandlerConfig.getConfig());
-                taskTypeToHandlerMap.put(taskType, taskHandler);
+    private void initConsumer() throws Exception {
+        logger.info("Initializing consumer with config {}", consumerConfig);
+        consumer = (Consumer) Class.forName(consumerConfig.getConsumerClass())
+                .getConstructor()
+                .newInstance();
+        consumer.init(consumerConfig.getConfig());
+    }
 
-                int maxParallelTasks = taskHandlerConfig.getMaxParallelTasks();
-                maxParallelTasks = maxParallelTasks > 0 ? maxParallelTasks : Runtime.getRuntime().availableProcessors();
-                ThreadPoolExecutor executor = new ThreadPoolExecutor(maxParallelTasks, maxParallelTasks,
-                        KEEP_ALIVE_TIME_IN_MINS, MINUTES, new LinkedBlockingQueue<>());
-                taskTypeToExecutorMap.put(taskType, executor);
-            } catch (Exception e) {
-                logger.error("Error initializing handler of type {} with config {}", taskType, taskHandlerConfig, e);
-            }
-        });
+    private void initProducer() throws Exception {
+        logger.info("Initializing producer with config {}", producerConfig);
+        producer = (Producer) Class.forName(producerConfig.getProducerClass())
+                .getConstructor()
+                .newInstance();
+        producer.init(producerConfig.getConfig());
+    }
+
+    private void initTaskHandlersAndExecutors() throws Exception {
+        for (Map.Entry<String, TaskHandlerConfig> taskTypToHandlerConfigEntry : taskTypeToHandlerConfig.entrySet()) {
+            final String taskType = taskTypToHandlerConfigEntry.getKey();
+            final TaskHandlerConfig taskHandlerConfig = taskTypToHandlerConfigEntry.getValue();
+            logger.info("Initializing task handler of type {} with config {}", taskType, taskHandlerConfig);
+            final TaskHandler taskHandler = (TaskHandler) Class.forName(taskHandlerConfig.getHandlerClass())
+                    .newInstance();
+            taskHandler.init(taskHandlerConfig.getConfig());
+            taskTypeToHandlerMap.put(taskType, taskHandler);
+
+            int maxParallelTasks = taskHandlerConfig.getMaxParallelTasks();
+            maxParallelTasks = maxParallelTasks > 0 ? maxParallelTasks : Runtime.getRuntime().availableProcessors();
+            taskTypeToMaxParallelTasksCount.put(taskType, maxParallelTasks);
+            taskTypeToRunningTasksCount.put(taskType, 0);
+        }
     }
 
     @Override
     public void start() {
-        taskConsumer.subscribe(this);
+        final long pollInterval = DateTimeUtil.resolveDuration(consumerConfig.getPollInterval());
+        scheduledExecutorService.scheduleAtFixedRate(this::consumeTasks, pollInterval, pollInterval, MILLISECONDS);
     }
 
-    @Override
-    public void consume(List<Task> tasks) {
-        if (tasks != null && !tasks.isEmpty()) {
-            execute(tasks);
-        }
+    private void consumeTasks() {
+        taskTypeToMaxParallelTasksCount.forEach((taskType, maxParallelTasks) -> {
+            synchronized (taskTypeToRunningTasksCount) {
+                final int tasksToPoll = maxParallelTasks - taskTypeToRunningTasksCount.get(taskType);
+                if (tasksToPoll > 0) {
+                    final List<String> tasks = consumer.poll(taskType, tasksToPoll);
+                    for (String taskAsString : tasks) {
+                        try {
+                            execute(MAPPER.readValue(taskAsString, Task.class));
+                        } catch (IOException e) {
+                            logger.error("Error parsing task message {}", taskAsString, e);
+                        }
+                    }
+                }
+            }
+        });
     }
 
     /**
-     * submits the list of tasks for execution to appropriate handler based on task type.
+     * submits the task for execution to appropriate handler based on task type.
      *
-     * @param tasks tasks to submit for execution
+     * @param task task to submit for execution
      */
-    private void execute(List<Task> tasks) {
-        for (Task task : tasks) {
-            logger.trace("Received task {} for execution from task queue", task);
-            final TaskHandler handler = taskTypeToHandlerMap.get(task.getType());
-            if (handler == null) {
-                logger.error("No handler found to execute task {} of type {}, skipping task and marking it as {}",
-                        task, task.getType(), FAILED);
-                updateStatus(task.getId(), task.getGroup(), FAILED, MISSING_HANDLER);
-                continue;
-            }
-            final ThreadPoolExecutor executor = taskTypeToExecutorMap.get(task.getType());
-            executor.submit(() -> {
-                try {
-                    updateStatus(task.getId(), task.getGroup(), RUNNING);
-                    handler.handle(task);
-                    updateStatus(task.getId(), task.getGroup(), SUCCESSFUL);
-                } catch (Exception e) {
-                    logger.error("Error executing task {}", task, e);
-                    updateStatus(task.getId(), task.getGroup(), FAILED, e.getMessage());
-                }
-            });
+    private void execute(Task task) {
+        logger.trace("Received task {} for execution from task queue", task);
+        final TaskHandler handler = taskTypeToHandlerMap.get(task.getType());
+        if (handler == null) {
+            logger.error("No handler found to execute task {} of type {}, skipping task and marking it as {}",
+                    task, task.getType(), FAILED);
+            updateStatus(task.getId(), task.getGroup(), FAILED, MISSING_HANDLER);
+            return;
         }
+        updateStatus(task.getId(), task.getGroup(), SUBMITTED);
+        taskTypeToRunningTasksCount.put(task.getType(), taskTypeToRunningTasksCount.get(task.getType()) + 1);
+        executorService.submit(() -> {
+            try {
+                updateStatus(task.getId(), task.getGroup(), RUNNING);
+                handler.handle(task);
+                updateStatus(task.getId(), task.getGroup(), SUCCESSFUL);
+            } catch (Exception e) {
+                logger.error("Error executing task {}", task, e);
+                updateStatus(task.getId(), task.getGroup(), FAILED, e.getMessage());
+            } finally {
+                synchronized (taskTypeToRunningTasksCount) {
+                    taskTypeToRunningTasksCount.put(task.getType(), taskTypeToRunningTasksCount.get(task.getType()) - 1);
+                }
+            }
+        });
     }
 
-    private void updateStatus(String taskId, String taskGroup, Task.Status status) {
+    private void updateStatus(String taskId, String taskGroup, Status status) {
         updateStatus(taskId, taskGroup, status, null);
     }
 
-    private void updateStatus(String taskId, String taskGroup, Task.Status status, String statusMessage) {
+    private void updateStatus(String taskId, String taskGroup, Status status, String statusMessage) {
         try {
             TaskStatus taskStatus = new TaskStatus();
             taskStatus.setTaskId(taskId);
             taskStatus.setTaskGroup(taskGroup);
             taskStatus.setStatus(status);
             taskStatus.setStatusMessage(statusMessage);
-            statusProducer.add(taskStatus);
-        } catch (Exception e) {
+            producer.send(TASK_STATUS_TOPIC, MAPPER.writeValueAsString(taskStatus));
+        } catch (IOException e) {
             logger.error("Error adding task status {} to queue", status, e);
         }
     }
@@ -154,19 +195,21 @@ public class TaskExecutionService implements Service, Subscriber<Task> {
     @Override
     public void stop() {
         logger.info("Stopping task execution service");
-        taskTypeToExecutorMap.values().forEach(ThreadPoolExecutor::shutdown);
         try {
-            for (ThreadPoolExecutor threadPoolExecutor : taskTypeToExecutorMap.values()) {
-                threadPoolExecutor.awaitTermination(10, SECONDS);
-            }
+            scheduledExecutorService.shutdown();
+            scheduledExecutorService.awaitTermination(10, SECONDS);
+            executorService.shutdown();
+            executorService.awaitTermination(10, SECONDS);
         } catch (InterruptedException e) {
-            logger.error("Error stopping handler thread pool", e);
+            logger.error("Error stopping executor pool", e);
         }
-        if (taskConsumer != null) {
-            taskConsumer.close();
+
+        if (consumer != null) {
+            consumer.close();
         }
-        if (statusProducer != null) {
-            statusProducer.close();
+
+        if (producer != null) {
+            producer.close();
         }
     }
 }

@@ -57,11 +57,11 @@ class TaskProvider {
 
     private void init() {
         logger.info("Initializing task provider from task store");
-        final List<Task> tasks = taskStore.load(Arrays.asList(CREATED, WAITING, SUBMITTED, RUNNING));
+        final List<Task> tasks = taskStore.load(Arrays.asList(CREATED, WAITING, SCHEDULED, SUBMITTED, RUNNING));
         if (tasks != null && !tasks.isEmpty()) {
             tasks.sort(Comparator.comparing(Task::getCreatedAt));
             tasks.forEach(this::addToGraph);
-            tasks.forEach(this::resolveAndUpdateDependency);
+            tasks.forEach(this::resolve);
         }
     }
 
@@ -100,7 +100,7 @@ class TaskProvider {
      * @param task
      * @return false when dependant tasks are in failed state or not found, true otherwise
      */
-    boolean resolveAndUpdateDependency(Task task) {
+    boolean resolve(Task task) {
         final List<TaskDependencyInfo> dependencyInfoList = task.getDependsOn();
         if (dependencyInfoList != null) {
             List<Task> dependentTasks = new ArrayList<>();
@@ -204,7 +204,7 @@ class TaskProvider {
     }
 
     synchronized List<Task> getActiveTasks() {
-        return getTasks(Arrays.asList(SUBMITTED, RUNNING));
+        return getTasks(Arrays.asList(SCHEDULED, SUBMITTED, RUNNING));
     }
 
     synchronized List<Task> getDependentTasks(Task task) {

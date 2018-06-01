@@ -17,7 +17,6 @@
 
 package com.cognitree.kronos.queue.producer;
 
-import com.cognitree.kronos.model.Task;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -27,31 +26,32 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 
-public class KafkaTaskProducer implements Producer<Task> {
-    private static final Logger logger = LoggerFactory.getLogger(KafkaTaskProducer.class);
+public class KafkaProducerImpl implements Producer {
+    private static final Logger logger = LoggerFactory.getLogger(KafkaProducerImpl.class);
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private KafkaProducer<String, String> kafkaProducer;
 
-    public KafkaTaskProducer(ObjectNode config) {
+    public void init(ObjectNode config) {
+        logger.info("Initializing producer for kafka with config {}", config);
         Properties producerConfig = OBJECT_MAPPER.convertValue(config.get("producerConfig"), Properties.class);
         kafkaProducer = new KafkaProducer<>(producerConfig);
     }
 
-    public void add(Task task) throws Exception {
-        logger.info("Received request to add task {} to queue", task);
-        ProducerRecord<String, String> record =
-                new ProducerRecord<>(task.getType(), task.getGroup(), OBJECT_MAPPER.writeValueAsString(task));
-        kafkaProducer.send(record, (metadata, exception) -> {
+    @Override
+    public void send(String topic, String record) {
+        logger.trace("Received request to send message {} to topic {}.", record, topic);
+        ProducerRecord<String, String> producerRecord =
+                new ProducerRecord<>(topic, record);
+        kafkaProducer.send(producerRecord, (metadata, exception) -> {
             if (exception != null) {
-                logger.error("Error sending task {} over kafka", task, exception);
+                logger.error("Error sending record {} over kafka to topic {}.", record, topic, exception);
             }
         });
     }
 
     @Override
     public void close() {
-        // do nothing
     }
 }

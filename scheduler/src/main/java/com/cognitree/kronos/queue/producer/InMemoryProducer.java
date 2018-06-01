@@ -17,27 +17,22 @@
 
 package com.cognitree.kronos.queue.producer;
 
-import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.queue.InMemoryQueueFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.LinkedBlockingQueue;
+public class InMemoryProducer implements Producer {
+    private static final Logger logger = LoggerFactory.getLogger(InMemoryProducer.class);
 
-public class InMemoryTaskProducer implements Producer<Task> {
-    private static final Logger logger = LoggerFactory.getLogger(InMemoryTaskProducer.class);
-
-    private final LinkedBlockingQueue<Task> buffer;
-
-    public InMemoryTaskProducer(ObjectNode config) {
-        buffer = InMemoryQueueFactory.getBuffer(Task.class);
+    public void init(ObjectNode config) {
+        logger.info("Initializing producer for in-memory queue with config", config);
     }
 
     @Override
-    public void add(Task task) {
-        logger.debug("Received request to add task {} to queue", task);
-        buffer.add(task);
+    public void send(String topic, String record) {
+        logger.trace("Received request to send message {} on topic {}", record, topic);
+        InMemoryQueueFactory.getQueue(topic).add(record);
     }
 
     @Override

@@ -63,26 +63,16 @@ public class ApplicationConfig {
     private Map<String, TimeoutPolicyConfig> timeoutPolicyConfig;
 
     /**
-     * {@link Producer} configuration, used by the framework to instantiate the task producer to be used for adding
-     * tasks to queue.
+     * {@link Producer} configuration, used by the framework to instantiate the producer to be used for communication
+     * between scheduler and executor.
      */
-    private ProducerConfig taskProducerConfig;
-    /**
-     * {@link Consumer} configuration, used by the framework to instantiate the task consumer to be used for getting
-     * tasks from queue.
-     */
-    private ConsumerConfig taskConsumerConfig;
+    private ProducerConfig producerConfig;
 
     /**
-     * {@link Producer} configuration, used by the framework to instantiate the task status producer to be used for adding
-     * tasks status to queue.
+     * {@link Consumer} configuration, used by the framework to instantiate the consumer to be used for communication
+     * between scheduler and executor.
      */
-    private ProducerConfig taskStatusProducerConfig;
-    /**
-     * {@link Consumer} configuration, used by the framework to instantiate the task status consumer to be used for getting
-     * tasks status from queue.
-     */
-    private ConsumerConfig taskStatusConsumerConfig;
+    private ConsumerConfig consumerConfig;
 
     /**
      * {@link TaskStore} configuration, used by the framework to instantiate the task store to be used for storing
@@ -128,36 +118,20 @@ public class ApplicationConfig {
         this.timeoutPolicyConfig = timeoutPolicyConfig;
     }
 
-    public ProducerConfig getTaskProducerConfig() {
-        return taskProducerConfig;
+    public ProducerConfig getProducerConfig() {
+        return producerConfig;
     }
 
-    public void setTaskProducerConfig(ProducerConfig taskProducerConfig) {
-        this.taskProducerConfig = taskProducerConfig;
+    public void setProducerConfig(ProducerConfig producerConfig) {
+        this.producerConfig = producerConfig;
     }
 
-    public ConsumerConfig getTaskConsumerConfig() {
-        return taskConsumerConfig;
+    public ConsumerConfig getConsumerConfig() {
+        return consumerConfig;
     }
 
-    public void setTaskConsumerConfig(ConsumerConfig taskConsumerConfig) {
-        this.taskConsumerConfig = taskConsumerConfig;
-    }
-
-    public ProducerConfig getTaskStatusProducerConfig() {
-        return taskStatusProducerConfig;
-    }
-
-    public void setTaskStatusProducerConfig(ProducerConfig taskStatusProducerConfig) {
-        this.taskStatusProducerConfig = taskStatusProducerConfig;
-    }
-
-    public ConsumerConfig getTaskStatusConsumerConfig() {
-        return taskStatusConsumerConfig;
-    }
-
-    public void setTaskStatusConsumerConfig(ConsumerConfig taskStatusConsumerConfig) {
-        this.taskStatusConsumerConfig = taskStatusConsumerConfig;
+    public void setConsumerConfig(ConsumerConfig consumerConfig) {
+        this.consumerConfig = consumerConfig;
     }
 
     public TaskStoreConfig getTaskStoreConfig() {
@@ -184,10 +158,8 @@ public class ApplicationConfig {
         return Objects.equals(readerConfig, that.readerConfig) &&
                 Objects.equals(handlerConfig, that.handlerConfig) &&
                 Objects.equals(timeoutPolicyConfig, that.timeoutPolicyConfig) &&
-                Objects.equals(taskProducerConfig, that.taskProducerConfig) &&
-                Objects.equals(taskConsumerConfig, that.taskConsumerConfig) &&
-                Objects.equals(taskStatusProducerConfig, that.taskStatusProducerConfig) &&
-                Objects.equals(taskStatusConsumerConfig, that.taskStatusConsumerConfig) &&
+                Objects.equals(producerConfig, that.producerConfig) &&
+                Objects.equals(consumerConfig, that.consumerConfig) &&
                 Objects.equals(taskStoreConfig, that.taskStoreConfig) &&
                 Objects.equals(taskPurgeInterval, that.taskPurgeInterval);
     }
@@ -195,8 +167,8 @@ public class ApplicationConfig {
     @Override
     public int hashCode() {
 
-        return Objects.hash(readerConfig, handlerConfig, timeoutPolicyConfig, taskProducerConfig, taskConsumerConfig,
-                taskStatusProducerConfig, taskStatusConsumerConfig, taskStoreConfig, taskPurgeInterval);
+        return Objects.hash(readerConfig, handlerConfig, timeoutPolicyConfig, producerConfig,
+                consumerConfig, taskStoreConfig, taskPurgeInterval);
     }
 
     @Override
@@ -205,10 +177,8 @@ public class ApplicationConfig {
                 "readerConfig=" + readerConfig +
                 ", handlerConfig=" + handlerConfig +
                 ", timeoutPolicyConfig=" + timeoutPolicyConfig +
-                ", taskProducerConfig=" + taskProducerConfig +
-                ", taskConsumerConfig=" + taskConsumerConfig +
-                ", taskStatusProducerConfig=" + taskStatusProducerConfig +
-                ", taskStatusConsumerConfig=" + taskStatusConsumerConfig +
+                ", producerConfig=" + producerConfig +
+                ", consumerConfig=" + consumerConfig +
                 ", taskStoreConfig='" + taskStoreConfig + '\'' +
                 ", taskPurgeInterval='" + taskPurgeInterval + '\'' +
                 '}';

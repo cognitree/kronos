@@ -20,7 +20,6 @@ package com.cognitree.kronos.model;
 import com.cognitree.kronos.executor.TaskExecutionService;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.scheduler.TaskSchedulerService;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Objects;
 

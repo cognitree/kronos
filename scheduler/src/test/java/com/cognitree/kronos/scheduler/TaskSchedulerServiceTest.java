@@ -41,7 +41,7 @@ import static com.cognitree.kronos.model.TaskDependencyInfo.Mode.all;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
 @FixMethodOrder(MethodSorters.JVM)
-public class SchedulerServiceTest extends ApplicationTest {
+public class TaskSchedulerServiceTest extends ApplicationTest {
 
     @Test
     public void testSchedulerInitialization() {
@@ -186,7 +186,6 @@ public class SchedulerServiceTest extends ApplicationTest {
         waitForTaskToFinishExecution(500);
         // All tasks should be removed as they have reached the final state
         ServiceProvider.getTaskSchedulerService().deleteStaleTasks();
-        System.out.println(taskProvider.toString());
         Assert.assertEquals(5, taskProvider.size());
     }
 }

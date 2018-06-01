@@ -77,7 +77,7 @@ public class ShellCommandHandler implements TaskHandler {
                 int exitValue = process.waitFor();
                 logger.info("Process exited with code {} for command {}", exitValue, cmdWithArgs);
                 if (exitValue != 0) {
-                    throw new HandlerException("process exited with code " + exitValue);
+                    throw new HandlerException("process exited with error code " + exitValue);
                 }
             } catch (Exception e) {
                 logger.error("Error executing command {}", cmdWithArgs, e);

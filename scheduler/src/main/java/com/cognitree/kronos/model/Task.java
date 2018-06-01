@@ -193,12 +193,16 @@ public class Task {
         if (this == o) return true;
         if (!(o instanceof Task)) return false;
         Task task = (Task) o;
-        return Objects.equals(id, task.id);
+        return Objects.equals(id, task.id) &&
+                Objects.equals(name, task.name) &&
+                Objects.equals(group, task.group) &&
+                Objects.equals(type, task.type) &&
+                Objects.equals(dependsOn, task.dependsOn);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(id, name, group, type, dependsOn);
     }
 
     @Override
@@ -221,6 +225,6 @@ public class Task {
     }
 
     public enum Status {
-        CREATED, WAITING, SUBMITTED, RUNNING, SUCCESSFUL, FAILED;
+        CREATED, WAITING, SCHEDULED, SUBMITTED, RUNNING, SUCCESSFUL, FAILED;
     }
 }
