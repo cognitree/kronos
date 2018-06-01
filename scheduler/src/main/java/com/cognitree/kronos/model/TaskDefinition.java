@@ -76,7 +76,7 @@ public class TaskDefinition {
     private Map<String, Object> additionalProperties = new HashMap<>();
 
     public String getId() {
-        return getGroup() + ":" + getType() + ":" + getName();
+        return getGroup() + ":" + getName() + ":" + getType();
     }
 
     public String getName() {

@@ -2,6 +2,7 @@ package com.cognitree.kronos;
 
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
+import com.cognitree.kronos.model.TaskDefinition;
 import com.cognitree.kronos.model.TaskDependencyInfo;
 
 import java.util.*;
@@ -18,7 +19,15 @@ public class TestUtil {
         return dependencyInfo1;
     }
 
-    public static void waitForTaskToFinishExecution(long timeInMillis) {
+    public static TaskDefinition createTaskDefinition(String type, String name, String schedule) {
+        TaskDefinition taskDefinition = new TaskDefinition();
+        taskDefinition.setType(type);
+        taskDefinition.setName(name);
+        taskDefinition.setSchedule(schedule);
+        return taskDefinition;
+    }
+
+    public static void sleep(long timeInMillis) {
         try {
             Thread.sleep(timeInMillis);
         } catch (InterruptedException e) {

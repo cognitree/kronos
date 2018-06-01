@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 import static com.cognitree.kronos.TestUtil.prepareDependencyInfo;
-import static com.cognitree.kronos.TestUtil.waitForTaskToFinishExecution;
+import static com.cognitree.kronos.TestUtil.sleep;
 import static com.cognitree.kronos.model.FailureMessage.FAILED_TO_RESOLVE_DEPENDENCY;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
@@ -30,19 +30,19 @@ public class TaskDependencyTest extends ApplicationTest {
         Task taskOne = TestUtil.getTaskBuilder().setName("taskOne").setType("test").build();
         ServiceProvider.getTaskSchedulerService().schedule(taskOne);
         Assert.assertEquals(6, taskProvider.size());
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
 
         Task taskTwo = TestUtil.getTaskBuilder().setName("taskTwo").setType("test").build();
         ServiceProvider.getTaskSchedulerService().schedule(taskTwo);
         Assert.assertEquals(7, taskProvider.size());
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskTwo.getStatus());
 
         Task taskThree = TestUtil.getTaskBuilder().setName("taskThree").setType("test").build();
         ServiceProvider.getTaskSchedulerService().schedule(taskThree);
         Assert.assertEquals(8, taskProvider.size());
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskThree.getStatus());
     }
 
@@ -58,7 +58,7 @@ public class TaskDependencyTest extends ApplicationTest {
 
         ServiceProvider.getTaskSchedulerService().schedule(taskOne);
         ServiceProvider.getTaskSchedulerService().schedule(taskThree);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
         Assert.assertEquals(FAILED, taskThree.getStatus());
     }
@@ -69,25 +69,25 @@ public class TaskDependencyTest extends ApplicationTest {
         Task taskOneGroupOne = TestUtil.getTaskBuilder().setName("taskOne").setGroup("groupOne").setType("test")
                 .setCreatedAt(createdAt).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskOneGroupOne);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskOneGroupOne.getStatus());
 
         Task taskOneGroupTwo = TestUtil.getTaskBuilder().setName("taskOne").setGroup("groupTwo").shouldPass(false)
                 .setType("test").setCreatedAt(createdAt).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskOneGroupTwo);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(FAILED, taskOneGroupTwo.getStatus());
 
         Task taskTwoGroupOne = TestUtil.getTaskBuilder().setName("taskTwo").setGroup("groupOne").setType("test")
                 .setCreatedAt(createdAt + 1).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskTwoGroupOne);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskTwoGroupOne.getStatus());
 
         Task taskTwoGroupTwo = TestUtil.getTaskBuilder().setName("taskTwo").setGroup("groupTwo").setType("test")
                 .setCreatedAt(createdAt + 1).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskTwoGroupTwo);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskTwoGroupTwo.getStatus());
 
         List<TaskDependencyInfo> dependencyInfos = new ArrayList<>();
@@ -97,13 +97,13 @@ public class TaskDependencyTest extends ApplicationTest {
         Task taskThreeGroupOne = TestUtil.getTaskBuilder().setName("taskThree").setGroup("groupOne").setType("test")
                 .setDependsOn(dependencyInfos).setCreatedAt(createdAt + 5).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskThreeGroupOne);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskThreeGroupOne.getStatus());
 
         Task taskThreeGroupTwo = TestUtil.getTaskBuilder().setName("taskThree").setGroup("groupTwo").setType("test")
                 .setDependsOn(dependencyInfos).setCreatedAt(createdAt + 5).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskThreeGroupTwo);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(FAILED, taskThreeGroupTwo.getStatus());
         Assert.assertEquals(FAILED_TO_RESOLVE_DEPENDENCY, taskThreeGroupTwo.getStatusMessage());
     }
@@ -124,7 +124,7 @@ public class TaskDependencyTest extends ApplicationTest {
 
         Task taskTwoB = TestUtil.getTaskBuilder().setName("taskTwo").setType("test").setCreatedAt(createdAt).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskTwoB);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
 
         final TaskDependencyInfo taskOneDependencyInfo = prepareDependencyInfo("taskOne", all, "1h");
         final TaskDependencyInfo taskTwoDependencyInfo = prepareDependencyInfo("taskTwo", all, "1h");
@@ -154,7 +154,7 @@ public class TaskDependencyTest extends ApplicationTest {
         ServiceProvider.getTaskSchedulerService().schedule(taskOne);
         ServiceProvider.getTaskSchedulerService().schedule(taskTwo);
         ServiceProvider.getTaskSchedulerService().schedule(taskThree);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
         Assert.assertEquals(SUCCESSFUL, taskTwo.getStatus());
         Assert.assertEquals(SUCCESSFUL, taskThree.getStatus());
@@ -174,7 +174,7 @@ public class TaskDependencyTest extends ApplicationTest {
         ServiceProvider.getTaskSchedulerService().schedule(taskOne);
         ServiceProvider.getTaskSchedulerService().schedule(taskTwo);
         ServiceProvider.getTaskSchedulerService().schedule(taskThree);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
         Assert.assertEquals(FAILED, taskTwo.getStatus());
         Assert.assertEquals(FAILED, taskThree.getStatus());
@@ -187,35 +187,35 @@ public class TaskDependencyTest extends ApplicationTest {
         Task taskOneA = TestUtil.getTaskBuilder().setName("taskOne").setType("test").shouldPass(false)
                 .setCreatedAt(createdAt).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskOneA);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(FAILED, taskOneA.getStatus());
 
         Task taskOneB = TestUtil.getTaskBuilder().setName("taskOne").setType("test").shouldPass(false)
                 .setCreatedAt(createdAt + 1).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskOneB);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(FAILED, taskOneB.getStatus());
 
         Task taskOneC = TestUtil.getTaskBuilder().setName("taskOne").setType("test").setCreatedAt(createdAt + 2).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskOneC);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskOneC.getStatus());
 
         Task taskTwoA = TestUtil.getTaskBuilder().setName("taskTwo").setType("test").shouldPass(false)
                 .setCreatedAt(createdAt).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskTwoA);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(FAILED, taskTwoA.getStatus());
 
         Task taskTwoB = TestUtil.getTaskBuilder().setName("taskTwo").setType("test").shouldPass(false)
                 .setCreatedAt(createdAt + 1).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskTwoB);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(FAILED, taskTwoB.getStatus());
 
         Task taskTwoC = TestUtil.getTaskBuilder().setName("taskTwo").setType("test").setCreatedAt(createdAt + 2).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskTwoC);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskTwoC.getStatus());
 
         List<TaskDependencyInfo> dependencyInfos = new ArrayList<>();
@@ -224,7 +224,7 @@ public class TaskDependencyTest extends ApplicationTest {
         Task taskThree = TestUtil.getTaskBuilder().setName("taskThree").setType("test").setDependsOn(dependencyInfos)
                 .setCreatedAt(createdAt + 5).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskThree);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskThree.getStatus());
     }
 
@@ -233,34 +233,34 @@ public class TaskDependencyTest extends ApplicationTest {
         final long createdAt = System.currentTimeMillis();
         Task taskOneA = TestUtil.getTaskBuilder().setName("taskOne").setType("test").setCreatedAt(createdAt).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskOneA);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskOneA.getStatus());
 
         Task taskOneB = TestUtil.getTaskBuilder().setName("taskOne").setType("test").setCreatedAt(createdAt + 1).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskOneB);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskOneB.getStatus());
 
         Task taskOneC = TestUtil.getTaskBuilder().setName("taskOne").setType("test").shouldPass(false)
                 .setCreatedAt(createdAt + 2).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskOneC);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(FAILED, taskOneC.getStatus());
 
         Task taskTwoA = TestUtil.getTaskBuilder().setName("taskTwo").setType("test").setCreatedAt(createdAt).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskTwoA);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskTwoA.getStatus());
 
         Task taskTwoB = TestUtil.getTaskBuilder().setName("taskTwo").setType("test").setCreatedAt(createdAt + 1).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskTwoB);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskTwoB.getStatus());
 
         Task taskTwoC = TestUtil.getTaskBuilder().setName("taskTwo").setType("test").shouldPass(false)
                 .setCreatedAt(createdAt + 2).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskTwoC);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(FAILED, taskTwoC.getStatus());
 
         List<TaskDependencyInfo> dependencyInfos = new ArrayList<>();
@@ -269,7 +269,7 @@ public class TaskDependencyTest extends ApplicationTest {
         Task taskThree = TestUtil.getTaskBuilder().setName("taskThree").setType("test").setDependsOn(dependencyInfos)
                 .setCreatedAt(createdAt + 5).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskThree);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(FAILED, taskThree.getStatus());
         Assert.assertEquals(FAILED_TO_RESOLVE_DEPENDENCY, taskThree.getStatusMessage());
     }
@@ -279,36 +279,36 @@ public class TaskDependencyTest extends ApplicationTest {
         final long createdAt = System.currentTimeMillis();
         Task taskOneA = TestUtil.getTaskBuilder().setName("taskOne").setType("test").setCreatedAt(createdAt).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskOneA);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskOneA.getStatus());
 
         Task taskOneB = TestUtil.getTaskBuilder().setName("taskOne").setType("test").shouldPass(false)
                 .setCreatedAt(createdAt + 1).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskOneB);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(FAILED, taskOneB.getStatus());
 
         Task taskOneC = TestUtil.getTaskBuilder().setName("taskOne").setType("test").shouldPass(false)
                 .setCreatedAt(createdAt + 2).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskOneC);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(FAILED, taskOneC.getStatus());
 
         Task taskTwoA = TestUtil.getTaskBuilder().setName("taskTwo").setType("test").setCreatedAt(createdAt + 1).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskTwoA);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskTwoA.getStatus());
 
         Task taskTwoB = TestUtil.getTaskBuilder().setName("taskTwo").setType("test").shouldPass(false)
                 .setCreatedAt(createdAt + 1).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskTwoB);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(FAILED, taskTwoB.getStatus());
 
         Task taskTwoC = TestUtil.getTaskBuilder().setName("taskTwo").setType("test").shouldPass(false)
                 .setCreatedAt(createdAt + 2).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskTwoC);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(FAILED, taskTwoC.getStatus());
 
         List<TaskDependencyInfo> dependencyInfos = new ArrayList<>();
@@ -318,7 +318,7 @@ public class TaskDependencyTest extends ApplicationTest {
                 .setCreatedAt(createdAt + 5).build();
 
         ServiceProvider.getTaskSchedulerService().schedule(taskThree);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskThree.getStatus());
     }
 
@@ -328,33 +328,33 @@ public class TaskDependencyTest extends ApplicationTest {
         Task taskOneA = TestUtil.getTaskBuilder().setName("taskOne").setType("test").shouldPass(false)
                 .setCreatedAt(createdAt).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskOneA);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(FAILED, taskOneA.getStatus());
 
         Task taskOneB = TestUtil.getTaskBuilder().setName("taskOne").setType("test").setCreatedAt(createdAt + 1).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskOneB);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskOneB.getStatus());
 
         Task taskOneC = TestUtil.getTaskBuilder().setName("taskOne").setType("test").setCreatedAt(createdAt + 2).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskOneC);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskOneC.getStatus());
 
         Task taskTwoA = TestUtil.getTaskBuilder().setName("taskTwo").setType("test").shouldPass(false)
                 .setCreatedAt(createdAt).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskTwoA);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(FAILED, taskTwoA.getStatus());
 
         Task taskTwoB = TestUtil.getTaskBuilder().setName("taskTwo").setType("test").setCreatedAt(createdAt + 1).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskTwoB);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskTwoB.getStatus());
 
         Task taskTwoC = TestUtil.getTaskBuilder().setName("taskTwo").setType("test").setCreatedAt(createdAt + 2).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskTwoC);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskTwoC.getStatus());
 
         List<TaskDependencyInfo> dependencyInfos = new ArrayList<>();
@@ -363,7 +363,7 @@ public class TaskDependencyTest extends ApplicationTest {
         Task taskThree = TestUtil.getTaskBuilder().setName("taskThree").setType("test").setDependsOn(dependencyInfos)
                 .setCreatedAt(createdAt + 5).build();
         ServiceProvider.getTaskSchedulerService().schedule(taskThree);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(FAILED, taskThree.getStatus());
         Assert.assertEquals(FAILED_TO_RESOLVE_DEPENDENCY, taskThree.getStatusMessage());
     }

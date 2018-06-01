@@ -28,7 +28,7 @@ public class TaskExecutorServiceTest extends ApplicationTest {
         ServiceProvider.getTaskSchedulerService().schedule(taskFour);
         Task taskFive = TestUtil.getTaskBuilder().setName("taskFive").waitForCallback(true).setType("test").build();
         ServiceProvider.getTaskSchedulerService().schedule(taskFive);
-        TestUtil.waitForTaskToFinishExecution(1000);
+        TestUtil.sleep(1000);
         // TODO what to check here status can be running or submitted depending on executor
         Assert.assertEquals(RUNNING, taskOne.getStatus());
         Assert.assertEquals(RUNNING, taskTwo.getStatus());
@@ -36,14 +36,14 @@ public class TaskExecutorServiceTest extends ApplicationTest {
         Assert.assertEquals(RUNNING, taskFour.getStatus());
         Assert.assertEquals(SCHEDULED, taskFive.getStatus());
         TestTaskHandler.finishExecution(taskOne.getId());
-        TestUtil.waitForTaskToFinishExecution(500);
+        TestUtil.sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
         Assert.assertEquals(RUNNING, taskFive.getStatus());
         TestTaskHandler.finishExecution(taskTwo.getId());
         TestTaskHandler.finishExecution(taskThree.getId());
         TestTaskHandler.finishExecution(taskFour.getId());
         TestTaskHandler.finishExecution(taskFive.getId());
-        TestUtil.waitForTaskToFinishExecution(500);
+        TestUtil.sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskTwo.getStatus());
         Assert.assertEquals(SUCCESSFUL, taskThree.getStatus());
         Assert.assertEquals(SUCCESSFUL, taskFour.getStatus());
@@ -62,7 +62,7 @@ public class TaskExecutorServiceTest extends ApplicationTest {
         ServiceProvider.getTaskSchedulerService().schedule(taskFour);
         Task taskFive = TestUtil.getTaskBuilder().setName("taskFive").setType("typeB").build();
         ServiceProvider.getTaskSchedulerService().schedule(taskFive);
-        TestUtil.waitForTaskToFinishExecution(2000);
+        TestUtil.sleep(2000);
         Assert.assertTrue(TypeATaskHandler.isHandled(taskOne.getId()));
         Assert.assertFalse(TypeBTaskHandler.isHandled(taskOne.getId()));
         Assert.assertTrue(TypeBTaskHandler.isHandled(taskTwo.getId()));

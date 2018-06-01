@@ -105,4 +105,9 @@ public final class TaskReaderService implements Service {
             logger.error("Error stopping task reader service...", e);
         }
     }
+
+    // used in junit
+    public Scheduler getScheduler() {
+        return scheduler;
+    }
 }

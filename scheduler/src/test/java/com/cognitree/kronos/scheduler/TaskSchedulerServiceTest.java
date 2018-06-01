@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.cognitree.kronos.TestUtil.prepareDependencyInfo;
-import static com.cognitree.kronos.TestUtil.waitForTaskToFinishExecution;
+import static com.cognitree.kronos.TestUtil.sleep;
 import static com.cognitree.kronos.model.FailureMessage.FAILED_TO_RESOLVE_DEPENDENCY;
 import static com.cognitree.kronos.model.FailureMessage.TIMED_OUT;
 import static com.cognitree.kronos.model.Task.Status.*;
@@ -49,14 +49,14 @@ public class TaskSchedulerServiceTest extends ApplicationTest {
         Assert.assertEquals(FAILED, MockTaskStore.getTask("mockTaskOne-B").getStatus());
         Assert.assertEquals(TIMED_OUT, MockTaskStore.getTask("mockTaskOne-B").getStatusMessage());
 
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         final Task mockTaskTwo = MockTaskStore.getTask("mockTaskTwo");
         Assert.assertEquals(SUCCESSFUL, mockTaskTwo.getStatus());
         final Task mockTaskThree = MockTaskStore.getTask("mockTaskThree");
         Assert.assertEquals(FAILED, mockTaskThree.getStatus());
         Assert.assertEquals(FAILED_TO_RESOLVE_DEPENDENCY, mockTaskThree.getStatusMessage());
         final Task mockTaskFour = MockTaskStore.getTask("mockTaskFour");
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, mockTaskFour.getStatus());
     }
 
@@ -65,7 +65,7 @@ public class TaskSchedulerServiceTest extends ApplicationTest {
         Task taskOne = TestUtil.getTaskBuilder().setName("taskOne").setType("test").build();
         ServiceProvider.getTaskSchedulerService().schedule(taskOne);
         Assert.assertEquals(6, taskProvider.size());
-        waitForTaskToFinishExecution(1000);
+        sleep(1000);
         Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
     }
 
@@ -75,7 +75,7 @@ public class TaskSchedulerServiceTest extends ApplicationTest {
         ServiceProvider.getTaskSchedulerService().schedule(taskOne);
         ServiceProvider.getTaskSchedulerService().schedule(taskOne);
         Assert.assertEquals(6, taskProvider.size());
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
     }
 
@@ -93,24 +93,24 @@ public class TaskSchedulerServiceTest extends ApplicationTest {
 
         ServiceProvider.getTaskSchedulerService().schedule(taskOne);
         Assert.assertTrue(taskProvider.isReadyForExecution(taskOne));
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         ServiceProvider.getTaskSchedulerService().schedule(taskTwo);
         Assert.assertTrue(taskProvider.isReadyForExecution((taskTwo)));
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         ServiceProvider.getTaskSchedulerService().schedule(taskThree);
         Assert.assertEquals(RUNNING, taskTwo.getStatus());
         Assert.assertEquals(WAITING, taskThree.getStatus());
         Assert.assertFalse(taskProvider.isReadyForExecution(taskThree));
         // inform handler to finish execution of taskTwo
         TestTaskHandler.finishExecution(taskTwo.getId());
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskTwo.getStatus());
 
         Assert.assertTrue(taskProvider.isReadyForExecution(taskThree));
         Assert.assertEquals(RUNNING, taskThree.getStatus());
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         TestTaskHandler.finishExecution(taskThree.getId());
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskThree.getStatus());
     }
 
@@ -128,9 +128,9 @@ public class TaskSchedulerServiceTest extends ApplicationTest {
         ServiceProvider.getTaskSchedulerService().schedule(taskOne);
         ServiceProvider.getTaskSchedulerService().schedule(taskTwo);
         ServiceProvider.getTaskSchedulerService().schedule(taskThree);
-        waitForTaskToFinishExecution(1000);
+        sleep(1000);
         Assert.assertEquals(RUNNING, taskOne.getStatus());
-        waitForTaskToFinishExecution(5000);
+        sleep(5000);
         TestTaskHandler.finishExecution(taskOne.getId());
         Assert.assertEquals(FAILED, taskOne.getStatus());
         Assert.assertEquals(TIMED_OUT, taskOne.getStatusMessage());
@@ -147,7 +147,7 @@ public class TaskSchedulerServiceTest extends ApplicationTest {
         Task independentTask = TestUtil.getTaskBuilder().setName("independentTask").setType("test")
                 .waitForCallback(true).setCreatedAt(createdAt).build();
         ServiceProvider.getTaskSchedulerService().schedule(independentTask);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
 
         Task taskOne = TestUtil.getTaskBuilder().setName("taskOne").setType("test").waitForCallback(true)
                 .setCreatedAt(createdAt).build();
@@ -166,24 +166,24 @@ public class TaskSchedulerServiceTest extends ApplicationTest {
         ServiceProvider.getTaskSchedulerService().schedule(taskTwo);
         ServiceProvider.getTaskSchedulerService().schedule(taskThree);
         ServiceProvider.getTaskSchedulerService().schedule(taskFour);
-        waitForTaskToFinishExecution(500);
+        sleep(500);
 
         Assert.assertEquals(10, taskProvider.size());
         ServiceProvider.getTaskSchedulerService().deleteStaleTasks();
         // no task should be purged as they are all in RUNNING state
         Assert.assertEquals(10, taskProvider.size());
         TestTaskHandler.finishExecution(independentTask.getId());
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         ServiceProvider.getTaskSchedulerService().deleteStaleTasks();
         Assert.assertEquals(9, taskProvider.size());
         TestTaskHandler.finishExecution(taskOne.getId());
         TestTaskHandler.finishExecution(taskTwo.getId());
         TestTaskHandler.finishExecution(taskThree.getId());
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         ServiceProvider.getTaskSchedulerService().deleteStaleTasks();
         Assert.assertEquals(9, taskProvider.size());
         TestTaskHandler.finishExecution(taskFour.getId());
-        waitForTaskToFinishExecution(500);
+        sleep(500);
         // All tasks should be removed as they have reached the final state
         ServiceProvider.getTaskSchedulerService().deleteStaleTasks();
         Assert.assertEquals(5, taskProvider.size());
