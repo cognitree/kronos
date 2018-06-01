@@ -58,7 +58,8 @@ public class MockTaskStore implements TaskStore {
     }
 
     @Override
-    public void update(Task task) {
+    public void update(String taskId, String taskGroup, Status status, String statusMessage,
+                       long submittedAt, long completedAt) {
 
     }
 
