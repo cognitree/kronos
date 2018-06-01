@@ -1,6 +1,7 @@
 package com.cognitree.kronos.store;
 
 import com.cognitree.kronos.model.Task;
+import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskDependencyInfo;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -112,19 +113,24 @@ public class SQLiteTaskStore implements TaskStore {
     }
 
     @Override
-    public void update(Task task) {
-        logger.debug("Received request to update task {}", task);
+    public void update(String taskId, String taskGroup, Status status, String statusMessage,
+                       long submittedAt, long completedAt) {
+        logger.debug("Received request to update task properties id {}, group {}, status {}, status message {}, " +
+                        "submitted at {}, completed at {}",
+                taskId, taskGroup, status, statusMessage, submittedAt, completedAt);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_TASK)) {
             int paramIndex = 0;
-            preparedStatement.setString(++paramIndex, task.getStatus().name());
-            preparedStatement.setString(++paramIndex, task.getStatusMessage());
-            preparedStatement.setLong(++paramIndex, task.getSubmittedAt());
-            preparedStatement.setLong(++paramIndex, task.getCompletedAt());
-            preparedStatement.setString(++paramIndex, task.getId());
+            preparedStatement.setString(++paramIndex, status.name());
+            preparedStatement.setString(++paramIndex, statusMessage);
+            preparedStatement.setLong(++paramIndex, submittedAt);
+            preparedStatement.setLong(++paramIndex, completedAt);
+            preparedStatement.setString(++paramIndex, taskId);
             preparedStatement.execute();
         } catch (Exception e) {
-            logger.error("error updating task {} into database", task, e);
+            logger.error("error updating task properties id {}, group {}, status {}, status message {}, " +
+                            "submitted at {}, completed at {}",
+                    taskId, taskGroup, status, statusMessage, submittedAt, completedAt);
         }
     }
 
@@ -147,7 +153,7 @@ public class SQLiteTaskStore implements TaskStore {
     }
 
     @Override
-    public List<Task> load(List<Task.Status> statuses) {
+    public List<Task> load(List<Status> statuses) {
         logger.debug("Received request to get all tasks with status in {}", statuses);
         String placeHolders = String.join(",", Collections.nCopies(statuses.size(), "?"));
         final String sqlQuery = LOAD_TASK_BY_STATUS.replace("$statuses", placeHolders);
@@ -201,7 +207,7 @@ public class SQLiteTaskStore implements TaskStore {
         task.setTimeoutPolicy(resultSet.getString(++paramIndex));
         task.setDependsOn(MAPPER.readValue(resultSet.getString(++paramIndex), DEPENDENCY_INFO_LIST_TYPE_REF));
         task.setProperties(MAPPER.readValue(resultSet.getString(++paramIndex), PROPERTIES_TYPE_REF));
-        task.setStatus(Task.Status.valueOf(resultSet.getString(++paramIndex)));
+        task.setStatus(Status.valueOf(resultSet.getString(++paramIndex)));
         task.setStatusMessage(resultSet.getString(++paramIndex));
         task.setCreatedAt(resultSet.getLong(++paramIndex));
         task.setSubmittedAt(resultSet.getLong(++paramIndex));

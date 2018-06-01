@@ -318,8 +318,7 @@ public final class TaskSchedulerService implements Service {
                 scheduleReadyTasks();
                 break;
         }
-        // TODO task store is being used by both provider and scheduler service
-        taskStore.update(task);
+        taskProvider.update(task);
         statusChangeListeners.forEach(listener -> listener.statusChanged(task, currentStatus, status));
     }
 

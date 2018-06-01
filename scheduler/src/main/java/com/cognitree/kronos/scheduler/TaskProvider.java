@@ -237,6 +237,12 @@ class TaskProvider {
                 .allMatch(t -> t.getStatus().equals(SUCCESSFUL));
     }
 
+    void update(Task task) {
+        logger.debug("Received request to update task {}", task);
+        taskStore.update(task.getId(), task.getGroup(), task.getStatus(), task.getStatusMessage(),
+                task.getSubmittedAt(), task.getCompletedAt());
+    }
+
     /**
      * deletes all the old tasks from memory
      * task to delete is determined by {@link ApplicationConfig#taskPurgeInterval}

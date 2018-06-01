@@ -38,7 +38,7 @@ public interface TaskStore {
 
     void store(Task task);
 
-    void update(Task task);
+    void update(String taskId, String taskGroup, Status status, String statusMessage, long submittedAt, long completedAt);
 
     Task load(String taskId, String taskGroup);
 
