@@ -26,7 +26,7 @@ public class InMemoryProducer implements Producer {
     private static final Logger logger = LoggerFactory.getLogger(InMemoryProducer.class);
 
     public void init(ObjectNode config) {
-        logger.info("Initializing producer for in-memory queue with config", config);
+        logger.info("Initializing producer for in-memory queue with config {}", config);
     }
 
     @Override

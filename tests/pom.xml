@@ -18,13 +18,31 @@
             <groupId>com.cognitree.kronos</groupId>
             <artifactId>scheduler</artifactId>
             <version>1.0</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.cognitree.kronos</groupId>
             <artifactId>executor</artifactId>
             <version>1.0</version>
-            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.cognitree.kronos</groupId>
+            <artifactId>sqlite-store</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cognitree.kronos</groupId>
+            <artifactId>shell-handler</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cognitree.kronos</groupId>
+            <artifactId>file-reader</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cognitree.kronos</groupId>
+            <artifactId>kafka-message-bus</artifactId>
+            <version>1.0</version>
         </dependency>
     </dependencies>
 
