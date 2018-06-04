@@ -34,7 +34,7 @@ public class ConsumerConfig {
 
     /**
      * Configuration to be passed to consumer to instantiate itself.
-     * This will be passed as an arg to the constructor of {@link Consumer} at the time of instantiation
+     * This will be passed as an arg to {@link Consumer#init(ObjectNode)} at the time of instantiation
      */
     private ObjectNode config;
 

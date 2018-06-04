@@ -43,7 +43,8 @@ public final class TaskDefinitionReaderJob implements org.quartz.Job {
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
         final JobDataMap jobReaderDataMap = jobExecutionContext.getJobDetail().getJobDataMap();
-        final TaskDefinitionReader taskDefinitionReader = (TaskDefinitionReader) jobReaderDataMap.remove("taskDefinitionReader");
+        final TaskDefinitionReader taskDefinitionReader =
+                (TaskDefinitionReader) jobReaderDataMap.remove("taskDefinitionReader");
         try {
             final List<TaskDefinition> taskDefinitions = taskDefinitionReader.load();
             final String taskReaderGroup = getTaskReaderGroup(jobExecutionContext);
@@ -51,7 +52,6 @@ public final class TaskDefinitionReaderJob implements org.quartz.Job {
             for (TaskDefinition taskDefinition : taskDefinitions) {
                 taskDefinitionMap.put(new JobKey(taskDefinition.getId(), taskReaderGroup), taskDefinition);
             }
-
             updateScheduler(taskDefinitionMap, jobExecutionContext);
         } catch (Exception e) {
             logger.error("Error reading task definitions", e);
@@ -64,12 +64,9 @@ public final class TaskDefinitionReaderJob implements org.quartz.Job {
         final Scheduler scheduler = jobExecutionContext.getScheduler();
         Set<JobKey> currentlyScheduledTaskDefinitionKeys =
                 scheduler.getJobKeys(GroupMatcher.groupEquals(getTaskReaderGroup(jobExecutionContext)));
-        if (logger.isTraceEnabled()) {
-            logger.trace("currently scheduled task definitions: {}", currentlyScheduledTaskDefinitionKeys);
-        }
+        logger.trace("currently scheduled task definitions: {}", currentlyScheduledTaskDefinitionKeys);
 
         Set<JobKey> taskDefinitionsToAdd = new HashSet<>(taskDefinitionMap.keySet());
-
         // taskDefinitionsToAdd - jobs to add
         taskDefinitionsToAdd.removeAll(currentlyScheduledTaskDefinitionKeys);
         // taskDefinitionsToUpdate - jobs to update
@@ -78,6 +75,7 @@ public final class TaskDefinitionReaderJob implements org.quartz.Job {
         // taskDefinitionsToRemove - jobs to remove
         Set<JobKey> taskDefinitionsToRemove = new HashSet<>(currentlyScheduledTaskDefinitionKeys);
         taskDefinitionsToRemove.removeAll(taskDefinitionMap.keySet());
+
         if (!taskDefinitionsToAdd.isEmpty()) {
             logger.info("adding new task definitions {}", taskDefinitionsToAdd);
             // Add new jobs
@@ -124,7 +122,7 @@ public final class TaskDefinitionReaderJob implements org.quartz.Job {
 
             JobDataMap jobDataMap = new JobDataMap();
             jobDataMap.put("taskDefinition", taskDefinition);
-            JobDetail jobDetail = newJob(TaskDelegatorJob.class)
+            JobDetail jobDetail = newJob(TaskSchedulerJob.class)
                     .withIdentity(jobIdentifier, jobGroupIdentifier)
                     .usingJobData(jobDataMap)
                     .build();
@@ -145,15 +143,18 @@ public final class TaskDefinitionReaderJob implements org.quartz.Job {
     }
 
     /**
-     * a task delegator job is created per task definitions and on trigger creates actual {@link Task}
-     * from {@link TaskDefinition} and submits it to {@link TaskSchedulerService} for execution
+     * A task scheduler job is created per task definitions and is triggered as per the scheduled defined by
+     * {@link TaskDefinition#schedule}.
+     * <p>
+     * On trigger, It creates an instance of {@link Task} from {@link TaskDefinition} and schedules it to
+     * {@link TaskSchedulerService} for execution
      */
-    public static final class TaskDelegatorJob implements org.quartz.Job {
+    public static final class TaskSchedulerJob implements org.quartz.Job {
         @Override
         public void execute(JobExecutionContext jobExecutionContext) {
-            final JobDataMap jobHandlerDataMap = jobExecutionContext.getJobDetail().getJobDataMap();
-            logger.trace("received request to create task from data map {}", jobHandlerDataMap.getWrappedMap());
-            final TaskDefinition taskDefinition = (TaskDefinition) jobHandlerDataMap.get("taskDefinition");
+            final JobDataMap jobDataMap = jobExecutionContext.getJobDetail().getJobDataMap();
+            logger.trace("received request to create task from data map {}", jobDataMap.getWrappedMap());
+            final TaskDefinition taskDefinition = (TaskDefinition) jobDataMap.get("taskDefinition");
             ServiceProvider.getTaskSchedulerService().schedule(taskDefinition.createTask());
         }
     }

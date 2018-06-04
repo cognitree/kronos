@@ -47,10 +47,9 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * A task execution service is responsible for configuring/ initializing each {@link TaskHandler} and
- * periodically polling new tasks from task queue and submitting it to appropriate handler for execution
+ * periodically polling new tasks from queue and submitting it to appropriate handler for execution.
  * <p>
- * A task execution service acts as an consumer of tasks from task queue and producer of task status to the
- * task status queue
+ * A task execution service acts as an consumer of tasks from queue and producer of task status to the queue.
  * </p>
  */
 public class TaskExecutionService implements Service {
@@ -65,7 +64,7 @@ public class TaskExecutionService implements Service {
     private final Map<String, TaskHandler> taskTypeToHandlerMap = new HashMap<>();
     private final Map<String, Integer> taskTypeToMaxParallelTasksCount = new HashMap<>();
     private final Map<String, Integer> taskTypeToRunningTasksCount = new HashMap<>();
-    // used by internal tasks
+    // used by internal tasks like polling new tasks from queue
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
     // used to execute tasks
     private final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
@@ -144,7 +143,7 @@ public class TaskExecutionService implements Service {
     }
 
     /**
-     * submits the task for execution to appropriate handler based on task type.
+     * submit the task for execution to appropriate handler based on task type.
      *
      * @param task task to submit for execution
      */
@@ -195,6 +194,9 @@ public class TaskExecutionService implements Service {
     @Override
     public void stop() {
         logger.info("Stopping task execution service");
+        if (consumer != null) {
+            consumer.close();
+        }
         try {
             scheduledExecutorService.shutdown();
             scheduledExecutorService.awaitTermination(10, SECONDS);
@@ -203,11 +205,6 @@ public class TaskExecutionService implements Service {
         } catch (InterruptedException e) {
             logger.error("Error stopping executor pool", e);
         }
-
-        if (consumer != null) {
-            consumer.close();
-        }
-
         if (producer != null) {
             producer.close();
         }

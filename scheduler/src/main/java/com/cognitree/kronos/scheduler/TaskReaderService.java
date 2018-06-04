@@ -26,6 +26,7 @@ import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,8 +34,8 @@ import static org.quartz.JobBuilder.newJob;
 import static org.quartz.TriggerBuilder.newTrigger;
 
 /**
- * Task reader service is responsible for scheduling jobs for each {@link TaskDefinitionReader} configured
- * in {@link ApplicationConfig#getReaderConfig()}
+ * Task reader service schedules quartz job {@link TaskDefinitionReaderJob} for each {@link TaskDefinitionReader}
+ * configured in {@link ApplicationConfig#getReaderConfig()}
  */
 public final class TaskReaderService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(TaskReaderService.class);
@@ -44,23 +45,26 @@ public final class TaskReaderService implements Service {
     private Scheduler scheduler;
 
     public TaskReaderService(Map<String, TaskDefinitionReaderConfig> readerConfigMap) {
-        logger.info("Initializing task reader service with reader config {}", readerConfigMap);
         this.readerConfigMap = readerConfigMap;
     }
 
     @Override
-    public void init() throws SchedulerException, IllegalAccessException, InstantiationException, ClassNotFoundException {
+    public void init() throws Exception {
         scheduler = StdSchedulerFactory.getDefaultScheduler();
         initReaders();
     }
 
-    private void initReaders() throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+    private void initReaders() throws Exception {
         for (Map.Entry<String, TaskDefinitionReaderConfig> readerConfigEntry : readerConfigMap.entrySet()) {
-            final TaskDefinitionReaderConfig taskDefinitionReaderConfig = readerConfigEntry.getValue();
-            final TaskDefinitionReader taskDefinitionReader = (TaskDefinitionReader) Class.forName(taskDefinitionReaderConfig.getReaderClass())
+            final String readerName = readerConfigEntry.getKey();
+            final TaskDefinitionReaderConfig readerConfig = readerConfigEntry.getValue();
+            logger.info("Initializing task definition reader with name {}, config {}", readerName, readerConfig);
+            // validate reader schedule before instantiating
+            CronExpression.validateExpression(readerConfig.getSchedule());
+            final TaskDefinitionReader taskDefinitionReader = (TaskDefinitionReader) Class.forName(readerConfig.getReaderClass())
                     .newInstance();
-            taskDefinitionReader.init(taskDefinitionReaderConfig.getConfig());
-            taskReaders.put(readerConfigEntry.getKey(), taskDefinitionReader);
+            taskDefinitionReader.init(readerConfig.getConfig());
+            taskReaders.put(readerName, taskDefinitionReader);
         }
     }
 
@@ -74,24 +78,23 @@ public final class TaskReaderService implements Service {
      * Schedule a job for each {@link TaskDefinitionReader} implementation to repeat
      * at every configured interval {@link TaskDefinitionReaderConfig#getSchedule()}
      */
-    private void scheduleJobs() {
-        readerConfigMap.forEach((readerName, taskDefinitionReaderConfig) -> {
-            try {
-                JobDataMap jobDataMap = new JobDataMap();
-                jobDataMap.put("taskDefinitionReader", taskReaders.get(readerName));
-                JobDetail jobDetail = newJob(TaskDefinitionReaderJob.class)
-                        .withIdentity(readerName, readerName + "jobScheduler")
-                        .usingJobData(jobDataMap)
-                        .build();
-                Trigger trigger = newTrigger()
-                        .withIdentity(readerName, readerName + "jobScheduler")
-                        .withSchedule(CronScheduleBuilder.cronSchedule(taskDefinitionReaderConfig.getSchedule()))
-                        .build();
-                scheduler.scheduleJob(jobDetail, trigger);
-            } catch (Exception e) {
-                logger.error("Error scheduling job ", e);
-            }
-        });
+    private void scheduleJobs() throws SchedulerException {
+        for (Map.Entry<String, TaskDefinitionReaderConfig> readerConfigEntry : readerConfigMap.entrySet()) {
+            final String readerName = readerConfigEntry.getKey();
+            final TaskDefinitionReaderConfig readerConfig = readerConfigEntry.getValue();
+            logger.info("Starting task definition reader {} with config {}", readerName, readerConfig);
+            JobDataMap jobDataMap = new JobDataMap();
+            jobDataMap.put("taskDefinitionReader", taskReaders.get(readerName));
+            JobDetail jobDetail = newJob(TaskDefinitionReaderJob.class)
+                    .withIdentity(readerName, readerName + "jobScheduler")
+                    .usingJobData(jobDataMap)
+                    .build();
+            Trigger trigger = newTrigger()
+                    .withIdentity(readerName, readerName + "jobScheduler")
+                    .withSchedule(CronScheduleBuilder.cronSchedule(readerConfig.getSchedule()))
+                    .build();
+            scheduler.scheduleJob(jobDetail, trigger);
+        }
     }
 
     @Override

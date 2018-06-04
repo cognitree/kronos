@@ -49,11 +49,11 @@ import static com.cognitree.kronos.util.DateTimeUtil.resolveDuration;
 import static java.util.concurrent.TimeUnit.*;
 
 /**
- * A task scheduler service resolves dependency for each submitted task via {@link TaskProvider} and
- * submits the task ready for execution to the task queue.
+ * A task scheduler service resolves dependency via {@link TaskProvider} for each submitted task and
+ * submits the task ready for execution to the queue via {@link Producer}.
  * <p>
- * A task scheduler service acts as an producer of task to the task queue and consumer of task status
- * from the task status queue
+ * A task scheduler service acts as an producer of task to the queue and consumer of task status
+ * from the queue
  * </p>
  */
 public final class TaskSchedulerService implements Service {
@@ -150,20 +150,18 @@ public final class TaskSchedulerService implements Service {
         producer.init(producerConfig.getConfig());
     }
 
-    private void initTimeoutPolicies() {
+    private void initTimeoutPolicies() throws Exception {
         if (policyIdToPolicyConfig != null) {
-            policyIdToPolicyConfig.forEach((policyId, policyConfig) -> {
-                try {
-                    logger.info("Initializing timeout policy with id {}, config {}", policyId, policyConfig);
-                    final TimeoutPolicy timeoutPolicy = (TimeoutPolicy) Class.forName(policyConfig.getPolicyClass())
-                            .getConstructor()
-                            .newInstance();
-                    timeoutPolicy.init(policyConfig.getConfig());
-                    timeoutPolicyMap.put(policyId, timeoutPolicy);
-                } catch (Exception e) {
-                    logger.error("Error initializing timeout policy with id {}, config {}", policyId, policyConfig, e);
-                }
-            });
+            for (Map.Entry<String, TimeoutPolicyConfig> policyEntry : policyIdToPolicyConfig.entrySet()) {
+                final String policyId = policyEntry.getKey();
+                final TimeoutPolicyConfig policyConfig = policyEntry.getValue();
+                logger.info("Initializing timeout policy with id {}, config {}", policyId, policyConfig);
+                final TimeoutPolicy timeoutPolicy = (TimeoutPolicy) Class.forName(policyConfig.getPolicyClass())
+                        .getConstructor()
+                        .newInstance();
+                timeoutPolicy.init(policyConfig.getConfig());
+                timeoutPolicyMap.put(policyId, timeoutPolicy);
+            }
         }
     }
 
@@ -183,8 +181,7 @@ public final class TaskSchedulerService implements Service {
         final long timeoutTaskTime = task.getSubmittedAt() + getMaxExecutionTime(task);
         final long currentTimeMillis = System.currentTimeMillis();
 
-        final TimeoutPolicy timeoutPolicy = resolveTimeoutPolicy(task);
-        final TimeoutTask timeoutTask = new TimeoutTask(task, timeoutPolicy);
+        final TimeoutTask timeoutTask = new TimeoutTask(task);
         if (timeoutTaskTime < currentTimeMillis) {
             // submit timeout task now
             scheduledExecutorService.submit(timeoutTask);
@@ -196,31 +193,34 @@ public final class TaskSchedulerService implements Service {
         }
     }
 
-    private void resolveCreatedTasks() {
-        final List<Task> tasks = taskProvider.getTasks(Collections.singletonList(CREATED));
-        tasks.sort(Comparator.comparing(Task::getCreatedAt));
-        tasks.forEach(this::resolve);
-    }
-
     /**
-     * resolve timeout policy for task, policy resolution is done at multiple levels.
-     * First policy is checked at task definition level defined as {@link TaskDefinition#timeoutPolicy}
-     * If not found then it is checked at the task handler level defined as {@link TaskHandlerConfig#timeoutPolicy}
+     * get maximum time allowed by the task to complete execution, resolution is done at multiple levels.
+     * <p>
+     * Precedence:
+     * 1. {@link TaskDefinition#maxExecutionTime}
+     * 2. {@link TaskHandlerConfig#maxExecutionTime}
+     * 3. {@link TaskSchedulerService#DEFAULT_MAX_EXECUTION_TIME}
      *
      * @param task
      * @return
      */
-    private TimeoutPolicy resolveTimeoutPolicy(Task task) {
-        final String timeoutPolicyId = task.getTimeoutPolicy();
-        if (timeoutPolicyId != null && timeoutPolicyMap.containsKey(timeoutPolicyId)) {
-            return timeoutPolicyMap.get(timeoutPolicyId);
+    private long getMaxExecutionTime(Task task) {
+        if (task.getMaxExecutionTime() != null) {
+            return resolveDuration(task.getMaxExecutionTime());
         }
 
         final TaskHandlerConfig taskHandlerConfig = taskTypeToHandlerConfig.get(task.getType());
-        if (taskHandlerConfig == null) {
-            return null;
+        if (taskHandlerConfig != null && taskHandlerConfig.getMaxExecutionTime() != null) {
+            return resolveDuration(taskHandlerConfig.getMaxExecutionTime());
         }
-        return timeoutPolicyMap.get(taskHandlerConfig.getTimeoutPolicy());
+
+        return resolveDuration(DEFAULT_MAX_EXECUTION_TIME);
+    }
+
+    private void resolveCreatedTasks() {
+        final List<Task> tasks = taskProvider.getTasks(Collections.singletonList(CREATED));
+        tasks.sort(Comparator.comparing(Task::getCreatedAt));
+        tasks.forEach(this::resolve);
     }
 
     @Override
@@ -229,34 +229,6 @@ public final class TaskSchedulerService implements Service {
         scheduledExecutorService.scheduleAtFixedRate(this::consumeTaskStatus, pollInterval, pollInterval, MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> logger.debug("{}", taskProvider.toString()), 5, 5, MINUTES);
         scheduledExecutorService.scheduleAtFixedRate(this::deleteStaleTasks, 5, 5, MINUTES);
-    }
-
-    public void registerListener(TaskStatusChangeListener statusChangeListener) {
-        statusChangeListeners.add(statusChangeListener);
-    }
-
-    public void deregisterListener(TaskStatusChangeListener statusChangeListener) {
-        statusChangeListeners.remove(statusChangeListener);
-    }
-
-    public void schedule(Task task) {
-        logger.info("Received request to schedule task: {}", task);
-        add(task);
-        resolve(task);
-    }
-
-    private void add(Task task) {
-        taskProvider.add(task);
-    }
-
-    private void resolve(Task task) {
-        final boolean isResolved = taskProvider.resolve(task);
-        if (isResolved) {
-            updateStatus(task, WAITING, null);
-        } else {
-            logger.error("Unable to resolve dependency for task {}, marking it as {}", task, FAILED);
-            updateStatus(task, FAILED, FAILED_TO_RESOLVE_DEPENDENCY);
-        }
     }
 
     private void consumeTaskStatus() {
@@ -269,6 +241,52 @@ public final class TaskSchedulerService implements Service {
             } catch (IOException e) {
                 logger.error("Error parsing task status message {}", taskStatusAsString, e);
             }
+        }
+    }
+
+    /**
+     * deletes all the stale tasks from memory
+     * task to delete is determined by {@link ApplicationConfig#taskPurgeInterval}
+     * <p>
+     * see: {@link ApplicationConfig#taskPurgeInterval} for more details and implication of taskPurgeInterval
+     */
+    void deleteStaleTasks() {
+        taskProvider.removeOldTasks(taskPurgeInterval);
+    }
+
+    /**
+     * register a listener to receive task status change notifications
+     *
+     * @param statusChangeListener
+     */
+    public void registerListener(TaskStatusChangeListener statusChangeListener) {
+        statusChangeListeners.add(statusChangeListener);
+    }
+
+    /**
+     * deregister a task status change listener
+     *
+     * @param statusChangeListener
+     */
+    public void deregisterListener(TaskStatusChangeListener statusChangeListener) {
+        statusChangeListeners.remove(statusChangeListener);
+    }
+
+    public void schedule(Task task) {
+        logger.info("Received request to schedule task: {}", task);
+        final boolean isAdded = taskProvider.add(task);
+        if (isAdded) {
+            resolve(task);
+        }
+    }
+
+    private void resolve(Task task) {
+        final boolean isResolved = taskProvider.resolve(task);
+        if (isResolved) {
+            updateStatus(task, WAITING, null);
+        } else {
+            logger.error("Unable to resolve dependency for task {}, marking it as {}", task, FAILED);
+            updateStatus(task, FAILED, FAILED_TO_RESOLVE_DEPENDENCY);
         }
     }
 
@@ -348,12 +366,12 @@ public final class TaskSchedulerService implements Service {
     }
 
     /**
-     * submit tasks in created state with resolved dependency
+     * submit tasks ready for execution to queue
      */
-    private void scheduleReadyTasks() {
+    private synchronized void scheduleReadyTasks() {
         if (isInitialized) {
-            final List<Task> runnableTaskList = taskProvider.getReadyTasks();
-            for (Task task : runnableTaskList) {
+            final List<Task> readyTasks = taskProvider.getReadyTasks();
+            for (Task task : readyTasks) {
                 try {
                     producer.send(task.getType(), MAPPER.writeValueAsString(task));
                     updateStatus(task, SCHEDULED, null);
@@ -365,72 +383,71 @@ public final class TaskSchedulerService implements Service {
         }
     }
 
+    // used in junit
+    TaskProvider getTaskProvider() {
+        return taskProvider;
+    }
+
     @Override
     public void stop() {
         logger.info("Stopping task scheduler service");
-        scheduledExecutorService.shutdown();
+        if (consumer != null) {
+            consumer.close();
+        }
         try {
+            scheduledExecutorService.shutdown();
             scheduledExecutorService.awaitTermination(10, SECONDS);
         } catch (InterruptedException e) {
-            logger.error("Error stopping scheduled thread pool", e);
+            logger.error("Error stopping thread pool", e);
         }
         if (producer != null) {
             producer.close();
-        }
-        if (consumer != null) {
-            consumer.close();
         }
         if (taskStore != null) {
             taskStore.stop();
         }
     }
 
-    private long getMaxExecutionTime(Task task) {
-        if (task.getMaxExecutionTime() != null) {
-            return resolveDuration(task.getMaxExecutionTime());
+    /**
+     * resolve timeout policy for task, policy resolution is done at multiple levels.
+     * <p>
+     * Precedence:
+     * 1. {@link TaskDefinition#timeoutPolicy}
+     * 2. {@link TaskHandlerConfig#timeoutPolicy}
+     *
+     * @param task
+     * @return
+     */
+    private TimeoutPolicy resolveTimeoutPolicy(Task task) {
+        final String timeoutPolicyId = task.getTimeoutPolicy();
+        if (timeoutPolicyId != null && timeoutPolicyMap.containsKey(timeoutPolicyId)) {
+            return timeoutPolicyMap.get(timeoutPolicyId);
         }
 
         final TaskHandlerConfig taskHandlerConfig = taskTypeToHandlerConfig.get(task.getType());
-        if (taskHandlerConfig != null && taskHandlerConfig.getMaxExecutionTime() != null) {
-            return resolveDuration(taskHandlerConfig.getMaxExecutionTime());
+        if (taskHandlerConfig == null) {
+            return null;
         }
-
-        return resolveDuration(DEFAULT_MAX_EXECUTION_TIME);
-    }
-
-    /**
-     * deletes all the stale tasks from memory
-     * task to delete is determined by {@link ApplicationConfig#taskPurgeInterval}
-     * <p>
-     * see: {@link ApplicationConfig#taskPurgeInterval} for more details and implication of taskPurgeInterval
-     */
-    void deleteStaleTasks() {
-        taskProvider.removeOldTasks(taskPurgeInterval);
-    }
-
-    // used in junit
-    TaskProvider getTaskProvider() {
-        return taskProvider;
+        return timeoutPolicyMap.get(taskHandlerConfig.getTimeoutPolicy());
     }
 
     private class TimeoutTask implements Runnable {
-
         private final Task task;
-        private final TimeoutPolicy timeoutPolicy;
 
-        TimeoutTask(Task task, TimeoutPolicy timeoutPolicy) {
+        TimeoutTask(Task task) {
             this.task = task;
-            this.timeoutPolicy = timeoutPolicy;
         }
 
         @Override
         public void run() {
             logger.info("Task {} has timed out, marking task as failed", task);
             updateStatus(task, FAILED, TIMED_OUT);
+            final TimeoutPolicy timeoutPolicy = resolveTimeoutPolicy(task);
             if (timeoutPolicy != null) {
                 logger.info("Applying timeout policy {} on task {}", timeoutPolicy, task);
                 timeoutPolicy.handle(task);
             }
         }
     }
+
 }

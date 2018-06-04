@@ -38,7 +38,7 @@ public class TaskDefinitionReaderConfig {
     private ObjectNode config;
 
     /**
-     * A cron string representing how frequently the framework should ask for new task from {@link TaskDefinitionReader}
+     * A cron string representing how frequently the framework should look for new task from {@link TaskDefinitionReader}
      */
     private String schedule;
 

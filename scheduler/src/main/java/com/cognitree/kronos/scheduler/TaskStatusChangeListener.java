@@ -22,7 +22,7 @@ import com.cognitree.kronos.model.Task.Status;
 
 /**
  * An interface implemented by services interested in task status change. To receive notification on task status change
- * subscribe the listener with {@link TaskProvider}
+ * register the listener with {@link TaskSchedulerService#registerListener(TaskStatusChangeListener)}
  */
 public interface TaskStatusChangeListener {
 

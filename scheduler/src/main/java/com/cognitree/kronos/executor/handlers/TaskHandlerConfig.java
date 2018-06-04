@@ -39,17 +39,21 @@ public class TaskHandlerConfig {
     private ObjectNode config;
 
     /**
-     * default time the handler is suppose to send task status should be one of the final state SUCCESSFUL/ FAILED.
-     * If a task status is not received in the configured maxExecutionTime,
-     * the configured {@link TaskHandlerConfig#timeoutPolicy} is applied on the task
-     * <p>
-     * The parameter is also configurable at a task level by setting the property maxExecutionTime in {@link TaskDefinition}
+     * max allowed time for the handler to finish executing task.
+     * The parameter can be defined at a task level by setting {@link TaskDefinition#maxExecutionTime} and has a higher
+     * precedence.
      * </p>
      */
     private String maxExecutionTime;
 
     /**
-     * policy to be applied on task in case of timeout.
+     * policy to apply on task in case of timeout.
+     * <p>
+     * A task is said to be timed out if the handler fails to complete task execution in configured
+     * {@link TaskHandlerConfig#maxExecutionTime}.
+     * A timeout policy can be defined at a task level by setting {@link TaskDefinition#timeoutPolicy} and has a higher
+     * precedence.
+     * </p>
      */
     private String timeoutPolicy;
 

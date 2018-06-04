@@ -38,11 +38,9 @@ import static com.cognitree.kronos.util.DateTimeUtil.resolveDuration;
 
 /**
  * Task provider manages/ resolves task dependencies and exposes APIs to add, remove, retrieve tasks in active and
- * ready-to-execute state
- * listen for task status updates and calls the registered {@link TaskStatusChangeListener} on status change.
+ * ready-to-execute state.
  * <p>
- * Internally, task provider is backed by a directed acyclic graph that manages dependencies across these tasks.
- * The task state is stored in a persistent store if provided.
+ * Internally, task provider is backed by a directed acyclic graph to manage dependencies across these tasks.
  */
 class TaskProvider {
     private static final Logger logger = LoggerFactory.getLogger(TaskProvider.class);
@@ -81,12 +79,14 @@ class TaskProvider {
         nodes.forEach(graph::removeNode);
     }
 
-    synchronized void add(Task task) {
+    synchronized boolean add(Task task) {
         if (taskStore.load(task.getId(), task.getGroup()) == null) {
             addToGraph(task);
             taskStore.store(task);
+            return true;
         } else {
             logger.warn("Task {} already exist with task provider, skip adding", task);
+            return false;
         }
     }
 
