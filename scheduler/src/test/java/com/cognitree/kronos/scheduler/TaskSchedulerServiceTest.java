@@ -141,7 +141,7 @@ public class TaskSchedulerServiceTest extends ApplicationTest {
 
     @Test
     public void testTaskCleanup() {
-        // set task created at time to a lower value than the task purge interval configured in app.yaml
+        // set task created at time to a lower value than the task purge interval configured in scheduler.yaml
         final long taskPurgeInterval = DateTimeUtil.resolveDuration(schedulerConfig.getTaskPurgeInterval());
         final long createdAt = System.currentTimeMillis() - taskPurgeInterval - MINUTES.toMillis(1);
         Task independentTask = TestUtil.getTaskBuilder().setName("independentTask").setType("test")
