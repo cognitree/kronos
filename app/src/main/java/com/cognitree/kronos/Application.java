@@ -46,7 +46,7 @@ public class Application {
         }
     }
 
-    private void start() throws Exception {
+    public void start() throws Exception {
         logger.info("Starting application");
         schedulerApp.start();
         executorApp.start();

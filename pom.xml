@@ -89,10 +89,10 @@
     </build>
 
     <modules>
-        <module>core</module>
+        <module>common</module>
         <module>extensions</module>
         <module>scheduler</module>
         <module>executor</module>
-        <module>tests</module>
+        <module>app</module>
     </modules>
 </project>
