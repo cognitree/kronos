@@ -17,7 +17,6 @@
 
 package com.cognitree.kronos.executor.handlers;
 
-import com.cognitree.kronos.model.TaskDefinition;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Objects;
@@ -37,25 +36,6 @@ public class TaskHandlerConfig {
      * This is passed as an arg to the {@link TaskHandler#init(ObjectNode)} method at the time of instantiation
      */
     private ObjectNode config;
-
-    /**
-     * max allowed time for the handler to finish executing task.
-     * The parameter can be defined at a task level by setting {@link TaskDefinition#maxExecutionTime} and has a higher
-     * precedence.
-     * </p>
-     */
-    private String maxExecutionTime;
-
-    /**
-     * policy to apply on task in case of timeout.
-     * <p>
-     * A task is said to be timed out if the handler fails to complete task execution in configured
-     * {@link TaskHandlerConfig#maxExecutionTime}.
-     * A timeout policy can be defined at a task level by setting {@link TaskDefinition#timeoutPolicy} and has a higher
-     * precedence.
-     * </p>
-     */
-    private String timeoutPolicy;
 
     /**
      * max number of tasks to be scheduled in parallel for execution at any point of time
@@ -78,22 +58,6 @@ public class TaskHandlerConfig {
         this.config = config;
     }
 
-    public String getMaxExecutionTime() {
-        return maxExecutionTime;
-    }
-
-    public void setMaxExecutionTime(String maxExecutionTime) {
-        this.maxExecutionTime = maxExecutionTime;
-    }
-
-    public String getTimeoutPolicy() {
-        return timeoutPolicy;
-    }
-
-    public void setTimeoutPolicy(String timeoutPolicy) {
-        this.timeoutPolicy = timeoutPolicy;
-    }
-
     public int getMaxParallelTasks() {
         return maxParallelTasks;
     }
@@ -109,14 +73,12 @@ public class TaskHandlerConfig {
         TaskHandlerConfig that = (TaskHandlerConfig) o;
         return maxParallelTasks == that.maxParallelTasks &&
                 Objects.equals(handlerClass, that.handlerClass) &&
-                Objects.equals(config, that.config) &&
-                Objects.equals(maxExecutionTime, that.maxExecutionTime) &&
-                Objects.equals(timeoutPolicy, that.timeoutPolicy);
+                Objects.equals(config, that.config);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(handlerClass, config, maxExecutionTime, timeoutPolicy, maxParallelTasks);
+        return Objects.hash(handlerClass, config, maxParallelTasks);
     }
 
     @Override
@@ -124,8 +86,6 @@ public class TaskHandlerConfig {
         return "TaskHandlerConfig{" +
                 "handlerClass='" + handlerClass + '\'' +
                 ", config=" + config +
-                ", maxExecutionTime='" + maxExecutionTime + '\'' +
-                ", timeoutPolicy=" + timeoutPolicy +
                 ", maxParallelTasks=" + maxParallelTasks +
                 '}';
     }

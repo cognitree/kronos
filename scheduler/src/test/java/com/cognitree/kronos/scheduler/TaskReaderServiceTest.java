@@ -1,8 +1,8 @@
 package com.cognitree.kronos.scheduler;
 
-import com.cognitree.kronos.ApplicationConfig;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.TaskDefinition;
+import com.cognitree.kronos.queue.QueueConfig;
 import com.cognitree.kronos.scheduler.readers.MockTaskDefinitionReader;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -19,22 +19,24 @@ import java.io.InputStream;
 import static com.cognitree.kronos.TestUtil.sleep;
 
 public class TaskReaderServiceTest {
+    private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
 
     @BeforeClass
     public static void init() throws Exception {
-        InputStream appResourceStream = TaskReaderServiceTest.class.getClassLoader().getResourceAsStream("app.yaml");
-        ApplicationConfig applicationConfig =
-                new ObjectMapper(new YAMLFactory()).readValue(appResourceStream, ApplicationConfig.class);
+        InputStream schedulerConfigStream =
+                TaskSchedulerServiceTest.class.getClassLoader().getResourceAsStream("scheduler.yaml");
+        SchedulerConfig schedulerConfig = MAPPER.readValue(schedulerConfigStream, SchedulerConfig.class);
 
-        TaskReaderService taskReaderService = new TaskReaderService(applicationConfig.getReaderConfig());
+        InputStream queueConfigStream =
+                TaskSchedulerServiceTest.class.getClassLoader().getResourceAsStream("queue.yaml");
+        QueueConfig queueConfig = MAPPER.readValue(queueConfigStream, QueueConfig.class);
+        TaskReaderService taskReaderService = new TaskReaderService(schedulerConfig.getTaskReaderConfig());
         ServiceProvider.registerService(taskReaderService);
         taskReaderService.init();
         taskReaderService.start();
 
         TaskSchedulerService taskSchedulerService =
-                new TaskSchedulerService(applicationConfig.getProducerConfig(), applicationConfig.getConsumerConfig(),
-                        applicationConfig.getHandlerConfig(), applicationConfig.getTimeoutPolicyConfig(),
-                        applicationConfig.getTaskStoreConfig(), applicationConfig.getTaskPurgeInterval());
+                new TaskSchedulerService(schedulerConfig, queueConfig);
         ServiceProvider.registerService(taskSchedulerService);
         taskSchedulerService.init();
         taskSchedulerService.start();

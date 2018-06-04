@@ -17,13 +17,12 @@
 
 package com.cognitree.kronos.scheduler;
 
-import com.cognitree.kronos.ApplicationConfig;
 import com.cognitree.kronos.Service;
-import com.cognitree.kronos.executor.handlers.TaskHandlerConfig;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskDefinition;
 import com.cognitree.kronos.model.TaskStatus;
+import com.cognitree.kronos.queue.QueueConfig;
 import com.cognitree.kronos.queue.consumer.Consumer;
 import com.cognitree.kronos.queue.consumer.ConsumerConfig;
 import com.cognitree.kronos.queue.producer.Producer;
@@ -61,14 +60,14 @@ public final class TaskSchedulerService implements Service {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final String DEFAULT_MAX_EXECUTION_TIME = "1d";
-    private static final String TASK_STATUS_TOPIC = "taskstatus";
 
     private final ProducerConfig producerConfig;
     private final ConsumerConfig consumerConfig;
-    private final Map<String, TaskHandlerConfig> taskTypeToHandlerConfig;
-    private final Map<String, TimeoutPolicyConfig> policyIdToPolicyConfig;
+    private final Map<String, TaskExecutionConfig> taskConfigMap;
+    private final Map<String, TimeoutPolicyConfig> policyConfigMap;
     private final TaskStoreConfig taskStoreConfig;
     private final String taskPurgeInterval;
+    private final String statusQueue;
 
     private final Map<String, TimeoutPolicy> timeoutPolicyMap = new HashMap<>();
     private final Map<String, ScheduledFuture<?>> taskTimeoutHandlersMap = new HashMap<>();
@@ -83,15 +82,14 @@ public final class TaskSchedulerService implements Service {
     private TaskProvider taskProvider;
     private boolean isInitialized; // is the task scheduler service initialized
 
-    public TaskSchedulerService(ProducerConfig producerConfig, ConsumerConfig consumerConfig,
-                                Map<String, TaskHandlerConfig> handlerConfig, Map<String, TimeoutPolicyConfig> policyConfig,
-                                TaskStoreConfig taskStoreConfig, String taskPurgeInterval) {
-        this.producerConfig = producerConfig;
-        this.consumerConfig = consumerConfig;
-        this.taskTypeToHandlerConfig = handlerConfig;
-        this.policyIdToPolicyConfig = policyConfig;
-        this.taskStoreConfig = taskStoreConfig;
-        this.taskPurgeInterval = taskPurgeInterval;
+    public TaskSchedulerService(SchedulerConfig schedulerConfig, QueueConfig queueConfig) {
+        this.taskConfigMap = schedulerConfig.getTaskExecutionConfig();
+        this.policyConfigMap = schedulerConfig.getTimeoutPolicyConfig();
+        this.taskStoreConfig = schedulerConfig.getTaskStoreConfig();
+        this.taskPurgeInterval = schedulerConfig.getTaskPurgeInterval();
+        this.producerConfig = queueConfig.getProducerConfig();
+        this.consumerConfig = queueConfig.getConsumerConfig();
+        this.statusQueue = queueConfig.getTaskStatusQueue();
     }
 
     /**
@@ -151,8 +149,8 @@ public final class TaskSchedulerService implements Service {
     }
 
     private void initTimeoutPolicies() throws Exception {
-        if (policyIdToPolicyConfig != null) {
-            for (Map.Entry<String, TimeoutPolicyConfig> policyEntry : policyIdToPolicyConfig.entrySet()) {
+        if (policyConfigMap != null) {
+            for (Map.Entry<String, TimeoutPolicyConfig> policyEntry : policyConfigMap.entrySet()) {
                 final String policyId = policyEntry.getKey();
                 final TimeoutPolicyConfig policyConfig = policyEntry.getValue();
                 logger.info("Initializing timeout policy with id {}, config {}", policyId, policyConfig);
@@ -198,7 +196,7 @@ public final class TaskSchedulerService implements Service {
      * <p>
      * Precedence:
      * 1. {@link TaskDefinition#maxExecutionTime}
-     * 2. {@link TaskHandlerConfig#maxExecutionTime}
+     * 2. {@link TaskExecutionConfig#maxExecutionTime}
      * 3. {@link TaskSchedulerService#DEFAULT_MAX_EXECUTION_TIME}
      *
      * @param task
@@ -209,9 +207,9 @@ public final class TaskSchedulerService implements Service {
             return resolveDuration(task.getMaxExecutionTime());
         }
 
-        final TaskHandlerConfig taskHandlerConfig = taskTypeToHandlerConfig.get(task.getType());
-        if (taskHandlerConfig != null && taskHandlerConfig.getMaxExecutionTime() != null) {
-            return resolveDuration(taskHandlerConfig.getMaxExecutionTime());
+        final TaskExecutionConfig taskExecutionConfig = this.taskConfigMap.get(task.getType());
+        if (taskExecutionConfig != null && taskExecutionConfig.getMaxExecutionTime() != null) {
+            return resolveDuration(taskExecutionConfig.getMaxExecutionTime());
         }
 
         return resolveDuration(DEFAULT_MAX_EXECUTION_TIME);
@@ -232,7 +230,7 @@ public final class TaskSchedulerService implements Service {
     }
 
     private void consumeTaskStatus() {
-        final List<String> tasksStatus = consumer.poll(TASK_STATUS_TOPIC);
+        final List<String> tasksStatus = consumer.poll(statusQueue);
         for (String taskStatusAsString : tasksStatus) {
             try {
                 final TaskStatus taskStatus = MAPPER.readValue(taskStatusAsString, TaskStatus.class);
@@ -246,9 +244,9 @@ public final class TaskSchedulerService implements Service {
 
     /**
      * deletes all the stale tasks from memory
-     * task to delete is determined by {@link ApplicationConfig#taskPurgeInterval}
+     * task to delete is determined by {@link SchedulerConfig#taskPurgeInterval}
      * <p>
-     * see: {@link ApplicationConfig#taskPurgeInterval} for more details and implication of taskPurgeInterval
+     * see: {@link SchedulerConfig#taskPurgeInterval} for more details and implication of taskPurgeInterval
      */
     void deleteStaleTasks() {
         taskProvider.removeOldTasks(taskPurgeInterval);
@@ -413,7 +411,7 @@ public final class TaskSchedulerService implements Service {
      * <p>
      * Precedence:
      * 1. {@link TaskDefinition#timeoutPolicy}
-     * 2. {@link TaskHandlerConfig#timeoutPolicy}
+     * 2. {@link TaskExecutionConfig#timeoutPolicy}
      *
      * @param task
      * @return
@@ -424,11 +422,11 @@ public final class TaskSchedulerService implements Service {
             return timeoutPolicyMap.get(timeoutPolicyId);
         }
 
-        final TaskHandlerConfig taskHandlerConfig = taskTypeToHandlerConfig.get(task.getType());
-        if (taskHandlerConfig == null) {
+        final TaskExecutionConfig taskExecutionConfig = taskConfigMap.get(task.getType());
+        if (taskExecutionConfig == null) {
             return null;
         }
-        return timeoutPolicyMap.get(taskHandlerConfig.getTimeoutPolicy());
+        return timeoutPolicyMap.get(taskExecutionConfig.getTimeoutPolicy());
     }
 
     private class TimeoutTask implements Runnable {

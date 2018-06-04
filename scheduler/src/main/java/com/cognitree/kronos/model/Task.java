@@ -18,7 +18,7 @@
 package com.cognitree.kronos.model;
 
 import com.cognitree.kronos.executor.handlers.TaskHandler;
-import com.cognitree.kronos.executor.handlers.TaskHandlerConfig;
+import com.cognitree.kronos.scheduler.TaskExecutionConfig;
 
 import java.util.*;
 
@@ -52,7 +52,7 @@ public class Task {
     /**
      * max allowed time for task to finish execution same as {@link TaskDefinition#maxExecutionTime}.
      * <p>
-     * takes precedence over the {@link TaskHandlerConfig#maxExecutionTime}
+     * takes precedence over the {@link TaskExecutionConfig#maxExecutionTime}
      * </p>
      */
     private String maxExecutionTime;

@@ -1,0 +1,20 @@
+taskReaderConfig:
+  mockReader:
+    readerClass: com.cognitree.kronos.scheduler.readers.MockTaskDefinitionReader
+    schedule: 0/1 * * 1/1 * ? *
+
+taskStoreConfig:
+  taskStoreClass: com.cognitree.kronos.store.MockTaskStore
+
+taskExecutionConfig:
+  test:
+    maxExecutionTime: 1h
+    timeoutPolicy:
+  typeA:
+    maxExecutionTime: 1h
+    timeoutPolicy:
+  typeB:
+    maxExecutionTime: 1h
+    timeoutPolicy:
+
+taskPurgeInterval: 1d

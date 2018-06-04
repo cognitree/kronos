@@ -20,10 +20,15 @@ package com.cognitree.kronos;
 /**
  * A service is identified by its name and is discovered using {@link ServiceProvider}
  */
-public interface Service extends ComponentLifecycle {
+public interface Service {
 
     default String getName() {
         return this.getClass().getSimpleName();
     }
 
+    void init() throws Exception;
+
+    void start() throws Exception;
+
+    void stop();
 }

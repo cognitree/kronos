@@ -23,6 +23,7 @@ import com.cognitree.kronos.executor.handlers.TaskHandlerConfig;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskStatus;
+import com.cognitree.kronos.queue.QueueConfig;
 import com.cognitree.kronos.queue.consumer.Consumer;
 import com.cognitree.kronos.queue.consumer.ConsumerConfig;
 import com.cognitree.kronos.queue.producer.Producer;
@@ -56,11 +57,12 @@ public class TaskExecutionService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(TaskExecutionService.class);
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final String TASK_STATUS_TOPIC = "taskstatus";
 
     private final ConsumerConfig consumerConfig;
     private final ProducerConfig producerConfig;
+    private final String statusQueue;
     private final Map<String, TaskHandlerConfig> taskTypeToHandlerConfig;
+
     private final Map<String, TaskHandler> taskTypeToHandlerMap = new HashMap<>();
     private final Map<String, Integer> taskTypeToMaxParallelTasksCount = new HashMap<>();
     private final Map<String, Integer> taskTypeToRunningTasksCount = new HashMap<>();
@@ -71,11 +73,11 @@ public class TaskExecutionService implements Service {
     private Consumer consumer;
     private Producer producer;
 
-    public TaskExecutionService(ConsumerConfig consumerConfig, ProducerConfig producerConfig,
-                                Map<String, TaskHandlerConfig> handlerConfig) {
-        this.consumerConfig = consumerConfig;
-        this.producerConfig = producerConfig;
-        this.taskTypeToHandlerConfig = handlerConfig;
+    public TaskExecutionService(ExecutorConfig executorConfig, QueueConfig queueConfig) {
+        this.consumerConfig = queueConfig.getConsumerConfig();
+        this.producerConfig = queueConfig.getProducerConfig();
+        this.statusQueue = queueConfig.getTaskStatusQueue();
+        this.taskTypeToHandlerConfig = executorConfig.getTaskHandlerConfig();
     }
 
     @Override
@@ -185,7 +187,7 @@ public class TaskExecutionService implements Service {
             taskStatus.setTaskGroup(taskGroup);
             taskStatus.setStatus(status);
             taskStatus.setStatusMessage(statusMessage);
-            producer.send(TASK_STATUS_TOPIC, MAPPER.writeValueAsString(taskStatus));
+            producer.send(statusQueue, MAPPER.writeValueAsString(taskStatus));
         } catch (IOException e) {
             logger.error("Error adding task status {} to queue", status, e);
         }

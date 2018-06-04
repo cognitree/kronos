@@ -17,7 +17,10 @@
 
 package com.cognitree.kronos;
 
+import com.cognitree.kronos.executor.ExecutorConfig;
 import com.cognitree.kronos.executor.TaskExecutionService;
+import com.cognitree.kronos.queue.QueueConfig;
+import com.cognitree.kronos.scheduler.SchedulerConfig;
 import com.cognitree.kronos.scheduler.TaskReaderService;
 import com.cognitree.kronos.scheduler.TaskSchedulerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,14 +38,14 @@ import java.io.InputStream;
  * The started services are registered with the {@link ServiceProvider} for future reference
  * </p>
  */
-public class Application implements ComponentLifecycle {
+public class Application {
     private static final Logger logger = LoggerFactory.getLogger(Application.class);
 
+    private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
     private static final String DEFAULT_PROFILE = "all";
     private static final String SCHEDULER_PROFILE = "scheduler";
     private static final String EXECUTOR_PROFILE = "executor";
     private static final String PROFILE = System.getProperty("profile", DEFAULT_PROFILE);
-    private static final String APP_CONFIG_FILE = System.getProperty("configFile", "app.yaml");
 
     public static void main(String[] args) {
         final Application application = new Application();
@@ -58,113 +61,122 @@ public class Application implements ComponentLifecycle {
         }
     }
 
-    private void register() throws Exception {
-        InputStream resourceAsStream = Application.class.getClassLoader().getResourceAsStream(APP_CONFIG_FILE);
-        if (resourceAsStream == null) {
-            throw new IOException("Resource not found: " + APP_CONFIG_FILE);
-        }
-
-        ApplicationConfig applicationConfig =
-                new ObjectMapper(new YAMLFactory()).readValue(resourceAsStream, ApplicationConfig.class);
-
+    private void register() throws IOException {
         switch (PROFILE) {
-            case EXECUTOR_PROFILE:
-                registerTaskExecutionService(applicationConfig);
-                break;
             case SCHEDULER_PROFILE:
-                registerTaskReaderService(applicationConfig);
-                registerTaskProviderService(applicationConfig);
+                registerScheduler();
+                break;
+            case EXECUTOR_PROFILE:
+                registerExecutor();
                 break;
             case DEFAULT_PROFILE:
-                registerTaskExecutionService(applicationConfig);
-                registerTaskReaderService(applicationConfig);
-                registerTaskProviderService(applicationConfig);
+                registerScheduler();
+                registerExecutor();
         }
     }
 
-    private void registerTaskReaderService(ApplicationConfig applicationConfig) {
-        TaskReaderService taskReaderService = new TaskReaderService(applicationConfig.getReaderConfig());
+    private void registerScheduler() throws IOException {
+        final InputStream schedulerConfigAsStream =
+                Application.class.getClassLoader().getResourceAsStream("scheduler.yaml");
+        final SchedulerConfig schedulerConfig = MAPPER.readValue(schedulerConfigAsStream, SchedulerConfig.class);
+
+        final InputStream queueConfigAsStream =
+                Application.class.getClassLoader().getResourceAsStream("queue.yaml");
+        final QueueConfig queueConfig = MAPPER.readValue(queueConfigAsStream, QueueConfig.class);
+
+        TaskSchedulerService taskSchedulerService = new TaskSchedulerService(schedulerConfig, queueConfig);
+        ServiceProvider.registerService(taskSchedulerService);
+
+        TaskReaderService taskReaderService = new TaskReaderService(schedulerConfig.getTaskReaderConfig());
         ServiceProvider.registerService(taskReaderService);
     }
 
-    @SuppressWarnings("unchecked")
-    private void registerTaskProviderService(ApplicationConfig applicationConfig) {
-        TaskSchedulerService taskSchedulerService =
-                new TaskSchedulerService(applicationConfig.getProducerConfig(), applicationConfig.getConsumerConfig(),
-                        applicationConfig.getHandlerConfig(), applicationConfig.getTimeoutPolicyConfig(),
-                        applicationConfig.getTaskStoreConfig(), applicationConfig.getTaskPurgeInterval());
-        ServiceProvider.registerService(taskSchedulerService);
-    }
+    private void registerExecutor() throws IOException {
+        final InputStream executorConfigAsStream =
+                Application.class.getClassLoader().getResourceAsStream("executor.yaml");
+        final ExecutorConfig executorConfig = MAPPER.readValue(executorConfigAsStream, ExecutorConfig.class);
 
-    @SuppressWarnings("unchecked")
-    private void registerTaskExecutionService(ApplicationConfig applicationConfig) {
-        TaskExecutionService taskExecutionService =
-                new TaskExecutionService(applicationConfig.getConsumerConfig(), applicationConfig.getProducerConfig(),
-                        applicationConfig.getHandlerConfig());
+        final InputStream queueConfigAsStream =
+                Application.class.getClassLoader().getResourceAsStream("queue.yaml");
+        final QueueConfig queueConfig = MAPPER.readValue(queueConfigAsStream, QueueConfig.class);
+
+        TaskExecutionService taskExecutionService = new TaskExecutionService(executorConfig, queueConfig);
         ServiceProvider.registerService(taskExecutionService);
     }
 
-    @Override
     public void init() throws Exception {
         switch (PROFILE) {
-            case EXECUTOR_PROFILE:
-                ServiceProvider.getTaskExecutionService().init();
-                break;
             case SCHEDULER_PROFILE:
-                ServiceProvider.getTaskReaderService().init();
-                ServiceProvider.getTaskSchedulerService().init();
+                initScheduler();
+                break;
+            case EXECUTOR_PROFILE:
+                initExecutor();
                 break;
             case DEFAULT_PROFILE:
-                ServiceProvider.getTaskReaderService().init();
-                ServiceProvider.getTaskSchedulerService().init();
-                ServiceProvider.getTaskExecutionService().init();
+                initScheduler();
+                initExecutor();
         }
     }
 
-    @Override
+    private void initScheduler() throws Exception {
+        ServiceProvider.getTaskReaderService().init();
+        ServiceProvider.getTaskSchedulerService().init();
+    }
+
+    private void initExecutor() throws Exception {
+        ServiceProvider.getTaskExecutionService().init();
+    }
+
     public void start() throws SchedulerException {
         switch (PROFILE) {
-            case EXECUTOR_PROFILE:
-                ServiceProvider.getTaskExecutionService().start();
-                break;
             case SCHEDULER_PROFILE:
-                ServiceProvider.getTaskReaderService().start();
-                ServiceProvider.getTaskSchedulerService().start();
+                startScheduler();
+                break;
+            case EXECUTOR_PROFILE:
+                startExecutor();
                 break;
             case DEFAULT_PROFILE:
-                ServiceProvider.getTaskReaderService().start();
-                ServiceProvider.getTaskSchedulerService().start();
-                ServiceProvider.getTaskExecutionService().start();
+                startScheduler();
+                startExecutor();
         }
     }
 
-    @Override
+    private void startScheduler() throws SchedulerException {
+        ServiceProvider.getTaskReaderService().start();
+        ServiceProvider.getTaskSchedulerService().start();
+    }
+
+    private void startExecutor() {
+        ServiceProvider.getTaskExecutionService().start();
+    }
+
     public void stop() {
         switch (PROFILE) {
             case SCHEDULER_PROFILE:
-                if (ServiceProvider.getTaskReaderService() != null) {
-                    ServiceProvider.getTaskReaderService().stop();
-                }
-                if (ServiceProvider.getTaskSchedulerService() != null) {
-                    ServiceProvider.getTaskSchedulerService().stop();
-                }
+                stopScheduler();
                 break;
             case EXECUTOR_PROFILE:
-                if (ServiceProvider.getTaskExecutionService() != null) {
-                    ServiceProvider.getTaskExecutionService().stop();
-                }
+                stopExecutor();
                 break;
             case DEFAULT_PROFILE:
-                if (ServiceProvider.getTaskReaderService() != null) {
-                    ServiceProvider.getTaskReaderService().stop();
-                }
-                if (ServiceProvider.getTaskSchedulerService() != null) {
-                    ServiceProvider.getTaskSchedulerService().stop();
-                }
-                if (ServiceProvider.getTaskExecutionService() != null) {
-                    ServiceProvider.getTaskExecutionService().stop();
-                }
+                stopScheduler();
+                stopExecutor();
                 break;
+        }
+    }
+
+    private void stopScheduler() {
+        if (ServiceProvider.getTaskReaderService() != null) {
+            ServiceProvider.getTaskReaderService().stop();
+        }
+        if (ServiceProvider.getTaskSchedulerService() != null) {
+            ServiceProvider.getTaskSchedulerService().stop();
+        }
+    }
+
+    private void stopExecutor() {
+        if (ServiceProvider.getTaskExecutionService() != null) {
+            ServiceProvider.getTaskExecutionService().stop();
         }
     }
 }

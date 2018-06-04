@@ -17,7 +17,6 @@
 
 package com.cognitree.kronos.scheduler;
 
-import com.cognitree.kronos.ApplicationConfig;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskDependencyInfo;
@@ -245,9 +244,9 @@ class TaskProvider {
 
     /**
      * deletes all the old tasks from memory
-     * task to delete is determined by {@link ApplicationConfig#taskPurgeInterval}
+     * task to delete is determined by {@link SchedulerConfig#taskPurgeInterval}
      * <p>
-     * see: {@link ApplicationConfig#taskPurgeInterval} for more details and implication of taskPurgeInterval
+     * see: {@link SchedulerConfig#taskPurgeInterval} for more details and implication of taskPurgeInterval
      */
     synchronized void removeOldTasks(String taskPurgeInterval) {
         final Set<Task> tasksToDelete = new HashSet<>();

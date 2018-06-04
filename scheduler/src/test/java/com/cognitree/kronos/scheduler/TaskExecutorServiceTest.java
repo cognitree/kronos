@@ -29,16 +29,17 @@ public class TaskExecutorServiceTest extends ApplicationTest {
         Task taskFive = TestUtil.getTaskBuilder().setName("taskFive").waitForCallback(true).setType("test").build();
         ServiceProvider.getTaskSchedulerService().schedule(taskFive);
         TestUtil.sleep(1000);
-        // TODO what to check here status can be running or submitted depending on executor
-        Assert.assertEquals(RUNNING, taskOne.getStatus());
-        Assert.assertEquals(RUNNING, taskTwo.getStatus());
-        Assert.assertEquals(RUNNING, taskThree.getStatus());
-        Assert.assertEquals(RUNNING, taskFour.getStatus());
+        // depending on the number of available cores task picked for execution
+        // will be in one of the two state RUNNING or SUBMITTED
+        Assert.assertTrue(taskOne.getStatus().equals(RUNNING) || taskOne.getStatus().equals(SUBMITTED));
+        Assert.assertTrue(taskTwo.getStatus().equals(RUNNING) || taskTwo.getStatus().equals(SUBMITTED));
+        Assert.assertTrue(taskThree.getStatus().equals(RUNNING) || taskThree.getStatus().equals(SUBMITTED));
+        Assert.assertTrue(taskFour.getStatus().equals(RUNNING) || taskFour.getStatus().equals(SUBMITTED));
         Assert.assertEquals(SCHEDULED, taskFive.getStatus());
         TestTaskHandler.finishExecution(taskOne.getId());
         TestUtil.sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
-        Assert.assertEquals(RUNNING, taskFive.getStatus());
+        Assert.assertTrue(taskFive.getStatus().equals(RUNNING) || taskFive.getStatus().equals(SUBMITTED));
         TestTaskHandler.finishExecution(taskTwo.getId());
         TestTaskHandler.finishExecution(taskThree.getId());
         TestTaskHandler.finishExecution(taskFour.getId());

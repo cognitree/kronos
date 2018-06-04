@@ -1,8 +1,9 @@
 package com.cognitree.kronos.scheduler;
 
-import com.cognitree.kronos.ApplicationConfig;
 import com.cognitree.kronos.ServiceProvider;
+import com.cognitree.kronos.executor.ExecutorConfig;
 import com.cognitree.kronos.executor.TaskExecutionService;
+import com.cognitree.kronos.queue.QueueConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.AfterClass;
@@ -12,23 +13,27 @@ import org.junit.BeforeClass;
 import java.io.InputStream;
 
 public class ApplicationTest {
-    static ApplicationConfig applicationConfig;
+    private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
+    static SchedulerConfig schedulerConfig;
     static TaskProvider taskProvider;
 
     @BeforeClass
     public static void init() throws Exception {
-        InputStream appResourceStream = TaskSchedulerServiceTest.class.getClassLoader().getResourceAsStream("app.yaml");
-        applicationConfig = new ObjectMapper(new YAMLFactory()).readValue(appResourceStream, ApplicationConfig.class);
         initTaskSchedulerService();
         initTaskExecutionService();
     }
 
     @SuppressWarnings("unchecked")
     private static void initTaskSchedulerService() throws Exception {
-        TaskSchedulerService taskSchedulerService =
-                new TaskSchedulerService(applicationConfig.getProducerConfig(), applicationConfig.getConsumerConfig(),
-                        applicationConfig.getHandlerConfig(), applicationConfig.getTimeoutPolicyConfig(),
-                        applicationConfig.getTaskStoreConfig(), applicationConfig.getTaskPurgeInterval());
+        InputStream schedulerConfigStream =
+                TaskSchedulerServiceTest.class.getClassLoader().getResourceAsStream("scheduler.yaml");
+        schedulerConfig = MAPPER.readValue(schedulerConfigStream, SchedulerConfig.class);
+
+        InputStream queueConfigStream =
+                TaskSchedulerServiceTest.class.getClassLoader().getResourceAsStream("queue.yaml");
+        QueueConfig queueConfig = MAPPER.readValue(queueConfigStream, QueueConfig.class);
+
+        TaskSchedulerService taskSchedulerService = new TaskSchedulerService(schedulerConfig, queueConfig);
         ServiceProvider.registerService(taskSchedulerService);
         taskSchedulerService.init();
         taskSchedulerService.start();
@@ -37,9 +42,16 @@ public class ApplicationTest {
 
     @SuppressWarnings("unchecked")
     private static void initTaskExecutionService() throws Exception {
+        InputStream executorConfigStream =
+                TaskSchedulerServiceTest.class.getClassLoader().getResourceAsStream("executor.yaml");
+        ExecutorConfig executorConfig = MAPPER.readValue(executorConfigStream, ExecutorConfig.class);
+
+        InputStream queueConfigStream =
+                TaskSchedulerServiceTest.class.getClassLoader().getResourceAsStream("queue.yaml");
+        QueueConfig queueConfig = MAPPER.readValue(queueConfigStream, QueueConfig.class);
+
         TaskExecutionService taskExecutionService =
-                new TaskExecutionService(applicationConfig.getConsumerConfig(), applicationConfig.getProducerConfig(),
-                        applicationConfig.getHandlerConfig());
+                new TaskExecutionService(executorConfig, queueConfig);
         ServiceProvider.registerService(taskExecutionService);
         taskExecutionService.init();
         taskExecutionService.start();

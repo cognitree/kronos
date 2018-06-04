@@ -17,7 +17,6 @@
 
 package com.cognitree.kronos.scheduler;
 
-import com.cognitree.kronos.ApplicationConfig;
 import com.cognitree.kronos.Service;
 import com.cognitree.kronos.scheduler.readers.TaskDefinitionReader;
 import com.cognitree.kronos.scheduler.readers.TaskDefinitionReaderConfig;
@@ -26,7 +25,6 @@ import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,7 +33,7 @@ import static org.quartz.TriggerBuilder.newTrigger;
 
 /**
  * Task reader service schedules quartz job {@link TaskDefinitionReaderJob} for each {@link TaskDefinitionReader}
- * configured in {@link ApplicationConfig#getReaderConfig()}
+ * configured in {@link SchedulerConfig#getTaskReaderConfig()}
  */
 public final class TaskReaderService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(TaskReaderService.class);

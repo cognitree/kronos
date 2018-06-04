@@ -17,14 +17,14 @@
 
 package com.cognitree.kronos.scheduler.policies;
 
-import com.cognitree.kronos.executor.handlers.TaskHandlerConfig;
 import com.cognitree.kronos.model.Task;
+import com.cognitree.kronos.scheduler.TaskExecutionConfig;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * An interface to be implemented by timeout policies which will be invoked when a task exceeds the max execution time
  * <p>
- * For details refer: {@link TaskHandlerConfig#maxExecutionTime}
+ * For details refer: {@link TaskExecutionConfig#maxExecutionTime}
  */
 public interface TimeoutPolicy {
 
