@@ -22,18 +22,18 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Objects;
 
 /**
- * defines configuration for a {@link Producer}
+ * defines configuration for a {@link Producer}.
  */
 public class ProducerConfig {
 
     /**
-     * fully qualified class name of the {@link Producer} implementation to be used to create a producer
+     * fully qualified class name of the {@link Producer} implementation to be used to create a producer.
      */
     private String producerClass;
 
     /**
      * Configuration to be passed to producer to instantiate itself.
-     * This will be passed as an arg to {@link Producer#init(ObjectNode)} at the time of instantiation
+     * This will be passed as an arg to {@link Producer#init(ObjectNode)} at the time of instantiation.
      */
     private ObjectNode config;
 

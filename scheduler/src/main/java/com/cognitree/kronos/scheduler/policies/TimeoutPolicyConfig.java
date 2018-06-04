@@ -22,17 +22,17 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Objects;
 
 /**
- * defines configuration for a {@link TimeoutPolicy}
+ * defines configuration for a {@link TimeoutPolicy}.
  */
 public class TimeoutPolicyConfig {
 
     /**
-     * fully qualified class name of the {@link TimeoutPolicy} implementation
+     * fully qualified class name of the {@link TimeoutPolicy} implementation.
      */
     private String policyClass;
 
     /**
-     * Configuration to be passed to timeout policy to instantiate itself.
+     * Configuration required by the timeout policy to instantiate itself.
      * This will be passed as an arg to the {@link TimeoutPolicy#init(ObjectNode)}
      * method at the time of instantiation.
      */

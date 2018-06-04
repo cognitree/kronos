@@ -6,13 +6,14 @@ import com.cognitree.kronos.executor.handlers.TaskHandlerConfig;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * defines configurations for executor.
+ */
 public class ExecutorConfig {
     /**
-     * Map of task handler configuration, used by the framework to instantiate and start the handlers ({@link TaskHandler}
+     * Map of task handler configuration, required by the framework to instantiate and start the handlers ({@link TaskHandler}
      * <p>
      * Here key is the task type the handler is supposed to handle.
-     * Framework also supports a default handler concept which will be used for all the tasks with no configured handler
-     * Default handler needs to be explicitly set and should have a key as "default"
      */
     private Map<String, TaskHandlerConfig> taskHandlerConfig;
 

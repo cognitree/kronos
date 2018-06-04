@@ -9,6 +9,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 
+/**
+ * starts the executor app by reading configurations from classpath.
+ */
 public class ExecutorApp {
 
     private static final Logger logger = LoggerFactory.getLogger(ExecutorApp.class);

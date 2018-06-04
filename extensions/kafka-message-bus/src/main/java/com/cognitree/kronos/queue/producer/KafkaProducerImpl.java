@@ -26,6 +26,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 
+/**
+ * A {@link Producer} implementation using Kafka as queue in backend.
+ */
 public class KafkaProducerImpl implements Producer {
     private static final Logger logger = LoggerFactory.getLogger(KafkaProducerImpl.class);
 

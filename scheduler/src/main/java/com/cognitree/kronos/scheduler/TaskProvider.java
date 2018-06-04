@@ -39,9 +39,10 @@ import static com.cognitree.kronos.util.DateTimeUtil.resolveDuration;
  * Task provider manages/ resolves task dependencies and exposes APIs to add, remove, retrieve tasks in active and
  * ready-to-execute state.
  * <p>
- * Internally, task provider is backed by a directed acyclic graph to manage dependencies across these tasks.
+ * Internally, task provider is backed by a directed acyclic graph and persistence store to manage dependencies
+ * across these tasks.
  */
-class TaskProvider {
+final class TaskProvider {
     private static final Logger logger = LoggerFactory.getLogger(TaskProvider.class);
 
     private final MutableGraph<Task> graph = GraphBuilder.directed().build();
@@ -94,12 +95,12 @@ class TaskProvider {
     }
 
     /**
-     * Check if all the dependant tasks of the given task are available and not in failed state.
+     * Check if all the dependant tasks for the given task are available and not in failed state.
      *
      * @param task
      * @return false when dependant tasks are in failed state or not found, true otherwise
      */
-    boolean resolve(Task task) {
+    synchronized boolean resolve(Task task) {
         final List<TaskDependencyInfo> dependencyInfoList = task.getDependsOn();
         if (dependencyInfoList != null) {
             List<Task> dependentTasks = new ArrayList<>();
@@ -171,7 +172,7 @@ class TaskProvider {
         graph.putEdge(dependerTask, dependeeTask);
     }
 
-    Task getTask(String taskId, String taskGroup) {
+    synchronized Task getTask(String taskId, String taskGroup) {
         for (Task task : graph.nodes()) {
             if (task.getId().equals(taskId) && task.getGroup().equals(taskGroup)) {
                 return task;
@@ -230,6 +231,7 @@ class TaskProvider {
         return stream.collect(Collectors.toList());
     }
 
+    // used in junit
     boolean isReadyForExecution(Task task) {
         return graph.predecessors(task)
                 .stream()

@@ -5,6 +5,10 @@ import com.cognitree.kronos.queue.producer.ProducerConfig;
 
 import java.util.Objects;
 
+/**
+ * defines configuration required by the application to create producer and consumer to exchange message between
+ * scheduler and executor.
+ */
 public class QueueConfig {
     private ProducerConfig producerConfig;
     private ConsumerConfig consumerConfig;

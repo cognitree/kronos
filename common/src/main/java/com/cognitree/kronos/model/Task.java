@@ -22,62 +22,60 @@ import java.util.*;
 import static com.cognitree.kronos.model.Task.Status.CREATED;
 
 /**
- * A task created from {@link TaskDefinition} for execution
+ * A task created from {@link TaskDefinition} for execution.
  */
 public class Task {
 
     /**
-     * is set by the framework uniquely to identify this task
+     * is uniquely set by the scheduler to identify this task.
      */
     private String id;
     /**
-     * name of the task same as {@link TaskDefinition#name}
+     * name of the task same as {@link TaskDefinition#name}.
      */
     private String name;
     /**
-     * group name task belongs to same as {@link TaskDefinition#group}
+     * group name task belongs to same as {@link TaskDefinition#group}.
      */
     private String group;
     /**
-     * type of task same as {@link TaskDefinition#type}
+     * type of task same as {@link TaskDefinition#type}.
      */
     private String type;
     /**
-     * policy to apply in case of timeout
+     * policy to apply in case of timeout and takes precedence over the generic default values specified at application level.
      */
     private String timeoutPolicy;
     /**
-     * max allowed time for task to finish execution same as {@link TaskDefinition#maxExecutionTime}.
-     * <p>
+     * max allowed time for task to finish execution same as {@link TaskDefinition#maxExecutionTime} and
      * takes precedence over the generic default values specified at application level.
-     * </p>
      */
     private String maxExecutionTime;
     /**
-     * list of tasks it depends on defined same as {@link TaskDefinition#dependsOn}
+     * list of tasks it depends on defined same as {@link TaskDefinition#dependsOn}.
      */
     private List<TaskDependencyInfo> dependsOn = new ArrayList<>();
     /**
-     * properties used by the task during execution same as {@link TaskDefinition#properties}
-     * It also includes all the additional task properties {@link TaskDefinition#additionalProperties}
+     * properties required by the task during execution same as {@link TaskDefinition#properties}.
+     * Also includes all the additional task properties {@link TaskDefinition#additionalProperties}.
      */
     private Map<String, Object> properties = new HashMap<>();
 
     private Status status = CREATED;
     /**
-     * additional details about task status
+     * additional details about task status.
      */
     private String statusMessage;
     /**
-     * creation time of the task as per the {@link TaskDefinition#schedule}
+     * creation time of the task as per the {@link TaskDefinition#schedule}.
      */
     private long createdAt;
     /**
-     * actual time when the task is submitted for execution
+     * actual time when the task is submitted for execution.
      */
     private long submittedAt;
     /**
-     * actual time when the task is submitted for execution
+     * actual time when the task is submitted for execution.
      */
     private long completedAt;
 

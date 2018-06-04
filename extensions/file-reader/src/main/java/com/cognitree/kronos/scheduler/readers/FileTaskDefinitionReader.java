@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * A task definition reader implementation loading tasks from specified file in the classpath
+ * A {@link TaskDefinitionReader} implementation to load {@link TaskDefinition} from specified file in the classpath.
  */
 public class FileTaskDefinitionReader implements TaskDefinitionReader {
     private static final Logger logger = LoggerFactory.getLogger(FileTaskDefinitionReader.class);

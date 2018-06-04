@@ -22,23 +22,20 @@ import java.util.Objects;
 import static com.cognitree.kronos.model.TaskDependencyInfo.Mode.all;
 
 /**
- * defines dependency between two tasks
+ * used to define dependency between two tasks.
  */
 public class TaskDependencyInfo {
     /**
-     * name of the task it depends on
+     * name of the task it depends on.
      */
     private String name;
     /**
-     * <p>
      * time period to look for all the tasks with name {@link TaskDependencyInfo#name} to associate dependency.
-     * <p>
-     * duration lets a user clearly define which instance of task it depends on by defining a boundary
      */
     private String duration;
     /**
      * mode of dependency whether it depends on the first last or all tasks found in the
-     * {@link TaskDependencyInfo#duration} period
+     * {@link TaskDependencyInfo#duration} period.
      */
     private Mode mode = all;
 

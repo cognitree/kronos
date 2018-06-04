@@ -10,29 +10,33 @@ import com.cognitree.kronos.scheduler.store.TaskStoreConfig;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * defines configurations for scheduler.
+ */
 public class SchedulerConfig {
 
     /**
-     * Map of reader configuration, used by the framework to instantiate and start the readers ({@link TaskDefinitionReader})
+     * Map of reader configuration, required by the scheduler to instantiate and start the readers ({@link TaskDefinitionReader})
      * <p>
      * Here key is the name to use for task reader and should be unique across all readers
      */
     private Map<String, TaskDefinitionReaderConfig> taskReaderConfig;
 
     /**
-     * {@link TaskStore} configuration, used by the framework to instantiate the task store to be used for storing
+     * {@link TaskStore} configuration, required by the scheduler to instantiate the task store to be used for storing
      * the task and their state.
      */
     private TaskStoreConfig taskStoreConfig;
 
     /**
-     * {@link TaskExecutionConfig}, used by the framework to manage the task execution
-     * the task and their state.
+     * Map of task execution configuration, required by the scheduler to manage task execution per task type.
+     * <p>
+     * Here key is the task type and value is the configuration to be used for that task type.
      */
     private Map<String, TaskExecutionConfig> taskExecutionConfig;
 
     /**
-     * Map of policy configuration, used by the framework to configure timeout policies to apply in case of timeout
+     * Map of policy configuration, required by the scheduler to configure timeout policies to apply in case of timeout.
      * <p>
      * Here key is the policy id which is to be used by handler ({@link TaskExecutionConfig#timeoutPolicy})
      * and task {@link TaskDefinition#timeoutPolicy} while defining policy to apply on timeout.

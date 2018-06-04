@@ -22,23 +22,23 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Objects;
 
 /**
- * defines configuration for a {@link Consumer}
+ * defines configuration for a {@link Consumer}.
  */
 public class ConsumerConfig {
 
     /**
-     * fully qualified class name of the {@link Consumer} implementation to be used to create a consumer
+     * fully qualified class name of the {@link Consumer} implementation to be used to create a consumer.
      */
     private String consumerClass;
 
     /**
      * Configuration to be passed to consumer to instantiate itself.
-     * This will be passed as an arg to {@link Consumer#init(ObjectNode)} at the time of instantiation
+     * This will be passed as an arg to {@link Consumer#init(ObjectNode)} at the time of instantiation.
      */
     private ObjectNode config;
 
     /**
-     * time duration between successive poll to queue
+     * time duration between successive poll to queue.
      * example values:  10s, 1m, 5m etc
      */
     private String pollInterval;

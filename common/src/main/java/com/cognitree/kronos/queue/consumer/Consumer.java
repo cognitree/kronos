@@ -24,7 +24,13 @@ import java.util.List;
 
 public interface Consumer {
 
-    void init(ObjectNode config);
+    /**
+     * during initialization phase a call is made to initialize consumer using {@link ConsumerConfig#config}.
+     * Any property required by the consumer¸ to instantiate itself should be part of {@link ConsumerConfig#config}.
+     *
+     * @param consumerConfig configuration used to initialize the consumer.
+     */
+    void init(ObjectNode consumerConfig);
 
     /**
      * polls data from the underlying queue
@@ -37,8 +43,8 @@ public interface Consumer {
     /**
      * polls data from the underlying queue
      *
-     * @param topic topic to poll from
-     * @param maxSize  maximum number of records to poll
+     * @param topic   topic to poll from
+     * @param maxSize maximum number of records to poll
      * @return
      */
     List<String> poll(String topic, int maxSize);

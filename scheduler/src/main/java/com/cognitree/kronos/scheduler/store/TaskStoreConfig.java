@@ -4,14 +4,17 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Objects;
 
+/**
+ * defines configuration for a {@link TaskStore}.
+ */
 public class TaskStoreConfig {
     /**
-     * fully qualified class name of the {@link TaskStore} implementation to be used to create a task store
+     * fully qualified class name of the {@link TaskStore} implementation to be used to create a task store.
      */
     private String taskStoreClass;
 
     /**
-     * Configuration to be passed to task store to instantiate itself.
+     * Configuration required by the task store to instantiate itself.
      * This will be passed as an arg to the method of {@link TaskStore#init(ObjectNode)} at the time of instantiation
      */
     private ObjectNode config;

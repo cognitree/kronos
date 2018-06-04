@@ -48,13 +48,13 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
- * A task execution service is responsible for configuring/ initializing each {@link TaskHandler} and
- * periodically polling new tasks from queue and submitting it to appropriate handler for execution.
+ * A task execution service is responsible for initializing each {@link TaskHandler} and periodically polling new tasks
+ * from queue and submitting it to appropriate handler for execution.
  * <p>
  * A task execution service acts as an consumer of tasks from queue and producer of task status to the queue.
  * </p>
  */
-public class TaskExecutionService implements Service {
+public final class TaskExecutionService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(TaskExecutionService.class);
 
     private static final ObjectMapper MAPPER = new ObjectMapper();

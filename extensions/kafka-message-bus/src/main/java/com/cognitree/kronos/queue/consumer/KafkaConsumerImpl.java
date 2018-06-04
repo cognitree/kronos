@@ -28,6 +28,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+/**
+ * A {@link Consumer} implementation using Kafka as queue in backend.
+ */
 public class KafkaConsumerImpl implements Consumer {
     private static final Logger logger = LoggerFactory.getLogger(KafkaConsumerImpl.class);
 

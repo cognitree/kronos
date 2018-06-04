@@ -22,23 +22,23 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Objects;
 
 /**
- * defines configuration for a {@link TaskHandler}
+ * defines configuration for a {@link TaskHandler}.
  */
 public class TaskHandlerConfig {
 
     /**
-     * fully qualified class name of the {@link TaskHandler} implementation
+     * fully qualified class name of the {@link TaskHandler} implementation.
      */
     private String handlerClass;
 
     /**
-     * Configuration to be passed to handler to instantiate itself.
-     * This is passed as an arg to the {@link TaskHandler#init(ObjectNode)} method at the time of instantiation
+     * Configuration required by the handler to instantiate itself.
+     * This is passed as an arg to the {@link TaskHandler#init(ObjectNode)} method at the time of instantiation.
      */
     private ObjectNode config;
 
     /**
-     * max number of tasks to be scheduled in parallel for execution at any point of time
+     * maximum number of tasks to be scheduled in parallel for execution at any point of time.
      */
     private int maxParallelTasks;
 

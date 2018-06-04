@@ -274,7 +274,7 @@ public final class TaskSchedulerService implements Service {
         statusChangeListeners.remove(statusChangeListener);
     }
 
-    public void schedule(Task task) {
+    public synchronized void schedule(Task task) {
         logger.info("Received request to schedule task: {}", task);
         final boolean isAdded = taskProvider.add(task);
         if (isAdded) {
@@ -451,5 +451,4 @@ public final class TaskSchedulerService implements Service {
             }
         }
     }
-
 }

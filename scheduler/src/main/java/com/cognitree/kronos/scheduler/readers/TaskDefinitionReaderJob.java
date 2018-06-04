@@ -17,7 +17,6 @@
 
 package com.cognitree.kronos.scheduler.readers;
 
-import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.TaskDefinition;
 import com.cognitree.kronos.scheduler.TaskSchedulerService;
@@ -32,12 +31,11 @@ import static org.quartz.JobBuilder.newJob;
 import static org.quartz.TriggerBuilder.newTrigger;
 
 /**
- * TaskDefinitionReaderJob is scheduled by {@link TaskReaderService#scheduleJobs()} for each {@link TaskDefinitionReader} implementation.
- * <p>
- * Any change in the task definition is updated with the framework. Add new tasks definition, remove deleted one
- * and update existing task definition if required
+ * A quartz job scheduled for each {@link TaskDefinitionReader} configured.
+ * The job schedule is defined by {@link TaskDefinitionReaderConfig#schedule} and on trigger updates the current state
+ * of scheduler with {@link TaskDefinition} loaded from the reader.
  */
-public final class TaskDefinitionReaderJob implements org.quartz.Job {
+public final class TaskDefinitionReaderJob implements Job {
     private static final Logger logger = LoggerFactory.getLogger(TaskDefinitionReaderJob.class);
 
     @Override
@@ -143,13 +141,11 @@ public final class TaskDefinitionReaderJob implements org.quartz.Job {
     }
 
     /**
-     * A task scheduler job is created per task definitions and is triggered as per the scheduled defined by
-     * {@link TaskDefinition#schedule}.
-     * <p>
-     * On trigger, It creates an instance of {@link Task} from {@link TaskDefinition} and schedules it to
-     * {@link TaskSchedulerService} for execution
+     * A quartz job scheduled for each {@link TaskDefinition} provided by {@link TaskDefinitionReader#load()}.
+     * The job schedule is defined by {@link TaskDefinition#schedule} and on trigger creates an instance of {@link Task}
+     * from {@link TaskDefinition} and schedules it to {@link TaskSchedulerService} for execution.
      */
-    public static final class TaskSchedulerJob implements org.quartz.Job {
+    public static final class TaskSchedulerJob implements Job {
         @Override
         public void execute(JobExecutionContext jobExecutionContext) {
             final JobDataMap jobDataMap = jobExecutionContext.getJobDetail().getJobDataMap();

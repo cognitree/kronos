@@ -28,7 +28,7 @@ import java.util.Arrays;
 import java.util.Map;
 
 /**
- * Responsible for running shell commands with given arguments
+ * A {@link TaskHandler} implementation to execute shell commands with given arguments.
  */
 public class ShellCommandHandler implements TaskHandler {
     private static final Logger logger = LoggerFactory.getLogger(ShellCommandHandler.class);

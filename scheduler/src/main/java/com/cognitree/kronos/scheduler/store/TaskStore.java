@@ -24,14 +24,15 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.List;
 
 /**
- * An interface exposing API's to provide {@link Task} persistence
+ * An interface exposing API's to provide {@link Task} persistence.
  */
 public interface TaskStore {
 
     /**
-     * called during initialization phase to initialize the task store using {@link TaskStoreConfig#config}
+     * called during initialization phase to initialize the task store using {@link TaskStoreConfig#config}. Any property
+     * required by the store to instantiate itself should be part of {@link TaskStoreConfig#config}.
      *
-     * @param storeConfig
+     * @param storeConfig configuration used to initialize the store.
      * @throws Exception
      */
     void init(ObjectNode storeConfig) throws Exception;

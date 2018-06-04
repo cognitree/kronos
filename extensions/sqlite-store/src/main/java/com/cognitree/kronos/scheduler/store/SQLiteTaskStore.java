@@ -16,6 +16,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * A SQLite implementation of {@link TaskStore}.
+ */
 public class SQLiteTaskStore implements TaskStore {
     private static final Logger logger = LoggerFactory.getLogger(SQLiteTaskStore.class);
 

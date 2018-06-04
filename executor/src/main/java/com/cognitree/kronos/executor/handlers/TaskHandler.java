@@ -22,31 +22,26 @@ import com.cognitree.kronos.model.TaskDefinition;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
- * A handler defines how a task of given type is handled/ executed and is to be implemented for each task type
+ * A handler defines how a task of given type is handled/ executed and is to be implemented and configured for each task type
  * ({@link TaskDefinition#type}).
- * <p>
- * Configuring a TaskHandler
- * <p>
- * A handler configuration is defined by {@link TaskHandlerConfig}.
- * A handler is initialized using {@link TaskHandler#init(ObjectNode)} method. The {@link ObjectNode}
- * argument is same as {@link TaskHandlerConfig#config} and is used by the handler to instantiate itself. So any property
- * required by the handler to instantiate itself should be part of {@link TaskHandlerConfig#config}.
- * </p>
  */
 public interface TaskHandler {
 
+
     /**
-     * initialize the handler
-     * <p>
-     * invoked by framework during initialization phase made to initialize handler with {@link TaskHandlerConfig#config}.
+     * for each configured handler during initialization phase a call is made to initialize handler using
+     * {@link TaskHandlerConfig#config}. Any property required by the handler to instantiate itself
+     * should be part of {@link TaskHandlerConfig#config}.
      *
-     * @param handlerConfig handler configuration used to initialize the handler.
+     * @param handlerConfig configuration used to initialize the handler.
      */
     void init(ObjectNode handlerConfig);
 
     /**
-     * defines how to handle/ execute the task. If the execution succeeds without any exception then the task is
-     * marked successful otherwise failed with status message same as exception message.
+     * defines how to handle/ execute the task.
+     * <p>
+     * If the execution succeeds without any exception then the task is marked successful,
+     * otherwise failed with status message same as exception message.
      *
      * @param task task to handle.
      * @throws HandlerException thrown if handler fails to execute the task successfully.

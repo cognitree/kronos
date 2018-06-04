@@ -10,6 +10,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 
+/**
+ * starts the scheduler app by reading configurations from classpath.
+ */
 public class SchedulerApp {
 
     private static final Logger logger = LoggerFactory.getLogger(SchedulerApp.class);

@@ -21,7 +21,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public interface Producer {
 
-    void init(ObjectNode config);
+    /**
+     * during initialization phase a call is made to initialize producer using {@link ProducerConfig#config}.
+     * Any property required by the producer¸ to instantiate itself should be part of {@link ProducerConfig#config}.
+     *
+     * @param producerConfig configuration used to initialize the producer.
+     */
+    void init(ObjectNode producerConfig);
 
     /**
      * sends the record to the underlying queue

@@ -22,50 +22,48 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import java.util.*;
 
 /**
- * A task definition holds set of attributes some required by the framework and
- * some required by the task itself during execution
+ * A task definition holds set of attributes required by the framework and the task itself during execution.
  */
 public class TaskDefinition {
 
     private String name;
     /**
      * used to segregate task with same name and type into different group,
-     * by default all tasks are part of the same group which is DEFAULT
+     * by default all tasks are part of the same group which is default.
      */
     private String group = "default";
     /**
-     * type of tasks
+     * type of task.
      */
     private String type;
     /**
-     * A task can be enabled or disable at runtime, disabled tasks won't be picked by the framework
+     * A task can be enabled or disable at runtime, disabled tasks won't be picked by the framework.
      */
     private boolean isEnabled = true;
     /**
-     * A cron string representing when the task is to be scheduled
+     * A cron string representing when the task is to be scheduled.
      */
     private String schedule;
     /**
-     * policy to apply in case of timeout
+     * policy to apply in case of timeout.
      */
     private String timeoutPolicy;
     /**
-     * max allowed time for task to finish execution.
-     * <p>
-     * takes precedence over the generic default values specified at application level.
+     * max allowed time for task to finish execution and takes precedence over the generic default values specified at
+     * application level.
      * </p>
      */
     private String maxExecutionTime;
     /**
-     * A dependency list defining tasks, current task depends on
+     * A dependency list defining tasks, current task depends on.
      */
     private List<TaskDependencyInfo> dependsOn = new ArrayList<>();
     /**
-     * Additional task properties used by the task during execution
+     * Additional task properties used by the task during execution.
      */
     private Map<String, Object> properties = new HashMap<>();
     /**
-     * Any unknown properties will be mapped as additionalProperties for the task
+     * Any unknown properties will be mapped as additionalProperties for the task.
      */
     private Map<String, Object> additionalProperties = new HashMap<>();
 
