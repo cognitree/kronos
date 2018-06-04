@@ -4,8 +4,8 @@ import com.cognitree.kronos.model.TaskDefinition;
 import com.cognitree.kronos.scheduler.policies.TimeoutPolicyConfig;
 import com.cognitree.kronos.scheduler.readers.TaskDefinitionReader;
 import com.cognitree.kronos.scheduler.readers.TaskDefinitionReaderConfig;
-import com.cognitree.kronos.store.TaskStore;
-import com.cognitree.kronos.store.TaskStoreConfig;
+import com.cognitree.kronos.scheduler.store.TaskStore;
+import com.cognitree.kronos.scheduler.store.TaskStoreConfig;
 
 import java.util.Map;
 import java.util.Objects;
@@ -25,6 +25,10 @@ public class SchedulerConfig {
      */
     private TaskStoreConfig taskStoreConfig;
 
+    /**
+     * {@link TaskExecutionConfig}, used by the framework to manage the task execution
+     * the task and their state.
+     */
     private Map<String, TaskExecutionConfig> taskExecutionConfig;
 
     /**

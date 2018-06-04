@@ -10,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.cognitree.kronos</groupId>
-    <artifactId>scheduler</artifactId>
+    <artifactId>executor</artifactId>
     <version>1.0</version>
 
     <dependencies>

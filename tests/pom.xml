@@ -1,39 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xmlns="http://maven.apache.org/POM/4.0.0"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
     <parent>
-        <groupId>com.cognitree</groupId>
         <artifactId>kronos</artifactId>
+        <groupId>com.cognitree</groupId>
         <version>1.0</version>
     </parent>
+    <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.cognitree.kronos</groupId>
-    <artifactId>extensions</artifactId>
-    <packaging>pom</packaging>
+    <artifactId>tests</artifactId>
     <version>1.0</version>
-    <modules>
-        <module>kafka-message-bus</module>
-        <module>shell-handler</module>
-        <module>file-reader</module>
-        <module>sqlite-store</module>
-    </modules>
 
     <dependencies>
         <dependency>
             <groupId>com.cognitree.kronos</groupId>
             <artifactId>scheduler</artifactId>
             <version>1.0</version>
-            <scope>provided</scope>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.cognitree.kronos</groupId>
             <artifactId>executor</artifactId>
             <version>1.0</version>
-            <scope>provided</scope>
+            <scope>test</scope>
         </dependency>
     </dependencies>
+
 
 </project>

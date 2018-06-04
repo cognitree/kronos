@@ -1,0 +1,19 @@
+# configure message bus
+producerConfig:
+  producerClass: com.cognitree.kronos.queue.producer.KafkaTaskProducer
+  config:
+    producerConfig:
+      bootstrap.servers : localhost:9092
+      key.serializer : org.apache.kafka.common.serialization.StringSerializer
+      value.serializer : org.apache.kafka.common.serialization.StringSerializer
+consumerConfig:
+  consumerClass: com.cognitree.kronos.queue.consumer.KafkaTaskConsumer
+  config:
+    consumerConfig:
+      bootstrap.servers : localhost:9092
+      group.id: kronos
+      key.deserializer : org.apache.kafka.common.serialization.StringDeserializer
+      value.deserializer : org.apache.kafka.common.serialization.StringDeserializer
+    pollTimeout: 5s
+  pollInterval: 5s
+taskStatusQueue: taskstatus

@@ -20,7 +20,7 @@ package com.cognitree.kronos.scheduler;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskDependencyInfo;
-import com.cognitree.kronos.store.TaskStore;
+import com.cognitree.kronos.scheduler.store.TaskStore;
 import com.google.common.graph.GraphBuilder;
 import com.google.common.graph.MutableGraph;
 import org.slf4j.Logger;

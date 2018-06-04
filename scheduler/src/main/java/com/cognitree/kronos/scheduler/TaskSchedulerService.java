@@ -18,6 +18,7 @@
 package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.Service;
+import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskDefinition;
@@ -29,8 +30,8 @@ import com.cognitree.kronos.queue.producer.Producer;
 import com.cognitree.kronos.queue.producer.ProducerConfig;
 import com.cognitree.kronos.scheduler.policies.TimeoutPolicy;
 import com.cognitree.kronos.scheduler.policies.TimeoutPolicyConfig;
-import com.cognitree.kronos.store.TaskStore;
-import com.cognitree.kronos.store.TaskStoreConfig;
+import com.cognitree.kronos.scheduler.store.TaskStore;
+import com.cognitree.kronos.scheduler.store.TaskStoreConfig;
 import com.cognitree.kronos.util.DateTimeUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -42,9 +43,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 
-import static com.cognitree.kronos.model.FailureMessage.*;
+import static com.cognitree.kronos.model.Messages.*;
 import static com.cognitree.kronos.model.Task.Status.*;
-import static com.cognitree.kronos.util.DateTimeUtil.resolveDuration;
 import static java.util.concurrent.TimeUnit.*;
 
 /**
@@ -90,6 +90,10 @@ public final class TaskSchedulerService implements Service {
         this.producerConfig = queueConfig.getProducerConfig();
         this.consumerConfig = queueConfig.getConsumerConfig();
         this.statusQueue = queueConfig.getTaskStatusQueue();
+    }
+
+    public static TaskSchedulerService getService() {
+        return (TaskSchedulerService) ServiceProvider.getService(TaskSchedulerService.class.getSimpleName());
     }
 
     /**
@@ -204,15 +208,15 @@ public final class TaskSchedulerService implements Service {
      */
     private long getMaxExecutionTime(Task task) {
         if (task.getMaxExecutionTime() != null) {
-            return resolveDuration(task.getMaxExecutionTime());
+            return DateTimeUtil.resolveDuration(task.getMaxExecutionTime());
         }
 
         final TaskExecutionConfig taskExecutionConfig = this.taskConfigMap.get(task.getType());
         if (taskExecutionConfig != null && taskExecutionConfig.getMaxExecutionTime() != null) {
-            return resolveDuration(taskExecutionConfig.getMaxExecutionTime());
+            return DateTimeUtil.resolveDuration(taskExecutionConfig.getMaxExecutionTime());
         }
 
-        return resolveDuration(DEFAULT_MAX_EXECUTION_TIME);
+        return DateTimeUtil.resolveDuration(DEFAULT_MAX_EXECUTION_TIME);
     }
 
     private void resolveCreatedTasks() {
