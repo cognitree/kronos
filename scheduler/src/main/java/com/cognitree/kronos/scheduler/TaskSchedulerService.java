@@ -127,6 +127,7 @@ public final class TaskSchedulerService implements Service {
                 .newInstance();
         taskStore.init(taskStoreConfig.getConfig());
         taskProvider = new TaskProvider(taskStore);
+        taskProvider.init();
     }
 
     // used in junit to reinitialize task provider from store
@@ -329,6 +330,26 @@ public final class TaskSchedulerService implements Service {
         handleTaskStatusChange(task, status);
     }
 
+    private boolean isValidTransition(Status currentStatus, Status desiredStatus) {
+        switch (desiredStatus) {
+            case CREATED:
+                return currentStatus == null;
+            case WAITING:
+                return currentStatus == CREATED;
+            case SCHEDULED:
+                return currentStatus == WAITING;
+            case SUBMITTED:
+                return currentStatus == SCHEDULED;
+            case RUNNING:
+                return currentStatus == SUBMITTED;
+            case SUCCESSFUL:
+            case FAILED:
+                return currentStatus != SUCCESSFUL && currentStatus != FAILED;
+            default:
+                return false;
+        }
+    }
+
     private void notifyListeners(Task task, Status from, Status to) {
         final UnmodifiableTask unmodifiableTask = new UnmodifiableTask(task);
         statusChangeListeners.forEach(listener -> {
@@ -364,26 +385,6 @@ public final class TaskSchedulerService implements Service {
                 // If the task is finished (reached terminal state), proceed to schedule the next set of tasks
                 scheduleReadyTasks();
                 break;
-        }
-    }
-
-    private boolean isValidTransition(Status currentStatus, Status desiredStatus) {
-        switch (desiredStatus) {
-            case CREATED:
-                return currentStatus == null;
-            case WAITING:
-                return currentStatus == CREATED;
-            case SCHEDULED:
-                return currentStatus == WAITING;
-            case SUBMITTED:
-                return currentStatus == SCHEDULED;
-            case RUNNING:
-                return currentStatus == SUBMITTED;
-            case SUCCESSFUL:
-            case FAILED:
-                return currentStatus != SUCCESSFUL && currentStatus != FAILED;
-            default:
-                return false;
         }
     }
 

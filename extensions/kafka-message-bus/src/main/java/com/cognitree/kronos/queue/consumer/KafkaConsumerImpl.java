@@ -36,16 +36,16 @@ public class KafkaConsumerImpl implements Consumer {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    private final Map<String, KafkaConsumer<String, String>> kafkaConsumers = new HashMap<>();
-    private Properties consumerConfig;
+    private final Map<String, KafkaConsumer<String, String>> topicToKafkaConsumerMap = new HashMap<>();
+    private Properties kafkaConsumerConfig;
     private long pollTimeout;
 
 
     public void init(ObjectNode config) {
         logger.info("Initializing consumer for kafka with config {}", config);
-        consumerConfig = OBJECT_MAPPER.convertValue(config.get("consumerConfig"), Properties.class);
+        kafkaConsumerConfig = OBJECT_MAPPER.convertValue(config.get("kafkaConsumerConfig"), Properties.class);
         // force override consumer configuration for kafka to poll max 1 message at a time
-        consumerConfig.put("max.poll.records", 1);
+        kafkaConsumerConfig.put("max.poll.records", 1);
         pollTimeout = DateTimeUtil.resolveDuration(config.get("pollTimeout").asText());
     }
 
@@ -58,12 +58,12 @@ public class KafkaConsumerImpl implements Consumer {
     public List<String> poll(String topic, int size) {
         logger.trace("Received request to poll messages from topic {} with max size {}", topic, size);
         List<String> tasks = new ArrayList<>();
-        if (!kafkaConsumers.containsKey(topic)) {
+        if (!topicToKafkaConsumerMap.containsKey(topic)) {
             createKafkaConsumer(topic);
         }
 
         while (tasks.size() < size) {
-            final ConsumerRecords<String, String> consumerRecords = kafkaConsumers.get(topic).poll(pollTimeout);
+            final ConsumerRecords<String, String> consumerRecords = topicToKafkaConsumerMap.get(topic).poll(pollTimeout);
             if (consumerRecords.isEmpty()) {
                 break;
             }
@@ -76,11 +76,11 @@ public class KafkaConsumerImpl implements Consumer {
     }
 
     private synchronized void createKafkaConsumer(String topic) {
-        if (!kafkaConsumers.containsKey(topic)) {
-            logger.info("Creating kafka consumer on topic {} with consumer config {}", topic, consumerConfig);
-            KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(consumerConfig);
+        if (!topicToKafkaConsumerMap.containsKey(topic)) {
+            logger.info("Creating kafka consumer on topic {} with consumer config {}", topic, kafkaConsumerConfig);
+            KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(kafkaConsumerConfig);
             kafkaConsumer.subscribe(Collections.singletonList(topic));
-            kafkaConsumers.put(topic, kafkaConsumer);
+            topicToKafkaConsumerMap.put(topic, kafkaConsumer);
         }
     }
 

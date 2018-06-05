@@ -50,10 +50,9 @@ final class TaskProvider {
 
     TaskProvider(TaskStore store) {
         this.taskStore = store;
-        init();
     }
 
-    private void init() {
+    void init() {
         logger.info("Initializing task provider from task store");
         final List<Task> tasks = taskStore.load(Arrays.asList(CREATED, WAITING, SCHEDULED, SUBMITTED, RUNNING));
         if (tasks != null && !tasks.isEmpty()) {

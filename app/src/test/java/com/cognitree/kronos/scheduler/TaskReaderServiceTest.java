@@ -85,13 +85,9 @@ public class TaskReaderServiceTest {
         MockTaskDefinitionReader.removeTaskDefinition("taskTwo");
         sleep(1000);
         Assert.assertTrue(scheduler.checkExists(taskOneDefinitionReaderJobKey));
-        final TaskDefinition taskOne = MockTaskDefinitionReader.getTaskDefinition("taskOne");
-        System.out.println(taskOne);
-        final Object taskDefinition = scheduler.getJobDetail(taskOneDefinitionReaderJobKey).getJobDataMap().get("taskDefinition");
-        System.out.println(taskDefinition);
-        Assert.assertEquals(taskOne,
-                taskDefinition);
         Assert.assertFalse(scheduler.checkExists(taskTwoDefinitionReaderJobKey));
+        Assert.assertEquals(MockTaskDefinitionReader.getTaskDefinition("taskOne"),
+                scheduler.getJobDetail(taskOneDefinitionReaderJobKey).getJobDataMap().get("taskDefinition"));
 
         final TaskProvider taskProvider = TaskSchedulerService.getService().getTaskProvider();
         int taskCount = taskProvider.size();

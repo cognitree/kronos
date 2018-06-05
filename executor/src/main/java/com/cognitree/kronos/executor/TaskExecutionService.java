@@ -68,9 +68,9 @@ public final class TaskExecutionService implements Service {
     private final Map<String, Integer> taskTypeToMaxParallelTasksCount = new HashMap<>();
     private final Map<String, Integer> taskTypeToRunningTasksCount = new HashMap<>();
     // used by internal tasks like polling new tasks from queue
-    private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService internalExecutorService = Executors.newSingleThreadScheduledExecutor();
     // used to execute tasks
-    private final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    private final ExecutorService taskExecutorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     private Consumer consumer;
     private Producer producer;
 
@@ -109,9 +109,9 @@ public final class TaskExecutionService implements Service {
     }
 
     private void initTaskHandlersAndExecutors() throws Exception {
-        for (Map.Entry<String, TaskHandlerConfig> taskTypToHandlerConfigEntry : taskTypeToHandlerConfig.entrySet()) {
-            final String taskType = taskTypToHandlerConfigEntry.getKey();
-            final TaskHandlerConfig taskHandlerConfig = taskTypToHandlerConfigEntry.getValue();
+        for (Map.Entry<String, TaskHandlerConfig> taskTypeToHandlerConfigEntry : taskTypeToHandlerConfig.entrySet()) {
+            final String taskType = taskTypeToHandlerConfigEntry.getKey();
+            final TaskHandlerConfig taskHandlerConfig = taskTypeToHandlerConfigEntry.getValue();
             logger.info("Initializing task handler of type {} with config {}", taskType, taskHandlerConfig);
             final TaskHandler taskHandler = (TaskHandler) Class.forName(taskHandlerConfig.getHandlerClass())
                     .newInstance();
@@ -128,7 +128,7 @@ public final class TaskExecutionService implements Service {
     @Override
     public void start() {
         final long pollInterval = DateTimeUtil.resolveDuration(consumerConfig.getPollInterval());
-        scheduledExecutorService.scheduleAtFixedRate(this::consumeTasks, pollInterval, pollInterval, MILLISECONDS);
+        internalExecutorService.scheduleAtFixedRate(this::consumeTasks, 0, pollInterval, MILLISECONDS);
     }
 
     private void consumeTasks() {
@@ -139,7 +139,7 @@ public final class TaskExecutionService implements Service {
                     final List<String> tasks = consumer.poll(taskType, tasksToPoll);
                     for (String taskAsString : tasks) {
                         try {
-                            execute(MAPPER.readValue(taskAsString, Task.class));
+                            submit(MAPPER.readValue(taskAsString, Task.class));
                         } catch (IOException e) {
                             logger.error("Error parsing task message {}", taskAsString, e);
                         }
@@ -154,7 +154,7 @@ public final class TaskExecutionService implements Service {
      *
      * @param task task to submit for execution
      */
-    private void execute(Task task) {
+    private void submit(Task task) {
         logger.trace("Received task {} for execution from task queue", task);
         final TaskHandler handler = taskTypeToHandlerMap.get(task.getType());
         if (handler == null) {
@@ -165,7 +165,7 @@ public final class TaskExecutionService implements Service {
         }
         updateStatus(task.getId(), task.getGroup(), SUBMITTED);
         taskTypeToRunningTasksCount.put(task.getType(), taskTypeToRunningTasksCount.get(task.getType()) + 1);
-        executorService.submit(() -> {
+        taskExecutorService.submit(() -> {
             try {
                 updateStatus(task.getId(), task.getGroup(), RUNNING);
                 handler.handle(task);
@@ -205,10 +205,10 @@ public final class TaskExecutionService implements Service {
             consumer.close();
         }
         try {
-            scheduledExecutorService.shutdown();
-            scheduledExecutorService.awaitTermination(10, SECONDS);
-            executorService.shutdown();
-            executorService.awaitTermination(10, SECONDS);
+            internalExecutorService.shutdown();
+            internalExecutorService.awaitTermination(10, SECONDS);
+            taskExecutorService.shutdown();
+            taskExecutorService.awaitTermination(10, SECONDS);
         } catch (InterruptedException e) {
             logger.error("Error stopping executor pool", e);
         }

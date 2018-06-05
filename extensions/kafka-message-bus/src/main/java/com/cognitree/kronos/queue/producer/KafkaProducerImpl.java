@@ -38,8 +38,8 @@ public class KafkaProducerImpl implements Producer {
 
     public void init(ObjectNode config) {
         logger.info("Initializing producer for kafka with config {}", config);
-        Properties producerConfig = OBJECT_MAPPER.convertValue(config.get("producerConfig"), Properties.class);
-        kafkaProducer = new KafkaProducer<>(producerConfig);
+        Properties kafkaProducerConfig = OBJECT_MAPPER.convertValue(config.get("kafkaProducerConfig"), Properties.class);
+        kafkaProducer = new KafkaProducer<>(kafkaProducerConfig);
     }
 
     @Override
