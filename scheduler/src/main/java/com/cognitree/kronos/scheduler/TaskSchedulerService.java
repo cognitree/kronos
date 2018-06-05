@@ -23,6 +23,7 @@ import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskDefinition;
 import com.cognitree.kronos.model.TaskStatus;
+import com.cognitree.kronos.model.UnmodifiableTask;
 import com.cognitree.kronos.queue.QueueConfig;
 import com.cognitree.kronos.queue.consumer.Consumer;
 import com.cognitree.kronos.queue.consumer.ConsumerConfig;
@@ -313,6 +314,34 @@ public final class TaskSchedulerService implements Service {
 
         task.setStatus(status);
         task.setStatusMessage(statusMessage);
+
+        switch (status) {
+            case SUBMITTED:
+                task.setSubmittedAt(System.currentTimeMillis());
+                break;
+            case SUCCESSFUL:
+            case FAILED:
+                task.setCompletedAt(System.currentTimeMillis());
+                break;
+        }
+        taskProvider.update(task);
+        notifyListeners(task, currentStatus, status);
+        handleTaskStatusChange(task, status);
+    }
+
+    private void notifyListeners(Task task, Status from, Status to) {
+        final UnmodifiableTask unmodifiableTask = new UnmodifiableTask(task);
+        statusChangeListeners.forEach(listener -> {
+            try {
+                listener.statusChanged(unmodifiableTask, from, to);
+            } catch (Exception e) {
+                logger.error("error notifying task status change from {}, to {} for task {}",
+                        from, to, task, e);
+            }
+        });
+    }
+
+    private void handleTaskStatusChange(Task task, Status status) {
         switch (status) {
             case CREATED:
                 break;
@@ -322,14 +351,12 @@ public final class TaskSchedulerService implements Service {
             case SCHEDULED:
                 break;
             case SUBMITTED:
-                task.setSubmittedAt(System.currentTimeMillis());
                 createTimeoutTask(task);
                 break;
             case FAILED:
                 markDependentTasksAsFailed(task);
                 // do not break
             case SUCCESSFUL:
-                task.setCompletedAt(System.currentTimeMillis());
                 final ScheduledFuture<?> taskTimeoutFuture = taskTimeoutHandlersMap.remove(task.getId());
                 if (taskTimeoutFuture != null) {
                     taskTimeoutFuture.cancel(false);
@@ -338,8 +365,6 @@ public final class TaskSchedulerService implements Service {
                 scheduleReadyTasks();
                 break;
         }
-        taskProvider.update(task);
-        statusChangeListeners.forEach(listener -> listener.statusChanged(task, currentStatus, status));
     }
 
     private boolean isValidTransition(Status currentStatus, Status desiredStatus) {

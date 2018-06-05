@@ -26,6 +26,7 @@ public class TaskDependencyTest extends ApplicationTest {
 
     @Test
     public void testAddIndependentTasks() {
+        final TaskProvider taskProvider = TaskSchedulerService.getService().getTaskProvider();
         Task taskOne = TestUtil.getTaskBuilder().setName("taskOne").setType("test").build();
         TaskSchedulerService.getService().schedule(taskOne);
         Assert.assertEquals(6, taskProvider.size());
@@ -130,6 +131,8 @@ public class TaskDependencyTest extends ApplicationTest {
         Task taskThree = TestUtil.getTaskBuilder().setName("taskThree").setType("test")
                 .setDependsOn(Arrays.asList(taskOneDependencyInfo, taskTwoDependencyInfo)).setCreatedAt(createdAt + 5)
                 .build();
+
+        final TaskProvider taskProvider = TaskSchedulerService.getService().getTaskProvider();
         final Set<Task> taskOneDependentTasks = taskProvider.getDependentTasks(taskThree, taskOneDependencyInfo);
         Assert.assertEquals(1, taskOneDependentTasks.size());
         Assert.assertEquals(taskOneB, taskOneDependentTasks.iterator().next());

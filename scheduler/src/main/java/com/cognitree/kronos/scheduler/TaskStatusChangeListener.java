@@ -26,5 +26,14 @@ import com.cognitree.kronos.model.Task.Status;
  */
 public interface TaskStatusChangeListener {
 
+    /**
+     * called on task status change.
+     * <p>
+     * attempts to modify the task instance, result in an UnsupportedOperationException
+     *
+     * @param task an unmodifiable instance of task.
+     * @param from
+     * @param to
+     */
     void statusChanged(Task task, Status from, Status to);
 }

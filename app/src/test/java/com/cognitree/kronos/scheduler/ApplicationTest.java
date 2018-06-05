@@ -14,8 +14,6 @@ import java.io.InputStream;
 
 public class ApplicationTest {
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
-    static SchedulerConfig schedulerConfig;
-    static TaskProvider taskProvider;
 
     @BeforeClass
     public static void init() throws Exception {
@@ -23,11 +21,10 @@ public class ApplicationTest {
         initTaskExecutionService();
     }
 
-    @SuppressWarnings("unchecked")
     private static void initTaskSchedulerService() throws Exception {
         InputStream schedulerConfigStream =
                 TaskSchedulerServiceTest.class.getClassLoader().getResourceAsStream("scheduler.yaml");
-        schedulerConfig = MAPPER.readValue(schedulerConfigStream, SchedulerConfig.class);
+        SchedulerConfig schedulerConfig = MAPPER.readValue(schedulerConfigStream, SchedulerConfig.class);
 
         InputStream queueConfigStream =
                 TaskSchedulerServiceTest.class.getClassLoader().getResourceAsStream("queue.yaml");
@@ -37,10 +34,8 @@ public class ApplicationTest {
         ServiceProvider.registerService(taskSchedulerService);
         taskSchedulerService.init();
         taskSchedulerService.start();
-        taskProvider = TaskSchedulerService.getService().getTaskProvider();
     }
 
-    @SuppressWarnings("unchecked")
     private static void initTaskExecutionService() throws Exception {
         InputStream executorConfigStream =
                 TaskSchedulerServiceTest.class.getClassLoader().getResourceAsStream("executor.yaml");

@@ -63,7 +63,7 @@ public class TaskSchedulerServiceTest extends ApplicationTest {
     public void testAddTask() {
         Task taskOne = TestUtil.getTaskBuilder().setName("taskOne").setType("test").build();
         TaskSchedulerService.getService().schedule(taskOne);
-        Assert.assertEquals(6, taskProvider.size());
+        Assert.assertEquals(6, TaskSchedulerService.getService().getTaskProvider().size());
         sleep(1000);
         Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
     }
@@ -73,7 +73,7 @@ public class TaskSchedulerServiceTest extends ApplicationTest {
         Task taskOne = TestUtil.getTaskBuilder().setName("taskOne").setType("test").build();
         TaskSchedulerService.getService().schedule(taskOne);
         TaskSchedulerService.getService().schedule(taskOne);
-        Assert.assertEquals(6, taskProvider.size());
+        Assert.assertEquals(6, TaskSchedulerService.getService().getTaskProvider().size());
         sleep(500);
         Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
     }
@@ -90,6 +90,7 @@ public class TaskSchedulerServiceTest extends ApplicationTest {
         Task taskThree = TestUtil.getTaskBuilder().setName("taskThree").setType("test").setDependsOn(dependencyInfos)
                 .waitForCallback(true).setCreatedAt(createdAt + 5).build();
 
+        final TaskProvider taskProvider = TaskSchedulerService.getService().getTaskProvider();
         TaskSchedulerService.getService().schedule(taskOne);
         Assert.assertTrue(taskProvider.isReadyForExecution(taskOne));
         sleep(500);
@@ -141,7 +142,7 @@ public class TaskSchedulerServiceTest extends ApplicationTest {
     @Test
     public void testTaskCleanup() {
         // set task created at time to a lower value than the task purge interval configured in scheduler.yaml
-        final long taskPurgeInterval = DateTimeUtil.resolveDuration(schedulerConfig.getTaskPurgeInterval());
+        final long taskPurgeInterval = DateTimeUtil.resolveDuration("1d");
         final long createdAt = System.currentTimeMillis() - taskPurgeInterval - MINUTES.toMillis(1);
         Task independentTask = TestUtil.getTaskBuilder().setName("independentTask").setType("test")
                 .waitForCallback(true).setCreatedAt(createdAt).build();
@@ -167,6 +168,7 @@ public class TaskSchedulerServiceTest extends ApplicationTest {
         TaskSchedulerService.getService().schedule(taskFour);
         sleep(500);
 
+        final TaskProvider taskProvider = TaskSchedulerService.getService().getTaskProvider();
         Assert.assertEquals(10, taskProvider.size());
         TaskSchedulerService.getService().deleteStaleTasks();
         // no task should be purged as they are all in RUNNING state
@@ -186,5 +188,14 @@ public class TaskSchedulerServiceTest extends ApplicationTest {
         // All tasks should be removed as they have reached the final state
         TaskSchedulerService.getService().deleteStaleTasks();
         Assert.assertEquals(5, taskProvider.size());
+    }
+
+    @Test
+    public void testTaskStatusChangeLister() {
+        sleep(2000);
+        TaskSchedulerService.getService().registerListener(new MockTaskStatusChangeListener());
+        Task taskOne = TestUtil.getTaskBuilder().setName("taskOne").setType("test")
+                .setCreatedAt(System.currentTimeMillis()).build();
+        TaskSchedulerService.getService().schedule(taskOne);
     }
 }
