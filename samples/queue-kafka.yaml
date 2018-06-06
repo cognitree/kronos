@@ -1,13 +1,13 @@
 # configure message bus
 producerConfig:
-  producerClass: com.cognitree.kronos.queue.producer.KafkaTaskProducer
+  producerClass: com.cognitree.kronos.queue.producer.KafkaProducerImpl
   config:
     kafkaProducerConfig:
       bootstrap.servers : localhost:9092
       key.serializer : org.apache.kafka.common.serialization.StringSerializer
       value.serializer : org.apache.kafka.common.serialization.StringSerializer
 consumerConfig:
-  consumerClass: com.cognitree.kronos.queue.consumer.KafkaTaskConsumer
+  consumerClass: com.cognitree.kronos.queue.consumer.KafkaConsumerImpl
   config:
     kafkaConsumerConfig:
       bootstrap.servers : localhost:9092
