@@ -146,11 +146,11 @@ public class SQLiteTaskStore implements TaskStore {
             preparedStatement.setString(++paramIndex, taskId);
             preparedStatement.setString(++paramIndex, taskGroup);
             final ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.first()) {
+            if (resultSet.next()) {
                 return getTask(resultSet);
             }
         } catch (Exception e) {
-            logger.error("Error fetching task from database", e);
+            logger.error("Error fetching task with id {}, group {} from database", taskId, taskGroup, e);
         }
         return null;
     }
@@ -172,7 +172,7 @@ public class SQLiteTaskStore implements TaskStore {
             }
             return tasks;
         } catch (Exception e) {
-            logger.error("Error fetching task from database", e);
+            logger.error("Error fetching task with status in {} from database", statuses, e);
             return Collections.emptyList();
         }
     }
@@ -195,7 +195,8 @@ public class SQLiteTaskStore implements TaskStore {
             }
             return tasks;
         } catch (Exception e) {
-            logger.error("Error fetching task from database", e);
+            logger.error("Error fetching task with name {}, group {}, created before {}, created after {} " +
+                    "from database", taskName, taskGroup, createdBefore, createdAfter, e);
             return Collections.emptyList();
         }
     }
