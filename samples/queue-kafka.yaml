@@ -1,4 +1,3 @@
-# configure message bus
 producerConfig:
   producerClass: com.cognitree.kronos.queue.producer.KafkaProducerImpl
   config:

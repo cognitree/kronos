@@ -15,7 +15,7 @@
     <packaging>pom</packaging>
     <version>1.0</version>
     <modules>
-        <module>kafka-message-bus</module>
+        <module>kafka-queue</module>
         <module>shell-handler</module>
         <module>file-reader</module>
         <module>sqlite-store</module>

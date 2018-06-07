@@ -94,5 +94,6 @@
         <module>scheduler</module>
         <module>executor</module>
         <module>app</module>
+        <module>assembly</module>
     </modules>
 </project>

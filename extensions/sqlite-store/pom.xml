@@ -10,7 +10,6 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>sqlite-store</artifactId>
-    <version>1.0</version>
 
     <properties>
         <sqlite-jdbc.version>3.21.0.1</sqlite-jdbc.version>

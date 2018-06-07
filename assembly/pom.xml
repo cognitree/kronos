@@ -10,49 +10,69 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.cognitree.kronos</groupId>
-    <artifactId>app</artifactId>
-
-    <properties>
-        <dependency.scope>provided</dependency.scope>
-    </properties>
+    <artifactId>assembly</artifactId>
+    <packaging>pom</packaging>
 
     <dependencies>
         <dependency>
             <groupId>com.cognitree.kronos</groupId>
+            <artifactId>app</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cognitree.kronos</groupId>
             <artifactId>scheduler</artifactId>
             <version>${project.version}</version>
-            <scope>${dependency.scope}</scope>
         </dependency>
         <dependency>
             <groupId>com.cognitree.kronos</groupId>
             <artifactId>executor</artifactId>
             <version>${project.version}</version>
-            <scope>${dependency.scope}</scope>
         </dependency>
         <dependency>
             <groupId>com.cognitree.kronos</groupId>
             <artifactId>sqlite-store</artifactId>
             <version>${project.version}</version>
-            <scope>${dependency.scope}</scope>
         </dependency>
         <dependency>
             <groupId>com.cognitree.kronos</groupId>
             <artifactId>shell-handler</artifactId>
             <version>${project.version}</version>
-            <scope>${dependency.scope}</scope>
         </dependency>
         <dependency>
             <groupId>com.cognitree.kronos</groupId>
             <artifactId>file-reader</artifactId>
             <version>${project.version}</version>
-            <scope>${dependency.scope}</scope>
         </dependency>
         <dependency>
             <groupId>com.cognitree.kronos</groupId>
             <artifactId>kafka-message-bus</artifactId>
             <version>${project.version}</version>
-            <scope>${dependency.scope}</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <descriptors>
+                        <descriptor>src/main/assembly/assembly.xml</descriptor>
+                    </descriptors>
+                    <finalName>kronos-${project.version}</finalName>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>create-archive</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

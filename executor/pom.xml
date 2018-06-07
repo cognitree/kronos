@@ -11,13 +11,12 @@
 
     <groupId>com.cognitree.kronos</groupId>
     <artifactId>executor</artifactId>
-    <version>1.0</version>
 
     <dependencies>
         <dependency>
             <groupId>com.cognitree.kronos</groupId>
             <artifactId>common</artifactId>
-            <version>1.0</version>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 </project>
