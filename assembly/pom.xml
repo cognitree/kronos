@@ -46,7 +46,7 @@
         </dependency>
         <dependency>
             <groupId>com.cognitree.kronos</groupId>
-            <artifactId>kafka-message-bus</artifactId>
+            <artifactId>kafka-queue</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
