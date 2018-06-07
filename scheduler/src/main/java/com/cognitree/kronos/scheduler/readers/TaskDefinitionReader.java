@@ -23,26 +23,16 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.List;
 
 /**
- * A task definition reader interface to be implemented and configured with the framework to provide source of task definitions.
- * <p>
- * A task definition reader job is to read all the task definition from a source (can be a yaml/ db etc).
- * </p>
- * <p>
- * Configuring a TaskDefinitionReader
- * </p>
- * <p>
- * A reader configuration is defined by {@link TaskDefinitionReaderConfig}.
- * A reader is initialized using {@link TaskDefinitionReader#init(ObjectNode)} method
- * The {@link ObjectNode} argument is same as {@link TaskDefinitionReaderConfig#config} and is used by the reader to instantiate itself.
- * So any property required by the reader to instantiate itself should be part of {@link TaskDefinitionReaderConfig#config}
- * </p>
+ * An interface implemented to provide custom source of {@link TaskDefinition}.
  */
 public interface TaskDefinitionReader {
 
     /**
-     * for each reader during initialization phase a call is made to initialize reader using {@link TaskDefinitionReaderConfig#config}
+     * for each reader during initialization phase a call is made to initialize reader using
+     * {@link TaskDefinitionReaderConfig#config}. Any property required by the reader to instantiate itself
+     * should be part of {@link TaskDefinitionReaderConfig#config}.
      *
-     * @param readerConfig
+     * @param readerConfig configuration used to initialize the reader.
      */
     void init(ObjectNode readerConfig);
 

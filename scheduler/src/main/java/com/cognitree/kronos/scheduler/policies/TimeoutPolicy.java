@@ -17,22 +17,20 @@
 
 package com.cognitree.kronos.scheduler.policies;
 
-import com.cognitree.kronos.executor.handlers.TaskHandlerConfig;
 import com.cognitree.kronos.model.Task;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
- * An interface to be implemented by timeout policies which will be invoked when a task exceeds the max execution time
- * <p>
- * For details refer: {@link TaskHandlerConfig#maxExecutionTime}
+ * An interface implemented to define custom timeout policy to apply on a task in case of timeout.
  */
 public interface TimeoutPolicy {
 
     /**
-     * for each configured policy during initialization phase a call is made to initialize policy
-     * using {@link TimeoutPolicyConfig#config}
+     * for each configured policy during initialization phase a call is made to initialize policy using
+     * {@link TimeoutPolicyConfig#config}. Any property required by the timeout policy to instantiate itself
+     * should be part of {@link TimeoutPolicyConfig#config}.
      *
-     * @param policyConfig configuration used to initialize the policy
+     * @param policyConfig configuration used to initialize the policy.
      */
     void init(ObjectNode policyConfig);
 

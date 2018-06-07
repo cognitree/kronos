@@ -17,12 +17,10 @@
 
 package com.cognitree.kronos.scheduler;
 
-import com.cognitree.kronos.ApplicationConfig;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskDependencyInfo;
-import com.cognitree.kronos.store.TaskStore;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.cognitree.kronos.scheduler.store.TaskStore;
 import com.google.common.graph.GraphBuilder;
 import com.google.common.graph.MutableGraph;
 import org.slf4j.Logger;
@@ -33,36 +31,34 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.cognitree.kronos.model.FailureMessage.FAILED_TO_RESOLVE_DEPENDENCY;
 import static com.cognitree.kronos.model.Task.Status.*;
+import static com.cognitree.kronos.model.TaskDependencyInfo.Mode.first;
 import static com.cognitree.kronos.util.DateTimeUtil.resolveDuration;
 
 /**
  * Task provider manages/ resolves task dependencies and exposes APIs to add, remove, retrieve tasks in active and
- * ready-to-execute state
- * listen for task status updates and calls the registered {@link TaskStatusHandler} on status change.
+ * ready-to-execute state.
  * <p>
- * Internally, task provider is backed by a directed acyclic graph that manages dependencies across these tasks.
- * The task state is stored in a persistent store if provided.
+ * Internally, task provider is backed by a directed acyclic graph and persistence store to manage dependencies
+ * across these tasks.
  */
-class TaskProvider {
+final class TaskProvider {
     private static final Logger logger = LoggerFactory.getLogger(TaskProvider.class);
 
     private final MutableGraph<Task> graph = GraphBuilder.directed().build();
     private final TaskStore taskStore;
-    private final TaskStatusHandler statusHandler;
 
-    TaskProvider(TaskStore store, TaskStatusHandler statusHandler) {
+    TaskProvider(TaskStore store) {
         this.taskStore = store;
-        this.statusHandler = statusHandler;
-        init();
     }
 
-    private void init() {
+    void init() {
         logger.info("Initializing task provider from task store");
-        final List<Task> tasks = taskStore.load(Arrays.asList(CREATED, WAITING, SUBMITTED, RUNNING));
+        final List<Task> tasks = taskStore.load(Arrays.asList(CREATED, WAITING, SCHEDULED, SUBMITTED, RUNNING));
         if (tasks != null && !tasks.isEmpty()) {
-            tasks.forEach(this::addTask);
+            tasks.sort(Comparator.comparing(Task::getCreatedAt));
+            tasks.forEach(this::addToGraph);
+            tasks.forEach(this::resolve);
         }
     }
 
@@ -82,29 +78,28 @@ class TaskProvider {
         nodes.forEach(graph::removeNode);
     }
 
-    synchronized void addTask(Task task) {
-        final boolean isAdded = graph.addNode(task);
-        if (isAdded) {
+    synchronized boolean add(Task task) {
+        if (taskStore.load(task.getId(), task.getGroup()) == null) {
+            addToGraph(task);
             taskStore.store(task);
-            final boolean isResolved = resolveDependency(task);
-            if (isResolved) {
-                updateTask(task, WAITING, null);
-            } else {
-                logger.error("Unable to resolve dependency for task {}, marking it as {}", task, FAILED);
-                updateTask(task, FAILED, FAILED_TO_RESOLVE_DEPENDENCY);
-            }
+            return true;
         } else {
             logger.warn("Task {} already exist with task provider, skip adding", task);
+            return false;
         }
     }
 
+    private void addToGraph(Task task) {
+        graph.addNode(task);
+    }
+
     /**
-     * Check if all the dependant tasks of the given task are available and not in failed state.
+     * Check if all the dependant tasks for the given task are available and not in failed state.
      *
      * @param task
      * @return false when dependant tasks are in failed state or not found, true otherwise
      */
-    private boolean resolveDependency(Task task) {
+    synchronized boolean resolve(Task task) {
         final List<TaskDependencyInfo> dependencyInfoList = task.getDependsOn();
         if (dependencyInfoList != null) {
             List<Task> dependentTasks = new ArrayList<>();
@@ -127,7 +122,8 @@ class TaskProvider {
         return true;
     }
 
-    private Set<Task> getDependentTasks(Task task, TaskDependencyInfo dependencyInfo) {
+    // used in junit test case
+    Set<Task> getDependentTasks(Task task, TaskDependencyInfo dependencyInfo) {
         final TreeSet<Task> candidateDependentTasks = new TreeSet<>(Comparator.comparing(Task::getCreatedAt));
         final long createdAt = task.getCreatedAt();
         final long sentinelTimeStamp = createdAt - resolveDuration(dependencyInfo.getDuration());
@@ -139,7 +135,7 @@ class TaskProvider {
         candidateDependentTasks.addAll(tasksInMemory);
 
         // retrieve all dependent task in store only if dependency mode is not first and tasks in memory is empty
-        if (candidateDependentTasks.isEmpty() || dependencyInfo.getMode() != TaskDependencyInfo.Mode.first) {
+        if (candidateDependentTasks.isEmpty() || dependencyInfo.getMode() != first) {
             final List<Task> tasksInStore = taskStore.load(dependentTaskName, taskGroup, createdAt, sentinelTimeStamp);
             if (tasksInStore != null && !tasksInStore.isEmpty()) {
                 candidateDependentTasks.addAll(tasksInStore);
@@ -175,7 +171,7 @@ class TaskProvider {
         graph.putEdge(dependerTask, dependeeTask);
     }
 
-    private Task getTask(String taskId, String taskGroup) {
+    synchronized Task getTask(String taskId, String taskGroup) {
         for (Task task : graph.nodes()) {
             if (task.getId().equals(taskId) && task.getGroup().equals(taskGroup)) {
                 return task;
@@ -184,7 +180,7 @@ class TaskProvider {
         Task task = taskStore.load(taskId, taskGroup);
         // update local cache if not null
         if (task != null) {
-            addTask(task);
+            addToGraph(task);
         }
         return task;
     }
@@ -202,24 +198,29 @@ class TaskProvider {
     }
 
     synchronized List<Task> getReadyTasks() {
-        return getTasks(Collections.singletonList(WAITING), true);
+        final Predicate<Task> isReadyForExecution = this::isReadyForExecution;
+        return getTasks(Collections.singletonList(WAITING), isReadyForExecution);
     }
 
     synchronized List<Task> getActiveTasks() {
-        return this.getTasks(Arrays.asList(SUBMITTED, RUNNING), false);
+        return getTasks(Arrays.asList(SCHEDULED, SUBMITTED, RUNNING));
     }
 
-    private List<Task> getTasks(List<Status> statuses, boolean isDepdendancyResolved) {
+    synchronized List<Task> getDependentTasks(Task task) {
+        return new ArrayList<>(graph.successors(task));
+    }
+
+    @SafeVarargs
+    synchronized final List<Task> getTasks(List<Status> statuses, Predicate<Task>... predicates) {
         final Predicate<Task> statusPredicate = task -> statuses.contains(task.getStatus());
-        if (isDepdendancyResolved) {
-            final Predicate<Task> dependencyPredicate = this::isDependencyResolved;
-            return getTasks(statusPredicate, dependencyPredicate);
+        if (predicates != null && predicates.length > 0) {
+            final Predicate<Task> isReadyForExecutionPredicate = this::isReadyForExecution;
+            return getTasks(statusPredicate, isReadyForExecutionPredicate);
         } else {
             return getTasks(statusPredicate);
         }
     }
 
-    // used in junit
     @SafeVarargs
     private final List<Task> getTasks(Predicate<Task>... predicates) {
         Stream<Task> stream = graph.nodes().stream();
@@ -229,70 +230,24 @@ class TaskProvider {
         return stream.collect(Collectors.toList());
     }
 
-    boolean isDependencyResolved(Task task) {
+    // used in junit
+    boolean isReadyForExecution(Task task) {
         return graph.predecessors(task)
                 .stream()
                 .allMatch(t -> t.getStatus().equals(SUCCESSFUL));
     }
 
-    synchronized void updateTask(String taskId, String taskGroup, Status status,
-                                 String statusMessage, ObjectNode runtimeProperties) {
-        logger.info("Received request to update status of task with id: {}, group {} as {} " +
-                        "with status message {}, runtime properties {}",
-                taskId, taskGroup, status, statusMessage, runtimeProperties);
-
-        final Task task = getTask(taskId, taskGroup);
-        if (task == null) {
-            logger.error("No task found with id {}, group {}", taskId, taskGroup);
-            return;
-        }
-        updateTask(task, status, statusMessage, runtimeProperties);
-    }
-
-    synchronized void updateTask(Task task, Status status, String statusMessage) {
-        updateTask(task, status, statusMessage, null);
-    }
-
-    private synchronized void updateTask(Task task, Status status, String statusMessage, ObjectNode runtimeProperties) {
-        if (!isValidTransition(task, status)) {
-            logger.error("Invalid state transition from status {}, to {}", task.getStatus(), status);
-            return;
-        }
-
-        task.setStatus(status);
-        task.setStatusMessage(statusMessage);
-        task.setRuntimeProperties(runtimeProperties);
-        switch (status) {
-            case SUBMITTED:
-                task.setSubmittedAt(System.currentTimeMillis());
-                break;
-            case FAILED:
-                markDependentTasksAsFailed(task, statusMessage);
-                // do not break
-            case SUCCESSFUL:
-                task.setCompletedAt(System.currentTimeMillis());
-                break;
-        }
-        taskStore.update(task);
-        statusHandler.onStatusChange(task);
-    }
-
-
-    private boolean isValidTransition(Task task, Status toStatus) {
-        return task.getStatus() != SUCCESSFUL && task.getStatus() != FAILED;
-    }
-
-    private void markDependentTasksAsFailed(Task task, String statusMessage) {
-        graph.successors(task).forEach(dependentTask -> {
-            updateTask(dependentTask, FAILED, statusMessage);
-        });
+    void update(Task task) {
+        logger.debug("Received request to update task {}", task);
+        taskStore.update(task.getId(), task.getGroup(), task.getStatus(), task.getStatusMessage(),
+                task.getSubmittedAt(), task.getCompletedAt());
     }
 
     /**
      * deletes all the old tasks from memory
-     * task to delete is determined by {@link ApplicationConfig#taskPurgeInterval}
+     * task to delete is determined by {@link SchedulerConfig#taskPurgeInterval}
      * <p>
-     * see: {@link ApplicationConfig#taskPurgeInterval} for more details and implication of taskPurgeInterval
+     * see: {@link SchedulerConfig#taskPurgeInterval} for more details and implication of taskPurgeInterval
      */
     synchronized void removeOldTasks(String taskPurgeInterval) {
         final Set<Task> tasksToDelete = new HashSet<>();

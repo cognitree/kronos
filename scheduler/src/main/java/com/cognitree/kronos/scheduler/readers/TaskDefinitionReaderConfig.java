@@ -22,23 +22,23 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Objects;
 
 /**
- * defines configuration for a {@link TaskDefinitionReader}
+ * defines configuration for a {@link TaskDefinitionReader}.
  */
 public class TaskDefinitionReaderConfig {
 
     /**
-     * fully qualified class name of the {@link TaskDefinitionReader} implementation
+     * fully qualified class name of the {@link TaskDefinitionReader} implementation.
      */
     private String readerClass;
 
     /**
-     * Configuration to be passed to reader to instantiate itself.
-     * This will be passed as an arg to the {@link TaskDefinitionReader#init(ObjectNode)} method at the time of instantiation
+     * Configuration required by the reader to instantiate itself.
+     * This will be passed as an arg to the {@link TaskDefinitionReader#init(ObjectNode)} method at the time of instantiation.
      */
     private ObjectNode config;
 
     /**
-     * A cron string representing how frequently the framework should ask for new task from {@link TaskDefinitionReader}
+     * A cron string representing how frequently the framework should look for new task from {@link TaskDefinitionReader}.
      */
     private String schedule;
 

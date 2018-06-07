@@ -1,0 +1,6 @@
+producerConfig:
+  producerClass: com.cognitree.kronos.queue.producer.InMemoryProducer
+consumerConfig:
+  consumerClass: com.cognitree.kronos.queue.consumer.InMemoryConsumer
+  pollInterval: 100
+taskStatusQueue: taskstatus

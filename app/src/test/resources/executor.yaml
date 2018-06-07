@@ -1,0 +1,10 @@
+taskHandlerConfig:
+  test:
+    handlerClass: com.cognitree.kronos.executor.handlers.TestTaskHandler
+    maxParallelTasks: 4
+  typeA:
+    handlerClass: com.cognitree.kronos.executor.handlers.TypeATaskHandler
+    maxParallelTasks: 4
+  typeB:
+    handlerClass: com.cognitree.kronos.executor.handlers.TypeBTaskHandler
+    maxParallelTasks: 4

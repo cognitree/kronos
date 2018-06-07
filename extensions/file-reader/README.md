@@ -4,10 +4,10 @@ File reader is an extension for task definition reader to load task definitions 
 
 ## Configuring File Reader
 
-Update the `readerConfig` section in `app.yaml` to use to file reader.
+Update the `taskReaderConfig` section in `scheduler.yaml` to use to file reader.
 
 ```
-readerConfig:
+taskReaderConfig:
   # name to be assigned to the reader
   filereader:
     # fully qualified classname of the TaskDefinitionReader.java implementation

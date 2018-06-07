@@ -4,7 +4,7 @@ SQLite task store is an extension for task store which uses [SQLite](https://www
 
 ## Configuring SQLite Task Store
 
-Update the `taskStoreConfig` section in `app.yaml` to configure to sqlite task store.
+Update the `taskStoreConfig` section in `scheduler.yaml` to configure to sqlite task store.
 
 ```
 taskStoreConfig:
