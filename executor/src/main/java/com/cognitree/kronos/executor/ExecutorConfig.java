@@ -20,6 +20,7 @@ package com.cognitree.kronos.executor;
 import com.cognitree.kronos.executor.handlers.TaskHandler;
 import com.cognitree.kronos.executor.handlers.TaskHandlerConfig;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -32,7 +33,7 @@ public class ExecutorConfig {
      * <p>
      * Here key is the task type the handler is supposed to handle.
      */
-    private Map<String, TaskHandlerConfig> taskHandlerConfig;
+    private Map<String, TaskHandlerConfig> taskHandlerConfig = new HashMap<>();
 
     public Map<String, TaskHandlerConfig> getTaskHandlerConfig() {
         return taskHandlerConfig;

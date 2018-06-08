@@ -34,5 +34,12 @@ public interface TimeoutPolicy {
      */
     void init(ObjectNode policyConfig);
 
+    /**
+     * called on task timeout.
+     * <p>
+     * attempts to modify the task instance, result in an UnsupportedOperationException
+     *
+     * @param task an unmodifiable instance of task.
+     */
     void handle(Task task);
 }
