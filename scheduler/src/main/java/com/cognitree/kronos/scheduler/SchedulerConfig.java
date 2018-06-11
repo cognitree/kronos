@@ -24,6 +24,7 @@ import com.cognitree.kronos.scheduler.readers.TaskDefinitionReaderConfig;
 import com.cognitree.kronos.scheduler.store.TaskStore;
 import com.cognitree.kronos.scheduler.store.TaskStoreConfig;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -37,7 +38,7 @@ public class SchedulerConfig {
      * <p>
      * Here key is the name to use for task reader and should be unique across all readers
      */
-    private Map<String, TaskDefinitionReaderConfig> taskReaderConfig;
+    private Map<String, TaskDefinitionReaderConfig> taskReaderConfig = new HashMap<>();
 
     /**
      * {@link TaskStore} configuration, required by the scheduler to instantiate the task store to be used for storing
@@ -50,7 +51,7 @@ public class SchedulerConfig {
      * <p>
      * Here key is the task type and value is the configuration to be used for that task type.
      */
-    private Map<String, TaskExecutionConfig> taskExecutionConfig;
+    private Map<String, TaskExecutionConfig> taskExecutionConfig = new HashMap<>();
 
     /**
      * Map of policy configuration, required by the scheduler to configure timeout policies to apply in case of timeout.
@@ -58,7 +59,7 @@ public class SchedulerConfig {
      * Here key is the policy id which is to be used by handler ({@link TaskExecutionConfig#timeoutPolicy})
      * and task {@link TaskDefinition#timeoutPolicy} while defining policy to apply on timeout.
      */
-    private Map<String, TimeoutPolicyConfig> timeoutPolicyConfig;
+    private Map<String, TimeoutPolicyConfig> timeoutPolicyConfig = new HashMap<>();
 
     /**
      * Periodically, tasks older than the specified interval and status as one of the final state

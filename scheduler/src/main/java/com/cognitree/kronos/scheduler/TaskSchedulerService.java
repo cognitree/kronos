@@ -155,17 +155,15 @@ public final class TaskSchedulerService implements Service {
     }
 
     private void initTimeoutPolicies() throws Exception {
-        if (policyConfigMap != null) {
-            for (Map.Entry<String, TimeoutPolicyConfig> policyEntry : policyConfigMap.entrySet()) {
-                final String policyId = policyEntry.getKey();
-                final TimeoutPolicyConfig policyConfig = policyEntry.getValue();
-                logger.info("Initializing timeout policy with id {}, config {}", policyId, policyConfig);
-                final TimeoutPolicy timeoutPolicy = (TimeoutPolicy) Class.forName(policyConfig.getPolicyClass())
-                        .getConstructor()
-                        .newInstance();
-                timeoutPolicy.init(policyConfig.getConfig());
-                timeoutPolicyMap.put(policyId, timeoutPolicy);
-            }
+        for (Map.Entry<String, TimeoutPolicyConfig> policyEntry : policyConfigMap.entrySet()) {
+            final String policyId = policyEntry.getKey();
+            final TimeoutPolicyConfig policyConfig = policyEntry.getValue();
+            logger.info("Initializing timeout policy with id {}, config {}", policyId, policyConfig);
+            final TimeoutPolicy timeoutPolicy = (TimeoutPolicy) Class.forName(policyConfig.getPolicyClass())
+                    .getConstructor()
+                    .newInstance();
+            timeoutPolicy.init(policyConfig.getConfig());
+            timeoutPolicyMap.put(policyId, timeoutPolicy);
         }
     }
 
@@ -473,7 +471,7 @@ public final class TaskSchedulerService implements Service {
             final TimeoutPolicy timeoutPolicy = resolveTimeoutPolicy(task);
             if (timeoutPolicy != null) {
                 logger.info("Applying timeout policy {} on task {}", timeoutPolicy, task);
-                timeoutPolicy.handle(task);
+                timeoutPolicy.handle(new UnmodifiableTask(task));
             }
         }
     }
