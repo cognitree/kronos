@@ -18,7 +18,7 @@
 package com.cognitree.kronos.executor.handlers;
 
 import com.cognitree.kronos.model.Task;
-import com.cognitree.kronos.model.TaskDefinition;
+import com.cognitree.kronos.model.definitions.TaskDefinition;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**

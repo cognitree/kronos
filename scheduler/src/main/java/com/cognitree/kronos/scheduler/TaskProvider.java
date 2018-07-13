@@ -17,10 +17,13 @@
 
 package com.cognitree.kronos.scheduler;
 
+import com.cognitree.kronos.ReviewPending;
+import com.cognitree.kronos.model.MutableTaskId;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
-import com.cognitree.kronos.model.TaskDependencyInfo;
-import com.cognitree.kronos.scheduler.store.TaskStore;
+import com.cognitree.kronos.model.TaskId;
+import com.cognitree.kronos.model.definitions.TaskDependencyInfo;
+import com.cognitree.kronos.scheduler.store.TaskStoreService;
 import com.google.common.graph.GraphBuilder;
 import com.google.common.graph.MutableGraph;
 import org.slf4j.Logger;
@@ -32,7 +35,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.cognitree.kronos.model.Task.Status.*;
-import static com.cognitree.kronos.model.TaskDependencyInfo.Mode.first;
+import static com.cognitree.kronos.model.definitions.TaskDependencyInfo.Mode.first;
 import static com.cognitree.kronos.util.DateTimeUtil.resolveDuration;
 
 /**
@@ -42,19 +45,16 @@ import static com.cognitree.kronos.util.DateTimeUtil.resolveDuration;
  * Internally, task provider is backed by a directed acyclic graph and persistence store to manage dependencies
  * across these tasks.
  */
+@ReviewPending
 final class TaskProvider {
     private static final Logger logger = LoggerFactory.getLogger(TaskProvider.class);
 
     private final MutableGraph<Task> graph = GraphBuilder.directed().build();
-    private final TaskStore taskStore;
-
-    TaskProvider(TaskStore store) {
-        this.taskStore = store;
-    }
 
     void init() {
         logger.info("Initializing task provider from task store");
-        final List<Task> tasks = taskStore.load(Arrays.asList(CREATED, WAITING, SCHEDULED, SUBMITTED, RUNNING));
+        final List<Task> tasks = TaskStoreService.getService()
+                .load(Arrays.asList(CREATED, WAITING, SCHEDULED, SUBMITTED, RUNNING));
         if (tasks != null && !tasks.isEmpty()) {
             tasks.sort(Comparator.comparing(Task::getCreatedAt));
             tasks.forEach(this::addToGraph);
@@ -79,9 +79,9 @@ final class TaskProvider {
     }
 
     synchronized boolean add(Task task) {
-        if (taskStore.load(task.getId(), task.getGroup()) == null) {
+        if (TaskStoreService.getService().load(task) == null) {
             addToGraph(task);
-            taskStore.store(task);
+            TaskStoreService.getService().store(task);
             return true;
         } else {
             logger.warn("Task {} already exist with task provider, skip adding", task);
@@ -125,18 +125,17 @@ final class TaskProvider {
     // used in junit test case
     Set<Task> getDependentTasks(Task task, TaskDependencyInfo dependencyInfo) {
         final TreeSet<Task> candidateDependentTasks = new TreeSet<>(Comparator.comparing(Task::getCreatedAt));
-        final long createdAt = task.getCreatedAt();
-        final long sentinelTimeStamp = createdAt - resolveDuration(dependencyInfo.getDuration());
-        final String taskGroup = task.getGroup();
+        final String workflowId = task.getWorkflowId();
         final String dependentTaskName = dependencyInfo.getName();
 
         // retrieve all dependent task in memory
-        final List<Task> tasksInMemory = getTasks(dependentTaskName, taskGroup, createdAt, sentinelTimeStamp);
+        final List<Task> tasksInMemory = getTasks(dependentTaskName, workflowId);
         candidateDependentTasks.addAll(tasksInMemory);
 
         // retrieve all dependent task in store only if dependency mode is not first and tasks in memory is empty
         if (candidateDependentTasks.isEmpty() || dependencyInfo.getMode() != first) {
-            final List<Task> tasksInStore = taskStore.load(dependentTaskName, taskGroup, createdAt, sentinelTimeStamp);
+            final List<Task> tasksInStore = TaskStoreService.getService()
+                    .loadByNameAndWorkflowId(dependentTaskName, workflowId);
             if (tasksInStore != null && !tasksInStore.isEmpty()) {
                 candidateDependentTasks.addAll(tasksInStore);
             }
@@ -171,13 +170,15 @@ final class TaskProvider {
         graph.putEdge(dependerTask, dependeeTask);
     }
 
-    synchronized Task getTask(String taskId, String taskGroup) {
+    synchronized Task getTask(String taskId, String workflowId, String namespace) {
         for (Task task : graph.nodes()) {
-            if (task.getId().equals(taskId) && task.getGroup().equals(taskGroup)) {
+            if (task.getId().equals(taskId) && task.getWorkflowId().equals(workflowId)
+                    && task.getNamespace().equals(namespace)) {
                 return task;
             }
         }
-        Task task = taskStore.load(taskId, taskGroup);
+        final TaskId identity = MutableTaskId.create(taskId, workflowId, namespace);
+        Task task = TaskStoreService.getService().load(identity);
         // update local cache if not null
         if (task != null) {
             addToGraph(task);
@@ -185,13 +186,11 @@ final class TaskProvider {
         return task;
     }
 
-    private List<Task> getTasks(String taskName, String taskGroup, long createdBefore, long createdAfter) {
+    private List<Task> getTasks(String taskName, String workflowId) {
         List<Task> tasks = new ArrayList<>();
         for (Task task : graph.nodes()) {
-            if (task.getName().equals(taskName) && task.getGroup().equals(taskGroup)) {
-                if (task.getCreatedAt() < createdBefore && task.getCreatedAt() > createdAfter) {
-                    tasks.add(task);
-                }
+            if (task.getName().equals(taskName) && task.getWorkflowId().equals(workflowId)) {
+                tasks.add(task);
             }
         }
         return tasks;
@@ -239,8 +238,7 @@ final class TaskProvider {
 
     void update(Task task) {
         logger.debug("Received request to update task {}", task);
-        taskStore.update(task.getId(), task.getGroup(), task.getStatus(), task.getStatusMessage(),
-                task.getSubmittedAt(), task.getCompletedAt());
+        TaskStoreService.getService().update(task);
     }
 
     /**
@@ -264,7 +262,7 @@ final class TaskProvider {
     }
 
     /**
-     * Returns Set of tasks for deletion if group of tasks (group is defined by connected depender or dependee task)
+     * Returns Set of tasks for deletion if namespace of tasks (namespace is defined by connected depender or dependee task)
      * have been executed and trigger timestamp is older than cleanUpTimestamp.
      * <p>
      * Returns empty set if any of the tasks fails to match above mentioned criteria.
@@ -304,7 +302,7 @@ final class TaskProvider {
 
     public synchronized String toString() {
         StringBuilder graphOutputBuilder = new StringBuilder();
-        graphOutputBuilder.append("Task Graph \n");
+        graphOutputBuilder.append("Task TopologicalSort \n");
         for (Task task : graph.nodes()) {
             if (graph.inDegree(task) == 0) {
                 prepareGraphOutput(task, 1, graphOutputBuilder);
@@ -317,7 +315,7 @@ final class TaskProvider {
         for (int i = 0; i < level; i++) {
             outputBuilder.append("  ");
         }
-        outputBuilder.append("- ").append(task.getGroup()).append(":").append(task.getName())
+        outputBuilder.append("- ").append(task.getWorkflowId()).append(":").append(task.getName())
                 .append(":").append(task.getId()).append("(").append(task.getStatus()).append(")\n");
         graph.successors(task).forEach(t -> prepareGraphOutput(t, level + 1, outputBuilder));
     }

@@ -17,32 +17,21 @@
 
 package com.cognitree.kronos.scheduler.store;
 
+import com.cognitree.kronos.ReviewPending;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Objects;
 
-/**
- * defines configuration for a {@link TaskStore}.
- */
+@ReviewPending
 public class TaskStoreConfig {
-    /**
-     * fully qualified class name of the {@link TaskStore} implementation to be used to create a task store.
-     */
-    private String taskStoreClass;
+
+    private String storeClass;
 
     /**
      * Configuration required by the task store to instantiate itself.
      * This will be passed as an arg to the method of {@link TaskStore#init(ObjectNode)} at the time of instantiation
      */
     private ObjectNode config;
-
-    public String getTaskStoreClass() {
-        return taskStoreClass;
-    }
-
-    public void setTaskStoreClass(String taskStoreClass) {
-        this.taskStoreClass = taskStoreClass;
-    }
 
     public ObjectNode getConfig() {
         return config;
@@ -52,25 +41,33 @@ public class TaskStoreConfig {
         this.config = config;
     }
 
+    public String getStoreClass() {
+        return storeClass;
+    }
+
+    public void setStoreClass(String storeClass) {
+        this.storeClass = storeClass;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof TaskStoreConfig)) return false;
         TaskStoreConfig that = (TaskStoreConfig) o;
-        return Objects.equals(taskStoreClass, that.taskStoreClass) &&
+        return Objects.equals(storeClass, that.storeClass) &&
                 Objects.equals(config, that.config);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(taskStoreClass, config);
+        return Objects.hash(storeClass, config);
     }
 
     @Override
     public String toString() {
         return "TaskStoreConfig{" +
-                "taskStoreClass='" + taskStoreClass + '\'' +
+                "storeClass='" + storeClass + '\'' +
                 ", config=" + config +
                 '}';
     }

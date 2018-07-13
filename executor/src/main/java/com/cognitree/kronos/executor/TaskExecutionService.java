@@ -21,9 +21,9 @@ import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.executor.handlers.TaskHandler;
 import com.cognitree.kronos.executor.handlers.TaskHandlerConfig;
+import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
-import com.cognitree.kronos.model.TaskStatus;
 import com.cognitree.kronos.queue.QueueConfig;
 import com.cognitree.kronos.queue.consumer.Consumer;
 import com.cognitree.kronos.queue.consumer.ConsumerConfig;
@@ -42,8 +42,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import static com.cognitree.kronos.model.Messages.MISSING_HANDLER;
 import static com.cognitree.kronos.model.Task.Status.*;
+import static com.cognitree.kronos.util.Messages.MISSING_HANDLER;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -139,7 +139,7 @@ public final class TaskExecutionService implements Service {
                     final List<String> tasks = consumer.poll(taskType, tasksToPoll);
                     for (String taskAsString : tasks) {
                         try {
-                            submit(MAPPER.readValue(taskAsString, Task.class));
+                            submit(MAPPER.readValue(taskAsString, MutableTask.class));
                         } catch (IOException e) {
                             logger.error("Error parsing task message {}", taskAsString, e);
                         }
@@ -160,19 +160,19 @@ public final class TaskExecutionService implements Service {
         if (handler == null) {
             logger.error("No handler found to execute task {} of type {}, skipping task and marking it as {}",
                     task, task.getType(), FAILED);
-            updateStatus(task.getId(), task.getGroup(), FAILED, MISSING_HANDLER);
+            updateStatus(task.getId(), task.getWorkflowId(), task.getNamespace(), FAILED, MISSING_HANDLER);
             return;
         }
-        updateStatus(task.getId(), task.getGroup(), SUBMITTED);
+        updateStatus(task.getId(), task.getWorkflowId(), task.getNamespace(), SUBMITTED);
         taskTypeToRunningTasksCount.put(task.getType(), taskTypeToRunningTasksCount.get(task.getType()) + 1);
         taskExecutorService.submit(() -> {
             try {
-                updateStatus(task.getId(), task.getGroup(), RUNNING);
+                updateStatus(task.getId(), task.getWorkflowId(), task.getNamespace(), RUNNING);
                 handler.handle(task);
-                updateStatus(task.getId(), task.getGroup(), SUCCESSFUL);
+                updateStatus(task.getId(), task.getWorkflowId(), task.getNamespace(), SUCCESSFUL);
             } catch (Exception e) {
                 logger.error("Error executing task {}", task, e);
-                updateStatus(task.getId(), task.getGroup(), FAILED, e.getMessage());
+                updateStatus(task.getId(), task.getWorkflowId(), task.getNamespace(), FAILED, e.getMessage());
             } finally {
                 synchronized (taskTypeToRunningTasksCount) {
                     taskTypeToRunningTasksCount.put(task.getType(), taskTypeToRunningTasksCount.get(task.getType()) - 1);
@@ -181,18 +181,20 @@ public final class TaskExecutionService implements Service {
         });
     }
 
-    private void updateStatus(String taskId, String taskGroup, Status status) {
-        updateStatus(taskId, taskGroup, status, null);
+    private void updateStatus(String taskId, String workflowId, String namespace, Status status) {
+        updateStatus(taskId, workflowId, namespace, status, null);
     }
 
-    private void updateStatus(String taskId, String taskGroup, Status status, String statusMessage) {
+    private void updateStatus(String taskId, String workflowId, String namespace,
+                              Status status, String statusMessage) {
         try {
-            TaskStatus taskStatus = new TaskStatus();
-            taskStatus.setTaskId(taskId);
-            taskStatus.setTaskGroup(taskGroup);
-            taskStatus.setStatus(status);
-            taskStatus.setStatusMessage(statusMessage);
-            producer.send(statusQueue, MAPPER.writeValueAsString(taskStatus));
+            Task.TaskUpdate taskUpdate = new Task.TaskUpdate();
+            taskUpdate.setTaskId(taskId);
+            taskUpdate.setWorkflowId(workflowId);
+            taskUpdate.setNamespace(namespace);
+            taskUpdate.setStatus(status);
+            taskUpdate.setStatusMessage(statusMessage);
+            producer.send(statusQueue, MAPPER.writeValueAsString(taskUpdate));
         } catch (IOException e) {
             logger.error("Error adding task status {} to queue", status, e);
         }

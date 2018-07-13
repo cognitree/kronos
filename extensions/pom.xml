@@ -34,7 +34,6 @@
     <modules>
         <module>kafka-queue</module>
         <module>shell-handler</module>
-        <module>file-reader</module>
         <module>sqlite-store</module>
     </modules>
 

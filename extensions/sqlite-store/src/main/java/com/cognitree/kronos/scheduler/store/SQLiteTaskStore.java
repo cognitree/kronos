@@ -17,9 +17,11 @@
 
 package com.cognitree.kronos.scheduler.store;
 
+import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
-import com.cognitree.kronos.model.TaskDependencyInfo;
+import com.cognitree.kronos.model.TaskId;
+import com.cognitree.kronos.model.definitions.TaskDependencyInfo;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -40,17 +42,20 @@ public class SQLiteTaskStore implements TaskStore {
     private static final Logger logger = LoggerFactory.getLogger(SQLiteTaskStore.class);
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final String INSERT_REPLACE_TASK = "INSERT OR REPLACE INTO tasks VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+    private static final String INSERT_REPLACE_TASK = "INSERT OR REPLACE INTO tasks VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_TASK = "UPDATE tasks SET status = ?, status_message = ?, submitted_at = ?, " +
-            "completed_at = ? WHERE id = ?";
-    private static final String LOAD_TASK = "SELECT * FROM tasks WHERE id = ? AND task_group = ?";
+            "completed_at = ? WHERE id = ? AND workflow_id = ? AND namespace = ?";
+    private static final String LOAD_ALL_TASKS = "SELECT * FROM tasks";
+    private static final String LOAD_TASK = "SELECT * FROM tasks WHERE id = ? AND workflow_id = ? AND namespace = ?";
     private static final String LOAD_TASK_BY_STATUS = "SELECT * FROM tasks WHERE status IN ($statuses)";
-    private static final String LOAD_TASK_BY_NAME_GROUP = "SELECT * FROM tasks WHERE name = ? AND task_group = ? AND " +
-            "created_at < ? AND created_at > ?";
+    private static final String LOAD_TASK_BY_NAME_WORKFLOW_ID = "SELECT * FROM tasks WHERE name = ? AND workflow_id = ?";
+    private static final String LOAD_TASK_BY_WORKFLOW_ID = "SELECT * FROM tasks WHERE workflow_id = ? AND namespace = ?";
+    private static final String DELETE_TASK = "DELETE FROM tasks WHERE id = ? AND workflow_id = ? AND namespace = ?";
     private static final String DDL_CREATE_TASK_SQL = "CREATE TABLE IF NOT EXISTS tasks (" +
             "id string," +
+            "workflow_id string," +
             "name string," +
-            "task_group string," +
+            "namespace string," +
             "type string," +
             "timeout_policy string," +
             "depends_on string," +
@@ -62,7 +67,7 @@ public class SQLiteTaskStore implements TaskStore {
             "completed_at integer," +
             "PRIMARY KEY(id)" +
             ")";
-    private static final String CREATE_TASK_INDEX_SQL = "CREATE INDEX IF NOT EXISTS tasks_name_group_idx on tasks (name, task_group)";
+    private static final String CREATE_TASK_INDEX_SQL = "CREATE INDEX IF NOT EXISTS tasks_name_group_idx on tasks (workflow_id)";
     private static final TypeReference<Map<String, Object>> PROPERTIES_TYPE_REF =
             new TypeReference<Map<String, Object>>() {
             };
@@ -115,8 +120,9 @@ public class SQLiteTaskStore implements TaskStore {
              PreparedStatement preparedStatement = connection.prepareStatement(INSERT_REPLACE_TASK)) {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, task.getId());
+            preparedStatement.setString(++paramIndex, task.getWorkflowId());
             preparedStatement.setString(++paramIndex, task.getName());
-            preparedStatement.setString(++paramIndex, task.getGroup());
+            preparedStatement.setString(++paramIndex, task.getNamespace());
             preparedStatement.setString(++paramIndex, task.getType());
             preparedStatement.setString(++paramIndex, task.getTimeoutPolicy());
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(task.getDependsOn()));
@@ -133,43 +139,80 @@ public class SQLiteTaskStore implements TaskStore {
     }
 
     @Override
-    public void update(String taskId, String taskGroup, Status status, String statusMessage,
-                       long submittedAt, long completedAt) {
-        logger.debug("Received request to update task properties id {}, group {}, status {}, status message {}, " +
-                        "submitted at {}, completed at {}",
-                taskId, taskGroup, status, statusMessage, submittedAt, completedAt);
+    public List<Task> load() {
+        logger.debug("Received request to get all tasks");
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_TASK)) {
-            int paramIndex = 0;
-            preparedStatement.setString(++paramIndex, status.name());
-            preparedStatement.setString(++paramIndex, statusMessage);
-            preparedStatement.setLong(++paramIndex, submittedAt);
-            preparedStatement.setLong(++paramIndex, completedAt);
-            preparedStatement.setString(++paramIndex, taskId);
-            preparedStatement.execute();
+             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_ALL_TASKS)) {
+            final ResultSet resultSet = preparedStatement.executeQuery();
+            List<Task> tasks = new ArrayList<>();
+            while (resultSet.next()) {
+                tasks.add(getTask(resultSet));
+            }
+            return tasks;
         } catch (Exception e) {
-            logger.error("error updating task properties id {}, group {}, status {}, status message {}, " +
-                            "submitted at {}, completed at {}",
-                    taskId, taskGroup, status, statusMessage, submittedAt, completedAt);
+            logger.error("Error loading all tasks from database", e);
+            return Collections.emptyList();
         }
     }
 
     @Override
-    public Task load(String taskId, String taskGroup) {
-        logger.debug("Received request to get task with id {}, group {}", taskId, taskGroup);
+    public Task load(TaskId taskId) {
+        logger.debug("Received request to load task with id {}", taskId);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_TASK)) {
             int paramIndex = 0;
-            preparedStatement.setString(++paramIndex, taskId);
-            preparedStatement.setString(++paramIndex, taskGroup);
+            preparedStatement.setString(++paramIndex, taskId.getId());
+            preparedStatement.setString(++paramIndex, taskId.getWorkflowId());
+            preparedStatement.setString(++paramIndex, taskId.getNamespace());
             final ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 return getTask(resultSet);
             }
         } catch (Exception e) {
-            logger.error("Error fetching task with id {}, group {} from database", taskId, taskGroup, e);
+            logger.error("Error loading task with id {} from database", taskId, e);
         }
         return null;
+    }
+
+    @Override
+    public void update(Task task) {
+        TaskId taskId = task.getIdentity();
+        logger.debug("Received request to update task with id {} to {}", taskId, task);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_TASK)) {
+            int paramIndex = 0;
+            preparedStatement.setString(++paramIndex, task.getStatus().name());
+            preparedStatement.setString(++paramIndex, task.getStatusMessage());
+            preparedStatement.setLong(++paramIndex, task.getSubmittedAt());
+            preparedStatement.setLong(++paramIndex, task.getCompletedAt());
+            preparedStatement.setString(++paramIndex, taskId.getId());
+            preparedStatement.setString(++paramIndex, taskId.getWorkflowId());
+            preparedStatement.setString(++paramIndex, taskId.getNamespace());
+            preparedStatement.execute();
+        } catch (Exception e) {
+            logger.error("Error updating task with id {} to {}", taskId, task, e);
+        }
+    }
+
+    @Override
+    public List<Task> loadByWorkflowId(String workflowId, String namespace) {
+        logger.debug("Received request to get all tasks with workflow id {}, namespace {}", workflowId, namespace);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_TASK_BY_WORKFLOW_ID)) {
+            int paramIndex = 0;
+            preparedStatement.setString(++paramIndex, workflowId);
+            preparedStatement.setString(++paramIndex, namespace);
+            final ResultSet resultSet = preparedStatement.executeQuery();
+            List<Task> tasks = new ArrayList<>();
+            while (resultSet.next()) {
+                tasks.add(getTask(resultSet));
+            }
+            return tasks;
+        } catch (Exception e) {
+            logger.error("Error fetching tasks with workflow id {}, namespace {} from database",
+                    workflowId, namespace, e);
+            return Collections.emptyList();
+        }
     }
 
     @Override
@@ -189,22 +232,19 @@ public class SQLiteTaskStore implements TaskStore {
             }
             return tasks;
         } catch (Exception e) {
-            logger.error("Error fetching task with status in {} from database", statuses, e);
+            logger.error("Error loading task with status in {} from database", statuses, e);
             return Collections.emptyList();
         }
     }
 
     @Override
-    public List<Task> load(String taskName, String taskGroup, long createdBefore, long createdAfter) {
-        logger.debug("Received request to get all tasks with name {}, group {}, created before {}, " +
-                "created after {}", taskName, taskGroup, createdBefore, createdAfter);
+    public List<Task> loadByNameAndWorkflowId(String taskName, String workflowId) {
+        logger.debug("Received request to get all tasks with name {}, workflow id {}", taskName, workflowId);
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_TASK_BY_NAME_GROUP)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_TASK_BY_NAME_WORKFLOW_ID)) {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, taskName);
-            preparedStatement.setString(++paramIndex, taskGroup);
-            preparedStatement.setLong(++paramIndex, createdBefore);
-            preparedStatement.setLong(++paramIndex, createdAfter);
+            preparedStatement.setString(++paramIndex, workflowId);
             final ResultSet resultSet = preparedStatement.executeQuery();
             List<Task> tasks = new ArrayList<>();
             while (resultSet.next()) {
@@ -212,18 +252,33 @@ public class SQLiteTaskStore implements TaskStore {
             }
             return tasks;
         } catch (Exception e) {
-            logger.error("Error fetching task with name {}, group {}, created before {}, created after {} " +
-                    "from database", taskName, taskGroup, createdBefore, createdAfter, e);
+            logger.error("Error loading task with name {}, workflow id {} from database", taskName, workflowId, e);
             return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public void delete(TaskId identity) {
+        logger.debug("Received request to delete task with id {}", identity);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(DELETE_TASK)) {
+            int paramIndex = 0;
+            preparedStatement.setString(++paramIndex, identity.getId());
+            preparedStatement.setString(++paramIndex, identity.getWorkflowId());
+            preparedStatement.setString(++paramIndex, identity.getNamespace());
+            preparedStatement.executeUpdate();
+        } catch (Exception e) {
+            logger.error("Error deleting task with id {} from database", identity, e);
         }
     }
 
     private Task getTask(ResultSet resultSet) throws Exception {
         int paramIndex = 0;
-        Task task = new Task();
+        MutableTask task = new MutableTask();
         task.setId(resultSet.getString(++paramIndex));
+        task.setWorkflowId(resultSet.getString(++paramIndex));
         task.setName(resultSet.getString(++paramIndex));
-        task.setGroup(resultSet.getString(++paramIndex));
+        task.setNamespace(resultSet.getString(++paramIndex));
         task.setType(resultSet.getString(++paramIndex));
         task.setTimeoutPolicy(resultSet.getString(++paramIndex));
         task.setDependsOn(MAPPER.readValue(resultSet.getString(++paramIndex), DEPENDENCY_INFO_LIST_TYPE_REF));

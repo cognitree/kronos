@@ -20,7 +20,7 @@ package com.cognitree.kronos.scheduler;
 import com.cognitree.kronos.TestUtil;
 import com.cognitree.kronos.executor.handlers.TestTaskHandler;
 import com.cognitree.kronos.model.Task;
-import com.cognitree.kronos.model.TaskDependencyInfo;
+import com.cognitree.kronos.model.definitions.TaskDependencyInfo;
 import com.cognitree.kronos.scheduler.store.MockTaskStore;
 import com.cognitree.kronos.util.DateTimeUtil;
 import org.junit.Assert;
@@ -33,10 +33,10 @@ import java.util.List;
 
 import static com.cognitree.kronos.TestUtil.prepareDependencyInfo;
 import static com.cognitree.kronos.TestUtil.sleep;
-import static com.cognitree.kronos.model.Messages.FAILED_TO_RESOLVE_DEPENDENCY;
-import static com.cognitree.kronos.model.Messages.TIMED_OUT;
 import static com.cognitree.kronos.model.Task.Status.*;
-import static com.cognitree.kronos.model.TaskDependencyInfo.Mode.all;
+import static com.cognitree.kronos.model.definitions.TaskDependencyInfo.Mode.all;
+import static com.cognitree.kronos.util.Messages.FAILED_TO_RESOLVE_DEPENDENCY;
+import static com.cognitree.kronos.util.Messages.TIMED_OUT;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
 @FixMethodOrder(MethodSorters.JVM)

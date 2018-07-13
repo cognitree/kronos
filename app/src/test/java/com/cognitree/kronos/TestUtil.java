@@ -17,10 +17,11 @@
 
 package com.cognitree.kronos;
 
+import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
-import com.cognitree.kronos.model.TaskDefinition;
-import com.cognitree.kronos.model.TaskDependencyInfo;
+import com.cognitree.kronos.model.definitions.TaskDefinition;
+import com.cognitree.kronos.model.definitions.TaskDependencyInfo;
 
 import java.util.*;
 
@@ -31,7 +32,7 @@ public class TestUtil {
     public static TaskDependencyInfo prepareDependencyInfo(String taskName, TaskDependencyInfo.Mode mode, String duration) {
         TaskDependencyInfo dependencyInfo1 = new TaskDependencyInfo();
         dependencyInfo1.setName(taskName);
-        dependencyInfo1.setDuration(duration);
+//        dependencyInfo1.setDuration(duration);
         dependencyInfo1.setMode(mode);
         return dependencyInfo1;
     }
@@ -40,7 +41,6 @@ public class TestUtil {
         TaskDefinition taskDefinition = new TaskDefinition();
         taskDefinition.setType(type);
         taskDefinition.setName(name);
-        taskDefinition.setSchedule(schedule);
         return taskDefinition;
     }
 
@@ -148,7 +148,7 @@ public class TestUtil {
         }
 
         public Task build() {
-            Task task = new Task();
+            MutableTask task = new MutableTask();
             task.setId(id);
             task.setName(name);
             task.setType(type);
@@ -158,7 +158,7 @@ public class TestUtil {
             task.setMaxExecutionTime(maxExecutionTime);
             task.setProperties(properties);
             task.setDependsOn(dependsOn);
-            task.setGroup(group);
+            task.setWorkflowId(group);
             task.setCreatedAt(createdAt);
             task.setSubmittedAt(submittedAt);
             task.setCompletedAt(completedAt);

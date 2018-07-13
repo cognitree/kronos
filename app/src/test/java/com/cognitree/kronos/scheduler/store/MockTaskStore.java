@@ -20,13 +20,14 @@ package com.cognitree.kronos.scheduler.store;
 import com.cognitree.kronos.TestUtil;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
-import com.cognitree.kronos.model.TaskDependencyInfo;
+import com.cognitree.kronos.model.TaskId;
+import com.cognitree.kronos.model.definitions.TaskDependencyInfo;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.*;
 
 import static com.cognitree.kronos.model.Task.Status.*;
-import static com.cognitree.kronos.model.TaskDependencyInfo.Mode.all;
+import static com.cognitree.kronos.model.definitions.TaskDependencyInfo.Mode.all;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
@@ -74,14 +75,23 @@ public class MockTaskStore implements TaskStore {
     }
 
     @Override
-    public void update(String taskId, String taskGroup, Status status, String statusMessage,
-                       long submittedAt, long completedAt) {
+    public List<Task> load() {
+        return null;
+    }
+
+    @Override
+    public Task load(TaskId identity) {
+        return null;
+    }
+
+    @Override
+    public void update(Task entity) {
 
     }
 
     @Override
-    public Task load(String taskId, String taskGroup) {
-        return null;
+    public void delete(TaskId identity) {
+
     }
 
     @Override
@@ -90,7 +100,12 @@ public class MockTaskStore implements TaskStore {
     }
 
     @Override
-    public List<Task> load(String taskName, String taskGroup, long createdBefore, long createdAfter) {
+    public List<Task> loadByWorkflowId(String workflowId, String namespace) {
+        return null;
+    }
+
+    @Override
+    public List<Task> loadByNameAndWorkflowId(String taskName, String taskGroup) {
         return Collections.emptyList();
     }
 

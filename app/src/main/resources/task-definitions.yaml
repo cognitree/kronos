@@ -2,13 +2,38 @@
 - name: task one
   # task type
   type: shellCommand
-  schedule: 0 0/5 * 1/1 * ? *
   properties:
     # set working dir before executing the command
     workingDir: /tmp/
     # command to execute
     cmd: echo
     # command args if any
-    args: Hello World
+    args: Hello World from task one
+    # dir to used to dump the command logs
+    logDir: /tmp/
+# task one pings google.com 4 times and runs every 5 min.
+- name: task two
+  # task type
+  type: shellCommand
+  properties:
+    # set working dir before executing the command
+    workingDir: /tmp/
+    # command to execute
+    cmd: echo
+    # command args if any
+    args: Hello World from task two
+    # dir to used to dump the command logs
+    logDir: /tmp/
+# task one pings google.com 4 times and runs every 5 min.
+- name: task three
+  # task type
+  type: shellCommand
+  properties:
+    # set working dir before executing the command
+    workingDir: /tmp/
+    # command to execute
+    cmd: echo
+    # command args if any
+    args: Hello World from task three
     # dir to used to dump the command logs
     logDir: /tmp/

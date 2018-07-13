@@ -112,5 +112,6 @@
         <module>executor</module>
         <module>app</module>
         <module>assembly</module>
+        <module>webserver</module>
     </modules>
 </project>
