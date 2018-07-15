@@ -75,6 +75,7 @@ public class WorkflowDefinitionResource {
 
         WorkflowSchedulerService.getService().isValid(workflowDefinition);
         WorkflowDefinitionStoreService.getService().update(workflowDefinition);
+        WorkflowSchedulerService.getService().update(workflowDefinition);
         return Response.status(OK).entity(workflowDefinition).build();
     }
 

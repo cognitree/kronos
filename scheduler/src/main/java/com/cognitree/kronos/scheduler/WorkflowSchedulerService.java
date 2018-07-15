@@ -26,7 +26,6 @@ import com.cognitree.kronos.model.definitions.*;
 import com.cognitree.kronos.model.definitions.WorkflowDefinition.WorkflowTask;
 import com.cognitree.kronos.scheduler.graph.TopologicalSort;
 import com.cognitree.kronos.scheduler.store.TaskDefinitionStoreService;
-import com.cognitree.kronos.scheduler.store.WorkflowDefinitionStoreService;
 import com.cognitree.kronos.scheduler.store.WorkflowStoreService;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
@@ -70,7 +69,7 @@ public final class WorkflowSchedulerService implements Service {
     public void schedule(WorkflowDefinition workflowDefinition) {
         try {
             JobDataMap jobDataMap = new JobDataMap();
-            jobDataMap.put("workflowDefinitionId", (WorkflowDefinitionId) workflowDefinition);
+            jobDataMap.put("workflowDefinition", workflowDefinition);
             JobDetail jobDetail = newJob(WorkflowSchedulerJob.class)
                     .withIdentity(getWorkflowJobKey(workflowDefinition))
                     .usingJobData(jobDataMap)
@@ -99,17 +98,16 @@ public final class WorkflowSchedulerService implements Service {
         return CronScheduleBuilder.cronSchedule(workflowDefinition.getSchedule());
     }
 
-    public void execute(WorkflowDefinitionId workflowDefinitionId) throws Exception {
-        logger.info("Executing workflow definition with id {}", workflowDefinitionId);
-        final WorkflowDefinition workflowDefinition =
-                WorkflowDefinitionStoreService.getService().load(workflowDefinitionId);
+    public void execute(WorkflowDefinition workflowDefinition) throws Exception {
+        logger.info("Executing workflow definition {}", workflowDefinition);
         final Workflow workflow = createWorkflow(workflowDefinition);
         WorkflowStoreService.getService().store(workflow);
-        logger.info("Executing workflow with id {} for name {}, namespace {}",
-                workflow.getId(), workflow.getName(), workflow.getNamespace());
+        logger.debug("Executing workflow {}", workflow);
         final List<WorkflowTask> workflowTasks = resolveWorkflowTasks(workflowDefinition.getTasks());
+        final CronExpression workflowSchedule = new CronExpression(workflowDefinition.getSchedule());
+        final Date workflowEndTime = workflowSchedule.getTimeAfter(new Date());
         for (WorkflowTask workflowTask : workflowTasks) {
-            scheduleWorkflowTask(workflowDefinition, workflow, workflowTask);
+            scheduleWorkflowTask(workflowTask, workflow.getId(), workflow.getNamespace(), workflowEndTime);
         }
     }
 
@@ -147,50 +145,51 @@ public final class WorkflowSchedulerService implements Service {
         return topologicalSort.sort();
     }
 
-    private void scheduleWorkflowTask(WorkflowDefinition workflowDefinition, Workflow workflow, WorkflowTask workflowTask) {
+    private void scheduleWorkflowTask(WorkflowTask workflowTask, String workflowId,
+                                      String namespace, Date workflowEndTime) {
+        logger.debug("scheduling workflow task {} for workflow with id {}, namespace {}, workflow end time {}",
+                workflowTask, workflowId, namespace, workflowEndTime);
         try {
-            TaskDefinitionId taskDefinitionId = TaskDefinitionId.create(workflowTask.getName());
-            final TaskDefinition taskDefinition =
-                    TaskDefinitionStoreService.getService().load(taskDefinitionId);
-            final String jobIdentifier = workflowTask.getName();
-            final String jobGroupIdentifier =
-                    getWorkflowTaskGroup(workflow.getName(), workflow.getNamespace());
+            final String taskName = workflowTask.getName();
+            TaskDefinitionId taskDefinitionId = TaskDefinitionId.create(taskName);
+            final TaskDefinition taskDefinition = TaskDefinitionStoreService.getService().load(taskDefinitionId);
 
             JobDataMap jobDataMap = new JobDataMap();
             jobDataMap.put("workflowTask", workflowTask);
             jobDataMap.put("taskDefinition", taskDefinition);
-            jobDataMap.put("workflowId", workflow.getId());
-            jobDataMap.put("namespace", workflow.getNamespace());
+            jobDataMap.put("workflowId", workflowId);
+            jobDataMap.put("namespace", namespace);
             JobDetail jobDetail = newJob(WorkflowTaskSchedulerJob.class)
-                    .withIdentity(jobIdentifier, jobGroupIdentifier)
+                    .withIdentity(taskName, workflowId)
                     .usingJobData(jobDataMap)
                     .build();
 
             Trigger jobTrigger;
             if (workflowTask.getSchedule() != null) {
-                final CronExpression workflowSchedule = new CronExpression(workflowDefinition.getSchedule());
                 CronScheduleBuilder workflowTaskJobSchedule = CronScheduleBuilder.cronSchedule(workflowTask.getSchedule());
-                final Date currentDate = new Date();
                 jobTrigger = newTrigger()
-                        .withIdentity(jobIdentifier, jobGroupIdentifier)
+                        .withIdentity(taskName, workflowId)
                         .withSchedule(workflowTaskJobSchedule)
-                        // TODO might not work for cron schedule: run at this date at this time
-                        .endAt(workflowSchedule.getTimeAfter(currentDate))
+                        .endAt(workflowEndTime)
                         .build();
             } else {
                 jobTrigger = newTrigger()
-                        .withIdentity(jobIdentifier, jobGroupIdentifier)
+                        .withIdentity(taskName, workflowId)
                         .startNow()
                         .build();
             }
             scheduler.scheduleJob(jobDetail, jobTrigger);
         } catch (Exception ex) {
-            logger.error("Error scheduling workflow task {} for workflow {}", workflowTask, workflow, ex);
+            logger.error("Error scheduling workflow task {} for workflow with id {}, name {}, namespace {}, " +
+                    "workflow end time {}", workflowTask, workflowId, namespace, workflowEndTime, ex);
         }
     }
 
-    private String getWorkflowTaskGroup(String workflowName, String namespace) {
-        return workflowName + ":" + namespace;
+    public void update(WorkflowDefinition workflowDefinition) {
+        // delete the old workflow definition
+        delete(workflowDefinition);
+        // schedule new workflow
+        schedule(workflowDefinition);
     }
 
     public void delete(WorkflowDefinitionId workflowDefinitionId) {
@@ -258,11 +257,11 @@ public final class WorkflowSchedulerService implements Service {
         public void execute(JobExecutionContext jobExecutionContext) {
             final JobDataMap jobDataMap = jobExecutionContext.getJobDetail().getJobDataMap();
             logger.trace("received request to execute workflow with data map {}", jobDataMap.getWrappedMap());
-            final WorkflowDefinitionId workflowDefinitionId = (WorkflowDefinitionId) jobDataMap.get("workflowDefinitionId");
+            final WorkflowDefinition workflowDefinition = (WorkflowDefinition) jobDataMap.get("workflowDefinition");
             try {
-                WorkflowSchedulerService.getService().execute(workflowDefinitionId);
+                WorkflowSchedulerService.getService().execute(workflowDefinition);
             } catch (Exception e) {
-                logger.error("Error scheduling workflow with id {}", workflowDefinitionId, e);
+                logger.error("Error scheduling workflow with id {}", workflowDefinition, e);
             }
         }
     }
