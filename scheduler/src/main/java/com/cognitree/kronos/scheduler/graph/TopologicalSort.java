@@ -38,7 +38,7 @@ public class TopologicalSort<V> {
     }
 
     /**
-     * Add a vertex to the graph.  Nothing happens if vertex is already in graph.
+     * Add a vertex to the graph. Nothing happens if vertex is already in graph.
      */
     public void add(V vertex) {
         if (neighbors.containsKey(vertex)) return;
@@ -63,7 +63,7 @@ public class TopologicalSort<V> {
     }
 
     /**
-     * Remove an edge from the graph.  Nothing happens if no such edge.
+     * Remove an edge from the graph. Nothing happens if no such edge.
      *
      * @throws IllegalArgumentException if either vertex doesn't exist.
      */

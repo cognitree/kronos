@@ -67,6 +67,10 @@ public final class WorkflowSchedulerService implements Service {
     }
 
     public void schedule(WorkflowDefinition workflowDefinition) {
+        if (!workflowDefinition.isEnabled()) {
+            logger.debug("Workflow definition {} is disabled from scheduling", workflowDefinition);
+            return;
+        }
         try {
             JobDataMap jobDataMap = new JobDataMap();
             jobDataMap.put("workflowDefinition", workflowDefinition);
@@ -149,6 +153,10 @@ public final class WorkflowSchedulerService implements Service {
                                       String namespace, Date workflowEndTime) {
         logger.debug("scheduling workflow task {} for workflow with id {}, namespace {}, workflow end time {}",
                 workflowTask, workflowId, namespace, workflowEndTime);
+        if (!workflowTask.isEnabled()) {
+            logger.debug("Workflow task {} is disabled from scheduling", workflowTask);
+            return;
+        }
         try {
             final String taskName = workflowTask.getName();
             TaskDefinitionId taskDefinitionId = TaskDefinitionId.create(taskName);

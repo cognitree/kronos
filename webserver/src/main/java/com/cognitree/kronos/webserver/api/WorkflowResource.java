@@ -28,11 +28,11 @@ public class WorkflowResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllWorkflow(@QueryParam("name") String workflowName,
                                    @DefaultValue(DEFAULT_DAYS) @QueryParam("date_range") int numberOfDays) {
-        final List<Workflow> workflows;
         final long currentTimeMillis = System.currentTimeMillis();
         long createdAfter = currentTimeMillis - (currentTimeMillis % TimeUnit.DAYS.toMillis(1))
                 - TimeUnit.DAYS.toMillis(numberOfDays - 1);
         long createdBefore = createdAfter + TimeUnit.DAYS.toMillis(numberOfDays);
+        final List<Workflow> workflows;
         if (workflowName == null) {
             logger.info("Received request to get all workflow with date range {}", numberOfDays);
             workflows = WorkflowStoreService.getService().load(createdAfter, createdBefore);
