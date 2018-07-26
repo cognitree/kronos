@@ -1,14 +1,29 @@
-# task one pings google.com 4 times and runs every 5 min.
 - name: workflow
-  schedule: 5 0/2 * 1/1 * ? *
+#  namespace: default
   description: test workflow
+  schedule: 5 0/2 * 1/1 * ? *
   tasks:
     - name: task one
-      schedule: 0 0/1 * 1/1 * ? *
+      properties:
+        schedule: 1 0/1 * 1/1 * ? *
+        # command to execute
+        cmd: echo
+        # command args if any
+        args: Hello World from task one
     - name: task two
-      schedule: 0 0/1 * 1/1 * ? *
+      schedule: 1 0/1 * 1/1 * ? *
+      properties:
+        # command to execute
+        cmd: sleep
+        # command args if any
+        args: 30
     - name: task three
-      schedule: 0 0/2 * 1/1 * ? *
+      schedule: 2 0/2 * 1/1 * ? *
+      properties:
+        # command to execute
+        cmd: echo
+        # command args if any
+        args: Hello World from task three
       dependsOn:
         - name: task two
           mode: all

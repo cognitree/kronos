@@ -1,15 +1,34 @@
-# configure task store
-taskStoreConfig:
-  taskStoreClass: com.cognitree.kronos.scheduler.store.SQLiteTaskStore
+# configure task definition store
+taskDefinitionStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.SQLiteTaskDefinitionStore
   config:
     connectionURL: jdbc:sqlite:kronos.db
     username:
     password:
 
-taskExecutionConfig:
-  shellCommand:
-    # max execution time per task
-    maxExecutionTime: 10m
+# configure task store
+taskStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.SQLiteTaskStore
+  config:
+    connectionURL: jdbc:sqlite:kronos.db
+    username:
+    password:
+
+# configure workflow definition store
+workflowDefinitionStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.SQLiteWorkflowDefinitionStore
+  config:
+    connectionURL: jdbc:sqlite:kronos.db
+    username:
+    password:
+
+# configure workflow store
+workflowStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.SQLiteWorkflowStore
+  config:
+    connectionURL: jdbc:sqlite:kronos.db
+    username:
+    password:
 
 # time to wait before removing executed tasks from memory
 taskPurgeInterval: 1d

@@ -63,6 +63,7 @@ public final class WorkflowSchedulerService implements Service {
     }
 
     public void add(WorkflowDefinition workflowDefinition) throws Exception {
+        logger.info("Received request to add workflow definition {}", workflowDefinition);
         validate(workflowDefinition);
         schedule(workflowDefinition);
     }
@@ -88,19 +89,19 @@ public final class WorkflowSchedulerService implements Service {
                 for (TaskDependencyInfo taskDependencyInfo : dependsOn) {
                     final WorkflowTask dependeeTask = workflowTaskMap.get(taskDependencyInfo.getName());
                     if (dependeeTask == null) {
-                        throw new Exception("missing task " + taskDependencyInfo.getName());
+                        throw new ValidationException("missing task " + taskDependencyInfo.getName());
                     }
 
                     if (dependeeTask.getSchedule() != null
                             && workflowTask.getSchedule() == null) {
-                        throw new Exception("missing schedule for task " + workflowTask.getName());
+                        throw new ValidationException("missing schedule for task " + workflowTask.getName());
                     }
                     topologicalSort.add(dependeeTask, workflowTask);
                 }
             }
         }
         if (!topologicalSort.isDag()) {
-            throw new Exception("Invalid workflow definition contains cyclic dependency)");
+            throw new ValidationException("Invalid workflow definition contains cyclic dependency)");
         }
     }
 
