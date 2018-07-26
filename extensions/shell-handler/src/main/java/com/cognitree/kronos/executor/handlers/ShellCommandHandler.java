@@ -87,10 +87,10 @@ public class ShellCommandHandler implements TaskHandler {
     }
 
     private String getProperty(Map<String, Object> properties, String key) {
-        return (String) properties.get(key);
+        return String.valueOf(properties.get(key));
     }
 
     private String getProperty(Map<String, Object> properties, String key, String defaultValue) {
-        return (String) properties.getOrDefault(key, defaultValue);
+        return String.valueOf(properties.getOrDefault(key, defaultValue));
     }
 }
