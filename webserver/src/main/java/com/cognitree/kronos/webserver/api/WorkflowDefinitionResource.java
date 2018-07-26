@@ -53,9 +53,12 @@ public class WorkflowDefinitionResource {
         }
         // override namespace of workflow
         workflowDefinition.setNamespace(DEFAULT_NAMESPACE);
-        WorkflowSchedulerService.getService().isValid(workflowDefinition);
+        try {
+            WorkflowSchedulerService.getService().add(workflowDefinition);
+        } catch (Exception ex) {
+            return Response.status(BAD_REQUEST).entity(ex.getMessage()).build();
+        }
         WorkflowDefinitionStoreService.getService().store(workflowDefinition);
-        WorkflowSchedulerService.getService().schedule(workflowDefinition);
         return Response.status(OK).entity(workflowDefinition).build();
     }
 
@@ -72,10 +75,12 @@ public class WorkflowDefinitionResource {
             logger.error("No workflow definition exists with name {}", workflowDefName);
             return Response.status(NOT_FOUND).build();
         }
-
-        WorkflowSchedulerService.getService().isValid(workflowDefinition);
+        try {
+            WorkflowSchedulerService.getService().update(workflowDefinition);
+        } catch (Exception ex) {
+            return Response.status(BAD_REQUEST).entity(ex.getMessage()).build();
+        }
         WorkflowDefinitionStoreService.getService().update(workflowDefinition);
-        WorkflowSchedulerService.getService().update(workflowDefinition);
         return Response.status(OK).entity(workflowDefinition).build();
     }
 

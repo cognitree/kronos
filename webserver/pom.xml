@@ -9,10 +9,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.cognitree.kronos</groupId>
-    <artifactId>webserver</artifactId>
+    <artifactId>apis</artifactId>
     <packaging>war</packaging>
     <version>1.0</version>
-    <name>webserver</name>
+    <name>apis</name>
 
     <properties>
         <jersey.version>2.27</jersey.version>
@@ -46,19 +46,16 @@
             <groupId>com.cognitree.kronos</groupId>
             <artifactId>sqlite-store</artifactId>
             <version>${project.version}</version>
-            <scope>${dependency.scope}</scope>
         </dependency>
         <dependency>
             <groupId>com.cognitree.kronos</groupId>
             <artifactId>shell-handler</artifactId>
             <version>${project.version}</version>
-            <scope>${dependency.scope}</scope>
         </dependency>
         <dependency>
             <groupId>com.cognitree.kronos</groupId>
             <artifactId>kafka-queue</artifactId>
             <version>${project.version}</version>
-            <scope>${dependency.scope}</scope>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>

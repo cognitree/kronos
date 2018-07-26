@@ -27,7 +27,6 @@ import java.util.Objects;
  */
 public class Workflow extends WorkflowId {
     private String name;
-    private String description;
     private long createdAt;
 
     public String getName() {
@@ -36,14 +35,6 @@ public class Workflow extends WorkflowId {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     public long getCreatedAt() {
@@ -67,14 +58,13 @@ public class Workflow extends WorkflowId {
         return createdAt == workflow.createdAt &&
                 Objects.equals(id, workflow.id) &&
                 Objects.equals(name, workflow.name) &&
-                Objects.equals(namespace, workflow.namespace) &&
-                Objects.equals(description, workflow.description);
+                Objects.equals(namespace, workflow.namespace);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(id, name, namespace, description, createdAt);
+        return Objects.hash(id, name, namespace, createdAt);
     }
 
     @Override
@@ -83,7 +73,6 @@ public class Workflow extends WorkflowId {
                 "id='" + id + '\'' +
                 ", name='" + name + '\'' +
                 ", namespace='" + namespace + '\'' +
-                ", description='" + description + '\'' +
                 ", createdAt=" + createdAt +
                 '}';
     }

@@ -35,20 +35,19 @@ import java.util.List;
 public class SQLiteWorkflowStore implements WorkflowStore {
     private static final Logger logger = LoggerFactory.getLogger(SQLiteWorkflowStore.class);
 
-    private static final String INSERT_REPLACE_WORKFLOW = "INSERT OR REPLACE INTO workflows VALUES (?,?,?,?,?)";
+    private static final String INSERT_REPLACE_WORKFLOW = "INSERT OR REPLACE INTO workflows VALUES (?,?,?,?)";
     private static final String LOAD_WORKFLOW = "SELECT * FROM workflows";
     private static final String LOAD_WORKFLOW_BY_ID = "SELECT * FROM workflows WHERE id = ? AND namespace = ?";
     private static final String LOAD_WORKFLOW_BY_NAME_CREATED_AFTER = "SELECT * FROM workflows WHERE name = ? AND namespace = ?" +
             " AND created_at > ? AND created_at < ?";
     private static final String LOAD_ALL_WORKFLOW_CREATED_AFTER = "SELECT * FROM workflows where created_at > ? AND created_at < ?";
-    private static final String UPDATE_WORKFLOW = "UPDATE workflows SET description = ?, created_at = ? " +
+    private static final String UPDATE_WORKFLOW = "UPDATE workflows SET created_at = ? " +
             " WHERE id = ? AND namespace = ?";
     private static final String DELETE_WORKFLOW = "DELETE FROM workflows WHERE id = ? AND namespace = ?";
     private static final String DDL_CREATE_WORKFLOW_SQL = "CREATE TABLE IF NOT EXISTS workflows (" +
             "id string," +
             "name string," +
             "namespace string," +
-            "description string," +
             "created_at integer," +
             "PRIMARY KEY(id)" +
             ")";
@@ -103,7 +102,6 @@ public class SQLiteWorkflowStore implements WorkflowStore {
             preparedStatement.setString(++paramIndex, workflow.getId());
             preparedStatement.setString(++paramIndex, workflow.getName());
             preparedStatement.setString(++paramIndex, workflow.getNamespace());
-            preparedStatement.setString(++paramIndex, workflow.getDescription());
             preparedStatement.setLong(++paramIndex, workflow.getCreatedAt());
             preparedStatement.execute();
         } catch (Exception e) {
@@ -195,7 +193,6 @@ public class SQLiteWorkflowStore implements WorkflowStore {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_WORKFLOW)) {
             int paramIndex = 0;
-            preparedStatement.setString(++paramIndex, workflow.getDescription());
             preparedStatement.setLong(++paramIndex, workflow.getCreatedAt());
             preparedStatement.setString(++paramIndex, workflowId.getId());
             preparedStatement.setString(++paramIndex, workflowId.getNamespace());
@@ -225,7 +222,6 @@ public class SQLiteWorkflowStore implements WorkflowStore {
         workflow.setId(resultSet.getString(++paramIndex));
         workflow.setName(resultSet.getString(++paramIndex));
         workflow.setNamespace(resultSet.getString(++paramIndex));
-        workflow.setDescription(resultSet.getString(++paramIndex));
         workflow.setCreatedAt(resultSet.getLong(++paramIndex));
         return workflow;
     }
