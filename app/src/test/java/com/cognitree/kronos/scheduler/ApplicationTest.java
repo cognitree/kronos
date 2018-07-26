@@ -26,9 +26,11 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 
 import java.io.InputStream;
 
+@Ignore
 public class ApplicationTest {
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
 

@@ -24,11 +24,13 @@ import com.cognitree.kronos.executor.handlers.TypeBTaskHandler;
 import com.cognitree.kronos.model.Task;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 import static com.cognitree.kronos.model.Task.Status.*;
 
+@Ignore
 @FixMethodOrder(MethodSorters.JVM)
 public class TaskExecutorServiceTest extends ApplicationTest {
 

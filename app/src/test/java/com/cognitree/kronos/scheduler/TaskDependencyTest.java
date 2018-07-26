@@ -22,6 +22,7 @@ import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.definitions.TaskDependencyInfo;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
@@ -38,6 +39,7 @@ import static com.cognitree.kronos.model.definitions.TaskDependencyInfo.Mode.*;
 import static com.cognitree.kronos.util.Messages.FAILED_TO_RESOLVE_DEPENDENCY;
 import static java.util.concurrent.TimeUnit.HOURS;
 
+@Ignore
 @FixMethodOrder(MethodSorters.JVM)
 public class TaskDependencyTest extends ApplicationTest {
 

@@ -25,6 +25,7 @@ import com.cognitree.kronos.scheduler.store.MockTaskStore;
 import com.cognitree.kronos.util.DateTimeUtil;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
@@ -39,6 +40,7 @@ import static com.cognitree.kronos.util.Messages.FAILED_TO_RESOLVE_DEPENDENCY;
 import static com.cognitree.kronos.util.Messages.TIMED_OUT;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
+@Ignore
 @FixMethodOrder(MethodSorters.JVM)
 public class TaskSchedulerServiceTest extends ApplicationTest {
 
