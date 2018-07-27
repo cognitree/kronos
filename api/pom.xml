@@ -9,9 +9,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.cognitree.kronos</groupId>
-    <artifactId>apis</artifactId>
+    <artifactId>api</artifactId>
     <version>1.0</version>
-    <name>apis</name>
+    <name>api</name>
 
     <properties>
         <jersey.version>2.27</jersey.version>

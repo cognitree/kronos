@@ -25,8 +25,10 @@ import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.*;
-import org.junit.runners.MethodSorters;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -35,9 +37,7 @@ import java.util.List;
 import static com.cognitree.kronos.model.Task.Status.*;
 import static java.lang.Thread.sleep;
 
-@FixMethodOrder(MethodSorters.JVM)
 public class TaskExecutorServiceTest {
-
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final ExecutorApp EXECUTOR_APP = new ExecutorApp();

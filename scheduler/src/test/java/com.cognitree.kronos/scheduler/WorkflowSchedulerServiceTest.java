@@ -3,8 +3,11 @@ package com.cognitree.kronos.scheduler;
 import com.cognitree.kronos.model.definitions.WorkflowDefinition;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.junit.*;
-import org.junit.runners.MethodSorters;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.quartz.JobKey;
 
 import java.io.InputStream;
 import java.util.Date;
@@ -12,7 +15,6 @@ import java.util.List;
 
 import static java.lang.Thread.sleep;
 
-@FixMethodOrder(MethodSorters.JVM)
 public class WorkflowSchedulerServiceTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
@@ -73,7 +75,24 @@ public class WorkflowSchedulerServiceTest {
     }
 
     @Test
+    public void testScheduleWorkflow() throws Exception {
+        TaskSchedulerService.getService().getTaskProvider().reinit();
+        final InputStream resourceAsStream =
+                getClass().getClassLoader().getResourceAsStream("test-workflow.yaml");
+        final WorkflowDefinition workflowDefinition = MAPPER.readValue(resourceAsStream, WorkflowDefinition.class);
+        WorkflowSchedulerService.getService().add(workflowDefinition);
+        sleep(System.currentTimeMillis() % 2000);
+        final JobKey jobKey = new JobKey(workflowDefinition.getName(), workflowDefinition.getNamespace());
+        Assert.assertTrue(WorkflowSchedulerService.getService().getScheduler().checkExists(jobKey));
+        WorkflowSchedulerService.getService().delete(workflowDefinition);
+        Assert.assertFalse(WorkflowSchedulerService.getService().getScheduler().checkExists(jobKey));
+        sleep(System.currentTimeMillis() % 2000);
+        Assert.assertEquals(3, TaskSchedulerService.getService().getTaskProvider().size());
+    }
+
+    @Test
     public void testExecuteWorkflow() throws Exception {
+        TaskSchedulerService.getService().getTaskProvider().reinit();
         final InputStream resourceAsStream =
                 getClass().getClassLoader().getResourceAsStream("test-workflow.yaml");
         final WorkflowDefinition workflowDefinition = MAPPER.readValue(resourceAsStream, WorkflowDefinition.class);

@@ -1,7 +1,7 @@
 name: test-workflow
 namespace: default
 description: test workflow
-schedule: 5 * * 1/1 * ? *
+schedule: 0/2 * * * * ?
 tasks:
   - name: task one
     properties:
@@ -14,7 +14,7 @@ tasks:
       # command to execute
       cmd: sleep
       # command args if any
-      args: 30
+      args: 1
     dependsOn:
       - name: task one
         mode: all

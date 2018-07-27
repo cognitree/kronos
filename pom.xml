@@ -112,7 +112,7 @@
         <module>executor</module>
         <module>app</module>
         <module>assembly</module>
-        <module>apis</module>
+        <module>api</module>
         <module>file-reader</module>
         <module>web-server</module>
     </modules>

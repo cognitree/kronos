@@ -245,11 +245,16 @@ public final class WorkflowSchedulerService implements Service {
     }
 
     public void delete(WorkflowDefinitionId workflowDefinitionId) {
+        logger.info("Received request to delete workflow definition with id {}", workflowDefinitionId);
         try {
             scheduler.deleteJob(getWorkflowJobKey(workflowDefinitionId));
         } catch (SchedulerException e) {
             logger.error("Error deleting quartz job for workflow with id {}", workflowDefinitionId);
         }
+    }
+
+    Scheduler getScheduler() {
+        return scheduler;
     }
 
     @Override
