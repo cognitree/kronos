@@ -79,8 +79,10 @@ public final class WorkflowSchedulerService implements Service {
         final TopologicalSort<WorkflowTask> topologicalSort = new TopologicalSort<>();
         final List<WorkflowTask> workflowTasks = workflowDefinition.getTasks();
         workflowTasks.forEach(workflowTask -> {
-            workflowTaskMap.put(workflowTask.getName(), workflowTask);
-            topologicalSort.add(workflowTask);
+            if (workflowTask.isEnabled()) {
+                workflowTaskMap.put(workflowTask.getName(), workflowTask);
+                topologicalSort.add(workflowTask);
+            }
         });
 
         for (WorkflowTask workflowTask : workflowTasks) {
@@ -92,8 +94,7 @@ public final class WorkflowSchedulerService implements Service {
                         throw new ValidationException("missing task " + taskDependencyInfo.getName());
                     }
 
-                    if (dependeeTask.getSchedule() != null
-                            && workflowTask.getSchedule() == null) {
+                    if (dependeeTask.getSchedule() != null && workflowTask.getSchedule() == null) {
                         throw new ValidationException("missing schedule for task " + workflowTask.getName());
                     }
                     topologicalSort.add(dependeeTask, workflowTask);
@@ -173,7 +174,7 @@ public final class WorkflowSchedulerService implements Service {
      * @param workflowTasks
      * @return
      */
-    private List<WorkflowTask> resolveWorkflowTasks(List<WorkflowTask> workflowTasks) throws Exception {
+    List<WorkflowTask> resolveWorkflowTasks(List<WorkflowTask> workflowTasks) throws Exception {
         final HashMap<String, WorkflowTask> workflowTaskMap = new HashMap<>();
         final TopologicalSort<WorkflowTask> topologicalSort = new TopologicalSort<>();
         workflowTasks.forEach(workflowTask -> {
