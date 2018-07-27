@@ -27,7 +27,7 @@ import java.util.List;
  */
 public interface WorkflowStore extends Store<Workflow, WorkflowId> {
 
-    List<Workflow> load(long createdAfter, long createdBefore);
+    List<Workflow> load(String namespace, long createdAfter, long createdBefore);
 
     List<Workflow> loadByName(String name, String namespace, long createdAfter, long createdBefore);
 }

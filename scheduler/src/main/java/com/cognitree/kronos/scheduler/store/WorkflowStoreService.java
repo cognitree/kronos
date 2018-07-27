@@ -55,8 +55,8 @@ public class WorkflowStoreService implements StoreService<Workflow, WorkflowId> 
         return workflowStore.load(workflowId);
     }
 
-    public List<Workflow> load(long createdAfter, long createdBefore) {
-        return workflowStore.load(createdAfter, createdBefore);
+    public List<Workflow> load(String namespace, long createdAfter, long createdBefore) {
+        return workflowStore.load(namespace, createdAfter, createdBefore);
     }
 
     public List<Workflow> loadByName(String name, String namespace, long createdAfter, long createdBefore) {

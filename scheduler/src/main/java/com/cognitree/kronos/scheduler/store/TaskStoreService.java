@@ -40,16 +40,16 @@ public class TaskStoreService implements StoreService<Task, TaskId> {
         return taskStore.load(taskId);
     }
 
-    public List<Task> loadByNameAndWorkflowId(String taskName, String workflowId) {
-        return taskStore.loadByNameAndWorkflowId(taskName, workflowId);
+    public List<Task> loadByNameAndWorkflowId(String taskName, String workflowId, String namespace) {
+        return taskStore.loadByNameAndWorkflowId(taskName, workflowId, namespace);
     }
 
     public List<Task> loadByWorkflowId(String workflowId, String namespace) {
         return taskStore.loadByWorkflowId(workflowId, namespace);
     }
 
-    public List<Task> load(List<Task.Status> statuses) {
-        return taskStore.load(statuses);
+    public List<Task> load(List<Task.Status> statuses, String namespace) {
+        return taskStore.load(statuses, namespace);
     }
 
     public void store(Task taskDefinition) {

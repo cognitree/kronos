@@ -35,7 +35,7 @@ public class WorkflowResource {
         final List<Workflow> workflows;
         if (workflowName == null) {
             logger.info("Received request to get all workflow with date range {}", numberOfDays);
-            workflows = WorkflowStoreService.getService().load(createdAfter, createdBefore);
+            workflows = WorkflowStoreService.getService().load(DEFAULT_NAMESPACE, createdAfter, createdBefore);
         } else {
             logger.info("Received request to get all workflow with name {}, date range {}", workflowName, numberOfDays);
             workflows = WorkflowStoreService.getService().loadByName(workflowName, DEFAULT_NAMESPACE, createdAfter, createdBefore);

@@ -30,7 +30,7 @@ public interface TaskStore extends Store<Task, TaskId> {
 
     List<Task> loadByWorkflowId(String workflowId, String namespace);
 
-    List<Task> load(List<Status> statuses);
+    List<Task> load(List<Status> statuses, String namespace);
 
-    List<Task> loadByNameAndWorkflowId(String taskName, String workflowId);
+    List<Task> loadByNameAndWorkflowId(String taskName, String workflowId, String namespace);
 }

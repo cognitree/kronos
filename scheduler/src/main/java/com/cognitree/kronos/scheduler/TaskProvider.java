@@ -53,8 +53,9 @@ final class TaskProvider {
 
     void init() {
         logger.info("Initializing task provider from task store");
+        // TODO fix : load tasks from all namespaces
         final List<Task> tasks = TaskStoreService.getService()
-                .load(Arrays.asList(CREATED, WAITING, SCHEDULED, SUBMITTED, RUNNING));
+                .load(Arrays.asList(CREATED, WAITING, SCHEDULED, SUBMITTED, RUNNING), null);
         if (tasks != null && !tasks.isEmpty()) {
             tasks.sort(Comparator.comparing(Task::getCreatedAt));
             tasks.forEach(this::addToGraph);
@@ -126,16 +127,17 @@ final class TaskProvider {
     Set<Task> getDependentTasks(Task task, TaskDependencyInfo dependencyInfo) {
         final TreeSet<Task> candidateDependentTasks = new TreeSet<>(Comparator.comparing(Task::getCreatedAt));
         final String workflowId = task.getWorkflowId();
+        final String namespace = task.getNamespace();
         final String dependentTaskName = dependencyInfo.getName();
 
         // retrieve all dependent task in memory
-        final List<Task> tasksInMemory = getTasks(dependentTaskName, workflowId);
+        final List<Task> tasksInMemory = getTasks(dependentTaskName, workflowId, namespace);
         candidateDependentTasks.addAll(tasksInMemory);
 
         // retrieve all dependent task in store only if dependency mode is not first and tasks in memory is empty
         if (candidateDependentTasks.isEmpty() || dependencyInfo.getMode() != first) {
             final List<Task> tasksInStore = TaskStoreService.getService()
-                    .loadByNameAndWorkflowId(dependentTaskName, workflowId);
+                    .loadByNameAndWorkflowId(dependentTaskName, workflowId, namespace);
             if (tasksInStore != null && !tasksInStore.isEmpty()) {
                 candidateDependentTasks.addAll(tasksInStore);
             }
@@ -186,10 +188,11 @@ final class TaskProvider {
         return task;
     }
 
-    private List<Task> getTasks(String taskName, String workflowId) {
+    private List<Task> getTasks(String taskName, String workflowId, String namespace) {
         List<Task> tasks = new ArrayList<>();
         for (Task task : graph.nodes()) {
-            if (task.getName().equals(taskName) && task.getWorkflowId().equals(workflowId)) {
+            if (task.getName().equals(taskName) && task.getWorkflowId().equals(workflowId)
+                    && task.getNamespace().equals(namespace)) {
                 tasks.add(task);
             }
         }

@@ -48,7 +48,8 @@ public class SQLiteTaskStore implements TaskStore {
     private static final String LOAD_ALL_TASKS = "SELECT * FROM tasks";
     private static final String LOAD_TASK = "SELECT * FROM tasks WHERE id = ? AND workflow_id = ? AND namespace = ?";
     private static final String LOAD_TASK_BY_STATUS = "SELECT * FROM tasks WHERE status IN ($statuses)";
-    private static final String LOAD_TASK_BY_NAME_WORKFLOW_ID = "SELECT * FROM tasks WHERE name = ? AND workflow_id = ?";
+    private static final String LOAD_TASK_BY_NAME_WORKFLOW_ID = "SELECT * FROM tasks WHERE name = ? AND workflow_id = ?" +
+            " AND namespace = ?";
     private static final String LOAD_TASK_BY_WORKFLOW_ID = "SELECT * FROM tasks WHERE workflow_id = ? AND namespace = ?";
     private static final String DELETE_TASK = "DELETE FROM tasks WHERE id = ? AND workflow_id = ? AND namespace = ?";
     private static final String DDL_CREATE_TASK_SQL = "CREATE TABLE IF NOT EXISTS tasks (" +
@@ -216,8 +217,9 @@ public class SQLiteTaskStore implements TaskStore {
     }
 
     @Override
-    public List<Task> load(List<Status> statuses) {
-        logger.debug("Received request to get all tasks with status in {}", statuses);
+    public List<Task> load(List<Status> statuses, String namespace) {
+        // TODO handle namespace
+        logger.debug("Received request to get all tasks with status in {}, namespace {}", statuses, namespace);
         String placeHolders = String.join(",", Collections.nCopies(statuses.size(), "?"));
         final String sqlQuery = LOAD_TASK_BY_STATUS.replace("$statuses", placeHolders);
         try (Connection connection = dataSource.getConnection();
@@ -238,13 +240,15 @@ public class SQLiteTaskStore implements TaskStore {
     }
 
     @Override
-    public List<Task> loadByNameAndWorkflowId(String taskName, String workflowId) {
-        logger.debug("Received request to get all tasks with name {}, workflow id {}", taskName, workflowId);
+    public List<Task> loadByNameAndWorkflowId(String taskName, String workflowId, String namespace) {
+        logger.debug("Received request to get all tasks with name {}, workflow id {}, namespace {}",
+                taskName, workflowId, namespace);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_TASK_BY_NAME_WORKFLOW_ID)) {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, taskName);
             preparedStatement.setString(++paramIndex, workflowId);
+            preparedStatement.setString(++paramIndex, namespace);
             final ResultSet resultSet = preparedStatement.executeQuery();
             List<Task> tasks = new ArrayList<>();
             while (resultSet.next()) {

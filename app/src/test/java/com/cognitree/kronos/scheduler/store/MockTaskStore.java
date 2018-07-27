@@ -95,7 +95,7 @@ public class MockTaskStore implements TaskStore {
     }
 
     @Override
-    public List<Task> load(List<Status> statuses) {
+    public List<Task> load(List<Status> statuses, String namespace) {
         return new ArrayList<>(TASKS_IN_STORE.values());
     }
 
@@ -105,7 +105,7 @@ public class MockTaskStore implements TaskStore {
     }
 
     @Override
-    public List<Task> loadByNameAndWorkflowId(String taskName, String taskGroup) {
+    public List<Task> loadByNameAndWorkflowId(String taskName, String taskGroup, String namespace) {
         return Collections.emptyList();
     }
 

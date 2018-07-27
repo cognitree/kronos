@@ -40,7 +40,8 @@ public class SQLiteWorkflowStore implements WorkflowStore {
     private static final String LOAD_WORKFLOW_BY_ID = "SELECT * FROM workflows WHERE id = ? AND namespace = ?";
     private static final String LOAD_WORKFLOW_BY_NAME_CREATED_AFTER = "SELECT * FROM workflows WHERE name = ? AND namespace = ?" +
             " AND created_at > ? AND created_at < ?";
-    private static final String LOAD_ALL_WORKFLOW_CREATED_AFTER = "SELECT * FROM workflows where created_at > ? AND created_at < ?";
+    private static final String LOAD_ALL_WORKFLOW_CREATED_AFTER = "SELECT * FROM workflows where namespace = ? AND" +
+            " created_at > ? AND created_at < ?";
     private static final String UPDATE_WORKFLOW = "UPDATE workflows SET created_at = ? " +
             " WHERE id = ? AND namespace = ?";
     private static final String DELETE_WORKFLOW = "DELETE FROM workflows WHERE id = ? AND namespace = ?";
@@ -145,11 +146,13 @@ public class SQLiteWorkflowStore implements WorkflowStore {
     }
 
     @Override
-    public List<Workflow> load(long createdAfter, long createdBefore) {
-        logger.debug("Received request to get all workflow created after {}", createdAfter);
+    public List<Workflow> load(String namespace, long createdAfter, long createdBefore) {
+        logger.debug("Received request to get all workflow under namespace {}, created after {}, created before {}",
+                namespace, createdAfter, createdBefore);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_ALL_WORKFLOW_CREATED_AFTER)) {
             int paramIndex = 0;
+            preparedStatement.setString(++paramIndex, namespace);
             preparedStatement.setLong(++paramIndex, createdAfter);
             preparedStatement.setLong(++paramIndex, createdBefore);
             final ResultSet resultSet = preparedStatement.executeQuery();
@@ -159,7 +162,8 @@ public class SQLiteWorkflowStore implements WorkflowStore {
             }
             return workflows;
         } catch (Exception e) {
-            logger.error("Error fetching all workflow from database created after {}", createdAfter, e);
+            logger.error("Error fetching all workflow from database under namespace {} created after {}, created before {}",
+                    namespace, createdAfter, createdBefore, e);
         }
         return Collections.emptyList();
     }
