@@ -74,7 +74,7 @@ public final class WorkflowSchedulerService implements Service {
      * @param workflowDefinition
      * @return
      */
-    private void validate(WorkflowDefinition workflowDefinition) throws Exception {
+    public void validate(WorkflowDefinition workflowDefinition) throws Exception {
         final HashMap<String, WorkflowTask> workflowTaskMap = new HashMap<>();
         final TopologicalSort<WorkflowTask> topologicalSort = new TopologicalSort<>();
         final List<WorkflowTask> workflowTasks = workflowDefinition.getTasks();

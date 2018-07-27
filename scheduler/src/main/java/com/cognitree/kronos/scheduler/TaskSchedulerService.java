@@ -380,6 +380,16 @@ public final class TaskSchedulerService implements Service {
         return taskProvider;
     }
 
+    // used in junit
+    Consumer getConsumer() {
+        return consumer;
+    }
+
+    // used in junit
+    Producer getProducer() {
+        return producer;
+    }
+
     @Override
     public void stop() {
         logger.info("Stopping task scheduler service");
