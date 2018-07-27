@@ -19,7 +19,6 @@ package com.cognitree.kronos.util;
 
 public interface Messages {
     String FAILED_TO_RESOLVE_DEPENDENCY = "failed to resolve task dependency";
-    String MISSING_HANDLER = "no handler registered to execute task";
     String TIMED_OUT = "timed out executing task";
     String TASK_SUBMISSION_FAILED = "error submitting task to queue";
 }

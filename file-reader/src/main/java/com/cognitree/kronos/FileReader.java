@@ -48,9 +48,9 @@ public class FileReader {
         List<WorkflowDefinition> workflowDefinitions = MAPPER.readValue(resourceAsStream, WORKFLOW_DEFINITION_LIST_REF);
 
         for (WorkflowDefinition workflowDefinition : workflowDefinitions) {
-//            if (workflowDefinition.getNamespace() == null) {
-//                workflowDefinition.setNamespace(DEFAULT_NAMESPACE);
-//            }
+            if (workflowDefinition.getNamespace() == null) {
+                workflowDefinition.setNamespace(DEFAULT_NAMESPACE);
+            }
             if (WorkflowDefinitionStoreService.getService().load(workflowDefinition) == null) {
                 try {
                     WorkflowSchedulerService.getService().add(workflowDefinition);

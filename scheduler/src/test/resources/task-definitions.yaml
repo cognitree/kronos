@@ -1,0 +1,27 @@
+# task one pings google.com 4 times and runs every 5 min.
+- name: task one
+  # task type
+  type: shellCommand
+  properties:
+    # set working dir before executing the command
+    workingDir: /tmp/
+    # dir to used to dump the command logs
+    logDir: /tmp/
+# task one pings google.com 4 times and runs every 5 min.
+- name: task two
+  # task type
+  type: shellCommand
+  properties:
+    # set working dir before executing the command
+    workingDir: /tmp/
+    # dir to used to dump the command logs
+    logDir: /tmp/
+# task one pings google.com 4 times and runs every 5 min.
+- name: task three
+  # task type
+  type: shellCommand
+  properties:
+    # set working dir before executing the command
+    workingDir: /tmp/
+    # dir to used to dump the command logs
+    logDir: /tmp/

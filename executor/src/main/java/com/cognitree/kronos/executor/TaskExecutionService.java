@@ -43,7 +43,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import static com.cognitree.kronos.model.Task.Status.*;
-import static com.cognitree.kronos.util.Messages.MISSING_HANDLER;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -156,18 +155,12 @@ public final class TaskExecutionService implements Service {
      */
     private void submit(Task task) {
         logger.trace("Received task {} for execution from task queue", task);
-        final TaskHandler handler = taskTypeToHandlerMap.get(task.getType());
-        if (handler == null) {
-            logger.error("No handler found to execute task {} of type {}, skipping task and marking it as {}",
-                    task, task.getType(), FAILED);
-            updateStatus(task.getId(), task.getWorkflowId(), task.getNamespace(), FAILED, MISSING_HANDLER);
-            return;
-        }
         updateStatus(task.getId(), task.getWorkflowId(), task.getNamespace(), SUBMITTED);
         taskTypeToRunningTasksCount.put(task.getType(), taskTypeToRunningTasksCount.get(task.getType()) + 1);
         taskExecutorService.submit(() -> {
             try {
                 updateStatus(task.getId(), task.getWorkflowId(), task.getNamespace(), RUNNING);
+                final TaskHandler handler = taskTypeToHandlerMap.get(task.getType());
                 handler.handle(task);
                 updateStatus(task.getId(), task.getWorkflowId(), task.getNamespace(), SUCCESSFUL);
             } catch (Exception e) {
@@ -198,6 +191,16 @@ public final class TaskExecutionService implements Service {
         } catch (IOException e) {
             logger.error("Error adding task status {} to queue", status, e);
         }
+    }
+
+    // used in junit
+    Consumer getConsumer() {
+        return consumer;
+    }
+
+    // used in junit
+    Producer getProducer() {
+        return producer;
     }
 
     @Override

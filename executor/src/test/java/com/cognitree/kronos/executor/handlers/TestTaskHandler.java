@@ -40,24 +40,16 @@ public class TestTaskHandler implements TaskHandler {
     }
 
     @Override
-    public void handle(Task task) throws HandlerException {
+    public void handle(Task task) {
         logger.info("Received request to handle task {}", task);
 
-        final boolean waitForCallback = (boolean) task.getProperties().get("waitForCallback");
-        if (waitForCallback) {
-            while (!tasks.contains(task.getId())) {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+        while (!tasks.contains(task.getId())) {
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-            tasks.remove(task.getId());
         }
-
-        final boolean shouldPass = (boolean) task.getProperties().get("shouldPass");
-        if (!shouldPass) {
-            throw new HandlerException("Error executing task");
-        }
+        tasks.remove(task.getId());
     }
 }
