@@ -1,8 +1,11 @@
 package com.cognitree.kronos.scheduler.store;
 
+import com.cognitree.kronos.ReviewPending;
+
 import java.util.HashMap;
 import java.util.Map;
 
+@ReviewPending
 public class StoreServiceProvider {
 
     private static final Map<String, StoreService> STORE_SERVICE_MAP = new HashMap<>();

@@ -34,12 +34,12 @@
         <dependency>
             <groupId>com.cognitree.kronos</groupId>
             <artifactId>common</artifactId>
-            <version>1.0</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.cognitree.kronos</groupId>
             <artifactId>common</artifactId>
-            <version>1.0</version>
+            <version>${project.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>

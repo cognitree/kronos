@@ -11,9 +11,11 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.Comparator.comparing;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 
@@ -40,7 +42,8 @@ public class WorkflowResource {
             logger.info("Received request to get all workflow with name {}, date range {}", workflowName, numberOfDays);
             workflows = WorkflowStoreService.getService().loadByName(workflowName, DEFAULT_NAMESPACE, createdAfter, createdBefore);
         }
-        return Response.status(OK).entity(workflows).build();
+        return Response.status(OK).entity(workflows.stream().sorted(comparing(Workflow::getCreatedAt).reversed()))
+                .build();
     }
 
     @GET

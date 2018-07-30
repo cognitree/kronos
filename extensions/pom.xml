@@ -41,13 +41,13 @@
         <dependency>
             <groupId>com.cognitree.kronos</groupId>
             <artifactId>scheduler</artifactId>
-            <version>1.0</version>
+            <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.cognitree.kronos</groupId>
             <artifactId>executor</artifactId>
-            <version>1.0</version>
+            <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

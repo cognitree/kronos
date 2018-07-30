@@ -25,6 +25,7 @@ import com.cognitree.kronos.model.Workflow;
 import com.cognitree.kronos.model.definitions.*;
 import com.cognitree.kronos.model.definitions.WorkflowDefinition.WorkflowTask;
 import com.cognitree.kronos.scheduler.graph.TopologicalSort;
+import com.cognitree.kronos.scheduler.store.StoreServiceProvider;
 import com.cognitree.kronos.scheduler.store.TaskDefinitionStoreService;
 import com.cognitree.kronos.scheduler.store.WorkflowStoreService;
 import org.quartz.*;
@@ -78,12 +79,17 @@ public final class WorkflowSchedulerService implements Service {
         final HashMap<String, WorkflowTask> workflowTaskMap = new HashMap<>();
         final TopologicalSort<WorkflowTask> topologicalSort = new TopologicalSort<>();
         final List<WorkflowTask> workflowTasks = workflowDefinition.getTasks();
-        workflowTasks.forEach(workflowTask -> {
-            if (workflowTask.isEnabled()) {
-                workflowTaskMap.put(workflowTask.getName(), workflowTask);
-                topologicalSort.add(workflowTask);
+        for (WorkflowTask task : workflowTasks) {
+            final String taskName = task.getName();
+            if (TaskDefinitionStoreService.getService().load(TaskDefinitionId.create(taskName)) == null) {
+                throw new ValidationException("missing task definition with name " + taskName);
             }
-        });
+
+            if (task.isEnabled()) {
+                workflowTaskMap.put(taskName, task);
+                topologicalSort.add(task);
+            }
+        }
 
         for (WorkflowTask workflowTask : workflowTasks) {
             final List<TaskDependencyInfo> dependsOn = workflowTask.getDependsOn();
@@ -174,7 +180,7 @@ public final class WorkflowSchedulerService implements Service {
      * @param workflowTasks
      * @return
      */
-    List<WorkflowTask> resolveWorkflowTasks(List<WorkflowTask> workflowTasks) throws Exception {
+    List<WorkflowTask> resolveWorkflowTasks(List<WorkflowTask> workflowTasks) {
         final HashMap<String, WorkflowTask> workflowTaskMap = new HashMap<>();
         final TopologicalSort<WorkflowTask> topologicalSort = new TopologicalSort<>();
         workflowTasks.forEach(workflowTask -> {
