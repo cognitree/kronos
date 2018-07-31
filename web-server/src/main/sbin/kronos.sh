@@ -1,6 +1,9 @@
 #!/bin/bash
 
 
+HOST="localhost"
+PORT=8080
+
 MAIN_CLASS=""
 APP_NAME=""
 APP_HOME="$(cd "`dirname "$0"`"/..; pwd)"
@@ -19,7 +22,9 @@ start(){
     echo "$APP_NAME is already running"
     exit 0
   fi
-  java -Xmx$HEAP_SIZE -Xms$HEAP_SIZE -cp "$APP_HOME/conf:$APP_HOME/jars/*" $MAIN_CLASS >> "$LOG_DIR/$APP_NAME-stdout-`date +%Y%m%d`.log" 2>&1 &
+  java -Xmx$HEAP_SIZE -Xms$HEAP_SIZE -cp "$APP_HOME/conf:$APP_HOME/jars/*" \
+  $MAIN_CLASS --host $HOST --port $PORT --resourceBase "$APP_HOME/webapp" --contextPath "/" \
+  --descriptor "$APP_HOME/webapp/WEB-INF/web.xml" >> "$LOG_DIR/$APP_NAME-stdout-`date +%Y%m%d`.log" 2>&1 &
   echo "$APP_NAME started: pid[`pgrep -f $MAIN_CLASS`]"
   echo "application logs available at $LOG_DIR/$APP_NAME-stdout-`date +%Y%m%d`.log"
 }

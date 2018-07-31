@@ -38,12 +38,16 @@
             <outputDirectory>docs</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>${project.parent.basedir}/samples</directory>
+            <directory>src/main/resources</directory>
             <outputDirectory>conf</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>${project.parent.basedir}/sbin</directory>
+            <directory>src/main/sbin</directory>
             <outputDirectory>sbin</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>src/main/webapp</directory>
+            <outputDirectory>webapp</outputDirectory>
         </fileSet>
     </fileSets>
     <dependencySets>

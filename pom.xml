@@ -107,13 +107,11 @@
 
     <modules>
         <module>common</module>
-        <module>extensions</module>
         <module>scheduler</module>
         <module>executor</module>
-        <module>app</module>
-        <module>assembly</module>
         <module>api</module>
-        <module>file-reader</module>
         <module>web-server</module>
+        <module>app</module>
+        <module>extensions</module>
     </modules>
 </project>
