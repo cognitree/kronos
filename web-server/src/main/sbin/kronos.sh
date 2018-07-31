@@ -4,8 +4,9 @@
 HOST="localhost"
 PORT=8080
 
-MAIN_CLASS=""
+MAIN_CLASS="com.cognitree.kronos.Application"
 APP_NAME=""
+MODE=""
 APP_HOME="$(cd "`dirname "$0"`"/..; pwd)"
 LOG_DIR=$APP_HOME/logs
 HEAP_SIZE="128m"
@@ -23,7 +24,7 @@ start(){
     exit 0
   fi
   java -Xmx$HEAP_SIZE -Xms$HEAP_SIZE -cp "$APP_HOME/conf:$APP_HOME/jars/*" \
-  $MAIN_CLASS --host $HOST --port $PORT --resourceBase "$APP_HOME/webapp" --contextPath "/" \
+  $MAIN_CLASS --mode $MODE --host $HOST --port $PORT --resourceBase "$APP_HOME/webapp" --contextPath "/" \
   --descriptor "$APP_HOME/webapp/WEB-INF/web.xml" >> "$LOG_DIR/$APP_NAME-stdout-`date +%Y%m%d`.log" 2>&1 &
   echo "$APP_NAME started: pid[`pgrep -f $MAIN_CLASS`]"
   echo "application logs available at $LOG_DIR/$APP_NAME-stdout-`date +%Y%m%d`.log"
@@ -87,15 +88,15 @@ init_param(){
   case "$1" in
     scheduler)
       APP_NAME="scheduler"
-      MAIN_CLASS="com.cognitree.kronos.scheduler.SchedulerApp"
+      MODE="scheduler"
       ;;
     executor)
       APP_NAME="executor"
-      MAIN_CLASS="com.cognitree.kronos.executor.ExecutorApp"
+      MODE="executor"
       ;;
     *)
       APP_NAME="kronos"
-      MAIN_CLASS="com.cognitree.kronos.Application"
+      MODE="all"
   esac
 }
 

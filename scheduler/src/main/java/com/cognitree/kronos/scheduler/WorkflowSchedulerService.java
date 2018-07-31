@@ -25,7 +25,6 @@ import com.cognitree.kronos.model.Workflow;
 import com.cognitree.kronos.model.definitions.*;
 import com.cognitree.kronos.model.definitions.WorkflowDefinition.WorkflowTask;
 import com.cognitree.kronos.scheduler.graph.TopologicalSort;
-import com.cognitree.kronos.scheduler.store.StoreServiceProvider;
 import com.cognitree.kronos.scheduler.store.TaskDefinitionStoreService;
 import com.cognitree.kronos.scheduler.store.WorkflowDefinitionStoreService;
 import com.cognitree.kronos.scheduler.store.WorkflowStoreService;
