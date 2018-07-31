@@ -5,9 +5,6 @@ public class WorkflowDefinitionId {
     protected String name;
     protected String namespace;
 
-    WorkflowDefinitionId() {
-    }
-
     public static WorkflowDefinitionId create(String name, String namespace) {
         final WorkflowDefinitionId workflowDefinitionId = new WorkflowDefinitionId();
         workflowDefinitionId.setName(name);

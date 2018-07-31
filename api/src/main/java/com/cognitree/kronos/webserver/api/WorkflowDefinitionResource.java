@@ -47,12 +47,12 @@ public class WorkflowDefinitionResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response addWorkflowDefinition(WorkflowDefinition workflowDefinition) {
         logger.info("Received request to add workflow definition {}", workflowDefinition);
+        // override namespace of workflow
+        workflowDefinition.setNamespace(DEFAULT_NAMESPACE);
         if (WorkflowDefinitionStoreService.getService().load(workflowDefinition) != null) {
             logger.error("Workflow definition already exists with name {}", workflowDefinition.getName());
             return Response.status(CONFLICT).build();
         }
-        // override namespace of workflow
-        workflowDefinition.setNamespace(DEFAULT_NAMESPACE);
         try {
             WorkflowSchedulerService.getService().add(workflowDefinition);
         } catch (Exception ex) {

@@ -42,7 +42,7 @@ public class SQLiteTaskStore implements TaskStore {
     private static final Logger logger = LoggerFactory.getLogger(SQLiteTaskStore.class);
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final String INSERT_REPLACE_TASK = "INSERT OR REPLACE INTO tasks VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    private static final String INSERT_REPLACE_TASK = "INSERT OR REPLACE INTO tasks VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_TASK = "UPDATE tasks SET status = ?, status_message = ?, submitted_at = ?, " +
             "completed_at = ? WHERE id = ? AND workflow_id = ? AND namespace = ?";
     private static final String LOAD_ALL_TASKS = "SELECT * FROM tasks";
@@ -59,6 +59,7 @@ public class SQLiteTaskStore implements TaskStore {
             "namespace string," +
             "type string," +
             "timeout_policy string," +
+            "max_execution_time string," +
             "depends_on string," +
             "properties string," +
             "status string," +
@@ -126,6 +127,7 @@ public class SQLiteTaskStore implements TaskStore {
             preparedStatement.setString(++paramIndex, task.getNamespace());
             preparedStatement.setString(++paramIndex, task.getType());
             preparedStatement.setString(++paramIndex, task.getTimeoutPolicy());
+            preparedStatement.setString(++paramIndex, task.getMaxExecutionTime());
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(task.getDependsOn()));
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(task.getProperties()));
             preparedStatement.setString(++paramIndex, task.getStatus().name());
@@ -285,6 +287,7 @@ public class SQLiteTaskStore implements TaskStore {
         task.setNamespace(resultSet.getString(++paramIndex));
         task.setType(resultSet.getString(++paramIndex));
         task.setTimeoutPolicy(resultSet.getString(++paramIndex));
+        task.setMaxExecutionTime(resultSet.getString(++paramIndex));
         task.setDependsOn(MAPPER.readValue(resultSet.getString(++paramIndex), DEPENDENCY_INFO_LIST_TYPE_REF));
         task.setProperties(MAPPER.readValue(resultSet.getString(++paramIndex), PROPERTIES_TYPE_REF));
         task.setStatus(Status.valueOf(resultSet.getString(++paramIndex)));
