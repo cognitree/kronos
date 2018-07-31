@@ -10,7 +10,7 @@ public class Application {
         WebAppContext webapp = new WebAppContext();
         webapp.setResourceBase("src/main/webapp");
         webapp.setContextPath("/");
-        webapp.setDefaultsDescriptor("web-server/src/main/resources/web.xml");
+        webapp.setDefaultsDescriptor("web-server/src/main/webapp/WEB-INF/web.xml");
 
         server.setHandler(webapp);
         server.start();
