@@ -27,6 +27,7 @@ import com.cognitree.kronos.model.definitions.WorkflowDefinition.WorkflowTask;
 import com.cognitree.kronos.scheduler.graph.TopologicalSort;
 import com.cognitree.kronos.scheduler.store.StoreServiceProvider;
 import com.cognitree.kronos.scheduler.store.TaskDefinitionStoreService;
+import com.cognitree.kronos.scheduler.store.WorkflowDefinitionStoreService;
 import com.cognitree.kronos.scheduler.store.WorkflowStoreService;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
@@ -56,6 +57,20 @@ public final class WorkflowSchedulerService implements Service {
     @Override
     public void init() throws Exception {
         scheduler = StdSchedulerFactory.getDefaultScheduler();
+        scheduleExistingWorkflow();
+    }
+
+    private void scheduleExistingWorkflow() {
+        // TODO load per namespace
+        final List<WorkflowDefinition> workflowDefinitions = WorkflowDefinitionStoreService.getService().load();
+        workflowDefinitions.forEach(workflowDefinition -> {
+            logger.info("Scheduling existing workflow definition {}", workflowDefinition);
+            try {
+                schedule(workflowDefinition);
+            } catch (Exception e) {
+                logger.error("Error scheduling workflow definition {}", workflowDefinition, e);
+            }
+        });
     }
 
     @Override

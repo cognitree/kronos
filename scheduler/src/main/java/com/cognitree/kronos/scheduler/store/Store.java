@@ -1,9 +1,11 @@
 package com.cognitree.kronos.scheduler.store;
 
+import com.cognitree.kronos.ReviewPending;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.List;
 
+@ReviewPending
 public interface Store<E, T> {
 
     /**
@@ -17,6 +19,7 @@ public interface Store<E, T> {
 
     void store(E entity);
 
+    // TODO: fix api exposed does not have a concept of namespace
     List<E> load();
 
     E load(T identity);

@@ -62,7 +62,7 @@ public class SQLiteWorkflowDefinitionStore implements WorkflowDefinitionStore {
 
     @Override
     public void init(ObjectNode storeConfig) throws Exception {
-        logger.info("Initializing SQLite task store");
+        logger.info("Initializing SQLite workflow definition store");
         initDataSource(storeConfig);
         initTaskStore();
     }
@@ -115,7 +115,7 @@ public class SQLiteWorkflowDefinitionStore implements WorkflowDefinitionStore {
 
     @Override
     public List<WorkflowDefinition> load() {
-        logger.debug("Received request to get all workflow");
+        logger.debug("Received request to get all workflow definition");
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_ALL_WORKFLOW_DEFINITION)) {
             final ResultSet resultSet = preparedStatement.executeQuery();

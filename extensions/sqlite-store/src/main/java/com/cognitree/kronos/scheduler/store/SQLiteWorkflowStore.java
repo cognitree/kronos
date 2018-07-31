@@ -58,7 +58,7 @@ public class SQLiteWorkflowStore implements WorkflowStore {
 
     @Override
     public void init(ObjectNode storeConfig) throws Exception {
-        logger.info("Initializing SQLite task store");
+        logger.info("Initializing SQLite workflow store");
         initDataSource(storeConfig);
         initTaskStore();
     }

@@ -59,7 +59,7 @@ public class SQLiteTaskDefinitionStore implements TaskDefinitionStore {
 
     @Override
     public void init(ObjectNode storeConfig) throws Exception {
-        logger.info("Initializing SQLite store for task definitions");
+        logger.info("Initializing SQLite task definitions store");
         initDataSource(storeConfig);
         initTaskStore();
     }
