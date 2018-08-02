@@ -102,7 +102,6 @@ public interface Task extends TaskId {
             this.statusMessage = statusMessage;
         }
 
-
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -117,7 +116,6 @@ public interface Task extends TaskId {
 
         @Override
         public int hashCode() {
-
             return Objects.hash(taskId, workflowId, namespace, status, statusMessage);
         }
 

@@ -17,6 +17,8 @@
 
 package com.cognitree.kronos.model.definitions;
 
+import java.util.Objects;
+
 public class WorkflowDefinitionId {
 
     protected String name;
@@ -43,5 +45,27 @@ public class WorkflowDefinitionId {
 
     public void setNamespace(String namespace) {
         this.namespace = namespace;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        WorkflowDefinitionId that = (WorkflowDefinitionId) o;
+        return Objects.equals(name, that.name) &&
+                Objects.equals(namespace, that.namespace);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, namespace);
+    }
+
+    @Override
+    public String toString() {
+        return "WorkflowDefinitionId{" +
+                "name='" + name + '\'' +
+                ", namespace='" + namespace + '\'' +
+                '}';
     }
 }

@@ -128,7 +128,7 @@ public final class WorkflowSchedulerService implements Service {
 
     private void schedule(WorkflowDefinition workflowDefinition) {
         if (!workflowDefinition.isEnabled()) {
-            logger.debug("Workflow definition {} is disabled from scheduling", workflowDefinition);
+            logger.warn("Workflow definition {} is disabled from scheduling", workflowDefinition);
             return;
         }
 
@@ -217,7 +217,7 @@ public final class WorkflowSchedulerService implements Service {
         logger.debug("scheduling workflow task {} for workflow with id {}, namespace {}, workflow next fire time {}",
                 workflowTask, workflowId, namespace, nextFireTime);
         if (!workflowTask.isEnabled()) {
-            logger.debug("Workflow task {} is disabled from scheduling", workflowTask);
+            logger.warn("Workflow task {} is disabled from scheduling", workflowTask);
             return;
         }
         try {

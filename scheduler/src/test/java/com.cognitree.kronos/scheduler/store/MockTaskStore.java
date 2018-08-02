@@ -39,7 +39,7 @@ public class MockTaskStore implements TaskStore {
 
     @Override
     public List<Task> load() {
-        return null;
+        return Collections.emptyList();
     }
 
     @Override

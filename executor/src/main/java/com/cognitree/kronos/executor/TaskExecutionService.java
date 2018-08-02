@@ -58,20 +58,23 @@ public final class TaskExecutionService implements Service {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
+    // Task consumer and provider info
     private final ConsumerConfig consumerConfig;
+    private Consumer consumer;
     private final ProducerConfig producerConfig;
+    private Producer producer;
     private final String statusQueue;
-    private final Map<String, TaskHandlerConfig> taskTypeToHandlerConfig;
 
+    // Task type mapping Info
+    private final Map<String, TaskHandlerConfig> taskTypeToHandlerConfig;
     private final Map<String, TaskHandler> taskTypeToHandlerMap = new HashMap<>();
     private final Map<String, Integer> taskTypeToMaxParallelTasksCount = new HashMap<>();
     private final Map<String, Integer> taskTypeToRunningTasksCount = new HashMap<>();
+
     // used by internal tasks like polling new tasks from queue
     private final ScheduledExecutorService internalExecutorService = Executors.newSingleThreadScheduledExecutor();
     // used to execute tasks
-    private final ExecutorService taskExecutorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-    private Consumer consumer;
-    private Producer producer;
+    private final ExecutorService taskExecutorThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
     public TaskExecutionService(ExecutorConfig executorConfig, QueueConfig queueConfig) {
         this.consumerConfig = queueConfig.getConsumerConfig();
@@ -157,7 +160,7 @@ public final class TaskExecutionService implements Service {
         logger.trace("Received task {} for execution from task queue", task);
         updateStatus(task.getId(), task.getWorkflowId(), task.getNamespace(), SUBMITTED);
         taskTypeToRunningTasksCount.put(task.getType(), taskTypeToRunningTasksCount.get(task.getType()) + 1);
-        taskExecutorService.submit(() -> {
+        taskExecutorThreadPool.submit(() -> {
             try {
                 updateStatus(task.getId(), task.getWorkflowId(), task.getNamespace(), RUNNING);
                 final TaskHandler handler = taskTypeToHandlerMap.get(task.getType());
@@ -212,8 +215,8 @@ public final class TaskExecutionService implements Service {
         try {
             internalExecutorService.shutdown();
             internalExecutorService.awaitTermination(10, SECONDS);
-            taskExecutorService.shutdown();
-            taskExecutorService.awaitTermination(10, SECONDS);
+            taskExecutorThreadPool.shutdown();
+            taskExecutorThreadPool.awaitTermination(10, SECONDS);
         } catch (InterruptedException e) {
             logger.error("Error stopping executor pool", e);
         }

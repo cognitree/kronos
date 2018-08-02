@@ -21,6 +21,7 @@ import com.cognitree.kronos.model.Workflow;
 import com.cognitree.kronos.model.WorkflowId;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.util.Collections;
 import java.util.List;
 
 public class MockWorkflowStore implements WorkflowStore {
@@ -47,7 +48,7 @@ public class MockWorkflowStore implements WorkflowStore {
 
     @Override
     public List<Workflow> load() {
-        return null;
+        return Collections.emptyList();
     }
 
     @Override

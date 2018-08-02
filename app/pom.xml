@@ -64,12 +64,6 @@
             <version>${project.version}</version>
             <scope>${dependency.scope}</scope>
         </dependency>
-        <dependency>
-            <groupId>com.cognitree.kronos</groupId>
-            <artifactId>file-reader</artifactId>
-            <version>${project.version}</version>
-            <scope>${dependency.scope}</scope>
-        </dependency>
     </dependencies>
 
 </project>

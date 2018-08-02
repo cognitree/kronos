@@ -17,6 +17,8 @@
 
 package com.cognitree.kronos.model;
 
+import java.util.Objects;
+
 public class MutableTaskId implements TaskId {
 
     private String id;
@@ -59,5 +61,29 @@ public class MutableTaskId implements TaskId {
 
     public void setNamespace(String namespace) {
         this.namespace = namespace;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MutableTaskId that = (MutableTaskId) o;
+        return Objects.equals(id, that.id) &&
+                Objects.equals(workflowId, that.workflowId) &&
+                Objects.equals(namespace, that.namespace);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, workflowId, namespace);
+    }
+
+    @Override
+    public String toString() {
+        return "MutableTaskId{" +
+                "id='" + id + '\'' +
+                ", workflowId='" + workflowId + '\'' +
+                ", namespace='" + namespace + '\'' +
+                '}';
     }
 }

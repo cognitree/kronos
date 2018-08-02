@@ -17,6 +17,8 @@
 
 package com.cognitree.kronos.model;
 
+import java.util.Objects;
+
 public class WorkflowId {
 
     protected String id;
@@ -46,5 +48,27 @@ public class WorkflowId {
 
     public void setNamespace(String namespace) {
         this.namespace = namespace;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        WorkflowId that = (WorkflowId) o;
+        return Objects.equals(id, that.id) &&
+                Objects.equals(namespace, that.namespace);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, namespace);
+    }
+
+    @Override
+    public String toString() {
+        return "WorkflowId{" +
+                "id='" + id + '\'' +
+                ", namespace='" + namespace + '\'' +
+                '}';
     }
 }

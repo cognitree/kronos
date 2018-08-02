@@ -63,7 +63,6 @@ public class Workflow extends WorkflowId {
 
     @Override
     public int hashCode() {
-
         return Objects.hash(id, name, namespace, createdAt);
     }
 
