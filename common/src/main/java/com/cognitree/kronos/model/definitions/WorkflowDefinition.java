@@ -117,6 +117,22 @@ public class WorkflowDefinition extends WorkflowDefinitionId {
             this.name = name;
         }
 
+        public Map<String, Object> getProperties() {
+            return properties;
+        }
+
+        public void setProperties(Map<String, Object> properties) {
+            this.properties = properties;
+        }
+
+        public List<TaskDependencyInfo> getDependsOn() {
+            return dependsOn;
+        }
+
+        public void setDependsOn(List<TaskDependencyInfo> dependsOn) {
+            this.dependsOn = dependsOn;
+        }
+
         public String getSchedule() {
             return schedule;
         }
@@ -141,22 +157,6 @@ public class WorkflowDefinition extends WorkflowDefinitionId {
             this.timeoutPolicy = timeoutPolicy;
         }
 
-        public List<TaskDependencyInfo> getDependsOn() {
-            return dependsOn;
-        }
-
-        public void setDependsOn(List<TaskDependencyInfo> dependsOn) {
-            this.dependsOn = dependsOn;
-        }
-
-        public Map<String, Object> getProperties() {
-            return properties;
-        }
-
-        public void setProperties(Map<String, Object> properties) {
-            this.properties = properties;
-        }
-
         public boolean isEnabled() {
             return isEnabled;
         }
@@ -172,28 +172,28 @@ public class WorkflowDefinition extends WorkflowDefinitionId {
             WorkflowTask that = (WorkflowTask) o;
             return isEnabled == that.isEnabled &&
                     Objects.equals(name, that.name) &&
+                    Objects.equals(properties, that.properties) &&
+                    Objects.equals(dependsOn, that.dependsOn) &&
                     Objects.equals(schedule, that.schedule) &&
                     Objects.equals(maxExecutionTime, that.maxExecutionTime) &&
-                    Objects.equals(timeoutPolicy, that.timeoutPolicy) &&
-                    Objects.equals(dependsOn, that.dependsOn) &&
-                    Objects.equals(properties, that.properties);
+                    Objects.equals(timeoutPolicy, that.timeoutPolicy);
         }
 
         @Override
         public int hashCode() {
 
-            return Objects.hash(name, schedule, maxExecutionTime, timeoutPolicy, dependsOn, properties, isEnabled);
+            return Objects.hash(name, properties, dependsOn, schedule, maxExecutionTime, timeoutPolicy, isEnabled);
         }
 
         @Override
         public String toString() {
             return "WorkflowTask{" +
                     "name='" + name + '\'' +
+                    ", properties=" + properties +
+                    ", dependsOn=" + dependsOn +
                     ", schedule='" + schedule + '\'' +
                     ", maxExecutionTime='" + maxExecutionTime + '\'' +
                     ", timeoutPolicy='" + timeoutPolicy + '\'' +
-                    ", dependsOn=" + dependsOn +
-                    ", properties=" + properties +
                     ", isEnabled=" + isEnabled +
                     '}';
         }
