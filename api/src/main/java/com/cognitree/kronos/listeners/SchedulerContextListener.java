@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.cognitree.kronos.webserver.listeners;
+package com.cognitree.kronos.listeners;
 
 import com.cognitree.kronos.executor.ExecutorApp;
 import com.cognitree.kronos.scheduler.SchedulerApp;

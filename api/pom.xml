@@ -33,6 +33,7 @@
     <properties>
         <jersey.version>2.27</jersey.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <swagger-jersey2-jaxrs.version>1.5.0</swagger-jersey2-jaxrs.version>
     </properties>
 
     <dependencyManagement>
@@ -90,6 +91,11 @@
         <dependency>
             <groupId>org.glassfish.jersey.media</groupId>
             <artifactId>jersey-media-json-jackson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-jersey2-jaxrs</artifactId>
+            <version>${swagger-jersey2-jaxrs.version}</version>
         </dependency>
     </dependencies>
 </project>

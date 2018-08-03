@@ -15,11 +15,12 @@
  * limitations under the License.
  */
 
-package com.cognitree.kronos.webserver.api;
+package com.cognitree.kronos.api;
 
 import com.cognitree.kronos.model.definitions.TaskDefinition;
 import com.cognitree.kronos.model.definitions.TaskDefinitionId;
 import com.cognitree.kronos.scheduler.store.TaskDefinitionStoreService;
+import io.swagger.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,10 +32,12 @@ import java.util.List;
 import static javax.ws.rs.core.Response.Status.*;
 
 @Path("taskdefs")
+@Api(value = "task definition", description = "manage task definitions")
 public class TaskDefinitionResource {
     private static final Logger logger = LoggerFactory.getLogger(TaskDefinitionResource.class);
 
     @GET
+    @ApiOperation(value = "Get all task definitions", response = TaskDefinition.class, responseContainer = "List")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllTaskDefinition() {
         logger.info("Received request to get all task definitions");
@@ -44,8 +47,12 @@ public class TaskDefinitionResource {
 
     @GET
     @Path("{name}")
+    @ApiOperation(value = "Get task definition with name", response = TaskDefinition.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 404, message = "Task definition not found")})
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getTaskDefinition(@PathParam("name") String name) {
+    public Response getTaskDefinition(@ApiParam(value = "task definition name", required = true)
+                                      @PathParam("name") String name) {
         logger.info("Received request to get task task definition with name {}", name);
         TaskDefinitionId taskDefinitionId = TaskDefinitionId.create(name);
         final TaskDefinition taskDefinition = TaskDefinitionStoreService.getService().load(taskDefinitionId);
@@ -57,6 +64,9 @@ public class TaskDefinitionResource {
     }
 
     @POST
+    @ApiOperation(value = "Add new task definition", response = TaskDefinition.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 409, message = "Task definition already exists")})
     @Produces(MediaType.APPLICATION_JSON)
     public Response addTaskDefinition(TaskDefinition taskDefinition) {
         logger.info("Received request to add task definition {}", taskDefinition);
@@ -70,8 +80,12 @@ public class TaskDefinitionResource {
 
     @PUT
     @Path("{name}")
+    @ApiOperation(value = "Update task definition", response = TaskDefinition.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 404, message = "Task definition not found")})
     @Produces(MediaType.APPLICATION_JSON)
-    public Response updateTaskDefinition(@PathParam("name") String name, TaskDefinition taskDefinition) {
+    public Response updateTaskDefinition(@ApiParam(value = "task definition name", required = true)
+                                         @PathParam("name") String name, TaskDefinition taskDefinition) {
         taskDefinition.setName(name);
         logger.info("Received request to update task definition with name {} to {}", name, taskDefinition);
         if (TaskDefinitionStoreService.getService().load(taskDefinition) == null) {
@@ -84,8 +98,12 @@ public class TaskDefinitionResource {
 
     @DELETE
     @Path("{name}")
+    @ApiOperation(value = "Delete task definition")
+    @ApiResponses(value = {
+            @ApiResponse(code = 404, message = "Task definition not found")})
     @Produces(MediaType.APPLICATION_JSON)
-    public Response deleteTaskDefinition(@PathParam("name") String name) {
+    public Response deleteTaskDefinition(@ApiParam(value = "task definition name", required = true)
+                                         @PathParam("name") String name) {
         logger.info("Received request to delete task definition with name {}", name);
         TaskDefinitionId taskDefinitionId = TaskDefinitionId.create(name);
         if (TaskDefinitionStoreService.getService().load(taskDefinitionId) == null) {

@@ -15,13 +15,15 @@
  * limitations under the License.
  */
 
-package com.cognitree.kronos.webserver.api;
+package com.cognitree.kronos.api;
 
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Workflow;
 import com.cognitree.kronos.model.WorkflowId;
+import com.cognitree.kronos.model.definitions.TaskDefinition;
 import com.cognitree.kronos.model.definitions.WorkflowDefinition.WorkflowTask;
 import com.cognitree.kronos.scheduler.store.WorkflowStoreService;
+import io.swagger.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +39,7 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 
 @Path("workflows")
+@Api(value = "workflow", description = "manage workflow ")
 public class WorkflowResource {
     private static final Logger logger = LoggerFactory.getLogger(WorkflowResource.class);
 
@@ -44,8 +47,11 @@ public class WorkflowResource {
     private static final String DEFAULT_DAYS = "10";
 
     @GET
+    @ApiOperation(value = "Get all running or executed workflows", response = Workflow.class, responseContainer = "List")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getAllWorkflow(@QueryParam("name") String workflowName,
+    public Response getAllWorkflow(@ApiParam(value = "workflow name")
+                                   @QueryParam("name") String workflowName,
+                                   @ApiParam(value = "Number of days to fetch workflow from today", defaultValue = "10")
                                    @DefaultValue(DEFAULT_DAYS) @QueryParam("date_range") int numberOfDays) {
         final long currentTimeMillis = System.currentTimeMillis();
         long createdAfter = currentTimeMillis - (currentTimeMillis % TimeUnit.DAYS.toMillis(1))
@@ -67,8 +73,12 @@ public class WorkflowResource {
 
     @GET
     @Path("{id}")
+    @ApiOperation(value = "Get workflow with id", response = TaskDefinition.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 404, message = "Workflow not found")})
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getWorkflow(@PathParam("id") String id) {
+    public Response getWorkflow(@ApiParam(value = "workflow id", required = true)
+                                @PathParam("id") String id) {
         logger.info("Received request to get workflow with id {}", id);
         WorkflowId workflowId = WorkflowId.create(id, DEFAULT_NAMESPACE);
         final Workflow workflow = WorkflowStoreService.getService().load(workflowId);
@@ -81,8 +91,12 @@ public class WorkflowResource {
 
     @GET
     @Path("{id}/tasks")
+    @ApiOperation(value = "Get workflow tasks with id", response = Task.class, responseContainer = "List")
+    @ApiResponses(value = {
+            @ApiResponse(code = 404, message = "Workflow not found")})
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getWorkflowTasks(@PathParam("id") String id) {
+    public Response getWorkflowTasks(@ApiParam(value = "workflow id", required = true)
+                                     @PathParam("id") String id) {
         WorkflowId workflowId = WorkflowId.create(id, DEFAULT_NAMESPACE);
         final Workflow workflow = WorkflowStoreService.getService().load(workflowId);
         if (workflow == null) {
@@ -96,8 +110,12 @@ public class WorkflowResource {
 
     @GET
     @Path("{id}/taskdefs")
+    @ApiOperation(value = "Get workflow task for workflow", response = WorkflowTask.class, responseContainer = "List")
+    @ApiResponses(value = {
+            @ApiResponse(code = 404, message = "Workflow not found")})
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getWorkflowTaskDefs(@PathParam("id") String id) {
+    public Response getWorkflowTaskDefs(@ApiParam(value = "workflow id", required = true)
+                                        @PathParam("id") String id) {
         WorkflowId workflowId = WorkflowId.create(id, DEFAULT_NAMESPACE);
         final Workflow workflow = WorkflowStoreService.getService().load(workflowId);
         if (workflow == null) {

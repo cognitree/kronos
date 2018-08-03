@@ -17,8 +17,8 @@
 
 package com.cognitree.kronos;
 
-import com.cognitree.kronos.webserver.listeners.ExecutorContextListener;
-import com.cognitree.kronos.webserver.listeners.SchedulerContextListener;
+import com.cognitree.kronos.listeners.ExecutorContextListener;
+import com.cognitree.kronos.listeners.SchedulerContextListener;
 import org.apache.commons.cli.*;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.webapp.WebAppContext;
@@ -90,7 +90,7 @@ public class Application {
         WebAppContext webapp = new WebAppContext();
         webapp.setResourceBase(resourceBase);
         webapp.setContextPath(contextPath);
-        webapp.setDefaultsDescriptor(descriptorFile);
+        webapp.setDescriptor(descriptorFile);
         switch (mode) {
             case "scheduler":
                 webapp.addEventListener(new SchedulerContextListener());

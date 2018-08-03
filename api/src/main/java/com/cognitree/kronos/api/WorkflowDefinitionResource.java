@@ -15,12 +15,13 @@
  * limitations under the License.
  */
 
-package com.cognitree.kronos.webserver.api;
+package com.cognitree.kronos.api;
 
 import com.cognitree.kronos.model.definitions.WorkflowDefinition;
 import com.cognitree.kronos.model.definitions.WorkflowDefinitionId;
 import com.cognitree.kronos.scheduler.WorkflowSchedulerService;
 import com.cognitree.kronos.scheduler.store.WorkflowDefinitionStoreService;
+import io.swagger.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,12 +33,14 @@ import java.util.List;
 import static javax.ws.rs.core.Response.Status.*;
 
 @Path("workflowdefs")
+@Api(value = "workflow definition", description = "manage workflow definitions")
 public class WorkflowDefinitionResource {
     private static final Logger logger = LoggerFactory.getLogger(WorkflowDefinitionResource.class);
 
     private static final String DEFAULT_NAMESPACE = "default";
 
     @GET
+    @ApiOperation(value = "Get all workflow definitions", response = WorkflowDefinition.class, responseContainer = "List")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllWorkflowDefinitions() {
         logger.info("Received request to get all workflow definitions");
@@ -47,8 +50,12 @@ public class WorkflowDefinitionResource {
 
     @GET
     @Path("{name}")
+    @ApiOperation(value = "Get workflow definition with name", response = WorkflowDefinition.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 404, message = "Workflow definition not found")})
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getWorkflowDefinition(@PathParam("name") String workflowDefName) {
+    public Response getWorkflowDefinition(@ApiParam(value = "workflow definition name", required = true)
+                                          @PathParam("name") String workflowDefName) {
         logger.info("Received request to get workflow definition with name {}", workflowDefName);
         WorkflowDefinitionId workflowDefinitionId = WorkflowDefinitionId.create(workflowDefName, DEFAULT_NAMESPACE);
         final WorkflowDefinition workflowDefinition =
@@ -61,6 +68,9 @@ public class WorkflowDefinitionResource {
     }
 
     @POST
+    @ApiOperation(value = "Add new workflow definition", response = WorkflowDefinition.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 409, message = "Workflow definition already exists")})
     @Produces(MediaType.APPLICATION_JSON)
     public Response addWorkflowDefinition(WorkflowDefinition workflowDefinition) {
         logger.info("Received request to add workflow definition {}", workflowDefinition);
@@ -81,8 +91,12 @@ public class WorkflowDefinitionResource {
 
     @PUT
     @Path("{name}")
+    @ApiOperation(value = "Update workflow definition", response = WorkflowDefinition.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 404, message = "Workflow definition not found")})
     @Produces(MediaType.APPLICATION_JSON)
-    public Response updateWorkflowDefinition(@PathParam("name") String workflowDefName,
+    public Response updateWorkflowDefinition(@ApiParam(value = "workflow definition name", required = true)
+                                             @PathParam("name") String workflowDefName,
                                              WorkflowDefinition workflowDefinition) {
         logger.info("Received request to update workflow definition with name {} to {}",
                 workflowDefName, workflowDefinition);
@@ -103,8 +117,12 @@ public class WorkflowDefinitionResource {
 
     @DELETE
     @Path("{name}")
+    @ApiOperation(value = "Delete workflow definition")
+    @ApiResponses(value = {
+            @ApiResponse(code = 404, message = "Workflow definition not found")})
     @Produces(MediaType.APPLICATION_JSON)
-    public Response deleteWorkflowDefinition(@PathParam("name") String workflowDefName) {
+    public Response deleteWorkflowDefinition(@ApiParam(value = "workflow definition name", required = true)
+                                             @PathParam("name") String workflowDefName) {
         logger.info("Received request to delete workflow definition with name {}", workflowDefName);
         WorkflowDefinitionId workflowDefinitionId = WorkflowDefinitionId.create(workflowDefName, DEFAULT_NAMESPACE);
         if (WorkflowDefinitionStoreService.getService().load(workflowDefinitionId) == null) {
