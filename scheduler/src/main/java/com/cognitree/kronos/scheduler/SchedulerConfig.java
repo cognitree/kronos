@@ -17,12 +17,12 @@
 
 package com.cognitree.kronos.scheduler;
 
-import com.cognitree.kronos.model.TaskDefinition;
+import com.cognitree.kronos.model.Task;
+import com.cognitree.kronos.model.Workflow;
+import com.cognitree.kronos.model.definitions.TaskDefinition;
+import com.cognitree.kronos.model.definitions.WorkflowDefinition;
 import com.cognitree.kronos.scheduler.policies.TimeoutPolicyConfig;
-import com.cognitree.kronos.scheduler.readers.TaskDefinitionReader;
-import com.cognitree.kronos.scheduler.readers.TaskDefinitionReaderConfig;
-import com.cognitree.kronos.scheduler.store.TaskStore;
-import com.cognitree.kronos.scheduler.store.TaskStoreConfig;
+import com.cognitree.kronos.scheduler.store.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,30 +34,29 @@ import java.util.Objects;
 public class SchedulerConfig {
 
     /**
-     * Map of reader configuration, required by the scheduler to instantiate and start the readers ({@link TaskDefinitionReader})
-     * <p>
-     * Here key is the name to use for task reader and should be unique across all readers
+     * {@link TaskDefinitionStore} configuration, required by the scheduler to instantiate the task definition store
+     * to be used for storing the {@link TaskDefinition}.
      */
-    private Map<String, TaskDefinitionReaderConfig> taskReaderConfig = new HashMap<>();
-
+    private TaskDefinitionStoreConfig taskDefinitionStoreConfig;
     /**
      * {@link TaskStore} configuration, required by the scheduler to instantiate the task store to be used for storing
-     * the task and their state.
+     * the {@link Task}.
      */
     private TaskStoreConfig taskStoreConfig;
-
     /**
-     * Map of task execution configuration, required by the scheduler to manage task execution per task type.
-     * <p>
-     * Here key is the task type and value is the configuration to be used for that task type.
+     * {@link WorkflowDefinitionStore} configuration, required by the scheduler to instantiate the workflow definition
+     * store to be used for storing {@link WorkflowDefinition}.
      */
-    private Map<String, TaskExecutionConfig> taskExecutionConfig = new HashMap<>();
-
+    private WorkflowDefinitionStoreConfig workflowDefinitionStoreConfig;
+    /**
+     * {@link WorkflowStore} configuration, required by the scheduler to instantiate the workflow store to be used for storing
+     * the {@link Workflow}.
+     */
+    private WorkflowStoreConfig workflowStoreConfig;
     /**
      * Map of policy configuration, required by the scheduler to configure timeout policies to apply in case of timeout.
      * <p>
-     * Here key is the policy id which is to be used by handler ({@link TaskExecutionConfig#timeoutPolicy})
-     * and task {@link TaskDefinition#timeoutPolicy} while defining policy to apply on timeout.
+     * Here key is the policy id which is to be used while defining policy to apply on timeout.
      */
     private Map<String, TimeoutPolicyConfig> timeoutPolicyConfig = new HashMap<>();
 
@@ -75,12 +74,12 @@ public class SchedulerConfig {
      */
     private String taskPurgeInterval = "1d";
 
-    public Map<String, TaskDefinitionReaderConfig> getTaskReaderConfig() {
-        return taskReaderConfig;
+    public TaskDefinitionStoreConfig getTaskDefinitionStoreConfig() {
+        return taskDefinitionStoreConfig;
     }
 
-    public void setTaskReaderConfig(Map<String, TaskDefinitionReaderConfig> taskReaderConfig) {
-        this.taskReaderConfig = taskReaderConfig;
+    public void setTaskDefinitionStoreConfig(TaskDefinitionStoreConfig taskDefinitionStoreConfig) {
+        this.taskDefinitionStoreConfig = taskDefinitionStoreConfig;
     }
 
     public TaskStoreConfig getTaskStoreConfig() {
@@ -91,12 +90,20 @@ public class SchedulerConfig {
         this.taskStoreConfig = taskStoreConfig;
     }
 
-    public Map<String, TaskExecutionConfig> getTaskExecutionConfig() {
-        return taskExecutionConfig;
+    public WorkflowDefinitionStoreConfig getWorkflowDefinitionStoreConfig() {
+        return workflowDefinitionStoreConfig;
     }
 
-    public void setTaskExecutionConfig(Map<String, TaskExecutionConfig> taskExecutionConfig) {
-        this.taskExecutionConfig = taskExecutionConfig;
+    public void setWorkflowDefinitionStoreConfig(WorkflowDefinitionStoreConfig workflowDefinitionStoreConfig) {
+        this.workflowDefinitionStoreConfig = workflowDefinitionStoreConfig;
+    }
+
+    public WorkflowStoreConfig getWorkflowStoreConfig() {
+        return workflowStoreConfig;
+    }
+
+    public void setWorkflowStoreConfig(WorkflowStoreConfig workflowStoreConfig) {
+        this.workflowStoreConfig = workflowStoreConfig;
     }
 
     public Map<String, TimeoutPolicyConfig> getTimeoutPolicyConfig() {
@@ -120,9 +127,10 @@ public class SchedulerConfig {
         if (this == o) return true;
         if (!(o instanceof SchedulerConfig)) return false;
         SchedulerConfig that = (SchedulerConfig) o;
-        return Objects.equals(taskReaderConfig, that.taskReaderConfig) &&
+        return Objects.equals(taskDefinitionStoreConfig, that.taskDefinitionStoreConfig) &&
                 Objects.equals(taskStoreConfig, that.taskStoreConfig) &&
-                Objects.equals(taskExecutionConfig, that.taskExecutionConfig) &&
+                Objects.equals(workflowDefinitionStoreConfig, that.workflowDefinitionStoreConfig) &&
+                Objects.equals(workflowStoreConfig, that.workflowStoreConfig) &&
                 Objects.equals(timeoutPolicyConfig, that.timeoutPolicyConfig) &&
                 Objects.equals(taskPurgeInterval, that.taskPurgeInterval);
     }
@@ -130,15 +138,16 @@ public class SchedulerConfig {
     @Override
     public int hashCode() {
 
-        return Objects.hash(taskReaderConfig, taskStoreConfig, taskExecutionConfig, timeoutPolicyConfig, taskPurgeInterval);
+        return Objects.hash(taskDefinitionStoreConfig, taskStoreConfig, workflowDefinitionStoreConfig, workflowStoreConfig, timeoutPolicyConfig, taskPurgeInterval);
     }
 
     @Override
     public String toString() {
         return "SchedulerConfig{" +
-                "taskReaderConfig=" + taskReaderConfig +
+                "taskDefinitionStoreConfig=" + taskDefinitionStoreConfig +
                 ", taskStoreConfig=" + taskStoreConfig +
-                ", taskExecutionConfig=" + taskExecutionConfig +
+                ", workflowDefinitionStoreConfig=" + workflowDefinitionStoreConfig +
+                ", workflowStoreConfig=" + workflowStoreConfig +
                 ", timeoutPolicyConfig=" + timeoutPolicyConfig +
                 ", taskPurgeInterval='" + taskPurgeInterval + '\'' +
                 '}';

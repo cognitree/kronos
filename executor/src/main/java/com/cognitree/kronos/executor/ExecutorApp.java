@@ -41,7 +41,7 @@ public class ExecutorApp {
             Runtime.getRuntime().addShutdownHook(new Thread(executorApp::stop));
             executorApp.start();
         } catch (Exception e) {
-            logger.error("Error starting application", e);
+            logger.error("Error starting executor", e);
             System.exit(0);
         }
     }

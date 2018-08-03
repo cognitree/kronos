@@ -30,10 +30,12 @@ public class Application {
 
     private final SchedulerApp schedulerApp;
     private final ExecutorApp executorApp;
+    private final FileReader fileReader;
 
     public Application() {
         schedulerApp = new SchedulerApp();
         executorApp = new ExecutorApp();
+        fileReader = new FileReader();
         Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
     }
 
@@ -50,6 +52,8 @@ public class Application {
         logger.info("Starting application");
         schedulerApp.start();
         executorApp.start();
+        fileReader.loadTaskDefinitions();
+        fileReader.loadWorkflowDefinitions();
     }
 
     public void stop() {

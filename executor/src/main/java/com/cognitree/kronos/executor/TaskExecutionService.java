@@ -21,9 +21,9 @@ import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.executor.handlers.TaskHandler;
 import com.cognitree.kronos.executor.handlers.TaskHandlerConfig;
+import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
-import com.cognitree.kronos.model.TaskStatus;
 import com.cognitree.kronos.queue.QueueConfig;
 import com.cognitree.kronos.queue.consumer.Consumer;
 import com.cognitree.kronos.queue.consumer.ConsumerConfig;
@@ -42,7 +42,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import static com.cognitree.kronos.model.Messages.MISSING_HANDLER;
 import static com.cognitree.kronos.model.Task.Status.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -59,20 +58,23 @@ public final class TaskExecutionService implements Service {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
+    // Task consumer and provider info
     private final ConsumerConfig consumerConfig;
+    private Consumer consumer;
     private final ProducerConfig producerConfig;
+    private Producer producer;
     private final String statusQueue;
-    private final Map<String, TaskHandlerConfig> taskTypeToHandlerConfig;
 
+    // Task type mapping Info
+    private final Map<String, TaskHandlerConfig> taskTypeToHandlerConfig;
     private final Map<String, TaskHandler> taskTypeToHandlerMap = new HashMap<>();
     private final Map<String, Integer> taskTypeToMaxParallelTasksCount = new HashMap<>();
     private final Map<String, Integer> taskTypeToRunningTasksCount = new HashMap<>();
+
     // used by internal tasks like polling new tasks from queue
     private final ScheduledExecutorService internalExecutorService = Executors.newSingleThreadScheduledExecutor();
     // used to execute tasks
-    private final ExecutorService taskExecutorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-    private Consumer consumer;
-    private Producer producer;
+    private final ExecutorService taskExecutorThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
     public TaskExecutionService(ExecutorConfig executorConfig, QueueConfig queueConfig) {
         this.consumerConfig = queueConfig.getConsumerConfig();
@@ -139,7 +141,7 @@ public final class TaskExecutionService implements Service {
                     final List<String> tasks = consumer.poll(taskType, tasksToPoll);
                     for (String taskAsString : tasks) {
                         try {
-                            submit(MAPPER.readValue(taskAsString, Task.class));
+                            submit(MAPPER.readValue(taskAsString, MutableTask.class));
                         } catch (IOException e) {
                             logger.error("Error parsing task message {}", taskAsString, e);
                         }
@@ -156,23 +158,17 @@ public final class TaskExecutionService implements Service {
      */
     private void submit(Task task) {
         logger.trace("Received task {} for execution from task queue", task);
-        final TaskHandler handler = taskTypeToHandlerMap.get(task.getType());
-        if (handler == null) {
-            logger.error("No handler found to execute task {} of type {}, skipping task and marking it as {}",
-                    task, task.getType(), FAILED);
-            updateStatus(task.getId(), task.getGroup(), FAILED, MISSING_HANDLER);
-            return;
-        }
-        updateStatus(task.getId(), task.getGroup(), SUBMITTED);
+        updateStatus(task.getId(), task.getWorkflowId(), task.getNamespace(), SUBMITTED);
         taskTypeToRunningTasksCount.put(task.getType(), taskTypeToRunningTasksCount.get(task.getType()) + 1);
-        taskExecutorService.submit(() -> {
+        taskExecutorThreadPool.submit(() -> {
             try {
-                updateStatus(task.getId(), task.getGroup(), RUNNING);
+                updateStatus(task.getId(), task.getWorkflowId(), task.getNamespace(), RUNNING);
+                final TaskHandler handler = taskTypeToHandlerMap.get(task.getType());
                 handler.handle(task);
-                updateStatus(task.getId(), task.getGroup(), SUCCESSFUL);
+                updateStatus(task.getId(), task.getWorkflowId(), task.getNamespace(), SUCCESSFUL);
             } catch (Exception e) {
                 logger.error("Error executing task {}", task, e);
-                updateStatus(task.getId(), task.getGroup(), FAILED, e.getMessage());
+                updateStatus(task.getId(), task.getWorkflowId(), task.getNamespace(), FAILED, e.getMessage());
             } finally {
                 synchronized (taskTypeToRunningTasksCount) {
                     taskTypeToRunningTasksCount.put(task.getType(), taskTypeToRunningTasksCount.get(task.getType()) - 1);
@@ -181,21 +177,33 @@ public final class TaskExecutionService implements Service {
         });
     }
 
-    private void updateStatus(String taskId, String taskGroup, Status status) {
-        updateStatus(taskId, taskGroup, status, null);
+    private void updateStatus(String taskId, String workflowId, String namespace, Status status) {
+        updateStatus(taskId, workflowId, namespace, status, null);
     }
 
-    private void updateStatus(String taskId, String taskGroup, Status status, String statusMessage) {
+    private void updateStatus(String taskId, String workflowId, String namespace,
+                              Status status, String statusMessage) {
         try {
-            TaskStatus taskStatus = new TaskStatus();
-            taskStatus.setTaskId(taskId);
-            taskStatus.setTaskGroup(taskGroup);
-            taskStatus.setStatus(status);
-            taskStatus.setStatusMessage(statusMessage);
-            producer.send(statusQueue, MAPPER.writeValueAsString(taskStatus));
+            Task.TaskUpdate taskUpdate = new Task.TaskUpdate();
+            taskUpdate.setTaskId(taskId);
+            taskUpdate.setWorkflowId(workflowId);
+            taskUpdate.setNamespace(namespace);
+            taskUpdate.setStatus(status);
+            taskUpdate.setStatusMessage(statusMessage);
+            producer.send(statusQueue, MAPPER.writeValueAsString(taskUpdate));
         } catch (IOException e) {
             logger.error("Error adding task status {} to queue", status, e);
         }
+    }
+
+    // used in junit
+    Consumer getConsumer() {
+        return consumer;
+    }
+
+    // used in junit
+    Producer getProducer() {
+        return producer;
     }
 
     @Override
@@ -207,8 +215,8 @@ public final class TaskExecutionService implements Service {
         try {
             internalExecutorService.shutdown();
             internalExecutorService.awaitTermination(10, SECONDS);
-            taskExecutorService.shutdown();
-            taskExecutorService.awaitTermination(10, SECONDS);
+            taskExecutorThreadPool.shutdown();
+            taskExecutorThreadPool.awaitTermination(10, SECONDS);
         } catch (InterruptedException e) {
             logger.error("Error stopping executor pool", e);
         }

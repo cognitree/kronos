@@ -19,33 +19,18 @@ package com.cognitree.kronos.scheduler.store;
 
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.cognitree.kronos.model.TaskId;
 
 import java.util.List;
 
 /**
  * An interface exposing API's to provide {@link Task} persistence.
  */
-public interface TaskStore {
+public interface TaskStore extends Store<Task, TaskId> {
 
-    /**
-     * called during initialization phase to initialize the task store using {@link TaskStoreConfig#config}. Any property
-     * required by the store to instantiate itself should be part of {@link TaskStoreConfig#config}.
-     *
-     * @param storeConfig configuration used to initialize the store.
-     * @throws Exception
-     */
-    void init(ObjectNode storeConfig) throws Exception;
+    List<Task> loadByWorkflowId(String workflowId, String namespace);
 
-    void store(Task task);
+    List<Task> load(List<Status> statuses, String namespace);
 
-    void update(String taskId, String taskGroup, Status status, String statusMessage, long submittedAt, long completedAt);
-
-    Task load(String taskId, String taskGroup);
-
-    List<Task> load(List<Status> statuses);
-
-    List<Task> load(String taskName, String taskGroup, long createdBefore, long createdAfter);
-
-    void stop();
+    List<Task> loadByNameAndWorkflowId(String taskName, String workflowId, String namespace);
 }

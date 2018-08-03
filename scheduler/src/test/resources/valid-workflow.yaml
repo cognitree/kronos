@@ -1,0 +1,32 @@
+name: test-workflow
+namespace: default
+description: test workflow
+schedule: 5 0/2 * 1/1 * ? *
+tasks:
+  - name: task one
+    properties:
+      schedule: 1 0/1 * 1/1 * ? *
+      # command to execute
+      cmd: echo
+      # command args if any
+      args: Hello World from task one
+  - name: task two
+    schedule: 2 0/1 * 1/1 * ? *
+    properties:
+      # command to execute
+      cmd: sleep
+      # command args if any
+      args: 30
+    dependsOn:
+      - name: task one
+        mode: all
+  - name: task three
+    schedule: 3 0/2 * 1/1 * ? *
+    properties:
+      # command to execute
+      cmd: echo
+      # command args if any
+      args: Hello World from task three
+    dependsOn:
+      - name: task two
+        mode: all

@@ -1,27 +1,34 @@
-# configure task definition readers
-taskReaderConfig:
-  # name of the reader
-  filereader:
-    # reader implementation class name to load tasks
-    readerClass: com.cognitree.kronos.scheduler.readers.FileTaskDefinitionReader
-    config:
-      # file to look in classpath to load task definitions
-      source: task-definitions.yaml
-    # interval in cron to look for changes in the task definition file
-    schedule: 0 0/1 * 1/1 * ? *
-
-# configure task store
-taskStoreConfig:
-  taskStoreClass: com.cognitree.kronos.scheduler.store.SQLiteTaskStore
+# configure task definition store
+taskDefinitionStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.SQLiteTaskDefinitionStore
   config:
     connectionURL: jdbc:sqlite:kronos.db
     username:
     password:
 
-taskExecutionConfig:
-  shellCommand:
-    # max execution time per task
-    maxExecutionTime: 10m
+# configure task store
+taskStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.SQLiteTaskStore
+  config:
+    connectionURL: jdbc:sqlite:kronos.db
+    username:
+    password:
+
+# configure workflow definition store
+workflowDefinitionStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.SQLiteWorkflowDefinitionStore
+  config:
+    connectionURL: jdbc:sqlite:kronos.db
+    username:
+    password:
+
+# configure workflow store
+workflowStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.SQLiteWorkflowStore
+  config:
+    connectionURL: jdbc:sqlite:kronos.db
+    username:
+    password:
 
 # time to wait before removing executed tasks from memory
 taskPurgeInterval: 1d

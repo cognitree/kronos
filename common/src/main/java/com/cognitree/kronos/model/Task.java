@@ -17,209 +17,117 @@
 
 package com.cognitree.kronos.model;
 
-import java.util.*;
+import com.cognitree.kronos.model.definitions.TaskDependencyInfo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import static com.cognitree.kronos.model.Task.Status.CREATED;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
-/**
- * A task created from {@link TaskDefinition} for execution.
- */
-public class Task {
+public interface Task extends TaskId {
 
-    /**
-     * is uniquely set by the scheduler to identify this task.
-     */
-    private String id;
-    /**
-     * name of the task same as {@link TaskDefinition#name}.
-     */
-    private String name;
-    /**
-     * group name task belongs to same as {@link TaskDefinition#group}.
-     */
-    private String group;
-    /**
-     * type of task same as {@link TaskDefinition#type}.
-     */
-    private String type;
-    /**
-     * policy to apply in case of timeout and takes precedence over the generic default values specified at application level.
-     */
-    private String timeoutPolicy;
-    /**
-     * max allowed time for task to finish execution same as {@link TaskDefinition#maxExecutionTime} and
-     * takes precedence over the generic default values specified at application level.
-     */
-    private String maxExecutionTime;
-    /**
-     * list of tasks it depends on defined same as {@link TaskDefinition#dependsOn}.
-     */
-    private List<TaskDependencyInfo> dependsOn = new ArrayList<>();
-    /**
-     * properties required by the task during execution same as {@link TaskDefinition#properties}.
-     * Also includes all the additional task properties {@link TaskDefinition#additionalProperties}.
-     */
-    private Map<String, Object> properties = new HashMap<>();
+    String getName();
 
-    private Status status = CREATED;
-    /**
-     * additional details about task status.
-     */
-    private String statusMessage;
-    /**
-     * creation time of the task as per the {@link TaskDefinition#schedule}.
-     */
-    private long createdAt;
-    /**
-     * actual time when the task is submitted for execution.
-     */
-    private long submittedAt;
-    /**
-     * actual time when the task is submitted for execution.
-     */
-    private long completedAt;
+    String getType();
 
-    public String getId() {
-        return id;
-    }
+    String getTimeoutPolicy();
 
-    public void setId(String id) {
-        this.id = id;
-    }
+    String getMaxExecutionTime();
 
-    public String getName() {
-        return name;
-    }
+    List<TaskDependencyInfo> getDependsOn();
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    Map<String, Object> getProperties();
 
-    public String getGroup() {
-        return group;
-    }
+    Status getStatus();
 
-    public void setGroup(String group) {
-        this.group = group;
-    }
+    String getStatusMessage();
 
-    public String getType() {
-        return type;
-    }
+    long getCreatedAt();
 
-    public void setType(String type) {
-        this.type = type;
-    }
+    long getSubmittedAt();
 
-    public String getTimeoutPolicy() {
-        return timeoutPolicy;
-    }
+    long getCompletedAt();
 
-    public void setTimeoutPolicy(String timeoutPolicy) {
-        this.timeoutPolicy = timeoutPolicy;
-    }
+    @JsonIgnore
+    TaskId getIdentity();
 
-    public String getMaxExecutionTime() {
-        return maxExecutionTime;
-    }
-
-    public void setMaxExecutionTime(String maxExecutionTime) {
-        this.maxExecutionTime = maxExecutionTime;
-    }
-
-    public List<TaskDependencyInfo> getDependsOn() {
-        return dependsOn;
-    }
-
-    public void setDependsOn(List<TaskDependencyInfo> dependsOn) {
-        this.dependsOn = dependsOn;
-    }
-
-    public Map<String, Object> getProperties() {
-        return properties;
-    }
-
-    public void setProperties(Map<String, Object> properties) {
-        this.properties = properties;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public void setStatus(Status status) {
-        this.status = status;
-    }
-
-    public String getStatusMessage() {
-        return statusMessage;
-    }
-
-    public void setStatusMessage(String statusMessage) {
-        this.statusMessage = statusMessage;
-    }
-
-    public long getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(long createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public long getSubmittedAt() {
-        return submittedAt;
-    }
-
-    public void setSubmittedAt(long submittedAt) {
-        this.submittedAt = submittedAt;
-    }
-
-    public long getCompletedAt() {
-        return completedAt;
-    }
-
-    public void setCompletedAt(long completedAt) {
-        this.completedAt = completedAt;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Task)) return false;
-        Task task = (Task) o;
-        return Objects.equals(id, task.id) &&
-                Objects.equals(name, task.name) &&
-                Objects.equals(group, task.group) &&
-                Objects.equals(type, task.type) &&
-                Objects.equals(dependsOn, task.dependsOn);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, name, group, type, dependsOn);
-    }
-
-    @Override
-    public String toString() {
-        return "Task{" +
-                "id='" + id + '\'' +
-                ", name='" + name + '\'' +
-                ", group='" + group + '\'' +
-                ", type='" + type + '\'' +
-                ", timeoutPolicy='" + timeoutPolicy + '\'' +
-                ", maxExecutionTime='" + maxExecutionTime + '\'' +
-                ", dependsOn=" + dependsOn +
-                ", properties=" + properties +
-                ", status=" + status +
-                ", statusMessage='" + statusMessage + '\'' +
-                ", createdAt=" + createdAt +
-                ", submittedAt=" + submittedAt +
-                ", completedAt=" + completedAt +
-                '}';
-    }
-
-    public enum Status {
+    enum Status {
         CREATED, WAITING, SCHEDULED, SUBMITTED, RUNNING, SUCCESSFUL, FAILED;
+    }
+
+    class TaskUpdate {
+        private String taskId;
+        private String workflowId;
+        private String namespace;
+        private Status status;
+        private String statusMessage;
+
+        public String getTaskId() {
+            return taskId;
+        }
+
+        public void setTaskId(String taskId) {
+            this.taskId = taskId;
+        }
+
+        public String getWorkflowId() {
+            return workflowId;
+        }
+
+        public void setWorkflowId(String workflowId) {
+            this.workflowId = workflowId;
+        }
+
+        public String getNamespace() {
+            return namespace;
+        }
+
+        public void setNamespace(String namespace) {
+            this.namespace = namespace;
+        }
+
+        public Status getStatus() {
+            return status;
+        }
+
+        public void setStatus(Status status) {
+            this.status = status;
+        }
+
+        public String getStatusMessage() {
+            return statusMessage;
+        }
+
+        public void setStatusMessage(String statusMessage) {
+            this.statusMessage = statusMessage;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof TaskUpdate)) return false;
+            TaskUpdate that = (TaskUpdate) o;
+            return Objects.equals(taskId, that.taskId) &&
+                    Objects.equals(workflowId, that.workflowId) &&
+                    Objects.equals(namespace, that.namespace) &&
+                    status == that.status &&
+                    Objects.equals(statusMessage, that.statusMessage);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(taskId, workflowId, namespace, status, statusMessage);
+        }
+
+        @Override
+        public String toString() {
+            return "TaskUpdate{" +
+                    "taskId='" + taskId + '\'' +
+                    ", workflowId='" + workflowId + '\'' +
+                    ", namespace='" + namespace + '\'' +
+                    ", status=" + status +
+                    ", statusMessage='" + statusMessage + '\'' +
+                    '}';
+        }
     }
 }
