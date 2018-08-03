@@ -17,12 +17,10 @@
 
 package com.cognitree.kronos.scheduler.store;
 
-import com.cognitree.kronos.ReviewPending;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Objects;
 
-@ReviewPending
 public class TaskStoreConfig {
 
     private String storeClass;

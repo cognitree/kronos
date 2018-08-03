@@ -17,19 +17,17 @@
 
 package com.cognitree.kronos.scheduler.store;
 
-import com.cognitree.kronos.ReviewPending;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Objects;
 
-@ReviewPending
 public class TaskDefinitionStoreConfig {
 
     private String storeClass;
 
     /**
-     * Configuration required by the task store to instantiate itself.
-     * This will be passed as an arg to the method of {@link TaskStore#init(ObjectNode)} at the time of instantiation
+     * Configuration required by the task definition store to instantiate itself.
+     * This will be passed as an arg to the method of {@link TaskDefinitionStore#init(ObjectNode)} at the time of instantiation
      */
     private ObjectNode config;
 

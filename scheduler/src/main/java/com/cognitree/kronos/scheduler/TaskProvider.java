@@ -17,7 +17,6 @@
 
 package com.cognitree.kronos.scheduler;
 
-import com.cognitree.kronos.ReviewPending;
 import com.cognitree.kronos.model.MutableTaskId;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
@@ -45,7 +44,6 @@ import static com.cognitree.kronos.util.DateTimeUtil.resolveDuration;
  * Internally, task provider is backed by a directed acyclic graph and persistence store to manage dependencies
  * across these tasks.
  */
-@ReviewPending
 final class TaskProvider {
     private static final Logger logger = LoggerFactory.getLogger(TaskProvider.class);
 
@@ -232,8 +230,7 @@ final class TaskProvider {
         return stream.collect(Collectors.toList());
     }
 
-    // used in junit
-    boolean isReadyForExecution(Task task) {
+    private boolean isReadyForExecution(Task task) {
         return graph.predecessors(task)
                 .stream()
                 .allMatch(t -> t.getStatus().equals(SUCCESSFUL));

@@ -25,9 +25,6 @@ public class MutableTaskId implements TaskId {
     private String workflowId;
     private String namespace;
 
-    protected MutableTaskId() {
-    }
-
     public static TaskId create(String id, String workflowId, String namespace) {
         final MutableTaskId mutableTaskId = new MutableTaskId();
         mutableTaskId.setId(id);

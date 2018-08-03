@@ -24,9 +24,6 @@ public class WorkflowId {
     protected String id;
     protected String namespace;
 
-    WorkflowId() {
-    }
-
     public static WorkflowId create(String id, String namespace) {
         final WorkflowId workflowId = new WorkflowId();
         workflowId.setId(id);

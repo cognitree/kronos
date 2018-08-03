@@ -17,7 +17,6 @@
 
 package com.cognitree.kronos.scheduler;
 
-import com.cognitree.kronos.ReviewPending;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.queue.QueueConfig;
 import com.cognitree.kronos.scheduler.store.*;
@@ -31,7 +30,6 @@ import java.io.InputStream;
 /**
  * starts the scheduler app by reading configurations from classpath.
  */
-@ReviewPending
 public class SchedulerApp {
 
     private static final Logger logger = LoggerFactory.getLogger(SchedulerApp.class);

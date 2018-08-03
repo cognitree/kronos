@@ -17,13 +17,11 @@
 
 package com.cognitree.kronos.scheduler.store;
 
-import com.cognitree.kronos.ReviewPending;
 import com.cognitree.kronos.model.definitions.WorkflowDefinition;
 import com.cognitree.kronos.model.definitions.WorkflowDefinitionId;
 
 import java.util.List;
 
-@ReviewPending
 public class WorkflowDefinitionStoreService implements StoreService<WorkflowDefinition, WorkflowDefinitionId> {
 
     private final WorkflowDefinitionStoreConfig workflowDefinitionStoreConfig;
