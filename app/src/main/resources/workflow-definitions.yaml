@@ -4,26 +4,21 @@
   schedule: 5 0/2 * 1/1 * ? *
   tasks:
     - name: task one
-      properties:
-        schedule: 1 0/1 * 1/1 * ? *
-        # command to execute
-        cmd: echo
-        # command args if any
-        args: Hello World from task one
     - name: task two
-      schedule: 1 0/1 * 1/1 * ? *
-      properties:
-        # command to execute
-        cmd: sleep
-        # command args if any
-        args: 30
     - name: task three
-      schedule: 2 0/2 * 1/1 * ? *
-      properties:
-        # command to execute
-        cmd: echo
-        # command args if any
-        args: Hello World from task three
       dependsOn:
         - name: task two
           mode: all
+#    - name: SparkPi
+#      properties:
+#        submitRequest:
+#          appResource: file:/spark-examples_2.11-2.3.1.jar
+#          appArgs: []
+#          mainClass: org.apache.spark.examples.SparkPi
+#          sparkProperties:
+#            spark.jars: file:/spark-examples_2.11-2.3.1.jar
+#            spark.driver.supervise: false
+#            spark.app.name: SparkPi
+#            spark.eventLog.enabled: false
+#            spark.submit.deployMode : cluster
+#

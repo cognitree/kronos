@@ -35,6 +35,7 @@
         <module>kafka-queue</module>
         <module>shell-handler</module>
         <module>sqlite-store</module>
+        <module>spark-handler</module>
     </modules>
 
     <dependencies>

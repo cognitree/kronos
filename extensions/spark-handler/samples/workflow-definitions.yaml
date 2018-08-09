@@ -1,0 +1,17 @@
+- name: MyWorkflow
+  namespace: default
+  description: sample workflow with tasks of type spark
+  schedule: 0 0/1 * 1/1 * ? *
+  tasks:
+    - name: SparkPi
+      properties:
+        submitRequest:
+          appResource: file:/spark-examples_2.11-2.3.1.jar
+          appArgs: []
+          mainClass: org.apache.spark.examples.SparkPi
+          sparkProperties:
+            spark.jars: file:/spark-examples_2.11-2.3.1.jar
+            spark.driver.supervise: false
+            spark.app.name: SparkPi
+            spark.eventLog.enabled: false
+            spark.submit.deployMode : cluster
