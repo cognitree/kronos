@@ -16,7 +16,7 @@ taskHandlerConfig:
     maxParallelTasks: 4
 ```
 
-Here, A [ShellCommandHandler](src/main/java/com/cognitree/kronos/executor/handlers/SparkHandler.java) is configured for task type `spark`. Tasks of type `spark` will be executed by Spark handler.
+Here, A [SparkHandler](src/main/java/com/cognitree/kronos/executor/handlers/SparkHandler.java) is configured for task type `spark`. Tasks of type `spark` will be executed by Spark handler.
 
 ## Configurable Task Properties
 
