@@ -30,7 +30,7 @@ Configurable properties supported by Spark Handler are as below:
 | masterHost       | Spark master REST server host                              | string       | localhost    | no        |
 | masterPort       | Spark master REST server port                              | int          | 6066         | no        |
 | secure           | is HTTPS enabled                                           | boolean      | false        | no        |
-| submitRequest    | properties required to build Spark job submit request      | boolean      | false        | no        |
+| submitRequest    | properties required to build Spark job submit request      | map          | false        | yes       |
 
 **Building Spark Job Submit Request**
 
