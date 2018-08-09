@@ -19,38 +19,30 @@
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
     <parent>
-        <groupId>com.cognitree</groupId>
-        <artifactId>kronos</artifactId>
+        <artifactId>extensions</artifactId>
+        <groupId>com.cognitree.kronos</groupId>
         <version>2.0</version>
     </parent>
+    <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.cognitree.kronos</groupId>
-    <artifactId>extensions</artifactId>
-    <packaging>pom</packaging>
-
-    <modules>
-        <module>kafka-queue</module>
-        <module>shell-handler</module>
-        <module>sqlite-store</module>
-        <module>spark-handler</module>
-    </modules>
+    <artifactId>spark-handler</artifactId>
+    
+    <properties>
+        <http.core.version>4.4.10</http.core.version>
+        <http.client.version>4.5.6</http.client.version>
+    </properties>
 
     <dependencies>
         <dependency>
-            <groupId>com.cognitree.kronos</groupId>
-            <artifactId>scheduler</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore</artifactId>
+            <version>${http.core.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.cognitree.kronos</groupId>
-            <artifactId>executor</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>${http.client.version}</version>
         </dependency>
     </dependencies>
-
 </project>
