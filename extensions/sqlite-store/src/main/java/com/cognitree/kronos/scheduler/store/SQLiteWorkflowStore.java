@@ -30,7 +30,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * A SQLite implementation of {@link TaskStore}.
+ * A SQLite implementation of {@link WorkflowStore}.
  */
 public class SQLiteWorkflowStore implements WorkflowStore {
     private static final Logger logger = LoggerFactory.getLogger(SQLiteWorkflowStore.class);
@@ -50,7 +50,7 @@ public class SQLiteWorkflowStore implements WorkflowStore {
             "name string," +
             "namespace string," +
             "created_at integer," +
-            "PRIMARY KEY(id)" +
+            "PRIMARY KEY(id, namespace)" +
             ")";
     private static final String CREATE_WORKFLOW_INDEX_SQL = "CREATE INDEX IF NOT EXISTS workflows_name_namespace_idx on workflows (name, namespace)";
 

@@ -33,7 +33,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * A SQLite implementation of {@link TaskStore}.
+ * A SQLite implementation of {@link WorkflowDefinitionStore}.
  */
 public class SQLiteWorkflowDefinitionStore implements WorkflowDefinitionStore {
     private static final Logger logger = LoggerFactory.getLogger(SQLiteWorkflowDefinitionStore.class);

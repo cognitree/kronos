@@ -67,9 +67,14 @@ public class SQLiteTaskStore implements TaskStore {
             "created_at integer," +
             "submitted_at integer," +
             "completed_at integer," +
-            "PRIMARY KEY(id)" +
+            "PRIMARY KEY(id, namespace)" +
             ")";
-    private static final String CREATE_TASK_INDEX_SQL = "CREATE INDEX IF NOT EXISTS tasks_name_group_idx on tasks (workflow_id)";
+    private static final String CREATE_TASK_INDEX_NAME_WORKFLOW_SQL = "CREATE INDEX IF NOT EXISTS tasks_name_workflow_idx " +
+            "on tasks (name, workflow_id, namespace)";
+    private static final String CREATE_TASK_INDEX_ID_WORKFLOW_SQL = "CREATE INDEX IF NOT EXISTS tasks_id_workflow_idx " +
+            "on tasks (id, workflow_id, namespace)";
+    private static final String CREATE_TASK_INDEX_WORKFLOW_ID_SQL = "CREATE INDEX IF NOT EXISTS tasks_workflow_idx " +
+            "on tasks (workflow_id, namespace)";
     private static final TypeReference<Map<String, Object>> PROPERTIES_TYPE_REF =
             new TypeReference<Map<String, Object>>() {
             };
@@ -111,7 +116,9 @@ public class SQLiteTaskStore implements TaskStore {
              Statement statement = connection.createStatement()) {
             statement.setQueryTimeout(30);
             statement.executeUpdate(DDL_CREATE_TASK_SQL);
-            statement.executeUpdate(CREATE_TASK_INDEX_SQL);
+            statement.executeUpdate(CREATE_TASK_INDEX_NAME_WORKFLOW_SQL);
+            statement.executeUpdate(CREATE_TASK_INDEX_ID_WORKFLOW_SQL);
+            statement.executeUpdate(CREATE_TASK_INDEX_WORKFLOW_ID_SQL);
         }
     }
 

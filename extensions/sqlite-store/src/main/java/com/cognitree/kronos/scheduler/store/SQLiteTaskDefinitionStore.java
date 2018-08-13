@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A SQLite implementation of {@link TaskStore}.
+ * A SQLite implementation of {@link TaskDefinitionStore}.
  */
 public class SQLiteTaskDefinitionStore implements TaskDefinitionStore {
     private static final Logger logger = LoggerFactory.getLogger(SQLiteTaskDefinitionStore.class);
