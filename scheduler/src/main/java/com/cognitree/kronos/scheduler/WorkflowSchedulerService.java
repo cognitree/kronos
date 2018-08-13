@@ -94,11 +94,12 @@ public final class WorkflowSchedulerService implements Service {
         final TopologicalSort<WorkflowTask> topologicalSort = new TopologicalSort<>();
         final List<WorkflowTask> workflowTasks = workflowDefinition.getTasks();
         for (WorkflowTask task : workflowTasks) {
-            final String taskName = task.getName();
-            if (TaskDefinitionStoreService.getService().load(TaskDefinitionId.create(taskName)) == null) {
-                throw new ValidationException("missing task definition with name " + taskName);
+            final String taskDefinitionName = task.getTaskDefinitionName();
+            if (TaskDefinitionStoreService.getService().load(TaskDefinitionId.create(taskDefinitionName)) == null) {
+                throw new ValidationException("missing task definition with name " + taskDefinitionName);
             }
 
+            final String taskName = task.getName();
             if (task.isEnabled()) {
                 workflowTaskMap.put(taskName, task);
                 topologicalSort.add(task);
@@ -221,10 +222,10 @@ public final class WorkflowSchedulerService implements Service {
             return;
         }
         try {
-            final String taskName = workflowTask.getName();
-            TaskDefinitionId taskDefinitionId = TaskDefinitionId.create(taskName);
+            TaskDefinitionId taskDefinitionId = TaskDefinitionId.create(workflowTask.getTaskDefinitionName());
             final TaskDefinition taskDefinition = TaskDefinitionStoreService.getService().load(taskDefinitionId);
 
+            final String taskName = workflowTask.getName();
             JobDataMap jobDataMap = new JobDataMap();
             jobDataMap.put("workflowTask", workflowTask);
             jobDataMap.put("taskDefinition", taskDefinition);

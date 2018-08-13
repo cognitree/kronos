@@ -100,6 +100,7 @@ public class WorkflowDefinition extends WorkflowDefinitionId {
     public static class WorkflowTask {
 
         private String name;
+        private String taskDefinitionName;
         private Map<String, Object> properties = new HashMap<>();
         private List<TaskDependencyInfo> dependsOn = new ArrayList<>();
 
@@ -115,6 +116,14 @@ public class WorkflowDefinition extends WorkflowDefinitionId {
 
         public void setName(String name) {
             this.name = name;
+        }
+
+        public String getTaskDefinitionName() {
+            return taskDefinitionName;
+        }
+
+        public void setTaskDefinitionName(String taskDefinitionName) {
+            this.taskDefinitionName = taskDefinitionName;
         }
 
         public Map<String, Object> getProperties() {
@@ -165,6 +174,7 @@ public class WorkflowDefinition extends WorkflowDefinitionId {
             isEnabled = enabled;
         }
 
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -172,6 +182,7 @@ public class WorkflowDefinition extends WorkflowDefinitionId {
             WorkflowTask that = (WorkflowTask) o;
             return isEnabled == that.isEnabled &&
                     Objects.equals(name, that.name) &&
+                    Objects.equals(taskDefinitionName, that.taskDefinitionName) &&
                     Objects.equals(properties, that.properties) &&
                     Objects.equals(dependsOn, that.dependsOn) &&
                     Objects.equals(schedule, that.schedule) &&
@@ -182,13 +193,14 @@ public class WorkflowDefinition extends WorkflowDefinitionId {
         @Override
         public int hashCode() {
 
-            return Objects.hash(name, properties, dependsOn, schedule, maxExecutionTime, timeoutPolicy, isEnabled);
+            return Objects.hash(name, taskDefinitionName, properties, dependsOn, schedule, maxExecutionTime, timeoutPolicy, isEnabled);
         }
 
         @Override
         public String toString() {
             return "WorkflowTask{" +
                     "name='" + name + '\'' +
+                    ", taskDefinitionName='" + taskDefinitionName + '\'' +
                     ", properties=" + properties +
                     ", dependsOn=" + dependsOn +
                     ", schedule='" + schedule + '\'' +

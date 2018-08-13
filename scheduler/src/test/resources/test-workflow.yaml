@@ -4,25 +4,19 @@ description: test workflow
 schedule: 0/2 * * * * ?
 tasks:
   - name: task one
+    taskDefinitionName: echo
     properties:
-      # command to execute
-      cmd: echo
-      # command args if any
       args: Hello World from task one
   - name: task two
+    taskDefinitionName: sleep
     properties:
-      # command to execute
-      cmd: sleep
-      # command args if any
       args: 1
     dependsOn:
       - name: task one
         mode: all
   - name: task three
+    taskDefinitionName: echo
     properties:
-      # command to execute
-      cmd: echo
-      # command args if any
       args: Hello World from task three
     dependsOn:
       - name: task two

@@ -3,13 +3,22 @@
   description: test workflow
   schedule: 5 0/2 * 1/1 * ? *
   tasks:
-    - name: task one
-    - name: task two
-    - name: task three
+    - name: taskOne
+      taskDefinitionName: echo
+      properties:
+        args: Hello World from task one
+    - name: taskTwo
+      taskDefinitionName: echo
+      properties:
+        args: Hello World from task one
+    - name: taskThree
+      taskDefinitionName: echo
+      properties:
+        args: Hello World from task one
       dependsOn:
-        - name: task two
-          mode: all
+        - name: taskTwo
 #    - name: SparkPi
+#      taskDefinitionName: SparkPi
 #      properties:
 #        submitRequest:
 #          appResource: file:/spark-examples_2.11-2.3.1.jar
