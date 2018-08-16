@@ -22,7 +22,14 @@ import com.cognitree.kronos.model.Workflow;
 import com.cognitree.kronos.model.definitions.TaskDefinition;
 import com.cognitree.kronos.model.definitions.WorkflowDefinition;
 import com.cognitree.kronos.scheduler.policies.TimeoutPolicyConfig;
-import com.cognitree.kronos.scheduler.store.*;
+import com.cognitree.kronos.scheduler.store.TaskDefinitionStore;
+import com.cognitree.kronos.scheduler.store.TaskDefinitionStoreConfig;
+import com.cognitree.kronos.scheduler.store.TaskStore;
+import com.cognitree.kronos.scheduler.store.TaskStoreConfig;
+import com.cognitree.kronos.scheduler.store.WorkflowDefinitionStore;
+import com.cognitree.kronos.scheduler.store.WorkflowDefinitionStoreConfig;
+import com.cognitree.kronos.scheduler.store.WorkflowStore;
+import com.cognitree.kronos.scheduler.store.WorkflowStoreConfig;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -17,6 +17,11 @@
 
 package com.cognitree.kronos.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+@JsonSerialize(as = MutableTaskId.class)
+@JsonDeserialize(as = MutableTaskId.class)
 public interface TaskId {
 
     String getId();

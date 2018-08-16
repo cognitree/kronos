@@ -23,6 +23,8 @@ import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.Task.TaskUpdate;
+import com.cognitree.kronos.model.TaskId;
+import com.cognitree.kronos.model.definitions.TaskDependencyInfo;
 import com.cognitree.kronos.queue.QueueConfig;
 import com.cognitree.kronos.queue.consumer.Consumer;
 import com.cognitree.kronos.queue.consumer.ConsumerConfig;
@@ -37,14 +39,31 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.stream.Collectors;
 
-import static com.cognitree.kronos.model.Task.Status.*;
-import static com.cognitree.kronos.util.Messages.*;
-import static java.util.concurrent.TimeUnit.*;
+import static com.cognitree.kronos.model.Task.Status.CREATED;
+import static com.cognitree.kronos.model.Task.Status.FAILED;
+import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
+import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
+import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
+import static com.cognitree.kronos.model.Task.Status.WAITING;
+import static com.cognitree.kronos.util.Messages.FAILED_TO_RESOLVE_DEPENDENCY;
+import static com.cognitree.kronos.util.Messages.TASK_SUBMISSION_FAILED;
+import static com.cognitree.kronos.util.Messages.TIMED_OUT;
+import static java.util.Comparator.comparing;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * A task scheduler service resolves dependency via {@link TaskProvider} for each submitted task and
@@ -188,7 +207,7 @@ public final class TaskSchedulerService implements Service {
 
     private void resolveCreatedTasks() {
         final List<Task> tasks = taskProvider.getTasks(Collections.singletonList(CREATED));
-        tasks.sort(Comparator.comparing(Task::getCreatedAt));
+        tasks.sort(comparing(Task::getCreatedAt));
         tasks.forEach(this::resolve);
     }
 
@@ -205,8 +224,8 @@ public final class TaskSchedulerService implements Service {
         for (String taskStatusAsString : tasksStatus) {
             try {
                 final TaskUpdate taskUpdate = MAPPER.readValue(taskStatusAsString, TaskUpdate.class);
-                updateStatus(taskUpdate.getTaskId(), taskUpdate.getWorkflowId(), taskUpdate.getNamespace(),
-                        taskUpdate.getStatus(), taskUpdate.getStatusMessage());
+                updateStatus(taskUpdate.getTaskId(), taskUpdate.getStatus(),
+                        taskUpdate.getStatusMessage(), taskUpdate.getContext());
             } catch (IOException e) {
                 logger.error("Error parsing task status message {}", taskStatusAsString, e);
             }
@@ -259,17 +278,20 @@ public final class TaskSchedulerService implements Service {
         }
     }
 
-    private void updateStatus(String taskId, String workflowId, String namespace,
-                              Status status, String statusMessage) {
-        final Task task = taskProvider.getTask(taskId, workflowId, namespace);
-        if (task == null) {
-            logger.error("No task found with id {}, workflowId {}, namespace {}", taskId, workflowId, namespace);
-            return;
-        }
-        updateStatus(task, status, statusMessage);
+    private void updateStatus(TaskId taskId, Status status, String statusMessage) {
+        updateStatus(taskId, status, statusMessage, null);
     }
 
-    private void updateStatus(Task task, Status status, String statusMessage) {
+    private void updateStatus(TaskId taskId, Status status, String statusMessage, Map<String, Object> context) {
+        final Task task = taskProvider.getTask(taskId);
+        if (task == null) {
+            logger.error("No task found with id {}", taskId);
+            return;
+        }
+        updateStatus(task, status, statusMessage, context);
+    }
+
+    private void updateStatus(Task task, Status status, String statusMessage, Map<String, Object> context) {
         logger.info("Received request to update status of task {} to {} " +
                 "with status message {}", task, status, statusMessage);
         Status currentStatus = task.getStatus();
@@ -280,7 +302,7 @@ public final class TaskSchedulerService implements Service {
         MutableTask mutableTask = (MutableTask) task;
         mutableTask.setStatus(status);
         mutableTask.setStatusMessage(statusMessage);
-
+        mutableTask.setContext(context);
         switch (status) {
             case SUBMITTED:
                 mutableTask.setSubmittedAt(System.currentTimeMillis());
@@ -365,6 +387,8 @@ public final class TaskSchedulerService implements Service {
             final List<Task> readyTasks = taskProvider.getReadyTasks();
             for (Task task : readyTasks) {
                 try {
+                    // update task context from the tasks it depends on before scheduling
+                    updateTaskContext(task);
                     producer.send(task.getType(), MAPPER.writeValueAsString(task));
                     updateStatus(task, SCHEDULED, null);
                 } catch (Exception e) {
@@ -373,6 +397,72 @@ public final class TaskSchedulerService implements Service {
                 }
             }
         }
+    }
+
+    /**
+     * updates the task properties with the context from the tasks it depends on.
+     *
+     * @param task
+     */
+    private void updateTaskContext(Task task) {
+        final List<TaskDependencyInfo> dependsOn = task.getDependsOn();
+        final Map<String, Object> dependentTaskContext = new LinkedHashMap<>();
+        for (TaskDependencyInfo taskDependencyInfo : dependsOn) {
+            final List<Task> dependentTasks = taskProvider.getDependentTasks(task, taskDependencyInfo)
+                    // sort the tasks based on creation time
+                    .stream().sorted(comparing(Task::getCreatedAt)).collect(Collectors.toList());
+            dependentTasks.forEach(dependentTask -> {
+                if (dependentTask.getContext() != null && !dependentTask.getContext().isEmpty()) {
+                    dependentTask.getContext().forEach((key, value) ->
+                            dependentTaskContext.put(dependentTask.getName() + "." + key, value));
+                }
+            });
+        }
+        updateTaskProperties(task, dependentTaskContext);
+    }
+
+    /**
+     * update task properties from the dependent task context
+     * <p>
+     * dependent task context map is of the form
+     * ${dependentTaskName}.key=value
+     * </p>
+     *
+     * @param task
+     * @param dependentTaskContext
+     */
+    // used in junit
+    void updateTaskProperties(Task task, Map<String, Object> dependentTaskContext) {
+        final Map<String, Object> modifiedTaskProperties = new HashMap<>(task.getProperties());
+        if (dependentTaskContext != null && !dependentTaskContext.isEmpty()) {
+            task.getProperties().forEach((key, value) -> {
+                if (value instanceof String && ((String) value).startsWith("${") && ((String) value).endsWith("}")) {
+                    final String valueToReplace = ((String) value).substring(2, ((String) value).length() - 1);
+                    if (dependentTaskContext.containsKey(valueToReplace)) {
+                        modifiedTaskProperties.put(key, dependentTaskContext.get(valueToReplace));
+                    } else if (valueToReplace.startsWith("*")) {
+                        dependentTaskContext.keySet().forEach(contextKey -> {
+                            if (contextKey.substring(contextKey.indexOf(".") + 1)
+                                    .equals(valueToReplace.substring(valueToReplace.indexOf(".") + 1))) {
+                                modifiedTaskProperties.put(key, dependentTaskContext.get(contextKey));
+                            }
+                        });
+                    }
+
+                    if (modifiedTaskProperties.get(key).equals(value)) {
+                        logger.error("Unable to update dynamic property from dependent task context. key {}, value {}",
+                                key, value);
+                        modifiedTaskProperties.put(key, null);
+                    }
+                }
+            });
+            dependentTaskContext.forEach((key, value) -> {
+                if (!modifiedTaskProperties.containsKey(key.substring(key.indexOf(".") + 1))) {
+                    modifiedTaskProperties.put(key.substring(key.indexOf(".") + 1), value);
+                }
+            });
+        }
+        task.getProperties().putAll(modifiedTaskProperties);
     }
 
     // used in junit

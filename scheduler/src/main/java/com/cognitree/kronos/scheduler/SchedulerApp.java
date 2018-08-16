@@ -19,7 +19,11 @@ package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.queue.QueueConfig;
-import com.cognitree.kronos.scheduler.store.*;
+import com.cognitree.kronos.scheduler.store.StoreServiceProvider;
+import com.cognitree.kronos.scheduler.store.TaskDefinitionStoreService;
+import com.cognitree.kronos.scheduler.store.TaskStoreService;
+import com.cognitree.kronos.scheduler.store.WorkflowDefinitionStoreService;
+import com.cognitree.kronos.scheduler.store.WorkflowStoreService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.slf4j.Logger;

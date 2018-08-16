@@ -19,22 +19,27 @@ package com.cognitree.kronos.model;
 
 import com.cognitree.kronos.model.definitions.TaskDependencyInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.cognitree.kronos.model.Task.Status.CREATED;
 
+@JsonSerialize(as = MutableTask.class)
+@JsonDeserialize(as = MutableTask.class)
 public class MutableTask extends MutableTaskId implements Task {
 
-    private String id;
-    private String workflowId;
     private String name;
-    private String namespace;
     private String type;
     private String timeoutPolicy;
     private String maxExecutionTime;
     private List<TaskDependencyInfo> dependsOn = new ArrayList<>();
     private Map<String, Object> properties = new HashMap<>();
+    private Map<String, Object> context = new HashMap<>();
 
     private Status status = CREATED;
     private String statusMessage;
@@ -42,39 +47,12 @@ public class MutableTask extends MutableTaskId implements Task {
     private long submittedAt;
     private long completedAt;
 
-    @Override
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    @Override
-    public String getWorkflowId() {
-        return workflowId;
-    }
-
-    public void setWorkflowId(String workflowId) {
-        this.workflowId = workflowId;
-    }
-
     public String getName() {
         return name;
     }
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    @Override
-    public String getNamespace() {
-        return namespace;
-    }
-
-    public void setNamespace(String namespace) {
-        this.namespace = namespace;
     }
 
     @Override
@@ -120,6 +98,15 @@ public class MutableTask extends MutableTaskId implements Task {
 
     public void setProperties(Map<String, Object> properties) {
         this.properties = properties;
+    }
+
+    @Override
+    public Map<String, Object> getContext() {
+        return context;
+    }
+
+    public void setContext(Map<String, Object> context) {
+        this.context = context;
     }
 
     @Override
@@ -174,36 +161,20 @@ public class MutableTask extends MutableTaskId implements Task {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Task)) return false;
-        Task task = (Task) o;
-        return Objects.equals(id, task.getId()) &&
-                Objects.equals(workflowId, task.getWorkflowId());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, workflowId);
-    }
-
-    @Override
     public String toString() {
         return "MutableTask{" +
-                "id='" + id + '\'' +
-                ", workflowId='" + workflowId + '\'' +
-                ", name='" + name + '\'' +
-                ", namespace='" + namespace + '\'' +
+                "name='" + name + '\'' +
                 ", type='" + type + '\'' +
                 ", timeoutPolicy='" + timeoutPolicy + '\'' +
                 ", maxExecutionTime='" + maxExecutionTime + '\'' +
                 ", dependsOn=" + dependsOn +
                 ", properties=" + properties +
+                ", context=" + context +
                 ", status=" + status +
                 ", statusMessage='" + statusMessage + '\'' +
                 ", createdAt=" + createdAt +
                 ", submittedAt=" + submittedAt +
                 ", completedAt=" + completedAt +
-                '}';
+                "} " + super.toString();
     }
 }

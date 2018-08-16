@@ -18,6 +18,7 @@
 package com.cognitree.kronos.executor.handlers;
 
 import com.cognitree.kronos.model.Task;
+import com.cognitree.kronos.model.Task.TaskResult;
 import com.cognitree.kronos.util.DateTimeUtil;
 import com.cognitree.spark.restclient.SparkRestClient;
 import com.cognitree.spark.restclient.model.JobStatusResponse;
@@ -50,7 +51,7 @@ public class SparkHandler implements TaskHandler {
     }
 
     @Override
-    public void handle(Task task) throws HandlerException {
+    public TaskResult handle(Task task) throws HandlerException {
         logger.info("Received request to handle task {}", task);
         final Map<String, Object> taskProperties = task.getProperties();
         final String sparkVersion = (String) taskProperties.get("sparkVersion");
@@ -70,8 +71,8 @@ public class SparkHandler implements TaskHandler {
                 .build();
 
         if (!taskProperties.containsKey("submitRequest")) {
-            logger.error("Missing spark job submit request, failing task {}", task);
-            throw new HandlerException("missing spark job submit request");
+            logger.error("Missing Spark job submit request, failing task {}", task);
+            return new Task.TaskResult(false, "missing Spark job submit request");
         }
 
         try {
@@ -79,8 +80,8 @@ public class SparkHandler implements TaskHandler {
                     MAPPER.convertValue(taskProperties.get("submitRequest"), JobSubmitRequest.class);
             final JobSubmitResponse jobSubmitResponse = sparkRestClient.submitJob(submitRequest);
             if (!jobSubmitResponse.getSuccess()) {
-                logger.error("Error submitting Spark job request. Response : {}", jobSubmitResponse);
-                throw new HandlerException(jobSubmitResponse.getMessage());
+                logger.error("Unable to submit Spark job request. Response : {}", jobSubmitResponse);
+                return new Task.TaskResult(false, "Unable to submit Spark job request");
             }
 
             JobStatusResponse statusResponse = sparkRestClient.getJobStatus(jobSubmitResponse.getSubmissionId());
@@ -99,16 +100,17 @@ public class SparkHandler implements TaskHandler {
                     logger.error("Unable to kill job with submission id {}, message {}",
                             jobSubmitResponse.getSubmissionId(), killJobResponse.getMessage());
                 }
-                throw new HandlerException("exceeded max execution time");
+                return new Task.TaskResult(false, "exceeded max execution time");
             }
 
             logger.info("Task {} finished execution with state {}", task, statusResponse.getDriverState());
             if (statusResponse.getDriverState() != DriverState.FINISHED) {
-                throw new HandlerException("Spark job finished execution with failure state " + statusResponse.getDriverState());
+                return new Task.TaskResult(false, "Spark job finished execution with failure state " + statusResponse.getDriverState());
             }
         } catch (Exception e) {
             logger.error("Error executing task {}", task, e);
-            throw new HandlerException(e.getMessage());
+            return new TaskResult(false, "Error executing task: " + e.getMessage());
         }
+        return new Task.TaskResult(true);
     }
 }

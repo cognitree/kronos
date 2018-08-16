@@ -17,8 +17,13 @@
 
 package com.cognitree.kronos.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import java.util.Objects;
 
+@JsonSerialize(as = MutableTaskId.class)
+@JsonDeserialize(as = MutableTaskId.class)
 public class MutableTaskId implements TaskId {
 
     private String id;
@@ -63,15 +68,16 @@ public class MutableTaskId implements TaskId {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        MutableTaskId that = (MutableTaskId) o;
-        return Objects.equals(id, that.id) &&
-                Objects.equals(workflowId, that.workflowId) &&
-                Objects.equals(namespace, that.namespace);
+        if (!(o instanceof MutableTaskId)) return false;
+        MutableTaskId taskId = (MutableTaskId) o;
+        return Objects.equals(id, taskId.id) &&
+                Objects.equals(workflowId, taskId.workflowId) &&
+                Objects.equals(namespace, taskId.namespace);
     }
 
     @Override
     public int hashCode() {
+
         return Objects.hash(id, workflowId, namespace);
     }
 

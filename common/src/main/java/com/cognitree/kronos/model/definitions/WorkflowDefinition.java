@@ -18,9 +18,17 @@
 package com.cognitree.kronos.model.definitions;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
+@JsonSerialize(as = WorkflowDefinition.class)
+@JsonDeserialize(as = WorkflowDefinition.class)
 public class WorkflowDefinition extends WorkflowDefinitionId {
 
     private String description;
@@ -67,34 +75,13 @@ public class WorkflowDefinition extends WorkflowDefinitionId {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof WorkflowDefinition)) return false;
-        WorkflowDefinition that = (WorkflowDefinition) o;
-        return isEnabled == that.isEnabled &&
-                Objects.equals(name, that.name) &&
-                Objects.equals(namespace, that.namespace) &&
-                Objects.equals(description, that.description) &&
-                Objects.equals(schedule, that.schedule) &&
-                Objects.equals(tasks, that.tasks);
-    }
-
-    @Override
-    public int hashCode() {
-
-        return Objects.hash(name, namespace, description, schedule, isEnabled, tasks);
-    }
-
-    @Override
     public String toString() {
         return "WorkflowDefinition{" +
-                "name='" + name + '\'' +
-                ", namespace='" + namespace + '\'' +
-                ", description='" + description + '\'' +
+                "description='" + description + '\'' +
+                ", tasks=" + tasks +
                 ", schedule='" + schedule + '\'' +
                 ", isEnabled=" + isEnabled +
-                ", tasks=" + tasks +
-                '}';
+                "} " + super.toString();
     }
 
     public static class WorkflowTask {

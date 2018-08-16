@@ -17,9 +17,16 @@
 
 package com.cognitree.kronos.model.definitions;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+import java.util.Objects;
+
+@JsonSerialize(as = TaskDefinitionId.class)
+@JsonDeserialize(as = TaskDefinitionId.class)
 public class TaskDefinitionId {
 
-    protected String name;
+    private String name;
 
     public static TaskDefinitionId create(String name) {
         final TaskDefinitionId taskDefinitionId = new TaskDefinitionId();
@@ -33,5 +40,26 @@ public class TaskDefinitionId {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof TaskDefinitionId)) return false;
+        TaskDefinitionId that = (TaskDefinitionId) o;
+        return Objects.equals(name, that.name);
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(name);
+    }
+
+    @Override
+    public String toString() {
+        return "TaskDefinitionId{" +
+                "name='" + name + '\'' +
+                '}';
     }
 }

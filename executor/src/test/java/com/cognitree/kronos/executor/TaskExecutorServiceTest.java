@@ -34,7 +34,10 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
-import static com.cognitree.kronos.model.Task.Status.*;
+import static com.cognitree.kronos.model.Task.Status.RUNNING;
+import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
+import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
+import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
 import static java.lang.Thread.sleep;
 
 public class TaskExecutorServiceTest {
@@ -124,7 +127,7 @@ public class TaskExecutorServiceTest {
         tasksStatus.forEach(taskStatus -> {
             try {
                 final Task.TaskUpdate taskUpdate = MAPPER.readValue(taskStatus, Task.TaskUpdate.class);
-                final MutableTask task = (MutableTask) tasksMap.get(taskUpdate.getTaskId());
+                final MutableTask task = (MutableTask) tasksMap.get(taskUpdate.getTaskId().getId());
                 task.setStatus(taskUpdate.getStatus());
                 task.setStatusMessage(taskUpdate.getStatusMessage());
             } catch (IOException e) {

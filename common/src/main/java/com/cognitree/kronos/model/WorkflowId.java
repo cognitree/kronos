@@ -17,12 +17,17 @@
 
 package com.cognitree.kronos.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import java.util.Objects;
 
+@JsonSerialize(as = WorkflowId.class)
+@JsonDeserialize(as = WorkflowId.class)
 public class WorkflowId {
 
-    protected String id;
-    protected String namespace;
+    private String id;
+    private String namespace;
 
     public static WorkflowId create(String id, String namespace) {
         final WorkflowId workflowId = new WorkflowId();

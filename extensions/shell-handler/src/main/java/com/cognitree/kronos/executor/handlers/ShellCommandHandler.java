@@ -18,6 +18,7 @@
 package com.cognitree.kronos.executor.handlers;
 
 import com.cognitree.kronos.model.Task;
+import com.cognitree.kronos.model.Task.TaskResult;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,47 +44,50 @@ public class ShellCommandHandler implements TaskHandler {
     }
 
     @Override
-    public void handle(Task task) throws HandlerException {
+    public TaskResult handle(Task task) {
         logger.info("received request to handle task {}", task);
 
         final Map<String, Object> taskProperties = task.getProperties();
-        if (taskProperties.containsKey(PROP_CMD)) {
-            ArrayList<String> cmdWithArgs = new ArrayList<>();
-            cmdWithArgs.add(getProperty(taskProperties, PROP_CMD));
+        if (!taskProperties.containsKey(PROP_CMD)) {
+            return new TaskResult(false, "no command found to execute");
+        }
 
-            if (taskProperties.containsKey(PROP_ARGS)) {
-                final String[] args = getProperty(taskProperties, PROP_ARGS, "").split(" ");
-                cmdWithArgs.addAll(Arrays.asList(args));
-            }
+        ArrayList<String> cmdWithArgs = new ArrayList<>();
+        cmdWithArgs.add(getProperty(taskProperties, PROP_CMD));
 
-            ProcessBuilder processBuilder = new ProcessBuilder(cmdWithArgs);
-            if (taskProperties.containsKey(PROPERTY_WORKING_DIR)) {
-                processBuilder.directory(new File(getProperty(taskProperties, PROPERTY_WORKING_DIR)));
-            }
-            String logDirPath = getProperty(taskProperties, PROPERTY_LOG_DIR,
-                    System.getProperty("java.io.tmpdir"));
-            File logDir = new File(logDirPath);
-            // create log directory is does not exist
-            if (!logDir.exists()) {
-                if (!logDir.mkdirs()) {
-                    throw new HandlerException("unable to create directory to store logs");
-                }
-            }
+        if (taskProperties.containsKey(PROP_ARGS)) {
+            final String[] args = getProperty(taskProperties, PROP_ARGS, "").split(" ");
+            cmdWithArgs.addAll(Arrays.asList(args));
+        }
 
-            processBuilder.redirectError(new File(logDir, task.getName() + "_" + task.getId() + "_stderr.log"));
-            processBuilder.redirectOutput(new File(logDir, task.getName() + "_" + task.getId() + "_stdout.log"));
-            try {
-                Process process = processBuilder.start();
-                int exitValue = process.waitFor();
-                logger.info("Process exited with code {} for command {}", exitValue, cmdWithArgs);
-                if (exitValue != 0) {
-                    throw new HandlerException("process exited with error code " + exitValue);
-                }
-            } catch (Exception e) {
-                logger.error("Error executing command {}", cmdWithArgs, e);
-                throw new HandlerException(e.getMessage(), e.getCause());
+        ProcessBuilder processBuilder = new ProcessBuilder(cmdWithArgs);
+        if (taskProperties.containsKey(PROPERTY_WORKING_DIR)) {
+            processBuilder.directory(new File(getProperty(taskProperties, PROPERTY_WORKING_DIR)));
+        }
+        String logDirPath = getProperty(taskProperties, PROPERTY_LOG_DIR,
+                System.getProperty("java.io.tmpdir"));
+        File logDir = new File(logDirPath);
+        // create log directory is does not exist
+        if (!logDir.exists()) {
+            if (!logDir.mkdirs()) {
+                return new TaskResult(false, "unable to create directory to store logs");
             }
         }
+
+        processBuilder.redirectError(new File(logDir, task.getName() + "_" + task.getId() + "_stderr.log"));
+        processBuilder.redirectOutput(new File(logDir, task.getName() + "_" + task.getId() + "_stdout.log"));
+        try {
+            Process process = processBuilder.start();
+            int exitValue = process.waitFor();
+            logger.info("Process exited with code {} for command {}", exitValue, cmdWithArgs);
+            if (exitValue != 0) {
+                return new TaskResult(false, "process exited with error code " + exitValue);
+            }
+        } catch (Exception e) {
+            logger.error("Error executing command {}", cmdWithArgs, e);
+            return new TaskResult(false, "process exited with exception: " + e.getMessage());
+        }
+        return new TaskResult(true);
     }
 
     private String getProperty(Map<String, Object> properties, String key) {

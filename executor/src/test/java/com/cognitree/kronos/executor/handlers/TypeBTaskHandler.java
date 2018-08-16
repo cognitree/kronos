@@ -24,6 +24,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.cognitree.kronos.model.Task.TaskResult;
+
 public class TypeBTaskHandler implements TaskHandler {
     private static final Set<String> handledTasks = Collections.synchronizedSet(new HashSet<>());
 
@@ -37,7 +39,8 @@ public class TypeBTaskHandler implements TaskHandler {
     }
 
     @Override
-    public void handle(Task task) throws HandlerException {
+    public TaskResult handle(Task task) {
         handledTasks.add(task.getId());
+        return new TaskResult(true);
     }
 }

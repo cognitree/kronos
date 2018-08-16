@@ -17,6 +17,10 @@
 
 package com.cognitree.spark.restclient;
 
+import com.cognitree.spark.restclient.model.JobStatusResponse;
+import com.cognitree.spark.restclient.model.JobSubmitRequest;
+import com.cognitree.spark.restclient.model.JobSubmitResponse;
+import com.cognitree.spark.restclient.model.KillJobResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -29,10 +33,6 @@ import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.cognitree.spark.restclient.model.JobStatusResponse;
-import com.cognitree.spark.restclient.model.JobSubmitRequest;
-import com.cognitree.spark.restclient.model.JobSubmitResponse;
-import com.cognitree.spark.restclient.model.KillJobResponse;
 
 import static org.apache.http.entity.ContentType.APPLICATION_JSON;
 import static org.apache.http.protocol.HTTP.CONTENT_TYPE;

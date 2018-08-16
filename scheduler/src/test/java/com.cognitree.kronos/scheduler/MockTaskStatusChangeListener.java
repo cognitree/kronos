@@ -24,7 +24,11 @@ import org.junit.Assert;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.cognitree.kronos.model.Task.Status.*;
+import static com.cognitree.kronos.model.Task.Status.CREATED;
+import static com.cognitree.kronos.model.Task.Status.RUNNING;
+import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
+import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
+import static com.cognitree.kronos.model.Task.Status.WAITING;
 
 public class MockTaskStatusChangeListener implements TaskStatusChangeListener {
     private Map<String, Status> taskStatusMap = new HashMap<>();
