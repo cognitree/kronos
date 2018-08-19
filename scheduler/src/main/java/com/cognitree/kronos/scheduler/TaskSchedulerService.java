@@ -45,11 +45,11 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.stream.Collectors;
 
 import static com.cognitree.kronos.model.Task.Status.CREATED;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
@@ -408,15 +408,16 @@ public final class TaskSchedulerService implements Service {
         final List<TaskDependencyInfo> dependsOn = task.getDependsOn();
         final Map<String, Object> dependentTaskContext = new LinkedHashMap<>();
         for (TaskDependencyInfo taskDependencyInfo : dependsOn) {
-            final List<Task> dependentTasks = taskProvider.getDependentTasks(task, taskDependencyInfo)
-                    // sort the tasks based on creation time
-                    .stream().sorted(comparing(Task::getCreatedAt)).collect(Collectors.toList());
-            dependentTasks.forEach(dependentTask -> {
+            // sort the tasks based on creation time and update the context from the latest task
+            Optional<Task> dependentTaskOptional = taskProvider.getDependentTasks(task, taskDependencyInfo)
+                    .stream().max(comparing(Task::getCreatedAt));
+            if (dependentTaskOptional.isPresent()) {
+                final Task dependentTask = dependentTaskOptional.get();
                 if (dependentTask.getContext() != null && !dependentTask.getContext().isEmpty()) {
                     dependentTask.getContext().forEach((key, value) ->
                             dependentTaskContext.put(dependentTask.getName() + "." + key, value));
                 }
-            });
+            }
         }
         updateTaskProperties(task, dependentTaskContext);
     }
@@ -433,36 +434,36 @@ public final class TaskSchedulerService implements Service {
      */
     // used in junit
     void updateTaskProperties(Task task, Map<String, Object> dependentTaskContext) {
-        final Map<String, Object> modifiedTaskProperties = new HashMap<>(task.getProperties());
-        if (dependentTaskContext != null && !dependentTaskContext.isEmpty()) {
-            task.getProperties().forEach((key, value) -> {
-                if (value instanceof String && ((String) value).startsWith("${") && ((String) value).endsWith("}")) {
-                    final String valueToReplace = ((String) value).substring(2, ((String) value).length() - 1);
-                    if (dependentTaskContext.containsKey(valueToReplace)) {
-                        modifiedTaskProperties.put(key, dependentTaskContext.get(valueToReplace));
-                    } else if (valueToReplace.startsWith("*")) {
-                        dependentTaskContext.keySet().forEach(contextKey -> {
-                            if (contextKey.substring(contextKey.indexOf(".") + 1)
-                                    .equals(valueToReplace.substring(valueToReplace.indexOf(".") + 1))) {
-                                modifiedTaskProperties.put(key, dependentTaskContext.get(contextKey));
-                            }
-                        });
-                    }
-
-                    if (modifiedTaskProperties.get(key).equals(value)) {
-                        logger.error("Unable to update dynamic property from dependent task context. key {}, value {}",
-                                key, value);
-                        modifiedTaskProperties.put(key, null);
-                    }
-                }
-            });
-            dependentTaskContext.forEach((key, value) -> {
-                if (!modifiedTaskProperties.containsKey(key.substring(key.indexOf(".") + 1))) {
-                    modifiedTaskProperties.put(key.substring(key.indexOf(".") + 1), value);
-                }
-            });
+        if (dependentTaskContext == null || dependentTaskContext.isEmpty()) {
+            return;
         }
-        task.getProperties().putAll(modifiedTaskProperties);
+
+        final Map<String, Object> modifiedTaskProperties = new HashMap<>();
+        task.getProperties().forEach((key, value) -> {
+            if (value instanceof String && ((String) value).startsWith("${") && ((String) value).endsWith("}")) {
+                final String valueToReplace = ((String) value).substring(2, ((String) value).length() - 1);
+                if (dependentTaskContext.containsKey(valueToReplace)) {
+                    modifiedTaskProperties.put(key, dependentTaskContext.get(valueToReplace));
+                } else if (valueToReplace.startsWith("*") && valueToReplace.length() > 2) {
+                    final String propertyToReplace = valueToReplace.substring(2);
+                    dependentTaskContext.keySet().forEach(contextKey -> {
+                        if (contextKey.substring(contextKey.indexOf(".") + 1).equals(propertyToReplace)) {
+                            modifiedTaskProperties.put(key, dependentTaskContext.get(contextKey));
+                        }
+                    });
+                }
+            } else {
+                // copy the remaining key value pair as it is from current task properties
+                modifiedTaskProperties.put(key, value);
+            }
+        });
+
+        dependentTaskContext.forEach((key, value) -> {
+            if (!modifiedTaskProperties.containsKey(key.substring(key.indexOf(".") + 1))) {
+                modifiedTaskProperties.put(key.substring(key.indexOf(".") + 1), value);
+            }
+        });
+        ((MutableTask) task).setProperties(modifiedTaskProperties);
     }
 
     // used in junit

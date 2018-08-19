@@ -35,7 +35,6 @@ public class ExecutorContextListener implements ServletContextListener {
     @Override
     public void contextInitialized(ServletContextEvent sce) {
         try {
-            logger.info("Starting executor");
             executorApp.start();
         } catch (Exception e) {
             logger.error("Error starting executor", e);
@@ -45,7 +44,6 @@ public class ExecutorContextListener implements ServletContextListener {
 
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
-        logger.info("Stopping executor");
         executorApp.stop();
     }
 }

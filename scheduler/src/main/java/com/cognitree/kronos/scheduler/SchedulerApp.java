@@ -52,6 +52,7 @@ public class SchedulerApp {
     }
 
     public void start() throws Exception {
+        logger.info("Starting scheduler app");
         final InputStream schedulerConfigAsStream =
                 getClass().getClassLoader().getResourceAsStream("scheduler.yaml");
         final SchedulerConfig schedulerConfig = MAPPER.readValue(schedulerConfigAsStream, SchedulerConfig.class);
@@ -103,6 +104,7 @@ public class SchedulerApp {
     }
 
     public void stop() {
+        logger.info("Stopping scheduler app");
         if (WorkflowSchedulerService.getService() != null) {
             WorkflowSchedulerService.getService().stop();
         }

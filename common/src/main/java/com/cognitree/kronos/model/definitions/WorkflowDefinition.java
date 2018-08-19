@@ -75,6 +75,16 @@ public class WorkflowDefinition extends WorkflowDefinitionId {
     }
 
     @Override
+    public boolean equals(Object o) {
+        return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
+
+    @Override
     public String toString() {
         return "WorkflowDefinition{" +
                 "description='" + description + '\'' +
@@ -160,7 +170,6 @@ public class WorkflowDefinition extends WorkflowDefinitionId {
         public void setEnabled(boolean enabled) {
             isEnabled = enabled;
         }
-
 
         @Override
         public boolean equals(Object o) {

@@ -40,9 +40,6 @@ public interface TaskHandler {
 
     /**
      * defines how to handle/ execute the task.
-     * <p>
-     * If the execution succeeds without any exception then the task is marked successful,
-     * otherwise failed with status message same as exception message.
      *
      * @param task task to handle.
      * @throws HandlerException thrown if handler fails to execute the task successfully.

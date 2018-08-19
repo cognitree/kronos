@@ -39,7 +39,7 @@ public class Application {
     public static void main(String[] args) throws Exception {
         Options options = new Options();
         Option modeOpt = new Option("mode", "mode", true,
-                "Kronos deployment mode (scheduler/ executor/ all)");
+                "Kronos deployment mode (scheduler/ all)");
         modeOpt.setRequired(true);
         options.addOption(modeOpt);
         Option hostOpt = new Option("host", "host", true, "Kronos server address");
@@ -100,9 +100,6 @@ public class Application {
         switch (mode) {
             case "scheduler":
                 webapp.addEventListener(new SchedulerContextListener());
-                break;
-            case "executor":
-                webapp.addEventListener(new ExecutorContextListener());
                 break;
             default:
                 webapp.addEventListener(new SchedulerContextListener());

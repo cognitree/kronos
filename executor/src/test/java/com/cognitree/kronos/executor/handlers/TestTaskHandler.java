@@ -52,6 +52,6 @@ public class TestTaskHandler implements TaskHandler {
             }
         }
         tasks.remove(task.getId());
-        return new TaskResult(true);
+        return TaskResult.SUCCESS;
     }
 }

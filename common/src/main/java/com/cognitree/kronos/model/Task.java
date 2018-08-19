@@ -63,6 +63,8 @@ public interface Task extends TaskId {
     }
 
     class TaskResult {
+        public static final TaskResult SUCCESS = new TaskResult(true);
+
         private boolean success;
         private String message;
         private Map<String, Object> context;

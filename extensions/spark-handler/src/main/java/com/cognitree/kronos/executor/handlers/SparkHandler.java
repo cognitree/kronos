@@ -42,16 +42,13 @@ public class SparkHandler implements TaskHandler {
     private static final int STATUS_MONITORING_INTERVAL = 5000;
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
 
-    private ObjectNode handlerConfig;
-
     @Override
     public void init(ObjectNode handlerConfig) {
 
-        this.handlerConfig = handlerConfig;
     }
 
     @Override
-    public TaskResult handle(Task task) throws HandlerException {
+    public TaskResult handle(Task task) {
         logger.info("Received request to handle task {}", task);
         final Map<String, Object> taskProperties = task.getProperties();
         final String sparkVersion = (String) taskProperties.get("sparkVersion");
@@ -72,7 +69,7 @@ public class SparkHandler implements TaskHandler {
 
         if (!taskProperties.containsKey("submitRequest")) {
             logger.error("Missing Spark job submit request, failing task {}", task);
-            return new Task.TaskResult(false, "missing Spark job submit request");
+            return new TaskResult(false, "missing Spark job submit request");
         }
 
         try {
@@ -81,7 +78,7 @@ public class SparkHandler implements TaskHandler {
             final JobSubmitResponse jobSubmitResponse = sparkRestClient.submitJob(submitRequest);
             if (!jobSubmitResponse.getSuccess()) {
                 logger.error("Unable to submit Spark job request. Response : {}", jobSubmitResponse);
-                return new Task.TaskResult(false, "Unable to submit Spark job request");
+                return new TaskResult(false, "Unable to submit Spark job request");
             }
 
             JobStatusResponse statusResponse = sparkRestClient.getJobStatus(jobSubmitResponse.getSubmissionId());
@@ -100,17 +97,17 @@ public class SparkHandler implements TaskHandler {
                     logger.error("Unable to kill job with submission id {}, message {}",
                             jobSubmitResponse.getSubmissionId(), killJobResponse.getMessage());
                 }
-                return new Task.TaskResult(false, "exceeded max execution time");
+                return new TaskResult(false, "Spark job exceeded max execution time");
             }
 
             logger.info("Task {} finished execution with state {}", task, statusResponse.getDriverState());
             if (statusResponse.getDriverState() != DriverState.FINISHED) {
-                return new Task.TaskResult(false, "Spark job finished execution with failure state " + statusResponse.getDriverState());
+                return new TaskResult(false, "Spark job finished execution with failure state " + statusResponse.getDriverState());
             }
         } catch (Exception e) {
             logger.error("Error executing task {}", task, e);
-            return new TaskResult(false, "Error executing task: " + e.getMessage());
+            return new TaskResult(false, "Error executing Spark job task: " + e.getMessage());
         }
-        return new Task.TaskResult(true);
+        return TaskResult.SUCCESS;
     }
 }

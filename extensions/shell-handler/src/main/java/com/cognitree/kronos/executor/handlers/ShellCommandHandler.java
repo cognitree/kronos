@@ -68,10 +68,8 @@ public class ShellCommandHandler implements TaskHandler {
                 System.getProperty("java.io.tmpdir"));
         File logDir = new File(logDirPath);
         // create log directory is does not exist
-        if (!logDir.exists()) {
-            if (!logDir.mkdirs()) {
-                return new TaskResult(false, "unable to create directory to store logs");
-            }
+        if (!logDir.exists() && !logDir.mkdirs()) {
+            return new TaskResult(false, "unable to create directory to store logs");
         }
 
         processBuilder.redirectError(new File(logDir, task.getName() + "_" + task.getId() + "_stderr.log"));
@@ -87,7 +85,7 @@ public class ShellCommandHandler implements TaskHandler {
             logger.error("Error executing command {}", cmdWithArgs, e);
             return new TaskResult(false, "process exited with exception: " + e.getMessage());
         }
-        return new TaskResult(true);
+        return TaskResult.SUCCESS;
     }
 
     private String getProperty(Map<String, Object> properties, String key) {

@@ -10,11 +10,11 @@
     - name: taskTwo
       taskDefinitionName: echo
       properties:
-        args: Hello World from task one
+        args: Hello World from task two
     - name: taskThree
       taskDefinitionName: echo
       properties:
-        args: Hello World from task one
+        args: Hello World from task three
       dependsOn:
         - name: taskTwo
 #    - name: SparkPi
