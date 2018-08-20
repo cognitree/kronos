@@ -46,7 +46,7 @@ public class SQLiteTaskStore implements TaskStore {
     private static final Logger logger = LoggerFactory.getLogger(SQLiteTaskStore.class);
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final String INSERT_REPLACE_TASK = "INSERT OR REPLACE INTO tasks VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    private static final String INSERT_REPLACE_TASK = "INSERT INTO tasks VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_TASK = "UPDATE tasks SET status = ?, status_message = ?, submitted_at = ?, " +
             "completed_at = ?, context = ? WHERE id = ? AND workflow_id = ? AND namespace = ?";
     private static final String LOAD_ALL_TASKS = "SELECT * FROM tasks";

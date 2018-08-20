@@ -39,7 +39,7 @@ import java.util.List;
 public class SQLiteWorkflowStore implements WorkflowStore {
     private static final Logger logger = LoggerFactory.getLogger(SQLiteWorkflowStore.class);
 
-    private static final String INSERT_REPLACE_WORKFLOW = "INSERT OR REPLACE INTO workflows VALUES (?,?,?,?)";
+    private static final String INSERT_REPLACE_WORKFLOW = "INSERT INTO workflows VALUES (?,?,?,?)";
     private static final String LOAD_WORKFLOW = "SELECT * FROM workflows";
     private static final String LOAD_WORKFLOW_BY_ID = "SELECT * FROM workflows WHERE id = ? AND namespace = ?";
     private static final String LOAD_WORKFLOW_BY_NAME_CREATED_AFTER = "SELECT * FROM workflows WHERE name = ? AND namespace = ?" +

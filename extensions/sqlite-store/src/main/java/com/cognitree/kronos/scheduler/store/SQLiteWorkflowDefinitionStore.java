@@ -43,7 +43,7 @@ public class SQLiteWorkflowDefinitionStore implements WorkflowDefinitionStore {
     private static final Logger logger = LoggerFactory.getLogger(SQLiteWorkflowDefinitionStore.class);
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final String INSERT_REPLACE_WORKFLOW_DEFINITION_DEFINITION = "INSERT OR REPLACE INTO workflow_definitions VALUES (?,?,?,?,?,?)";
+    private static final String INSERT_REPLACE_WORKFLOW_DEFINITION_DEFINITION = "INSERT INTO workflow_definitions VALUES (?,?,?,?,?,?)";
     private static final String LOAD_ALL_WORKFLOW_DEFINITION = "SELECT * FROM workflow_definitions";
     private static final String UPDATE_WORKFLOW_DEFINITION = "UPDATE workflow_definitions set description = ?, schedule = ?," +
             " tasks = ?, enabled = ? where name = ? AND namespace = ?";
