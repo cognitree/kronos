@@ -451,6 +451,11 @@ public final class TaskSchedulerService implements Service {
                             modifiedTaskProperties.put(key, dependentTaskContext.get(contextKey));
                         }
                     });
+                } else {
+                    // no dynamic property found to replace, setting it to null
+                    logger.error("No dynamic property found in dependent task context to replace key: {}," +
+                            " setting it to null", key);
+                    modifiedTaskProperties.put(key, null);
                 }
             } else {
                 // copy the remaining key value pair as it is from current task properties

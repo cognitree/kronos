@@ -682,11 +682,13 @@ public class TaskSchedulerServiceTest {
         taskProperties.put("keyTwo", "${taskOne.keyTwo}");
         taskProperties.put("keyThree", "${*.keyThree}");
         taskProperties.put("keyFour", "${*.keyFour}");
+        taskProperties.put("keyFive", "${*.}");
         task.setProperties(taskProperties);
 
         final HashMap<String, Object> dependentTaskContext = new LinkedHashMap<>();
         dependentTaskContext.put("taskOne.keyTwo", "taskOneValueTwo");
         dependentTaskContext.put("taskTwo.keyTwo", "taskTwoValueTwo");
+        dependentTaskContext.put("taskTwo.keyThree", "taskTwoValueThree");
         dependentTaskContext.put("taskOne.keyThree", "taskOneValueThree");
         dependentTaskContext.put("taskOne.keyFive", "valueFive");
 
@@ -695,6 +697,7 @@ public class TaskSchedulerServiceTest {
         Assert.assertEquals("taskOneValueTwo", task.getProperties().get("keyTwo"));
         Assert.assertEquals("taskOneValueThree", task.getProperties().get("keyThree"));
         Assert.assertNull(task.getProperties().get("keyFour"));
+        Assert.assertNull(task.getProperties().get("keyFive"));
     }
 
     private void finishExecution(Task task) throws JsonProcessingException {

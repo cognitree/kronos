@@ -26,7 +26,6 @@ start(){
       ARGS="--mode $MODE --host $HOST --port $PORT --resourceBase $APP_HOME/webapp --contextPath / --descriptor $APP_HOME/webapp/WEB-INF/web.xml"
       ;;
   esac
-  echo "$ARGS"
   java $HEAP_OPTS -cp "$APP_HOME/conf:$APP_HOME/jars/*" $MAIN_CLASS $ARGS >> "$LOG_DIR/$APP_NAME-stdout-`date +%Y%m%d`.log" 2>&1 &
   echo "$APP_NAME started: pid[`pgrep -f $MAIN_CLASS`]"
   echo "application logs available at $LOG_DIR/$APP_NAME-stdout-`date +%Y%m%d`.log"
@@ -40,8 +39,9 @@ stop(){
     echo "$APP_NAME is already stopped"
     return
   fi
-  echo "killing process: pid[`pgrep -f $MAIN_CLASS`]"
-  pkill -f $MAIN_CLASS
+  PID=`pgrep -f $MAIN_CLASS`
+  echo "killing process: pid[$PID]"
+  kill $PID
   echo -n "sent kill signal. waiting for shutdown."
   retry=20
   i=0

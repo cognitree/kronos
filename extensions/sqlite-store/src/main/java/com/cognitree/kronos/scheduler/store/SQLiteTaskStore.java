@@ -46,9 +46,9 @@ public class SQLiteTaskStore implements TaskStore {
     private static final Logger logger = LoggerFactory.getLogger(SQLiteTaskStore.class);
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final String INSERT_REPLACE_TASK = "INSERT OR REPLACE INTO tasks VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    private static final String INSERT_REPLACE_TASK = "INSERT OR REPLACE INTO tasks VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_TASK = "UPDATE tasks SET status = ?, status_message = ?, submitted_at = ?, " +
-            "completed_at = ? WHERE id = ? AND workflow_id = ? AND namespace = ?";
+            "completed_at = ?, context = ? WHERE id = ? AND workflow_id = ? AND namespace = ?";
     private static final String LOAD_ALL_TASKS = "SELECT * FROM tasks";
     private static final String LOAD_TASK = "SELECT * FROM tasks WHERE id = ? AND workflow_id = ? AND namespace = ?";
     private static final String LOAD_TASK_BY_STATUS = "SELECT * FROM tasks WHERE status IN ($statuses)";
@@ -66,6 +66,7 @@ public class SQLiteTaskStore implements TaskStore {
             "max_execution_time string," +
             "depends_on string," +
             "properties string," +
+            "context string," +
             "status string," +
             "status_message string," +
             "created_at integer," +
@@ -141,6 +142,7 @@ public class SQLiteTaskStore implements TaskStore {
             preparedStatement.setString(++paramIndex, task.getMaxExecutionTime());
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(task.getDependsOn()));
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(task.getProperties()));
+            preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(task.getContext()));
             preparedStatement.setString(++paramIndex, task.getStatus().name());
             preparedStatement.setString(++paramIndex, task.getStatusMessage());
             preparedStatement.setLong(++paramIndex, task.getCreatedAt());
@@ -199,6 +201,7 @@ public class SQLiteTaskStore implements TaskStore {
             preparedStatement.setString(++paramIndex, task.getStatusMessage());
             preparedStatement.setLong(++paramIndex, task.getSubmittedAt());
             preparedStatement.setLong(++paramIndex, task.getCompletedAt());
+            preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(task.getContext()));
             preparedStatement.setString(++paramIndex, taskId.getId());
             preparedStatement.setString(++paramIndex, taskId.getWorkflowId());
             preparedStatement.setString(++paramIndex, taskId.getNamespace());
@@ -301,6 +304,7 @@ public class SQLiteTaskStore implements TaskStore {
         task.setMaxExecutionTime(resultSet.getString(++paramIndex));
         task.setDependsOn(MAPPER.readValue(resultSet.getString(++paramIndex), DEPENDENCY_INFO_LIST_TYPE_REF));
         task.setProperties(MAPPER.readValue(resultSet.getString(++paramIndex), PROPERTIES_TYPE_REF));
+        task.setContext(MAPPER.readValue(resultSet.getString(++paramIndex), PROPERTIES_TYPE_REF));
         task.setStatus(Status.valueOf(resultSet.getString(++paramIndex)));
         task.setStatusMessage(resultSet.getString(++paramIndex));
         task.setCreatedAt(resultSet.getLong(++paramIndex));
