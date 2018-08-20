@@ -18,15 +18,18 @@
 package com.cognitree.kronos.model.definitions;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * A task definition holds set of attributes required by the task during execution.
  */
+@JsonSerialize(as = TaskDefinition.class)
+@JsonDeserialize(as = TaskDefinition.class)
 public class TaskDefinition extends TaskDefinitionId {
 
     private String type;
@@ -55,26 +58,19 @@ public class TaskDefinition extends TaskDefinitionId {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof TaskDefinition)) return false;
-        TaskDefinition that = (TaskDefinition) o;
-        return Objects.equals(name, that.name) &&
-                Objects.equals(type, that.type) &&
-                Objects.equals(properties, that.properties);
+        return super.equals(o);
     }
 
     @Override
     public int hashCode() {
-
-        return Objects.hash(name, type, properties);
+        return super.hashCode();
     }
 
     @Override
     public String toString() {
         return "TaskDefinition{" +
-                "name='" + name + '\'' +
-                ", type='" + type + '\'' +
+                "type='" + type + '\'' +
                 ", properties=" + properties +
-                '}';
+                "} " + super.toString();
     }
 }

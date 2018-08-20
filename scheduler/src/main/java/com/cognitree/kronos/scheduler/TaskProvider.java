@@ -17,7 +17,6 @@
 
 package com.cognitree.kronos.scheduler;
 
-import com.cognitree.kronos.model.MutableTaskId;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskId;
@@ -28,12 +27,26 @@ import com.google.common.graph.MutableGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.cognitree.kronos.model.Task.Status.*;
+import static com.cognitree.kronos.model.Task.Status.CREATED;
+import static com.cognitree.kronos.model.Task.Status.FAILED;
+import static com.cognitree.kronos.model.Task.Status.RUNNING;
+import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
+import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
+import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
+import static com.cognitree.kronos.model.Task.Status.WAITING;
 import static com.cognitree.kronos.model.definitions.TaskDependencyInfo.Mode.first;
 import static com.cognitree.kronos.util.DateTimeUtil.resolveDuration;
 
@@ -170,15 +183,13 @@ final class TaskProvider {
         graph.putEdge(dependerTask, dependeeTask);
     }
 
-    synchronized Task getTask(String taskId, String workflowId, String namespace) {
+    synchronized Task getTask(TaskId taskId) {
         for (Task task : graph.nodes()) {
-            if (task.getId().equals(taskId) && task.getWorkflowId().equals(workflowId)
-                    && task.getNamespace().equals(namespace)) {
+            if (task.getIdentity().equals(taskId)) {
                 return task;
             }
         }
-        final TaskId identity = MutableTaskId.create(taskId, workflowId, namespace);
-        Task task = TaskStoreService.getService().load(identity);
+        Task task = TaskStoreService.getService().load(taskId);
         // update local cache if not null
         if (task != null) {
             addToGraph(task);

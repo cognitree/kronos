@@ -47,6 +47,7 @@ public class ExecutorApp {
     }
 
     public void start() throws Exception {
+        logger.info("Starting executor app");
         final InputStream executorConfigAsStream =
                 getClass().getClassLoader().getResourceAsStream("executor.yaml");
         final ExecutorConfig executorConfig = MAPPER.readValue(executorConfigAsStream, ExecutorConfig.class);
@@ -62,6 +63,7 @@ public class ExecutorApp {
     }
 
     public void stop() {
+        logger.info("Stopping executor app");
         if (TaskExecutionService.getService() != null) {
             TaskExecutionService.getService().stop();
         }

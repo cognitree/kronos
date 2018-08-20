@@ -24,14 +24,27 @@ import com.cognitree.kronos.model.definitions.TaskDependencyInfo;
 import com.cognitree.kronos.util.DateTimeUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 
-import static com.cognitree.kronos.model.Task.Status.*;
-import static com.cognitree.kronos.model.definitions.TaskDependencyInfo.Mode.*;
+import static com.cognitree.kronos.model.Task.Status.FAILED;
+import static com.cognitree.kronos.model.Task.Status.RUNNING;
+import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
+import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
+import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
+import static com.cognitree.kronos.model.Task.Status.WAITING;
+import static com.cognitree.kronos.model.definitions.TaskDependencyInfo.Mode.all;
+import static com.cognitree.kronos.model.definitions.TaskDependencyInfo.Mode.first;
+import static com.cognitree.kronos.model.definitions.TaskDependencyInfo.Mode.last;
 import static com.cognitree.kronos.util.Messages.FAILED_TO_RESOLVE_DEPENDENCY;
 import static com.cognitree.kronos.util.Messages.TIMED_OUT;
 import static java.lang.Thread.sleep;
@@ -661,6 +674,32 @@ public class TaskSchedulerServiceTest {
         Assert.assertEquals(0, taskProvider.size());
     }
 
+    @Test
+    public void testUpdateTaskContext() {
+        MutableTask task = new MutableTask();
+        final HashMap<String, Object> taskProperties = new HashMap<>();
+        taskProperties.put("keyOne", "valueOne");
+        taskProperties.put("keyTwo", "${taskOne.keyTwo}");
+        taskProperties.put("keyThree", "${*.keyThree}");
+        taskProperties.put("keyFour", "${*.keyFour}");
+        taskProperties.put("keyFive", "${*.}");
+        task.setProperties(taskProperties);
+
+        final HashMap<String, Object> dependentTaskContext = new LinkedHashMap<>();
+        dependentTaskContext.put("taskOne.keyTwo", "taskOneValueTwo");
+        dependentTaskContext.put("taskTwo.keyTwo", "taskTwoValueTwo");
+        dependentTaskContext.put("taskTwo.keyThree", "taskTwoValueThree");
+        dependentTaskContext.put("taskOne.keyThree", "taskOneValueThree");
+        dependentTaskContext.put("taskOne.keyFive", "valueFive");
+
+        TaskSchedulerService.getService().updateTaskProperties(task, dependentTaskContext);
+
+        Assert.assertEquals("taskOneValueTwo", task.getProperties().get("keyTwo"));
+        Assert.assertEquals("taskOneValueThree", task.getProperties().get("keyThree"));
+        Assert.assertNull(task.getProperties().get("keyFour"));
+        Assert.assertNull(task.getProperties().get("keyFive"));
+    }
+
     private void finishExecution(Task task) throws JsonProcessingException {
         pushStatusUpdate(task, SUBMITTED);
         pushStatusUpdate(task, RUNNING);
@@ -669,9 +708,7 @@ public class TaskSchedulerServiceTest {
 
     private void pushStatusUpdate(Task task, Task.Status status) throws JsonProcessingException {
         Task.TaskUpdate taskUpdate = new Task.TaskUpdate();
-        taskUpdate.setTaskId(task.getId());
-        taskUpdate.setWorkflowId(task.getWorkflowId());
-        taskUpdate.setNamespace(task.getNamespace());
+        taskUpdate.setTaskId(task);
         taskUpdate.setStatus(status);
         taskUpdate.setStatusMessage(task.getStatusMessage());
         TaskSchedulerService.getService().getProducer().send("taskstatus", MAPPER.writeValueAsString(taskUpdate));

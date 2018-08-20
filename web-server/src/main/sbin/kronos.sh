@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MAIN_CLASS="com.cognitree.kronos.Application"
+MAIN_CLASS=""
 APP_NAME=""
 MODE=""
 APP_HOME="$(cd "`dirname "$0"`"/..; pwd)"
@@ -16,9 +16,17 @@ start(){
     echo "$APP_NAME is already running"
     exit 0
   fi
-  java $HEAP_OPTS -cp "$APP_HOME/conf:$APP_HOME/jars/*" \
-  $MAIN_CLASS --mode $MODE --host $HOST --port $PORT --resourceBase "$APP_HOME/webapp" --contextPath "/" \
-  --descriptor "$APP_HOME/webapp/WEB-INF/web.xml" >> "$LOG_DIR/$APP_NAME-stdout-`date +%Y%m%d`.log" 2>&1 &
+
+  ARGS=""
+  case "$MODE" in
+    executor)
+      ARGS=""
+      ;;
+    scheduler | all)
+      ARGS="--mode $MODE --host $HOST --port $PORT --resourceBase $APP_HOME/webapp --contextPath / --descriptor $APP_HOME/webapp/WEB-INF/web.xml"
+      ;;
+  esac
+  java $HEAP_OPTS -cp "$APP_HOME/conf:$APP_HOME/jars/*" $MAIN_CLASS $ARGS >> "$LOG_DIR/$APP_NAME-stdout-`date +%Y%m%d`.log" 2>&1 &
   echo "$APP_NAME started: pid[`pgrep -f $MAIN_CLASS`]"
   echo "application logs available at $LOG_DIR/$APP_NAME-stdout-`date +%Y%m%d`.log"
 }
@@ -31,8 +39,9 @@ stop(){
     echo "$APP_NAME is already stopped"
     return
   fi
-  echo "killing process: pid[`pgrep -f $MAIN_CLASS`]"
-  pkill -f $MAIN_CLASS
+  PID=`pgrep -f $MAIN_CLASS`
+  echo "killing process: pid[$PID]"
+  kill $PID
   echo -n "sent kill signal. waiting for shutdown."
   retry=20
   i=0
@@ -82,14 +91,17 @@ init_param(){
     scheduler)
       APP_NAME="scheduler"
       MODE="scheduler"
+      MAIN_CLASS="com.cognitree.kronos.Application"
       ;;
     executor)
       APP_NAME="executor"
       MODE="executor"
+      MAIN_CLASS="com.cognitree.kronos.executor.ExecutorApp"
       ;;
     *)
       APP_NAME="kronos"
       MODE="all"
+      MAIN_CLASS="com.cognitree.kronos.Application"
   esac
 }
 

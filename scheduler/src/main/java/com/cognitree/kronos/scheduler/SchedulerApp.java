@@ -19,7 +19,11 @@ package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.queue.QueueConfig;
-import com.cognitree.kronos.scheduler.store.*;
+import com.cognitree.kronos.scheduler.store.StoreServiceProvider;
+import com.cognitree.kronos.scheduler.store.TaskDefinitionStoreService;
+import com.cognitree.kronos.scheduler.store.TaskStoreService;
+import com.cognitree.kronos.scheduler.store.WorkflowDefinitionStoreService;
+import com.cognitree.kronos.scheduler.store.WorkflowStoreService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.slf4j.Logger;
@@ -48,6 +52,7 @@ public class SchedulerApp {
     }
 
     public void start() throws Exception {
+        logger.info("Starting scheduler app");
         final InputStream schedulerConfigAsStream =
                 getClass().getClassLoader().getResourceAsStream("scheduler.yaml");
         final SchedulerConfig schedulerConfig = MAPPER.readValue(schedulerConfigAsStream, SchedulerConfig.class);
@@ -99,6 +104,7 @@ public class SchedulerApp {
     }
 
     public void stop() {
+        logger.info("Stopping scheduler app");
         if (WorkflowSchedulerService.getService() != null) {
             WorkflowSchedulerService.getService().stop();
         }

@@ -1,29 +1,33 @@
-name: workflow
-namespace: default
-description: test workflow
-schedule: 0 0/1 * 1/1 * ? *
-tasks:
-  - name: task one
-    properties:
-      # command to execute
-      cmd: echo
-      # command args if any
-      args: Hello World from task one
-  - name: task two
-    properties:
-      # command to execute
-      cmd: sleep
-      # command args if any
-      args: 1
-    dependsOn:
-      - name: task one
-        mode: all
-  - name: task three
-    properties:
-      # command to execute
-      cmd: echo
-      # command args if any
-      args: Hello World from task three
-    dependsOn:
-      - name: task two
-        mode: all
+- name: workflow
+#  namespace: default
+  description: test workflow
+  schedule: 5 0/2 * 1/1 * ? *
+  tasks:
+    - name: taskOne
+      taskDefinitionName: echo
+      properties:
+        args: Hello World from task one
+    - name: taskTwo
+      taskDefinitionName: echo
+      properties:
+        args: Hello World from task two
+    - name: taskThree
+      taskDefinitionName: echo
+      properties:
+        args: Hello World from task three
+      dependsOn:
+        - name: taskTwo
+#    - name: SparkPi
+#      taskDefinitionName: SparkPi
+#      properties:
+#        submitRequest:
+#          appResource: file:/spark-examples_2.11-2.3.1.jar
+#          appArgs: []
+#          mainClass: org.apache.spark.examples.SparkPi
+#          sparkProperties:
+#            spark.jars: file:/spark-examples_2.11-2.3.1.jar
+#            spark.driver.supervise: false
+#            spark.app.name: SparkPi
+#            spark.eventLog.enabled: false
+#            spark.submit.deployMode : cluster
+#

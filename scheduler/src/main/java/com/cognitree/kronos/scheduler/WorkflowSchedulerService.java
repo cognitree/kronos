@@ -22,13 +22,26 @@ import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Workflow;
-import com.cognitree.kronos.model.definitions.*;
+import com.cognitree.kronos.model.definitions.TaskDefinition;
+import com.cognitree.kronos.model.definitions.TaskDefinitionId;
+import com.cognitree.kronos.model.definitions.TaskDependencyInfo;
+import com.cognitree.kronos.model.definitions.WorkflowDefinition;
 import com.cognitree.kronos.model.definitions.WorkflowDefinition.WorkflowTask;
+import com.cognitree.kronos.model.definitions.WorkflowDefinitionId;
 import com.cognitree.kronos.scheduler.graph.TopologicalSort;
 import com.cognitree.kronos.scheduler.store.TaskDefinitionStoreService;
 import com.cognitree.kronos.scheduler.store.WorkflowDefinitionStoreService;
 import com.cognitree.kronos.scheduler.store.WorkflowStoreService;
-import org.quartz.*;
+import org.quartz.CronScheduleBuilder;
+import org.quartz.Job;
+import org.quartz.JobDataMap;
+import org.quartz.JobDetail;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobKey;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
+import org.quartz.Trigger;
+import org.quartz.TriggerKey;
 import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,11 +107,12 @@ public final class WorkflowSchedulerService implements Service {
         final TopologicalSort<WorkflowTask> topologicalSort = new TopologicalSort<>();
         final List<WorkflowTask> workflowTasks = workflowDefinition.getTasks();
         for (WorkflowTask task : workflowTasks) {
-            final String taskName = task.getName();
-            if (TaskDefinitionStoreService.getService().load(TaskDefinitionId.create(taskName)) == null) {
-                throw new ValidationException("missing task definition with name " + taskName);
+            final String taskDefinitionName = task.getTaskDefinitionName();
+            if (TaskDefinitionStoreService.getService().load(TaskDefinitionId.create(taskDefinitionName)) == null) {
+                throw new ValidationException("missing task definition with name " + taskDefinitionName);
             }
 
+            final String taskName = task.getName();
             if (task.isEnabled()) {
                 workflowTaskMap.put(taskName, task);
                 topologicalSort.add(task);
@@ -221,10 +235,10 @@ public final class WorkflowSchedulerService implements Service {
             return;
         }
         try {
-            final String taskName = workflowTask.getName();
-            TaskDefinitionId taskDefinitionId = TaskDefinitionId.create(taskName);
+            TaskDefinitionId taskDefinitionId = TaskDefinitionId.create(workflowTask.getTaskDefinitionName());
             final TaskDefinition taskDefinition = TaskDefinitionStoreService.getService().load(taskDefinitionId);
 
+            final String taskName = workflowTask.getName();
             JobDataMap jobDataMap = new JobDataMap();
             jobDataMap.put("workflowTask", workflowTask);
             jobDataMap.put("taskDefinition", taskDefinition);

@@ -24,18 +24,22 @@ import org.apache.commons.dbcp2.BasicDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * A SQLite implementation of {@link TaskStore}.
+ * A SQLite implementation of {@link WorkflowStore}.
  */
 public class SQLiteWorkflowStore implements WorkflowStore {
     private static final Logger logger = LoggerFactory.getLogger(SQLiteWorkflowStore.class);
 
-    private static final String INSERT_REPLACE_WORKFLOW = "INSERT OR REPLACE INTO workflows VALUES (?,?,?,?)";
+    private static final String INSERT_REPLACE_WORKFLOW = "INSERT INTO workflows VALUES (?,?,?,?)";
     private static final String LOAD_WORKFLOW = "SELECT * FROM workflows";
     private static final String LOAD_WORKFLOW_BY_ID = "SELECT * FROM workflows WHERE id = ? AND namespace = ?";
     private static final String LOAD_WORKFLOW_BY_NAME_CREATED_AFTER = "SELECT * FROM workflows WHERE name = ? AND namespace = ?" +
@@ -50,7 +54,7 @@ public class SQLiteWorkflowStore implements WorkflowStore {
             "name string," +
             "namespace string," +
             "created_at integer," +
-            "PRIMARY KEY(id)" +
+            "PRIMARY KEY(id, namespace)" +
             ")";
     private static final String CREATE_WORKFLOW_INDEX_SQL = "CREATE INDEX IF NOT EXISTS workflows_name_namespace_idx on workflows (name, namespace)";
 

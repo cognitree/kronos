@@ -19,12 +19,14 @@ package com.cognitree.kronos.model;
 
 import com.cognitree.kronos.model.definitions.WorkflowDefinition;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import java.util.Objects;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 /**
  * runtime instance of {@link WorkflowDefinition}
  */
+@JsonSerialize(as = Workflow.class)
+@JsonDeserialize(as = Workflow.class)
 public class Workflow extends WorkflowId {
     private String name;
     private long createdAt;
@@ -52,27 +54,19 @@ public class Workflow extends WorkflowId {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Workflow)) return false;
-        Workflow workflow = (Workflow) o;
-        return createdAt == workflow.createdAt &&
-                Objects.equals(id, workflow.id) &&
-                Objects.equals(name, workflow.name) &&
-                Objects.equals(namespace, workflow.namespace);
+        return super.equals(o);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, namespace, createdAt);
+        return super.hashCode();
     }
 
     @Override
     public String toString() {
         return "Workflow{" +
-                "id='" + id + '\'' +
-                ", name='" + name + '\'' +
-                ", namespace='" + namespace + '\'' +
+                "name='" + name + '\'' +
                 ", createdAt=" + createdAt +
-                '}';
+                "} " + super.toString();
     }
 }

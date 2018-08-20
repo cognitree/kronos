@@ -18,6 +18,7 @@
 package com.cognitree.kronos.executor.handlers;
 
 import com.cognitree.kronos.model.Task;
+import com.cognitree.kronos.model.Task.TaskResult;
 import com.cognitree.kronos.model.definitions.TaskDefinition;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -39,12 +40,9 @@ public interface TaskHandler {
 
     /**
      * defines how to handle/ execute the task.
-     * <p>
-     * If the execution succeeds without any exception then the task is marked successful,
-     * otherwise failed with status message same as exception message.
      *
      * @param task task to handle.
      * @throws HandlerException thrown if handler fails to execute the task successfully.
      */
-    void handle(Task task) throws HandlerException;
+    TaskResult handle(Task task) throws HandlerException;
 }

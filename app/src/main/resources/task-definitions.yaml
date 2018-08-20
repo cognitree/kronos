@@ -1,28 +1,12 @@
-- name: task one
+- name: echo
   # task type
   type: shellCommand
   properties:
     # command to execute
     cmd: echo
-    # command args if any
-    args: Hello World from task one
     # set working dir before executing the command
     workingDir: /tmp/
     # dir to used to dump the command logs
-    logDir: /tmp/
-- name: task two
-  type: shellCommand
-  properties:
-    cmd: sleep
-    args: 30
-    workingDir: /tmp/
-    logDir: /tmp/
-- name: task three
-  type: shellCommand
-  properties:
-    cmd: echo
-    args: Hello World from task three
-    workingDir: /tmp/
     logDir: /tmp/
 #- name: SparkPi
 #   # task type

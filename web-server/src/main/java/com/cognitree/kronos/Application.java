@@ -19,7 +19,13 @@ package com.cognitree.kronos;
 
 import com.cognitree.kronos.listeners.ExecutorContextListener;
 import com.cognitree.kronos.listeners.SchedulerContextListener;
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.slf4j.Logger;
@@ -33,7 +39,7 @@ public class Application {
     public static void main(String[] args) throws Exception {
         Options options = new Options();
         Option modeOpt = new Option("mode", "mode", true,
-                "Kronos deployment mode (scheduler/ executor/ all)");
+                "Kronos deployment mode (scheduler/ all)");
         modeOpt.setRequired(true);
         options.addOption(modeOpt);
         Option hostOpt = new Option("host", "host", true, "Kronos server address");
@@ -94,9 +100,6 @@ public class Application {
         switch (mode) {
             case "scheduler":
                 webapp.addEventListener(new SchedulerContextListener());
-                break;
-            case "executor":
-                webapp.addEventListener(new ExecutorContextListener());
                 break;
             default:
                 webapp.addEventListener(new SchedulerContextListener());
