@@ -119,9 +119,8 @@ public class WorkflowDefinition extends WorkflowDefinitionId {
         private String name;
         private String taskDefinitionName;
         private Map<String, Object> properties = new HashMap<>();
-        private List<TaskDependencyInfo> dependsOn = new ArrayList<>();
+        private List<String> dependsOn = new ArrayList<>();
 
-        private String schedule;
         private String maxExecutionTime = "1d";
         private String timeoutPolicy;
 
@@ -151,20 +150,12 @@ public class WorkflowDefinition extends WorkflowDefinitionId {
             this.properties = properties;
         }
 
-        public List<TaskDependencyInfo> getDependsOn() {
+        public List<String> getDependsOn() {
             return dependsOn;
         }
 
-        public void setDependsOn(List<TaskDependencyInfo> dependsOn) {
+        public void setDependsOn(List<String> dependsOn) {
             this.dependsOn = dependsOn;
-        }
-
-        public String getSchedule() {
-            return schedule;
-        }
-
-        public void setSchedule(String schedule) {
-            this.schedule = schedule;
         }
 
         public String getMaxExecutionTime() {
@@ -201,7 +192,6 @@ public class WorkflowDefinition extends WorkflowDefinitionId {
                     Objects.equals(taskDefinitionName, that.taskDefinitionName) &&
                     Objects.equals(properties, that.properties) &&
                     Objects.equals(dependsOn, that.dependsOn) &&
-                    Objects.equals(schedule, that.schedule) &&
                     Objects.equals(maxExecutionTime, that.maxExecutionTime) &&
                     Objects.equals(timeoutPolicy, that.timeoutPolicy);
         }
@@ -209,7 +199,7 @@ public class WorkflowDefinition extends WorkflowDefinitionId {
         @Override
         public int hashCode() {
 
-            return Objects.hash(name, taskDefinitionName, properties, dependsOn, schedule, maxExecutionTime, timeoutPolicy, isEnabled);
+            return Objects.hash(name, taskDefinitionName, properties, dependsOn, maxExecutionTime, timeoutPolicy, isEnabled);
         }
 
         @Override
@@ -219,7 +209,6 @@ public class WorkflowDefinition extends WorkflowDefinitionId {
                     ", taskDefinitionName='" + taskDefinitionName + '\'' +
                     ", properties=" + properties +
                     ", dependsOn=" + dependsOn +
-                    ", schedule='" + schedule + '\'' +
                     ", maxExecutionTime='" + maxExecutionTime + '\'' +
                     ", timeoutPolicy='" + timeoutPolicy + '\'' +
                     ", isEnabled=" + isEnabled +

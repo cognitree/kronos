@@ -20,7 +20,6 @@ package com.cognitree.kronos;
 import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
-import com.cognitree.kronos.model.definitions.TaskDependencyInfo;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,7 +37,7 @@ public class MockTaskBuilder {
     private String type;
     private String timeoutPolicy;
     private String maxExecutionTime = "1h";
-    private List<TaskDependencyInfo> dependsOn = new ArrayList<>();
+    private List<String> dependsOn = new ArrayList<>();
     private Map<String, Object> properties = new HashMap<>();
     private Status status = CREATED;
     private String statusMessage;
@@ -86,7 +85,7 @@ public class MockTaskBuilder {
         return this;
     }
 
-    public MockTaskBuilder setDependsOn(List<TaskDependencyInfo> dependsOn) {
+    public MockTaskBuilder setDependsOn(List<String> dependsOn) {
         this.dependsOn = dependsOn;
         return this;
     }

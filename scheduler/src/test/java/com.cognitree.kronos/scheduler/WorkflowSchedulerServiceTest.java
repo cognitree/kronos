@@ -55,14 +55,6 @@ public class WorkflowSchedulerServiceTest {
     }
 
     @Test(expected = ValidationException.class)
-    public void testInValidWorkflowMissingSchedule() throws Exception {
-        final InputStream resourceAsStream =
-                getClass().getClassLoader().getResourceAsStream("invalid-workflow-missing-schedule.yaml");
-        final WorkflowDefinition workflowDefinition = MAPPER.readValue(resourceAsStream, WorkflowDefinition.class);
-        WorkflowSchedulerService.getService().validate(workflowDefinition);
-    }
-
-    @Test(expected = ValidationException.class)
     public void testInValidWorkflowMissingTasks() throws Exception {
         final InputStream resourceAsStream =
                 getClass().getClassLoader().getResourceAsStream("invalid-workflow-missing-tasks.yaml");
@@ -117,8 +109,8 @@ public class WorkflowSchedulerServiceTest {
         final List<WorkflowDefinition.WorkflowTask> workflowTasks =
                 WorkflowSchedulerService.getService().resolveWorkflowTasks(workflowDefinition.getTasks());
         Assert.assertEquals(0, TaskSchedulerService.getService().getTaskProvider().size());
-        WorkflowSchedulerService.getService().execute(workflowDefinition.getName(), workflowDefinition.getNamespace(),
-                workflowTasks, new Date(System.currentTimeMillis() + 5));
+        WorkflowSchedulerService.getService()
+                .execute(workflowDefinition.getName(), workflowDefinition.getNamespace(), workflowTasks);
         sleep(100);
         Assert.assertEquals(3, TaskSchedulerService.getService().getTaskProvider().size());
     }

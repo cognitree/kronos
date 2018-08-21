@@ -12,12 +12,10 @@ tasks:
     properties:
       args: 1
     dependsOn:
-      - name: task one
-        mode: all
+      - task one
   - name: task three
     taskDefinitionName: echo
     properties:
       args: Hello World from task three
     dependsOn:
-      - name: task two
-        mode: all
+      - task two

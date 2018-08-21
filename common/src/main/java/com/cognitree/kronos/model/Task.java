@@ -17,7 +17,6 @@
 
 package com.cognitree.kronos.model;
 
-import com.cognitree.kronos.model.definitions.TaskDependencyInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -39,7 +38,7 @@ public interface Task extends TaskId {
 
     String getMaxExecutionTime();
 
-    List<TaskDependencyInfo> getDependsOn();
+    List<String> getDependsOn();
 
     Map<String, Object> getProperties();
 

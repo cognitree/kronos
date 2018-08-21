@@ -21,7 +21,6 @@ import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskId;
-import com.cognitree.kronos.model.definitions.TaskDependencyInfo;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -83,8 +82,8 @@ public class SQLiteTaskStore implements TaskStore {
     private static final TypeReference<Map<String, Object>> PROPERTIES_TYPE_REF =
             new TypeReference<Map<String, Object>>() {
             };
-    private static final TypeReference<List<TaskDependencyInfo>> DEPENDENCY_INFO_LIST_TYPE_REF =
-            new TypeReference<List<TaskDependencyInfo>>() {
+    private static final TypeReference<List<String>> DEPENDENCY_INFO_LIST_TYPE_REF =
+            new TypeReference<List<String>>() {
             };
 
     private BasicDataSource dataSource;

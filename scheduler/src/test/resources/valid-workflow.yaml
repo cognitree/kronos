@@ -5,22 +5,17 @@ schedule: 5 0/2 * 1/1 * ? *
 tasks:
   - name: task one
     taskDefinitionName: echo
-    schedule: 1 0/1 * 1/1 * ? *
     properties:
       args: Hello World from task one
   - name: task two
     taskDefinitionName: sleep
-    schedule: 2 0/1 * 1/1 * ? *
     properties:
       args: 30
     dependsOn:
-      - name: task one
-        mode: all
+      - task one
   - name: task three
     taskDefinitionName: echo
-    schedule: 3 0/2 * 1/1 * ? *
     properties:
       args: Hello World from task three
     dependsOn:
-      - name: task two
-        mode: all
+      - task two

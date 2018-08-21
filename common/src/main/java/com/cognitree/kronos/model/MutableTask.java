@@ -17,7 +17,6 @@
 
 package com.cognitree.kronos.model;
 
-import com.cognitree.kronos.model.definitions.TaskDependencyInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -37,7 +36,7 @@ public class MutableTask extends MutableTaskId implements Task {
     private String type;
     private String timeoutPolicy;
     private String maxExecutionTime;
-    private List<TaskDependencyInfo> dependsOn = new ArrayList<>();
+    private List<String> dependsOn = new ArrayList<>();
     private Map<String, Object> properties = new HashMap<>();
     private Map<String, Object> context = new HashMap<>();
 
@@ -83,11 +82,11 @@ public class MutableTask extends MutableTaskId implements Task {
     }
 
     @Override
-    public List<TaskDependencyInfo> getDependsOn() {
+    public List<String> getDependsOn() {
         return dependsOn;
     }
 
-    public void setDependsOn(List<TaskDependencyInfo> dependsOn) {
+    public void setDependsOn(List<String> dependsOn) {
         this.dependsOn = dependsOn;
     }
 

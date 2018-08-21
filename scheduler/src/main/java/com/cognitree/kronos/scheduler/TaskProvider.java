@@ -20,7 +20,6 @@ package com.cognitree.kronos.scheduler;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskId;
-import com.cognitree.kronos.model.definitions.TaskDependencyInfo;
 import com.cognitree.kronos.scheduler.store.TaskStoreService;
 import com.google.common.graph.GraphBuilder;
 import com.google.common.graph.MutableGraph;
@@ -47,7 +46,6 @@ import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
 import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
 import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
 import static com.cognitree.kronos.model.Task.Status.WAITING;
-import static com.cognitree.kronos.model.definitions.TaskDependencyInfo.Mode.first;
 import static com.cognitree.kronos.util.DateTimeUtil.resolveDuration;
 
 /**
@@ -112,19 +110,19 @@ final class TaskProvider {
      * @return false when dependant tasks are in failed state or not found, true otherwise
      */
     synchronized boolean resolve(Task task) {
-        final List<TaskDependencyInfo> dependencyInfoList = task.getDependsOn();
-        if (dependencyInfoList != null) {
+        final List<String> dependsOn = task.getDependsOn();
+        if (dependsOn != null) {
             List<Task> dependentTasks = new ArrayList<>();
-            for (TaskDependencyInfo dependencyInfo : dependencyInfoList) {
-                Set<Task> tasks = getDependentTasks(task, dependencyInfo);
+            for (String dependentTaskName : dependsOn) {
+                Set<Task> tasks = getDependentTasks(dependentTaskName, task.getWorkflowId(), task.getNamespace());
                 if (tasks.isEmpty()) {
-                    logger.error("Missing tasks for dependency info {} for task {}", dependencyInfo, task);
+                    logger.error("Missing tasks for dependency info {} for task {}", dependentTaskName, task);
                     return false;
                 }
                 // check if any of the dependee tasks is FAILED
                 boolean isAnyDependeeFailed = tasks.stream().anyMatch(t -> t.getStatus().equals(FAILED));
                 if (isAnyDependeeFailed) {
-                    logger.error("Failed dependent tasks found for dependency info {} for task {}", dependencyInfo, task);
+                    logger.error("Failed dependent tasks found for dependency info {} for task {}", dependentTaskName, task);
                     return false;
                 }
                 dependentTasks.addAll(tasks);
@@ -135,18 +133,15 @@ final class TaskProvider {
     }
 
     // used in junit test case
-    Set<Task> getDependentTasks(Task task, TaskDependencyInfo dependencyInfo) {
+    Set<Task> getDependentTasks(String dependentTaskName, String workflowId, String namespace) {
         final TreeSet<Task> candidateDependentTasks = new TreeSet<>(Comparator.comparing(Task::getCreatedAt));
-        final String workflowId = task.getWorkflowId();
-        final String namespace = task.getNamespace();
-        final String dependentTaskName = dependencyInfo.getName();
 
         // retrieve all dependent task in memory
         final List<Task> tasksInMemory = getTasks(dependentTaskName, workflowId, namespace);
         candidateDependentTasks.addAll(tasksInMemory);
 
-        // retrieve all dependent task in store only if dependency mode is not first and tasks in memory is empty
-        if (candidateDependentTasks.isEmpty() || dependencyInfo.getMode() != first) {
+        // retrieve all dependent task in store only if tasks in memory is empty
+        if (candidateDependentTasks.isEmpty()) {
             final List<Task> tasksInStore = TaskStoreService.getService()
                     .loadByNameAndWorkflowId(dependentTaskName, workflowId, namespace);
             if (tasksInStore != null && !tasksInStore.isEmpty()) {
@@ -154,23 +149,7 @@ final class TaskProvider {
             }
         }
 
-        if (candidateDependentTasks.isEmpty()) return Collections.emptySet();
-
-        Set<Task> dependentTasks;
-        switch (dependencyInfo.getMode()) {
-            case first:
-                dependentTasks = Collections.singleton(candidateDependentTasks.first());
-                break;
-            case last:
-                dependentTasks = Collections.singleton(candidateDependentTasks.last());
-                break;
-            case all:
-                dependentTasks = candidateDependentTasks;
-                break;
-            default:
-                dependentTasks = Collections.emptySet();
-        }
-        return dependentTasks;
+        return candidateDependentTasks.isEmpty() ? Collections.emptySet() : candidateDependentTasks;
     }
 
     /**

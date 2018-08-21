@@ -24,7 +24,6 @@ import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.Task.TaskUpdate;
 import com.cognitree.kronos.model.TaskId;
-import com.cognitree.kronos.model.definitions.TaskDependencyInfo;
 import com.cognitree.kronos.queue.QueueConfig;
 import com.cognitree.kronos.queue.consumer.Consumer;
 import com.cognitree.kronos.queue.consumer.ConsumerConfig;
@@ -405,12 +404,13 @@ public final class TaskSchedulerService implements Service {
      * @param task
      */
     private void updateTaskContext(Task task) {
-        final List<TaskDependencyInfo> dependsOn = task.getDependsOn();
+        final List<String> dependsOn = task.getDependsOn();
         final Map<String, Object> dependentTaskContext = new LinkedHashMap<>();
-        for (TaskDependencyInfo taskDependencyInfo : dependsOn) {
+        for (String dependentTaskName : dependsOn) {
             // sort the tasks based on creation time and update the context from the latest task
-            Optional<Task> dependentTaskOptional = taskProvider.getDependentTasks(task, taskDependencyInfo)
-                    .stream().max(comparing(Task::getCreatedAt));
+            Optional<Task> dependentTaskOptional =
+                    taskProvider.getDependentTasks(dependentTaskName, task.getWorkflowId(), task.getNamespace())
+                            .stream().max(comparing(Task::getCreatedAt));
             if (dependentTaskOptional.isPresent()) {
                 final Task dependentTask = dependentTaskOptional.get();
                 if (dependentTask.getContext() != null && !dependentTask.getContext().isEmpty()) {
