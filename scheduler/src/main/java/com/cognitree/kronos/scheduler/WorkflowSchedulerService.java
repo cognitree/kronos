@@ -33,6 +33,7 @@ import com.cognitree.kronos.scheduler.store.TaskDefinitionStoreService;
 import com.cognitree.kronos.scheduler.store.WorkflowDefinitionStoreService;
 import com.cognitree.kronos.scheduler.store.WorkflowStoreService;
 import org.quartz.CronScheduleBuilder;
+import org.quartz.CronTrigger;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
@@ -41,6 +42,7 @@ import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
+import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
 import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
@@ -159,11 +161,18 @@ public final class WorkflowSchedulerService implements Service {
                     .build();
 
             CronScheduleBuilder jobSchedule = getJobSchedule(workflowDefinition);
-            Trigger simpleTrigger = newTrigger()
+            final TriggerBuilder<CronTrigger> triggerBuilder = newTrigger()
                     .withIdentity(getWorkflowTriggerKey(workflowDefinition))
-                    .withSchedule(jobSchedule)
-                    .build();
-            scheduler.scheduleJob(jobDetail, simpleTrigger);
+                    .withSchedule(jobSchedule);
+            final Long startAt = workflowDefinition.getStartAt();
+            if (startAt != null && startAt > 0) {
+                triggerBuilder.startAt(new Date(startAt));
+            }
+            final Long endAt = workflowDefinition.getEndAt();
+            if (endAt != null && endAt > 0) {
+                triggerBuilder.endAt(new Date(endAt));
+            }
+            scheduler.scheduleJob(jobDetail, triggerBuilder.build());
         } catch (Exception ex) {
             logger.error("Error scheduling workflow definition {}", workflowDefinition, ex);
         }
