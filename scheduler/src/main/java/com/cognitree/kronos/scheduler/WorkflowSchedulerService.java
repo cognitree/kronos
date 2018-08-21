@@ -22,6 +22,7 @@ import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Workflow;
+import com.cognitree.kronos.model.WorkflowId;
 import com.cognitree.kronos.model.definitions.TaskDefinition;
 import com.cognitree.kronos.model.definitions.TaskDefinitionId;
 import com.cognitree.kronos.model.definitions.WorkflowDefinition;
@@ -93,7 +94,9 @@ public final class WorkflowSchedulerService implements Service {
     public void add(WorkflowDefinition workflowDefinition) throws Exception {
         logger.info("Received request to add workflow definition {}", workflowDefinition);
         validate(workflowDefinition);
-        schedule(workflowDefinition);
+        if (workflowDefinition.getSchedule() != null) {
+            schedule(workflowDefinition);
+        }
     }
 
     /**
@@ -147,8 +150,7 @@ public final class WorkflowSchedulerService implements Service {
             JobDataMap jobDataMap = new JobDataMap();
             jobDataMap.put("name", workflowDefinitionId.getName());
             jobDataMap.put("namespace", workflowDefinitionId.getNamespace());
-            final List<WorkflowTask> workflowTasks = resolveWorkflowTasks(workflowDefinition.getTasks());
-            jobDataMap.put("tasks", workflowTasks);
+            jobDataMap.put("tasks", workflowDefinition.getTasks());
             JobDetail jobDetail = newJob(WorkflowSchedulerJob.class)
                     .withIdentity(getWorkflowJobKey(workflowDefinition))
                     .usingJobData(jobDataMap)
@@ -184,15 +186,16 @@ public final class WorkflowSchedulerService implements Service {
         return CronScheduleBuilder.cronSchedule(workflowDefinition.getSchedule());
     }
 
-    public void execute(String workflowName, String workflowNamespace, List<WorkflowTask> workflowTasks) {
+    public Workflow execute(String workflowName, String workflowNamespace, List<WorkflowTask> workflowTasks) {
         logger.info("Executing workflow definition with name {}, namespace {}, tasks {}",
                 workflowName, workflowNamespace, workflowTasks);
         final Workflow workflow = createWorkflow(workflowName, workflowNamespace);
         WorkflowStoreService.getService().store(workflow);
         logger.debug("Executing workflow {}", workflow);
-        for (WorkflowTask workflowTask : workflowTasks) {
+        orderWorkflowTasks(workflowTasks).forEach(workflowTask -> {
             scheduleWorkflowTask(workflowTask, workflow.getId(), workflow.getNamespace());
-        }
+        });
+        return workflow;
     }
 
     private Workflow createWorkflow(String workflowName, String workflowNamespace) {
@@ -210,7 +213,7 @@ public final class WorkflowSchedulerService implements Service {
      * @param workflowTasks
      * @return
      */
-    List<WorkflowTask> resolveWorkflowTasks(List<WorkflowTask> workflowTasks) {
+    List<WorkflowTask> orderWorkflowTasks(List<WorkflowTask> workflowTasks) {
         final HashMap<String, WorkflowTask> workflowTaskMap = new HashMap<>();
         final TopologicalSort<WorkflowTask> topologicalSort = new TopologicalSort<>();
         workflowTasks.forEach(workflowTask -> {

@@ -82,7 +82,7 @@ public class SQLiteTaskStore implements TaskStore {
     private static final TypeReference<Map<String, Object>> PROPERTIES_TYPE_REF =
             new TypeReference<Map<String, Object>>() {
             };
-    private static final TypeReference<List<String>> DEPENDENCY_INFO_LIST_TYPE_REF =
+    private static final TypeReference<List<String>> DEPENDS_ON_TYPE_REF =
             new TypeReference<List<String>>() {
             };
 
@@ -301,7 +301,7 @@ public class SQLiteTaskStore implements TaskStore {
         task.setType(resultSet.getString(++paramIndex));
         task.setTimeoutPolicy(resultSet.getString(++paramIndex));
         task.setMaxExecutionTime(resultSet.getString(++paramIndex));
-        task.setDependsOn(MAPPER.readValue(resultSet.getString(++paramIndex), DEPENDENCY_INFO_LIST_TYPE_REF));
+        task.setDependsOn(MAPPER.readValue(resultSet.getString(++paramIndex), DEPENDS_ON_TYPE_REF));
         task.setProperties(MAPPER.readValue(resultSet.getString(++paramIndex), PROPERTIES_TYPE_REF));
         task.setContext(MAPPER.readValue(resultSet.getString(++paramIndex), PROPERTIES_TYPE_REF));
         task.setStatus(Status.valueOf(resultSet.getString(++paramIndex)));

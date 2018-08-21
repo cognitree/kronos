@@ -27,7 +27,6 @@ import org.junit.Test;
 import org.quartz.JobKey;
 
 import java.io.InputStream;
-import java.util.Date;
 import java.util.List;
 
 import static java.lang.Thread.sleep;
@@ -77,7 +76,7 @@ public class WorkflowSchedulerServiceTest {
         final WorkflowDefinition workflowDefinition = MAPPER.readValue(resourceAsStream, WorkflowDefinition.class);
         WorkflowSchedulerService.getService().validate(workflowDefinition);
         final List<WorkflowDefinition.WorkflowTask> workflowTasks =
-                WorkflowSchedulerService.getService().resolveWorkflowTasks(workflowDefinition.getTasks());
+                WorkflowSchedulerService.getService().orderWorkflowTasks(workflowDefinition.getTasks());
         Assert.assertEquals("task one", workflowTasks.get(0).getName());
         Assert.assertEquals("task two", workflowTasks.get(1).getName());
         Assert.assertEquals("task three", workflowTasks.get(2).getName());
@@ -107,7 +106,7 @@ public class WorkflowSchedulerServiceTest {
         final WorkflowDefinition workflowDefinition = MAPPER.readValue(resourceAsStream, WorkflowDefinition.class);
         WorkflowSchedulerService.getService().validate(workflowDefinition);
         final List<WorkflowDefinition.WorkflowTask> workflowTasks =
-                WorkflowSchedulerService.getService().resolveWorkflowTasks(workflowDefinition.getTasks());
+                WorkflowSchedulerService.getService().orderWorkflowTasks(workflowDefinition.getTasks());
         Assert.assertEquals(0, TaskSchedulerService.getService().getTaskProvider().size());
         WorkflowSchedulerService.getService()
                 .execute(workflowDefinition.getName(), workflowDefinition.getNamespace(), workflowTasks);

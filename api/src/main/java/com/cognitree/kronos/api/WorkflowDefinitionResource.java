@@ -17,6 +17,8 @@
 
 package com.cognitree.kronos.api;
 
+import com.cognitree.kronos.model.Workflow;
+import com.cognitree.kronos.model.WorkflowId;
 import com.cognitree.kronos.model.definitions.WorkflowDefinition;
 import com.cognitree.kronos.model.definitions.WorkflowDefinitionId;
 import com.cognitree.kronos.scheduler.WorkflowSchedulerService;
@@ -100,6 +102,27 @@ public class WorkflowDefinitionResource {
         }
         WorkflowDefinitionStoreService.getService().store(workflowDefinition);
         return Response.status(OK).entity(workflowDefinition).build();
+    }
+
+    @POST
+    @Path("{name}/execute")
+    @ApiOperation(value = "Execute workflow definition with name", response = WorkflowDefinition.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 404, message = "Workflow definition not found")})
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response executeWorkflowDefinition(@ApiParam(value = "workflow definition name", required = true)
+                                              @PathParam("name") String workflowDefName) {
+        logger.info("Received request to execute workflow definition with name {}", workflowDefName);
+        WorkflowDefinitionId workflowDefinitionId = WorkflowDefinitionId.create(workflowDefName, DEFAULT_NAMESPACE);
+        final WorkflowDefinition workflowDefinition =
+                WorkflowDefinitionStoreService.getService().load(workflowDefinitionId);
+        if (workflowDefinition == null) {
+            logger.error("No workflow definition exists with name {}", workflowDefName);
+            return Response.status(NOT_FOUND).build();
+        }
+        Workflow workflow = WorkflowSchedulerService.getService()
+                .execute(workflowDefinition.getName(), workflowDefinition.getNamespace(), workflowDefinition.getTasks());
+        return Response.status(OK).entity(workflow).build();
     }
 
     @PUT
