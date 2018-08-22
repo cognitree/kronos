@@ -30,6 +30,7 @@ import com.cognitree.kronos.model.definitions.WorkflowDefinition.WorkflowTask;
 import com.cognitree.kronos.model.definitions.WorkflowDefinitionId;
 import com.cognitree.kronos.scheduler.graph.TopologicalSort;
 import com.cognitree.kronos.scheduler.store.TaskDefinitionStoreService;
+import com.cognitree.kronos.scheduler.store.TaskStoreService;
 import com.cognitree.kronos.scheduler.store.WorkflowDefinitionStoreService;
 import com.cognitree.kronos.scheduler.store.WorkflowStoreService;
 import org.quartz.CronScheduleBuilder;
@@ -52,13 +53,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
+import static com.cognitree.kronos.model.Workflow.Status.FAILED;
+import static com.cognitree.kronos.model.Workflow.Status.RUNNING;
+import static com.cognitree.kronos.model.Workflow.Status.SUCCESSFUL;
 import static org.quartz.JobBuilder.newJob;
 import static org.quartz.TriggerBuilder.newTrigger;
 
 /**
  * A workflow scheduler service is responsible for scheduling quartz job to execute the workflow.
  */
-public final class WorkflowSchedulerService implements Service {
+public final class WorkflowSchedulerService implements Service, TaskStatusChangeListener {
     private static final Logger logger = LoggerFactory.getLogger(WorkflowSchedulerService.class);
 
     private Scheduler scheduler;
@@ -71,6 +75,7 @@ public final class WorkflowSchedulerService implements Service {
     public void init() throws Exception {
         scheduler = StdSchedulerFactory.getDefaultScheduler();
         scheduleExistingWorkflow();
+        TaskSchedulerService.getService().registerListener(this);
     }
 
     private void scheduleExistingWorkflow() {
@@ -192,9 +197,10 @@ public final class WorkflowSchedulerService implements Service {
         final Workflow workflow = createWorkflow(workflowName, workflowNamespace);
         WorkflowStoreService.getService().store(workflow);
         logger.debug("Executing workflow {}", workflow);
-        orderWorkflowTasks(workflowTasks).forEach(workflowTask -> {
-            scheduleWorkflowTask(workflowTask, workflow.getId(), workflow.getNamespace());
-        });
+        orderWorkflowTasks(workflowTasks).forEach(workflowTask ->
+                scheduleWorkflowTask(workflowTask, workflow.getId(), workflow.getNamespace()));
+        workflow.setStatus(RUNNING);
+        WorkflowStoreService.getService().update(workflow);
         return workflow;
     }
 
@@ -285,6 +291,7 @@ public final class WorkflowSchedulerService implements Service {
         }
     }
 
+    // used in junit
     Scheduler getScheduler() {
         return scheduler;
     }
@@ -298,6 +305,29 @@ public final class WorkflowSchedulerService implements Service {
             }
         } catch (Exception e) {
             logger.error("Error stopping task reader service...", e);
+        }
+    }
+
+    @Override
+    public void statusChanged(Task task, Task.Status from, Task.Status to) {
+        logger.debug("Received status change notification for task {}, from {} to {}", task, from, to);
+        if (!to.isFinal()) {
+            return;
+        }
+        final String workflowId = task.getWorkflowId();
+        final String namespace = task.getNamespace();
+
+        final List<Task> tasks = TaskStoreService.getService().loadByWorkflowId(workflowId, namespace);
+        final boolean isWorkflowComplete = tasks.stream()
+                .allMatch(workflowTask -> workflowTask.getStatus().isFinal());
+
+        if (isWorkflowComplete) {
+            final boolean isSuccessful = tasks.stream()
+                    .allMatch(workflowTask -> workflowTask.getStatus() == Task.Status.SUCCESSFUL);
+            final Workflow workflow = WorkflowStoreService.getService().load(WorkflowId.create(workflowId, namespace));
+            workflow.setStatus(isSuccessful ? SUCCESSFUL : FAILED);
+            workflow.setCompletedAt(System.currentTimeMillis());
+            WorkflowStoreService.getService().update(workflow);
         }
     }
 

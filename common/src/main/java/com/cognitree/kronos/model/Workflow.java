@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import static com.cognitree.kronos.model.Workflow.Status.CREATED;
+
 /**
  * runtime instance of {@link WorkflowDefinition}
  */
@@ -29,7 +31,9 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonDeserialize(as = Workflow.class)
 public class Workflow extends WorkflowId {
     private String name;
+    private Status status = CREATED;
     private long createdAt;
+    private long completedAt;
 
     public String getName() {
         return name;
@@ -39,12 +43,28 @@ public class Workflow extends WorkflowId {
         this.name = name;
     }
 
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
     public long getCreatedAt() {
         return createdAt;
     }
 
     public void setCreatedAt(long createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public long getCompletedAt() {
+        return completedAt;
+    }
+
+    public void setCompletedAt(long completedAt) {
+        this.completedAt = completedAt;
     }
 
     @JsonIgnore
@@ -66,7 +86,13 @@ public class Workflow extends WorkflowId {
     public String toString() {
         return "Workflow{" +
                 "name='" + name + '\'' +
+                ", status=" + status +
                 ", createdAt=" + createdAt +
+                ", completedAt=" + completedAt +
                 "} " + super.toString();
+    }
+
+    public enum Status {
+        CREATED, RUNNING, FAILED, SUCCESSFUL
     }
 }

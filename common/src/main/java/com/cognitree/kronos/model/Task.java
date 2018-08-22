@@ -58,7 +58,23 @@ public interface Task extends TaskId {
     TaskId getIdentity();
 
     enum Status {
-        CREATED, WAITING, SCHEDULED, SUBMITTED, RUNNING, SUCCESSFUL, FAILED;
+        CREATED(false),
+        WAITING(false),
+        SCHEDULED(false),
+        SUBMITTED(false),
+        RUNNING(false),
+        SUCCESSFUL(true),
+        FAILED(true);
+
+        private final boolean isFinal;
+
+        Status(boolean isFinal) {
+            this.isFinal = isFinal;
+        }
+
+        public boolean isFinal() {
+            return this.isFinal;
+        }
     }
 
     class TaskResult {

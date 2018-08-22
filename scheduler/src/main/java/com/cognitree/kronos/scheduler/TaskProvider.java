@@ -292,7 +292,7 @@ final class TaskProvider {
 
     public synchronized String toString() {
         StringBuilder graphOutputBuilder = new StringBuilder();
-        graphOutputBuilder.append("Task TopologicalSort \n");
+        graphOutputBuilder.append("Task Graph \n");
         for (Task task : graph.nodes()) {
             if (graph.inDegree(task) == 0) {
                 prepareGraphOutput(task, 1, graphOutputBuilder);

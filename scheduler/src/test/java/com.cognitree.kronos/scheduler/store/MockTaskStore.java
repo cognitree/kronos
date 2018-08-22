@@ -64,7 +64,7 @@ public class MockTaskStore implements TaskStore {
 
     @Override
     public List<Task> loadByWorkflowId(String workflowId, String namespace) {
-        return null;
+        return Collections.emptyList();
     }
 
     @Override

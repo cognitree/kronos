@@ -21,7 +21,7 @@ import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Workflow;
 import com.cognitree.kronos.model.WorkflowId;
 import com.cognitree.kronos.model.definitions.TaskDefinition;
-import com.cognitree.kronos.model.definitions.WorkflowDefinition.WorkflowTask;
+import com.cognitree.kronos.response.WorkflowResponse;
 import com.cognitree.kronos.scheduler.store.WorkflowStoreService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -95,44 +95,9 @@ public class WorkflowResource {
             logger.error("No workflow exists with id {}", id);
             return Response.status(NOT_FOUND).build();
         }
-        return Response.status(OK).entity(workflow).build();
-    }
-
-    @GET
-    @Path("{id}/tasks")
-    @ApiOperation(value = "Get workflow tasks with id", response = Task.class, responseContainer = "List")
-    @ApiResponses(value = {
-            @ApiResponse(code = 404, message = "Workflow not found")})
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getWorkflowTasks(@ApiParam(value = "workflow id", required = true)
-                                     @PathParam("id") String id) {
-        WorkflowId workflowId = WorkflowId.create(id, DEFAULT_NAMESPACE);
-        final Workflow workflow = WorkflowStoreService.getService().load(workflowId);
-        if (workflow == null) {
-            logger.error("No workflow exists with id {}", workflowId);
-            return Response.status(NOT_FOUND).build();
-        }
         final List<Task> workflowTasks =
                 WorkflowStoreService.getService().getWorkflowTasks(workflow);
-        return Response.ok(workflowTasks).build();
-    }
 
-    @GET
-    @Path("{id}/taskdefs")
-    @ApiOperation(value = "Get workflow task for workflow", response = WorkflowTask.class, responseContainer = "List")
-    @ApiResponses(value = {
-            @ApiResponse(code = 404, message = "Workflow not found")})
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getWorkflowTaskDefs(@ApiParam(value = "workflow id", required = true)
-                                        @PathParam("id") String id) {
-        WorkflowId workflowId = WorkflowId.create(id, DEFAULT_NAMESPACE);
-        final Workflow workflow = WorkflowStoreService.getService().load(workflowId);
-        if (workflow == null) {
-            logger.error("No workflow exists with id {}", workflowId);
-            return Response.status(NOT_FOUND).build();
-        }
-        final List<WorkflowTask> workflowTaskDefs =
-                WorkflowStoreService.getService().getWorkflowTaskDefs(workflow);
-        return Response.ok(workflowTaskDefs).build();
+        return Response.status(OK).entity(WorkflowResponse.create(workflow, workflowTasks)).build();
     }
 }

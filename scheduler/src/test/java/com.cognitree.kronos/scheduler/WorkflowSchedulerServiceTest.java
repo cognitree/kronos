@@ -39,6 +39,7 @@ public class WorkflowSchedulerServiceTest {
     @BeforeClass
     public static void init() throws Exception {
         SCHEDULER_APP.start();
+        TaskSchedulerService.getService().deregisterListener(WorkflowSchedulerService.getService());
     }
 
     @AfterClass

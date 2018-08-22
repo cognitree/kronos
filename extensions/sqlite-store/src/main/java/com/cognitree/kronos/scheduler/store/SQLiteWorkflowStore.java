@@ -39,21 +39,23 @@ import java.util.List;
 public class SQLiteWorkflowStore implements WorkflowStore {
     private static final Logger logger = LoggerFactory.getLogger(SQLiteWorkflowStore.class);
 
-    private static final String INSERT_REPLACE_WORKFLOW = "INSERT INTO workflows VALUES (?,?,?,?)";
+    private static final String INSERT_REPLACE_WORKFLOW = "INSERT INTO workflows VALUES (?,?,?,?,?,?)";
     private static final String LOAD_WORKFLOW = "SELECT * FROM workflows";
     private static final String LOAD_WORKFLOW_BY_ID = "SELECT * FROM workflows WHERE id = ? AND namespace = ?";
     private static final String LOAD_WORKFLOW_BY_NAME_CREATED_AFTER = "SELECT * FROM workflows WHERE name = ? AND namespace = ?" +
             " AND created_at > ? AND created_at < ?";
     private static final String LOAD_ALL_WORKFLOW_CREATED_AFTER = "SELECT * FROM workflows where namespace = ? AND" +
             " created_at > ? AND created_at < ?";
-    private static final String UPDATE_WORKFLOW = "UPDATE workflows SET created_at = ? " +
+    private static final String UPDATE_WORKFLOW = "UPDATE workflows SET status = ?, created_at = ?, completed_at = ? " +
             " WHERE id = ? AND namespace = ?";
     private static final String DELETE_WORKFLOW = "DELETE FROM workflows WHERE id = ? AND namespace = ?";
     private static final String DDL_CREATE_WORKFLOW_SQL = "CREATE TABLE IF NOT EXISTS workflows (" +
             "id string," +
             "name string," +
             "namespace string," +
+            "status string," +
             "created_at integer," +
+            "completed_at integer," +
             "PRIMARY KEY(id, namespace)" +
             ")";
     private static final String CREATE_WORKFLOW_INDEX_SQL = "CREATE INDEX IF NOT EXISTS workflows_name_namespace_idx on workflows (name, namespace)";
@@ -107,7 +109,9 @@ public class SQLiteWorkflowStore implements WorkflowStore {
             preparedStatement.setString(++paramIndex, workflow.getId());
             preparedStatement.setString(++paramIndex, workflow.getName());
             preparedStatement.setString(++paramIndex, workflow.getNamespace());
+            preparedStatement.setString(++paramIndex, workflow.getStatus().name());
             preparedStatement.setLong(++paramIndex, workflow.getCreatedAt());
+            preparedStatement.setLong(++paramIndex, workflow.getCompletedAt());
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error storing workflow {} into database", workflow, e);
@@ -197,11 +201,13 @@ public class SQLiteWorkflowStore implements WorkflowStore {
     @Override
     public void update(Workflow workflow) {
         final WorkflowId workflowId = workflow.getIdentity();
-        logger.debug("Received request to update workflow with id {} to {}", workflowId, workflow);
+        logger.info("Received request to update workflow with id {} to {}", workflowId, workflow);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_WORKFLOW)) {
             int paramIndex = 0;
+            preparedStatement.setString(++paramIndex, workflow.getStatus().name());
             preparedStatement.setLong(++paramIndex, workflow.getCreatedAt());
+            preparedStatement.setLong(++paramIndex, workflow.getCompletedAt());
             preparedStatement.setString(++paramIndex, workflowId.getId());
             preparedStatement.setString(++paramIndex, workflowId.getNamespace());
             preparedStatement.execute();
@@ -230,7 +236,9 @@ public class SQLiteWorkflowStore implements WorkflowStore {
         workflow.setId(resultSet.getString(++paramIndex));
         workflow.setName(resultSet.getString(++paramIndex));
         workflow.setNamespace(resultSet.getString(++paramIndex));
+        workflow.setStatus(Workflow.Status.valueOf(resultSet.getString(++paramIndex)));
         workflow.setCreatedAt(resultSet.getLong(++paramIndex));
+        workflow.setCompletedAt(resultSet.getLong(++paramIndex));
         return workflow;
     }
 
