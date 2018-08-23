@@ -17,9 +17,11 @@
 
 package com.cognitree.kronos.scheduler;
 
+import com.cognitree.kronos.model.Namespace;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskId;
+import com.cognitree.kronos.scheduler.store.NamespaceStoreService;
 import com.cognitree.kronos.scheduler.store.TaskStoreService;
 import com.google.common.graph.GraphBuilder;
 import com.google.common.graph.MutableGraph;
@@ -62,10 +64,12 @@ final class TaskProvider {
 
     void init() {
         logger.info("Initializing task provider from task store");
-        // TODO fix : load tasks from all namespaces
-        final List<Task> tasks = TaskStoreService.getService()
-                .load(Arrays.asList(CREATED, WAITING, SCHEDULED, SUBMITTED, RUNNING), null);
-        if (tasks != null && !tasks.isEmpty()) {
+        final List<Namespace> namespaces = NamespaceStoreService.getService().load();
+        final List<Task> tasks = new ArrayList<>();
+        namespaces.forEach(namespace ->
+                TaskStoreService.getService()
+                        .load(Arrays.asList(CREATED, WAITING, SCHEDULED, SUBMITTED, RUNNING), namespace.getName()));
+        if (!tasks.isEmpty()) {
             tasks.sort(Comparator.comparing(Task::getCreatedAt));
             tasks.forEach(this::addToGraph);
             tasks.forEach(this::resolve);

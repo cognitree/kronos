@@ -37,7 +37,7 @@ public class MockWorkflowStore implements WorkflowStore {
     }
 
     @Override
-    public void init(ObjectNode storeConfig) throws Exception {
+    public void init(ObjectNode storeConfig) {
 
     }
 
@@ -47,7 +47,7 @@ public class MockWorkflowStore implements WorkflowStore {
     }
 
     @Override
-    public List<Workflow> load() {
+    public List<Workflow> load(String namespace) {
         return Collections.emptyList();
     }
 

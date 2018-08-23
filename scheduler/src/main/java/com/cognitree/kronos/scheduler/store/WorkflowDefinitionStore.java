@@ -20,8 +20,13 @@ package com.cognitree.kronos.scheduler.store;
 import com.cognitree.kronos.model.definitions.WorkflowDefinition;
 import com.cognitree.kronos.model.definitions.WorkflowDefinitionId;
 
+import java.util.List;
+
 /**
  * An interface exposing API's to provide {@link WorkflowDefinition} persistence.
  */
 public interface WorkflowDefinitionStore extends Store<WorkflowDefinition, WorkflowDefinitionId> {
+
+    List<WorkflowDefinition> load(String namespace);
+
 }

@@ -20,6 +20,7 @@ package com.cognitree.kronos.scheduler;
 import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.MutableTask;
+import com.cognitree.kronos.model.Namespace;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Workflow;
 import com.cognitree.kronos.model.WorkflowId;
@@ -29,6 +30,7 @@ import com.cognitree.kronos.model.definitions.WorkflowDefinition;
 import com.cognitree.kronos.model.definitions.WorkflowDefinition.WorkflowTask;
 import com.cognitree.kronos.model.definitions.WorkflowDefinitionId;
 import com.cognitree.kronos.scheduler.graph.TopologicalSort;
+import com.cognitree.kronos.scheduler.store.NamespaceStoreService;
 import com.cognitree.kronos.scheduler.store.TaskDefinitionStoreService;
 import com.cognitree.kronos.scheduler.store.TaskStoreService;
 import com.cognitree.kronos.scheduler.store.WorkflowDefinitionStoreService;
@@ -48,6 +50,7 @@ import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -79,8 +82,10 @@ public final class WorkflowSchedulerService implements Service, TaskStatusChange
     }
 
     private void scheduleExistingWorkflow() {
-        // TODO load per namespace
-        final List<WorkflowDefinition> workflowDefinitions = WorkflowDefinitionStoreService.getService().load();
+        final List<Namespace> namespaces = NamespaceStoreService.getService().load();
+        final List<WorkflowDefinition> workflowDefinitions = new ArrayList<>();
+        namespaces.forEach(namespace ->
+                workflowDefinitions.addAll(WorkflowDefinitionStoreService.getService().load(namespace.getName())));
         workflowDefinitions.forEach(workflowDefinition -> {
             logger.info("Scheduling existing workflow definition {}", workflowDefinition);
             try {

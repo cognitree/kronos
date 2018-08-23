@@ -40,7 +40,7 @@ public class SQLiteWorkflowStore implements WorkflowStore {
     private static final Logger logger = LoggerFactory.getLogger(SQLiteWorkflowStore.class);
 
     private static final String INSERT_REPLACE_WORKFLOW = "INSERT INTO workflows VALUES (?,?,?,?,?,?)";
-    private static final String LOAD_WORKFLOW = "SELECT * FROM workflows";
+    private static final String LOAD_WORKFLOW_BY_NAMESPACE = "SELECT * FROM workflows WHERE namespace = ?";
     private static final String LOAD_WORKFLOW_BY_ID = "SELECT * FROM workflows WHERE id = ? AND namespace = ?";
     private static final String LOAD_WORKFLOW_BY_NAME_CREATED_AFTER = "SELECT * FROM workflows WHERE name = ? AND namespace = ?" +
             " AND created_at > ? AND created_at < ?";
@@ -66,7 +66,7 @@ public class SQLiteWorkflowStore implements WorkflowStore {
     public void init(ObjectNode storeConfig) throws Exception {
         logger.info("Initializing SQLite workflow store");
         initDataSource(storeConfig);
-        initTaskStore();
+        initWorkflowStore();
     }
 
 
@@ -90,7 +90,7 @@ public class SQLiteWorkflowStore implements WorkflowStore {
         }
     }
 
-    private void initTaskStore() throws SQLException {
+    private void initWorkflowStore() throws SQLException {
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement()) {
             statement.setQueryTimeout(30);
@@ -119,10 +119,12 @@ public class SQLiteWorkflowStore implements WorkflowStore {
     }
 
     @Override
-    public List<Workflow> load() {
-        logger.debug("Received request to get all workflow");
+    public List<Workflow> load(String namespace) {
+        logger.debug("Received request to get all workflow  in namespace {}", namespace);
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_WORKFLOW)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_WORKFLOW_BY_NAMESPACE)) {
+            int paramIndex = 0;
+            preparedStatement.setString(++paramIndex, namespace);
             final ResultSet resultSet = preparedStatement.executeQuery();
             final ArrayList<Workflow> workflows = new ArrayList<>();
             while (resultSet.next()) {
@@ -130,7 +132,7 @@ public class SQLiteWorkflowStore implements WorkflowStore {
             }
             return workflows;
         } catch (Exception e) {
-            logger.error("Error fetching all workflow from database", e);
+            logger.error("Error fetching all workflow from database in namespace {}", namespace, e);
         }
         return Collections.emptyList();
     }

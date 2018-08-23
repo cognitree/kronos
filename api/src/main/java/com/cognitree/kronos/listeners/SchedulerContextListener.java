@@ -38,7 +38,7 @@ public class SchedulerContextListener implements ServletContextListener {
             schedulerApp.start();
         } catch (Exception e) {
             logger.error("Error starting scheduler", e);
-            throw new RuntimeException(e);
+            System.exit(0);
         }
     }
 

@@ -52,19 +52,12 @@ public class WorkflowStoreService implements StoreService<Workflow, WorkflowId> 
     }
 
     @Override
-    public void stop() {
-        workflowStore.stop();
-    }
-
-
-    @Override
     public void store(Workflow workflow) {
         workflowStore.store(workflow);
     }
 
-    @Override
-    public List<Workflow> load() {
-        return workflowStore.load();
+    public List<Workflow> load(String namespace) {
+        return workflowStore.load(namespace);
     }
 
     @Override
@@ -100,5 +93,10 @@ public class WorkflowStoreService implements StoreService<Workflow, WorkflowId> 
     @Override
     public void delete(WorkflowId workflowId) {
         workflowStore.delete(workflowId);
+    }
+
+    @Override
+    public void stop() {
+        workflowStore.stop();
     }
 }

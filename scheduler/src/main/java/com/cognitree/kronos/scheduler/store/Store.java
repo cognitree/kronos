@@ -19,8 +19,6 @@ package com.cognitree.kronos.scheduler.store;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import java.util.List;
-
 public interface Store<E, T> {
 
     /**
@@ -32,9 +30,6 @@ public interface Store<E, T> {
     void init(ObjectNode storeConfig) throws Exception;
 
     void store(E entity);
-
-    // TODO: fix api exposed does not have a concept of namespace
-    List<E> load();
 
     E load(T identity);
 

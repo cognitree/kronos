@@ -65,7 +65,7 @@ public class SQLiteTaskDefinitionStore implements TaskDefinitionStore {
     public void init(ObjectNode storeConfig) throws Exception {
         logger.info("Initializing SQLite task definitions store");
         initDataSource(storeConfig);
-        initTaskStore();
+        initTaskDefinitionStore();
     }
 
     private void initDataSource(ObjectNode storeConfig) {
@@ -88,7 +88,7 @@ public class SQLiteTaskDefinitionStore implements TaskDefinitionStore {
         }
     }
 
-    private void initTaskStore() throws SQLException {
+    private void initTaskDefinitionStore() throws SQLException {
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement()) {
             statement.setQueryTimeout(30);

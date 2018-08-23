@@ -44,7 +44,8 @@ public class SQLiteWorkflowDefinitionStore implements WorkflowDefinitionStore {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final String INSERT_REPLACE_WORKFLOW_DEFINITION_DEFINITION = "INSERT INTO workflow_definitions VALUES (?,?,?,?,?,?)";
-    private static final String LOAD_ALL_WORKFLOW_DEFINITION = "SELECT * FROM workflow_definitions";
+    private static final String LOAD_ALL_WORKFLOW_DEFINITION_BY_NAMESPACE = "SELECT * FROM workflow_definitions " +
+            "WHERE namespace = ?";
     private static final String UPDATE_WORKFLOW_DEFINITION = "UPDATE workflow_definitions set description = ?, schedule = ?," +
             " tasks = ?, enabled = ? where name = ? AND namespace = ?";
     private static final String DELETE_WORKFLOW_DEFINITION = "DELETE FROM workflow_definitions where name = ? AND namespace = ?";
@@ -68,7 +69,7 @@ public class SQLiteWorkflowDefinitionStore implements WorkflowDefinitionStore {
     public void init(ObjectNode storeConfig) throws Exception {
         logger.info("Initializing SQLite workflow definition store");
         initDataSource(storeConfig);
-        initTaskStore();
+        initWorkflowDefinitionStore();
     }
 
     private void initDataSource(ObjectNode storeConfig) {
@@ -91,7 +92,7 @@ public class SQLiteWorkflowDefinitionStore implements WorkflowDefinitionStore {
         }
     }
 
-    private void initTaskStore() throws SQLException {
+    private void initWorkflowDefinitionStore() throws SQLException {
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement()) {
             statement.setQueryTimeout(30);
@@ -118,10 +119,12 @@ public class SQLiteWorkflowDefinitionStore implements WorkflowDefinitionStore {
     }
 
     @Override
-    public List<WorkflowDefinition> load() {
-        logger.debug("Received request to get all workflow definition");
+    public List<WorkflowDefinition> load(String namespace) {
+        logger.debug("Received request to get all workflow definition in namespace {}", namespace);
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_ALL_WORKFLOW_DEFINITION)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_ALL_WORKFLOW_DEFINITION_BY_NAMESPACE)) {
+            int paramIndex = 0;
+            preparedStatement.setString(++paramIndex, namespace);
             final ResultSet resultSet = preparedStatement.executeQuery();
             List<WorkflowDefinition> workflowDefinitions = new ArrayList<>();
             while (resultSet.next()) {
@@ -129,7 +132,7 @@ public class SQLiteWorkflowDefinitionStore implements WorkflowDefinitionStore {
             }
             return workflowDefinitions;
         } catch (Exception e) {
-            logger.error("Error fetching workflow definitions from database", e);
+            logger.error("Error fetching workflow definitions from database in namespace {}", namespace, e);
             return Collections.emptyList();
         }
     }

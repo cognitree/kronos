@@ -44,8 +44,8 @@ import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 
-@Path("taskdefs")
-@Api(value = "task definition", description = "manage task definitions")
+@Path("/definitions/{res:tasks|t}")
+@Api(value = "task definitions", description = "manage task definitions")
 public class TaskDefinitionResource {
     private static final Logger logger = LoggerFactory.getLogger(TaskDefinitionResource.class);
 
@@ -66,7 +66,7 @@ public class TaskDefinitionResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getTaskDefinition(@ApiParam(value = "task definition name", required = true)
                                       @PathParam("name") String name) {
-        logger.info("Received request to get task task definition with name {}", name);
+        logger.info("Received request to get task definition with name {}", name);
         TaskDefinitionId taskDefinitionId = TaskDefinitionId.create(name);
         final TaskDefinition taskDefinition = TaskDefinitionStoreService.getService().load(taskDefinitionId);
         if (taskDefinition == null) {
@@ -114,7 +114,6 @@ public class TaskDefinitionResource {
     @ApiOperation(value = "Delete task definition")
     @ApiResponses(value = {
             @ApiResponse(code = 404, message = "Task definition not found")})
-    @Produces(MediaType.APPLICATION_JSON)
     public Response deleteTaskDefinition(@ApiParam(value = "task definition name", required = true)
                                          @PathParam("name") String name) {
         logger.info("Received request to delete task definition with name {}", name);

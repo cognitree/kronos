@@ -28,6 +28,8 @@ import java.util.List;
  */
 public interface TaskStore extends Store<Task, TaskId> {
 
+    List<Task> load(String namespace);
+
     List<Task> loadByWorkflowId(String workflowId, String namespace);
 
     List<Task> load(List<Status> statuses, String namespace);

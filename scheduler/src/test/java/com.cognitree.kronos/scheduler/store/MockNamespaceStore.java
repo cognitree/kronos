@@ -17,59 +17,42 @@
 
 package com.cognitree.kronos.scheduler.store;
 
-import com.cognitree.kronos.model.Task;
-import com.cognitree.kronos.model.Task.Status;
-import com.cognitree.kronos.model.TaskId;
+import com.cognitree.kronos.model.Namespace;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Collections;
 import java.util.List;
 
-public class MockTaskStore implements TaskStore {
-
+public class MockNamespaceStore implements NamespaceStore {
 
     @Override
     public void init(ObjectNode storeConfig) {
-    }
-
-    @Override
-    public void store(Task task) {
 
     }
 
     @Override
-    public List<Task> load(String namespace) {
+    public List<Namespace> load() {
         return Collections.emptyList();
     }
 
     @Override
-    public Task load(TaskId identity) {
+    public void store(Namespace entity) {
+
+    }
+
+    @Override
+    public Namespace load(String identity) {
         return null;
     }
 
     @Override
-    public void update(Task entity) {
+    public void update(Namespace entity) {
 
     }
 
     @Override
-    public void delete(TaskId identity) {
+    public void delete(String identity) {
 
-    }
-
-    @Override
-    public List<Task> load(List<Status> statuses, String namespace) {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public List<Task> loadByWorkflowId(String workflowId, String namespace) {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public List<Task> loadByNameAndWorkflowId(String taskName, String taskGroup, String namespace) {
-        return Collections.emptyList();
     }
 
     @Override

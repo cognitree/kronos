@@ -19,6 +19,7 @@ package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.queue.QueueConfig;
+import com.cognitree.kronos.scheduler.store.NamespaceStoreService;
 import com.cognitree.kronos.scheduler.store.StoreServiceProvider;
 import com.cognitree.kronos.scheduler.store.TaskDefinitionStoreService;
 import com.cognitree.kronos.scheduler.store.TaskStoreService;
@@ -65,6 +66,7 @@ public class SchedulerApp {
         registerService(schedulerConfig, queueConfig);
 
         // initialize service
+        NamespaceStoreService.getService().init();
         TaskDefinitionStoreService.getService().init();
         TaskStoreService.getService().init();
         WorkflowDefinitionStoreService.getService().init();
@@ -73,6 +75,7 @@ public class SchedulerApp {
         WorkflowSchedulerService.getService().init();
 
         // start service
+        NamespaceStoreService.getService().start();
         TaskDefinitionStoreService.getService().start();
         TaskStoreService.getService().start();
         WorkflowDefinitionStoreService.getService().start();
@@ -82,6 +85,10 @@ public class SchedulerApp {
     }
 
     private void registerService(SchedulerConfig schedulerConfig, QueueConfig queueConfig) {
+        NamespaceStoreService namespaceStoreService =
+                new NamespaceStoreService(schedulerConfig.getNamespaceStoreConfig());
+        StoreServiceProvider.registerStoreService(namespaceStoreService);
+
         TaskDefinitionStoreService taskDefinitionStoreService =
                 new TaskDefinitionStoreService(schedulerConfig.getTaskDefinitionStoreConfig());
         StoreServiceProvider.registerStoreService(taskDefinitionStoreService);

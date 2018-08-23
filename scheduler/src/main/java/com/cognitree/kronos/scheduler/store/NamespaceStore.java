@@ -17,46 +17,14 @@
 
 package com.cognitree.kronos.scheduler.store;
 
-import com.cognitree.kronos.model.definitions.WorkflowDefinition;
-import com.cognitree.kronos.model.definitions.WorkflowDefinitionId;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.cognitree.kronos.model.Namespace;
 
-import java.util.Collections;
 import java.util.List;
 
-public class MockWorkflowDefinitionStore implements WorkflowDefinitionStore {
-    @Override
-    public void init(ObjectNode storeConfig) {
+/**
+ * An interface exposing API's to provide {@link Namespace} persistence.
+ */
+public interface NamespaceStore extends Store<Namespace, String> {
 
-    }
-
-    @Override
-    public void store(WorkflowDefinition entity) {
-
-    }
-
-    @Override
-    public List<WorkflowDefinition> load(String namespace) {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public WorkflowDefinition load(WorkflowDefinitionId identity) {
-        return null;
-    }
-
-    @Override
-    public void update(WorkflowDefinition entity) {
-
-    }
-
-    @Override
-    public void delete(WorkflowDefinitionId identity) {
-
-    }
-
-    @Override
-    public void stop() {
-
-    }
+    List<Namespace> load();
 }

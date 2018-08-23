@@ -20,9 +20,12 @@ package com.cognitree.kronos.scheduler.store;
 import com.cognitree.kronos.model.definitions.TaskDefinition;
 import com.cognitree.kronos.model.definitions.TaskDefinitionId;
 
+import java.util.List;
+
 /**
  * An interface exposing API's to provide {@link TaskDefinition} persistence.
  */
 public interface TaskDefinitionStore extends Store<TaskDefinition, TaskDefinitionId> {
 
+    List<TaskDefinition> load();
 }

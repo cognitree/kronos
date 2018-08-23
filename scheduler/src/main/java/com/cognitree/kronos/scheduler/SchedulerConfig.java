@@ -17,11 +17,14 @@
 
 package com.cognitree.kronos.scheduler;
 
+import com.cognitree.kronos.model.Namespace;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Workflow;
 import com.cognitree.kronos.model.definitions.TaskDefinition;
 import com.cognitree.kronos.model.definitions.WorkflowDefinition;
 import com.cognitree.kronos.scheduler.policies.TimeoutPolicyConfig;
+import com.cognitree.kronos.scheduler.store.NamespaceStore;
+import com.cognitree.kronos.scheduler.store.NamespaceStoreConfig;
 import com.cognitree.kronos.scheduler.store.TaskDefinitionStore;
 import com.cognitree.kronos.scheduler.store.TaskDefinitionStoreConfig;
 import com.cognitree.kronos.scheduler.store.TaskStore;
@@ -40,6 +43,11 @@ import java.util.Objects;
  */
 public class SchedulerConfig {
 
+    /**
+     * {@link NamespaceStore} configuration, required by the scheduler to instantiate the namespace store to be
+     * used for storing the {@link Namespace}.
+     */
+    private NamespaceStoreConfig namespaceStoreConfig;
     /**
      * {@link TaskDefinitionStore} configuration, required by the scheduler to instantiate the task definition store
      * to be used for storing the {@link TaskDefinition}.
@@ -80,6 +88,14 @@ public class SchedulerConfig {
      * <p>
      */
     private String taskPurgeInterval = "1d";
+
+    public NamespaceStoreConfig getNamespaceStoreConfig() {
+        return namespaceStoreConfig;
+    }
+
+    public void setNamespaceStoreConfig(NamespaceStoreConfig namespaceStoreConfig) {
+        this.namespaceStoreConfig = namespaceStoreConfig;
+    }
 
     public TaskDefinitionStoreConfig getTaskDefinitionStoreConfig() {
         return taskDefinitionStoreConfig;
@@ -134,7 +150,8 @@ public class SchedulerConfig {
         if (this == o) return true;
         if (!(o instanceof SchedulerConfig)) return false;
         SchedulerConfig that = (SchedulerConfig) o;
-        return Objects.equals(taskDefinitionStoreConfig, that.taskDefinitionStoreConfig) &&
+        return Objects.equals(namespaceStoreConfig, that.namespaceStoreConfig) &&
+                Objects.equals(taskDefinitionStoreConfig, that.taskDefinitionStoreConfig) &&
                 Objects.equals(taskStoreConfig, that.taskStoreConfig) &&
                 Objects.equals(workflowDefinitionStoreConfig, that.workflowDefinitionStoreConfig) &&
                 Objects.equals(workflowStoreConfig, that.workflowStoreConfig) &&
@@ -145,13 +162,14 @@ public class SchedulerConfig {
     @Override
     public int hashCode() {
 
-        return Objects.hash(taskDefinitionStoreConfig, taskStoreConfig, workflowDefinitionStoreConfig, workflowStoreConfig, timeoutPolicyConfig, taskPurgeInterval);
+        return Objects.hash(namespaceStoreConfig, taskDefinitionStoreConfig, taskStoreConfig, workflowDefinitionStoreConfig, workflowStoreConfig, timeoutPolicyConfig, taskPurgeInterval);
     }
 
     @Override
     public String toString() {
         return "SchedulerConfig{" +
-                "taskDefinitionStoreConfig=" + taskDefinitionStoreConfig +
+                "namespaceStoreConfig=" + namespaceStoreConfig +
+                ", taskDefinitionStoreConfig=" + taskDefinitionStoreConfig +
                 ", taskStoreConfig=" + taskStoreConfig +
                 ", workflowDefinitionStoreConfig=" + workflowDefinitionStoreConfig +
                 ", workflowStoreConfig=" + workflowStoreConfig +

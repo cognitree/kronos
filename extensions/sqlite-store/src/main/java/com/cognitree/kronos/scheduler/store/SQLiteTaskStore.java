@@ -48,7 +48,7 @@ public class SQLiteTaskStore implements TaskStore {
     private static final String INSERT_REPLACE_TASK = "INSERT INTO tasks VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_TASK = "UPDATE tasks SET status = ?, status_message = ?, submitted_at = ?, " +
             "completed_at = ?, context = ? WHERE id = ? AND workflow_id = ? AND namespace = ?";
-    private static final String LOAD_ALL_TASKS = "SELECT * FROM tasks";
+    private static final String LOAD_ALL_TASKS_BY_NAMESPACE = "SELECT * FROM tasks WHERE namespace = ?";
     private static final String LOAD_TASK = "SELECT * FROM tasks WHERE id = ? AND workflow_id = ? AND namespace = ?";
     private static final String LOAD_TASK_BY_STATUS = "SELECT * FROM tasks WHERE status IN ($statuses)";
     private static final String LOAD_TASK_BY_NAME_WORKFLOW_ID = "SELECT * FROM tasks WHERE name = ? AND workflow_id = ?" +
@@ -154,10 +154,12 @@ public class SQLiteTaskStore implements TaskStore {
     }
 
     @Override
-    public List<Task> load() {
-        logger.debug("Received request to get all tasks");
+    public List<Task> load(String namespace) {
+        logger.debug("Received request to get all tasks in namespace {}", namespace);
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_ALL_TASKS)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_ALL_TASKS_BY_NAMESPACE)) {
+            int paramIndex = 0;
+            preparedStatement.setString(++paramIndex, namespace);
             final ResultSet resultSet = preparedStatement.executeQuery();
             List<Task> tasks = new ArrayList<>();
             while (resultSet.next()) {
@@ -165,7 +167,7 @@ public class SQLiteTaskStore implements TaskStore {
             }
             return tasks;
         } catch (Exception e) {
-            logger.error("Error loading all tasks from database", e);
+            logger.error("Error loading all tasks from database in namespace {}", namespace, e);
             return Collections.emptyList();
         }
     }

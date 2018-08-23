@@ -1,3 +1,11 @@
+# configure namespace store
+namespaceStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.MockNamespaceStore
+  config:
+    connectionURL: jdbc:sqlite:kronos.db
+    username:
+    password:
+
 # configure task definition store
 taskDefinitionStoreConfig:
   storeClass: com.cognitree.kronos.scheduler.store.MockTaskDefinitionStore

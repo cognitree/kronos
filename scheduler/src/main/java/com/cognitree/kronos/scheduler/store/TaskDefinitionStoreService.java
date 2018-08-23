@@ -47,11 +47,6 @@ public class TaskDefinitionStoreService implements StoreService<TaskDefinition, 
 
     }
 
-    @Override
-    public void stop() {
-        taskDefinitionStore.stop();
-    }
-
     public List<TaskDefinition> load() {
         return taskDefinitionStore.load();
     }
@@ -70,6 +65,11 @@ public class TaskDefinitionStoreService implements StoreService<TaskDefinition, 
 
     public void delete(TaskDefinitionId taskDefinitionId) {
         taskDefinitionStore.delete(taskDefinitionId);
+    }
+
+    @Override
+    public void stop() {
+        taskDefinitionStore.stop();
     }
 
 }

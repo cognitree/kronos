@@ -45,12 +45,8 @@ public class TaskStoreService implements StoreService<Task, TaskId> {
 
     }
 
-    public void stop() {
-        taskStore.stop();
-    }
-
-    public List<Task> load() {
-        return taskStore.load();
+    public List<Task> load(String namespace) {
+        return taskStore.load(namespace);
     }
 
     public Task load(TaskId taskId) {
@@ -79,5 +75,9 @@ public class TaskStoreService implements StoreService<Task, TaskId> {
 
     public void delete(TaskId taskId) {
         taskStore.delete(taskId);
+    }
+
+    public void stop() {
+        taskStore.stop();
     }
 }
