@@ -55,7 +55,6 @@ public class TaskSchedulerServiceTest {
     public static void init() throws Exception {
         SCHEDULER_APP.start();
         TaskSchedulerService.getService().registerListener(new MockTaskStatusChangeListener());
-        TaskSchedulerService.getService().deregisterListener(WorkflowSchedulerService.getService());
     }
 
     @AfterClass

@@ -31,7 +31,6 @@ import com.cognitree.kronos.queue.producer.Producer;
 import com.cognitree.kronos.queue.producer.ProducerConfig;
 import com.cognitree.kronos.scheduler.policies.TimeoutPolicy;
 import com.cognitree.kronos.scheduler.policies.TimeoutPolicyConfig;
-import com.cognitree.kronos.scheduler.store.TaskStoreConfig;
 import com.cognitree.kronos.util.DateTimeUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -80,7 +79,6 @@ public final class TaskSchedulerService implements Service {
     private final ProducerConfig producerConfig;
     private final ConsumerConfig consumerConfig;
     private final Map<String, TimeoutPolicyConfig> policyConfigMap;
-    private final TaskStoreConfig taskStoreConfig;
     private final String taskPurgeInterval;
     private final String statusQueue;
 
@@ -98,7 +96,6 @@ public final class TaskSchedulerService implements Service {
 
     public TaskSchedulerService(SchedulerConfig schedulerConfig, QueueConfig queueConfig) {
         this.policyConfigMap = schedulerConfig.getTimeoutPolicyConfig();
-        this.taskStoreConfig = schedulerConfig.getTaskStoreConfig();
         this.taskPurgeInterval = schedulerConfig.getTaskPurgeInterval();
         this.producerConfig = queueConfig.getProducerConfig();
         this.consumerConfig = queueConfig.getConsumerConfig();
@@ -133,7 +130,7 @@ public final class TaskSchedulerService implements Service {
     }
 
     private void initTaskProvider() {
-        logger.info("Initializing task store with config {}", taskStoreConfig);
+        logger.info("Initializing task provider");
         taskProvider = new TaskProvider();
         taskProvider.init();
     }
@@ -259,7 +256,7 @@ public final class TaskSchedulerService implements Service {
         statusChangeListeners.remove(statusChangeListener);
     }
 
-    public synchronized void schedule(Task task) {
+    synchronized void schedule(Task task) {
         logger.info("Received request to schedule task: {}", task);
         final boolean isAdded = taskProvider.add(task);
         if (isAdded) {

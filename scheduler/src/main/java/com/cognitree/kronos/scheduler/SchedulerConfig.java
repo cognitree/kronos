@@ -24,15 +24,11 @@ import com.cognitree.kronos.model.definitions.TaskDefinition;
 import com.cognitree.kronos.model.definitions.WorkflowDefinition;
 import com.cognitree.kronos.scheduler.policies.TimeoutPolicyConfig;
 import com.cognitree.kronos.scheduler.store.NamespaceStore;
-import com.cognitree.kronos.scheduler.store.NamespaceStoreConfig;
+import com.cognitree.kronos.scheduler.store.StoreConfig;
 import com.cognitree.kronos.scheduler.store.TaskDefinitionStore;
-import com.cognitree.kronos.scheduler.store.TaskDefinitionStoreConfig;
 import com.cognitree.kronos.scheduler.store.TaskStore;
-import com.cognitree.kronos.scheduler.store.TaskStoreConfig;
 import com.cognitree.kronos.scheduler.store.WorkflowDefinitionStore;
-import com.cognitree.kronos.scheduler.store.WorkflowDefinitionStoreConfig;
 import com.cognitree.kronos.scheduler.store.WorkflowStore;
-import com.cognitree.kronos.scheduler.store.WorkflowStoreConfig;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,27 +43,27 @@ public class SchedulerConfig {
      * {@link NamespaceStore} configuration, required by the scheduler to instantiate the namespace store to be
      * used for storing the {@link Namespace}.
      */
-    private NamespaceStoreConfig namespaceStoreConfig;
+    private StoreConfig namespaceStoreConfig;
     /**
      * {@link TaskDefinitionStore} configuration, required by the scheduler to instantiate the task definition store
      * to be used for storing the {@link TaskDefinition}.
      */
-    private TaskDefinitionStoreConfig taskDefinitionStoreConfig;
+    private StoreConfig taskDefinitionStoreConfig;
     /**
      * {@link TaskStore} configuration, required by the scheduler to instantiate the task store to be used for storing
      * the {@link Task}.
      */
-    private TaskStoreConfig taskStoreConfig;
+    private StoreConfig taskStoreConfig;
     /**
      * {@link WorkflowDefinitionStore} configuration, required by the scheduler to instantiate the workflow definition
      * store to be used for storing {@link WorkflowDefinition}.
      */
-    private WorkflowDefinitionStoreConfig workflowDefinitionStoreConfig;
+    private StoreConfig workflowDefinitionStoreConfig;
     /**
      * {@link WorkflowStore} configuration, required by the scheduler to instantiate the workflow store to be used for storing
      * the {@link Workflow}.
      */
-    private WorkflowStoreConfig workflowStoreConfig;
+    private StoreConfig workflowStoreConfig;
     /**
      * Map of policy configuration, required by the scheduler to configure timeout policies to apply in case of timeout.
      * <p>
@@ -89,43 +85,43 @@ public class SchedulerConfig {
      */
     private String taskPurgeInterval = "1d";
 
-    public NamespaceStoreConfig getNamespaceStoreConfig() {
+    public StoreConfig getNamespaceStoreConfig() {
         return namespaceStoreConfig;
     }
 
-    public void setNamespaceStoreConfig(NamespaceStoreConfig namespaceStoreConfig) {
+    public void setNamespaceStoreConfig(StoreConfig namespaceStoreConfig) {
         this.namespaceStoreConfig = namespaceStoreConfig;
     }
 
-    public TaskDefinitionStoreConfig getTaskDefinitionStoreConfig() {
+    public StoreConfig getTaskDefinitionStoreConfig() {
         return taskDefinitionStoreConfig;
     }
 
-    public void setTaskDefinitionStoreConfig(TaskDefinitionStoreConfig taskDefinitionStoreConfig) {
+    public void setTaskDefinitionStoreConfig(StoreConfig taskDefinitionStoreConfig) {
         this.taskDefinitionStoreConfig = taskDefinitionStoreConfig;
     }
 
-    public TaskStoreConfig getTaskStoreConfig() {
+    public StoreConfig getTaskStoreConfig() {
         return taskStoreConfig;
     }
 
-    public void setTaskStoreConfig(TaskStoreConfig taskStoreConfig) {
+    public void setTaskStoreConfig(StoreConfig taskStoreConfig) {
         this.taskStoreConfig = taskStoreConfig;
     }
 
-    public WorkflowDefinitionStoreConfig getWorkflowDefinitionStoreConfig() {
+    public StoreConfig getWorkflowDefinitionStoreConfig() {
         return workflowDefinitionStoreConfig;
     }
 
-    public void setWorkflowDefinitionStoreConfig(WorkflowDefinitionStoreConfig workflowDefinitionStoreConfig) {
+    public void setWorkflowDefinitionStoreConfig(StoreConfig workflowDefinitionStoreConfig) {
         this.workflowDefinitionStoreConfig = workflowDefinitionStoreConfig;
     }
 
-    public WorkflowStoreConfig getWorkflowStoreConfig() {
+    public StoreConfig getWorkflowStoreConfig() {
         return workflowStoreConfig;
     }
 
-    public void setWorkflowStoreConfig(WorkflowStoreConfig workflowStoreConfig) {
+    public void setWorkflowStoreConfig(StoreConfig workflowStoreConfig) {
         this.workflowStoreConfig = workflowStoreConfig;
     }
 

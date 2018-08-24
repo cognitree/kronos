@@ -30,11 +30,6 @@ import com.cognitree.kronos.model.definitions.WorkflowDefinition;
 import com.cognitree.kronos.model.definitions.WorkflowDefinition.WorkflowTask;
 import com.cognitree.kronos.model.definitions.WorkflowDefinitionId;
 import com.cognitree.kronos.scheduler.graph.TopologicalSort;
-import com.cognitree.kronos.scheduler.store.NamespaceStoreService;
-import com.cognitree.kronos.scheduler.store.TaskDefinitionStoreService;
-import com.cognitree.kronos.scheduler.store.TaskStoreService;
-import com.cognitree.kronos.scheduler.store.WorkflowDefinitionStoreService;
-import com.cognitree.kronos.scheduler.store.WorkflowStoreService;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.CronTrigger;
 import org.quartz.Job;
@@ -65,7 +60,7 @@ import static org.quartz.TriggerBuilder.newTrigger;
 /**
  * A workflow scheduler service is responsible for scheduling quartz job to execute the workflow.
  */
-public final class WorkflowSchedulerService implements Service, TaskStatusChangeListener {
+public final class WorkflowSchedulerService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(WorkflowSchedulerService.class);
 
     private Scheduler scheduler;
@@ -77,15 +72,15 @@ public final class WorkflowSchedulerService implements Service, TaskStatusChange
     @Override
     public void init() throws Exception {
         scheduler = StdSchedulerFactory.getDefaultScheduler();
-        scheduleExistingWorkflow();
-        TaskSchedulerService.getService().registerListener(this);
+        scheduleExistingWorkflows();
+        TaskSchedulerService.getService().registerListener(new WorkflowLifecycleHandler());
     }
 
-    private void scheduleExistingWorkflow() {
-        final List<Namespace> namespaces = NamespaceStoreService.getService().load();
+    private void scheduleExistingWorkflows() {
+        final List<Namespace> namespaces = NamespaceService.getService().get();
         final List<WorkflowDefinition> workflowDefinitions = new ArrayList<>();
         namespaces.forEach(namespace ->
-                workflowDefinitions.addAll(WorkflowDefinitionStoreService.getService().load(namespace.getName())));
+                workflowDefinitions.addAll(WorkflowDefinitionService.getService().get(namespace.getName())));
         workflowDefinitions.forEach(workflowDefinition -> {
             logger.info("Scheduling existing workflow definition {}", workflowDefinition);
             try {
@@ -101,87 +96,35 @@ public final class WorkflowSchedulerService implements Service, TaskStatusChange
         scheduler.start();
     }
 
-    public void add(WorkflowDefinition workflowDefinition) throws Exception {
-        logger.info("Received request to add workflow definition {}", workflowDefinition);
-        validate(workflowDefinition);
-        if (workflowDefinition.getSchedule() != null) {
-            schedule(workflowDefinition);
-        }
-    }
-
-    /**
-     * validate workflow definition
-     *
-     * @param workflowDefinition
-     * @return
-     */
-    public void validate(WorkflowDefinition workflowDefinition) throws Exception {
-        final HashMap<String, WorkflowTask> workflowTaskMap = new HashMap<>();
-        final TopologicalSort<WorkflowTask> topologicalSort = new TopologicalSort<>();
-        final List<WorkflowTask> workflowTasks = workflowDefinition.getTasks();
-        for (WorkflowTask task : workflowTasks) {
-            final String taskDefinitionName = task.getTaskDefinitionName();
-            if (TaskDefinitionStoreService.getService().load(TaskDefinitionId.create(taskDefinitionName)) == null) {
-                throw new ValidationException("missing task definition with name " + taskDefinitionName);
-            }
-
-            final String taskName = task.getName();
-            if (task.isEnabled()) {
-                workflowTaskMap.put(taskName, task);
-                topologicalSort.add(task);
-            }
-        }
-
-        for (WorkflowTask workflowTask : workflowTasks) {
-            final List<String> dependsOn = workflowTask.getDependsOn();
-            if (dependsOn != null && !dependsOn.isEmpty()) {
-                for (String dependentTask : dependsOn) {
-                    final WorkflowTask dependeeTask = workflowTaskMap.get(dependentTask);
-                    if (dependeeTask == null) {
-                        throw new ValidationException("missing task " + dependentTask);
-                    }
-                    topologicalSort.add(dependeeTask, workflowTask);
-                }
-            }
-        }
-        if (!topologicalSort.isDag()) {
-            throw new ValidationException("Invalid workflow definition contains cyclic dependency)");
-        }
-    }
-
-    private void schedule(WorkflowDefinition workflowDefinition) {
+    void schedule(WorkflowDefinition workflowDefinition) throws SchedulerException {
         if (!workflowDefinition.isEnabled()) {
             logger.warn("Workflow definition {} is disabled from scheduling", workflowDefinition);
             return;
         }
 
-        try {
-            final WorkflowDefinitionId workflowDefinitionId = workflowDefinition.getIdentity();
-            JobDataMap jobDataMap = new JobDataMap();
-            jobDataMap.put("name", workflowDefinitionId.getName());
-            jobDataMap.put("namespace", workflowDefinitionId.getNamespace());
-            jobDataMap.put("tasks", workflowDefinition.getTasks());
-            JobDetail jobDetail = newJob(WorkflowSchedulerJob.class)
-                    .withIdentity(getWorkflowJobKey(workflowDefinition))
-                    .usingJobData(jobDataMap)
-                    .build();
+        final WorkflowDefinitionId workflowDefinitionId = workflowDefinition.getIdentity();
+        JobDataMap jobDataMap = new JobDataMap();
+        jobDataMap.put("name", workflowDefinitionId.getName());
+        jobDataMap.put("namespace", workflowDefinitionId.getNamespace());
+        jobDataMap.put("tasks", workflowDefinition.getTasks());
+        JobDetail jobDetail = newJob(WorkflowSchedulerJob.class)
+                .withIdentity(getWorkflowJobKey(workflowDefinition))
+                .usingJobData(jobDataMap)
+                .build();
 
-            CronScheduleBuilder jobSchedule = getJobSchedule(workflowDefinition);
-            final TriggerBuilder<CronTrigger> triggerBuilder = newTrigger()
-                    .withIdentity(getWorkflowTriggerKey(workflowDefinition))
-                    .withSchedule(jobSchedule);
-            final Long startAt = workflowDefinition.getStartAt();
-            if (startAt != null && startAt > 0) {
-                triggerBuilder.startAt(new Date(startAt));
-            }
-            final Long endAt = workflowDefinition.getEndAt();
-            if (endAt != null && endAt > 0) {
-                triggerBuilder.endAt(new Date(endAt));
-            }
-            scheduler.scheduleJob(jobDetail, triggerBuilder.build());
-        } catch (Exception ex) {
-            logger.error("Error scheduling workflow definition {}", workflowDefinition, ex);
+        CronScheduleBuilder jobSchedule = getJobSchedule(workflowDefinition);
+        final TriggerBuilder<CronTrigger> triggerBuilder = newTrigger()
+                .withIdentity(getWorkflowTriggerKey(workflowDefinition))
+                .withSchedule(jobSchedule);
+        final Long startAt = workflowDefinition.getStartAt();
+        if (startAt != null && startAt > 0) {
+            triggerBuilder.startAt(new Date(startAt));
         }
+        final Long endAt = workflowDefinition.getEndAt();
+        if (endAt != null && endAt > 0) {
+            triggerBuilder.endAt(new Date(endAt));
+        }
+        scheduler.scheduleJob(jobDetail, triggerBuilder.build());
     }
 
     private JobKey getWorkflowJobKey(WorkflowDefinitionId workflowDefinitionId) {
@@ -196,16 +139,16 @@ public final class WorkflowSchedulerService implements Service, TaskStatusChange
         return CronScheduleBuilder.cronSchedule(workflowDefinition.getSchedule());
     }
 
-    public Workflow execute(String workflowName, String workflowNamespace, List<WorkflowTask> workflowTasks) {
+    Workflow execute(String workflowName, String workflowNamespace, List<WorkflowTask> workflowTasks) {
         logger.info("Executing workflow definition with name {}, namespace {}, tasks {}",
                 workflowName, workflowNamespace, workflowTasks);
         final Workflow workflow = createWorkflow(workflowName, workflowNamespace);
-        WorkflowStoreService.getService().store(workflow);
+        WorkflowService.getService().add(workflow);
         logger.debug("Executing workflow {}", workflow);
         orderWorkflowTasks(workflowTasks).forEach(workflowTask ->
                 scheduleWorkflowTask(workflowTask, workflow.getId(), workflow.getNamespace()));
         workflow.setStatus(RUNNING);
-        WorkflowStoreService.getService().update(workflow);
+        WorkflowService.getService().update(workflow);
         return workflow;
     }
 
@@ -249,15 +192,11 @@ public final class WorkflowSchedulerService implements Service, TaskStatusChange
             logger.warn("Workflow task {} is disabled from scheduling", workflowTask);
             return;
         }
-        try {
-            TaskDefinitionId taskDefinitionId = TaskDefinitionId.create(workflowTask.getTaskDefinitionName());
-            final TaskDefinition taskDefinition = TaskDefinitionStoreService.getService().load(taskDefinitionId);
-            final Task task = createTask(workflowId, workflowTask, taskDefinition, namespace);
-            TaskSchedulerService.getService().schedule(task);
-        } catch (Exception ex) {
-            logger.error("Error scheduling workflow task {} for workflow with id {}, namespace {}",
-                    workflowTask, workflowId, namespace, ex);
-        }
+
+        TaskDefinitionId taskDefinitionId = TaskDefinitionId.build(workflowTask.getTaskDefinitionName());
+        final TaskDefinition taskDefinition = TaskDefinitionService.getService().get(taskDefinitionId);
+        final Task task = createTask(workflowId, workflowTask, taskDefinition, namespace);
+        TaskSchedulerService.getService().schedule(task);
     }
 
     private Task createTask(String workflowId, WorkflowTask workflowTask,
@@ -279,21 +218,9 @@ public final class WorkflowSchedulerService implements Service, TaskStatusChange
         return task;
     }
 
-    public void update(WorkflowDefinition workflowDefinition) throws Exception {
-        validate(workflowDefinition);
-        // delete the old workflow definition
-        delete(workflowDefinition.getIdentity());
-        // schedule new workflow
-        schedule(workflowDefinition);
-    }
-
-    public void delete(WorkflowDefinitionId workflowDefinitionId) {
+    void delete(WorkflowDefinitionId workflowDefinitionId) throws SchedulerException {
         logger.info("Received request to delete workflow definition with id {}", workflowDefinitionId);
-        try {
-            scheduler.deleteJob(getWorkflowJobKey(workflowDefinitionId));
-        } catch (SchedulerException e) {
-            logger.error("Error deleting quartz job for workflow with id {}", workflowDefinitionId);
-        }
+        scheduler.deleteJob(getWorkflowJobKey(workflowDefinitionId));
     }
 
     // used in junit
@@ -313,26 +240,31 @@ public final class WorkflowSchedulerService implements Service, TaskStatusChange
         }
     }
 
-    @Override
-    public void statusChanged(Task task, Task.Status from, Task.Status to) {
-        logger.debug("Received status change notification for task {}, from {} to {}", task, from, to);
-        if (!to.isFinal()) {
-            return;
-        }
-        final String workflowId = task.getWorkflowId();
-        final String namespace = task.getNamespace();
+    public static final class WorkflowLifecycleHandler implements TaskStatusChangeListener {
+        @Override
+        public void statusChanged(Task task, Task.Status from, Task.Status to) {
+            logger.debug("Received status change notification for task {}, from {} to {}", task, from, to);
+            if (!to.isFinal()) {
+                return;
+            }
+            final String workflowId = task.getWorkflowId();
+            final String namespace = task.getNamespace();
 
-        final List<Task> tasks = TaskStoreService.getService().loadByWorkflowId(workflowId, namespace);
-        final boolean isWorkflowComplete = tasks.stream()
-                .allMatch(workflowTask -> workflowTask.getStatus().isFinal());
+            final List<Task> tasks = TaskService.getService().get(workflowId, namespace);
+            if (tasks.isEmpty()) {
+                return;
+            }
+            final boolean isWorkflowComplete = tasks.stream()
+                    .allMatch(workflowTask -> workflowTask.getStatus().isFinal());
 
-        if (isWorkflowComplete) {
-            final boolean isSuccessful = tasks.stream()
-                    .allMatch(workflowTask -> workflowTask.getStatus() == Task.Status.SUCCESSFUL);
-            final Workflow workflow = WorkflowStoreService.getService().load(WorkflowId.create(workflowId, namespace));
-            workflow.setStatus(isSuccessful ? SUCCESSFUL : FAILED);
-            workflow.setCompletedAt(System.currentTimeMillis());
-            WorkflowStoreService.getService().update(workflow);
+            if (isWorkflowComplete) {
+                final boolean isSuccessful = tasks.stream()
+                        .allMatch(workflowTask -> workflowTask.getStatus() == Task.Status.SUCCESSFUL);
+                final Workflow workflow = WorkflowService.getService().get(WorkflowId.build(workflowId, namespace));
+                workflow.setStatus(isSuccessful ? SUCCESSFUL : FAILED);
+                workflow.setCompletedAt(System.currentTimeMillis());
+                WorkflowService.getService().update(workflow);
+            }
         }
     }
 
@@ -347,12 +279,7 @@ public final class WorkflowSchedulerService implements Service, TaskStatusChange
             final String workflowName = (String) jobDataMap.get("name");
             final String workflowNamespace = (String) jobDataMap.get("namespace");
             final List<WorkflowTask> workflowTasks = (List<WorkflowTask>) jobDataMap.get("tasks");
-            try {
-                WorkflowSchedulerService.getService().execute(workflowName, workflowNamespace, workflowTasks);
-            } catch (Exception e) {
-                logger.error("Error scheduling workflow with name {}, namespace {}, tasks {}",
-                        workflowName, workflowNamespace, workflowTasks, e);
-            }
+            WorkflowSchedulerService.getService().execute(workflowName, workflowNamespace, workflowTasks);
         }
     }
 }

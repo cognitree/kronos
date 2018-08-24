@@ -21,8 +21,6 @@ import com.cognitree.kronos.model.Namespace;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskId;
-import com.cognitree.kronos.scheduler.store.NamespaceStoreService;
-import com.cognitree.kronos.scheduler.store.TaskStoreService;
 import com.google.common.graph.GraphBuilder;
 import com.google.common.graph.MutableGraph;
 import org.slf4j.Logger;
@@ -64,11 +62,11 @@ final class TaskProvider {
 
     void init() {
         logger.info("Initializing task provider from task store");
-        final List<Namespace> namespaces = NamespaceStoreService.getService().load();
+        final List<Namespace> namespaces = NamespaceService.getService().get();
         final List<Task> tasks = new ArrayList<>();
         namespaces.forEach(namespace ->
-                TaskStoreService.getService()
-                        .load(Arrays.asList(CREATED, WAITING, SCHEDULED, SUBMITTED, RUNNING), namespace.getName()));
+                TaskService.getService()
+                        .get(Arrays.asList(CREATED, WAITING, SCHEDULED, SUBMITTED, RUNNING), namespace.getName()));
         if (!tasks.isEmpty()) {
             tasks.sort(Comparator.comparing(Task::getCreatedAt));
             tasks.forEach(this::addToGraph);
@@ -93,9 +91,9 @@ final class TaskProvider {
     }
 
     synchronized boolean add(Task task) {
-        if (TaskStoreService.getService().load(task) == null) {
+        if (TaskService.getService().get(task) == null) {
             addToGraph(task);
-            TaskStoreService.getService().store(task);
+            TaskService.getService().add(task);
             return true;
         } else {
             logger.warn("Task {} already exist with task provider, skip adding", task);
@@ -146,8 +144,8 @@ final class TaskProvider {
 
         // retrieve all dependent task in store only if tasks in memory is empty
         if (candidateDependentTasks.isEmpty()) {
-            final List<Task> tasksInStore = TaskStoreService.getService()
-                    .loadByNameAndWorkflowId(dependentTaskName, workflowId, namespace);
+            final List<Task> tasksInStore = TaskService.getService()
+                    .get(dependentTaskName, workflowId, namespace);
             if (tasksInStore != null && !tasksInStore.isEmpty()) {
                 candidateDependentTasks.addAll(tasksInStore);
             }
@@ -172,7 +170,7 @@ final class TaskProvider {
                 return task;
             }
         }
-        Task task = TaskStoreService.getService().load(taskId);
+        Task task = TaskService.getService().get(taskId);
         // update local cache if not null
         if (task != null) {
             addToGraph(task);
@@ -232,7 +230,7 @@ final class TaskProvider {
 
     void update(Task task) {
         logger.debug("Received request to update task {}", task);
-        TaskStoreService.getService().update(task);
+        TaskService.getService().update(task);
     }
 
     /**

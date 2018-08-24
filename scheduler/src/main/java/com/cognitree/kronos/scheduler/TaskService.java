@@ -15,58 +15,62 @@
  * limitations under the License.
  */
 
-package com.cognitree.kronos.scheduler.store;
+package com.cognitree.kronos.scheduler;
 
+import com.cognitree.kronos.Service;
+import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.TaskId;
+import com.cognitree.kronos.scheduler.store.StoreConfig;
+import com.cognitree.kronos.scheduler.store.TaskStore;
 
 import java.util.List;
 
-public class TaskStoreService implements StoreService<Task, TaskId> {
+public class TaskService implements Service {
 
-    private TaskStoreConfig taskStoreConfig;
+    private StoreConfig storeConfig;
     private TaskStore taskStore;
 
-    public TaskStoreService(TaskStoreConfig taskStoreConfig) {
-        this.taskStoreConfig = taskStoreConfig;
+    public TaskService(StoreConfig storeConfig) {
+        this.storeConfig = storeConfig;
     }
 
-    public static TaskStoreService getService() {
-        return (TaskStoreService) StoreServiceProvider.getStoreService(TaskStoreService.class.getSimpleName());
+    public static TaskService getService() {
+        return (TaskService) ServiceProvider.getService(TaskService.class.getSimpleName());
     }
 
     public void init() throws Exception {
-        taskStore = (TaskStore) Class.forName(taskStoreConfig.getStoreClass())
+        taskStore = (TaskStore) Class.forName(storeConfig.getStoreClass())
                 .getConstructor().newInstance();
-        taskStore.init(taskStoreConfig.getConfig());
+        taskStore.init(storeConfig.getConfig());
     }
 
     public void start() {
 
     }
 
-    public List<Task> load(String namespace) {
+    public List<Task> get(String namespace) {
         return taskStore.load(namespace);
     }
 
-    public Task load(TaskId taskId) {
+    public Task get(TaskId taskId) {
         return taskStore.load(taskId);
     }
 
-    public List<Task> loadByNameAndWorkflowId(String taskName, String workflowId, String namespace) {
+    public List<Task> get(String taskName, String workflowId, String namespace) {
         return taskStore.loadByNameAndWorkflowId(taskName, workflowId, namespace);
     }
 
-    public List<Task> loadByWorkflowId(String workflowId, String namespace) {
+    public List<Task> get(String workflowId, String namespace) {
         return taskStore.loadByWorkflowId(workflowId, namespace);
     }
 
-    public List<Task> load(List<Task.Status> statuses, String namespace) {
+    public List<Task> get(List<Task.Status> statuses, String namespace) {
         return taskStore.load(statuses, namespace);
     }
 
-    public void store(Task taskDefinition) {
-        taskStore.store(taskDefinition);
+    public void add(Task task) {
+        taskStore.store(task);
     }
 
     public void update(Task task) {

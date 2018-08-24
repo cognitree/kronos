@@ -15,30 +15,34 @@
  * limitations under the License.
  */
 
-package com.cognitree.kronos.scheduler.store;
+package com.cognitree.kronos.scheduler;
 
+import com.cognitree.kronos.Service;
+import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.Namespace;
+import com.cognitree.kronos.scheduler.store.NamespaceStore;
+import com.cognitree.kronos.scheduler.store.StoreConfig;
 
 import java.util.List;
 
-public class NamespaceStoreService implements StoreService<Namespace, String> {
+public class NamespaceService implements Service {
 
-    private final NamespaceStoreConfig namespaceStoreConfig;
+    private final StoreConfig storeConfig;
     private NamespaceStore namespaceStore;
 
-    public NamespaceStoreService(NamespaceStoreConfig namespaceStoreConfig) {
-        this.namespaceStoreConfig = namespaceStoreConfig;
+    public NamespaceService(StoreConfig storeConfig) {
+        this.storeConfig = storeConfig;
     }
 
-    public static NamespaceStoreService getService() {
-        return (NamespaceStoreService) StoreServiceProvider.getStoreService(NamespaceStoreService.class.getSimpleName());
+    public static NamespaceService getService() {
+        return (NamespaceService) ServiceProvider.getService(NamespaceService.class.getSimpleName());
     }
 
     @Override
     public void init() throws Exception {
-        namespaceStore = (NamespaceStore) Class.forName(namespaceStoreConfig.getStoreClass())
+        namespaceStore = (NamespaceStore) Class.forName(storeConfig.getStoreClass())
                 .getConstructor().newInstance();
-        namespaceStore.init(namespaceStoreConfig.getConfig());
+        namespaceStore.init(storeConfig.getConfig());
     }
 
     @Override
@@ -46,15 +50,15 @@ public class NamespaceStoreService implements StoreService<Namespace, String> {
 
     }
 
-    public List<Namespace> load() {
+    public List<Namespace> get() {
         return namespaceStore.load();
     }
 
-    public Namespace load(String namespaceId) {
+    public Namespace get(String namespaceId) {
         return namespaceStore.load(namespaceId);
     }
 
-    public void store(Namespace namespace) {
+    public void add(Namespace namespace) {
         namespaceStore.store(namespace);
     }
 

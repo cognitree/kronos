@@ -28,7 +28,7 @@ public class TaskDefinitionId {
 
     private String name;
 
-    public static TaskDefinitionId create(String name) {
+    public static TaskDefinitionId build(String name) {
         final TaskDefinitionId taskDefinitionId = new TaskDefinitionId();
         taskDefinitionId.setName(name);
         return taskDefinitionId;

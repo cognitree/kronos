@@ -15,35 +15,37 @@
  * limitations under the License.
  */
 
-package com.cognitree.kronos.scheduler.store;
+package com.cognitree.kronos.scheduler;
 
+import com.cognitree.kronos.Service;
+import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Workflow;
 import com.cognitree.kronos.model.WorkflowId;
-import com.cognitree.kronos.model.definitions.WorkflowDefinition;
-import com.cognitree.kronos.model.definitions.WorkflowDefinition.WorkflowTask;
-import com.cognitree.kronos.model.definitions.WorkflowDefinitionId;
+import com.cognitree.kronos.scheduler.store.StoreConfig;
+import com.cognitree.kronos.scheduler.store.WorkflowStore;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
-public class WorkflowStoreService implements StoreService<Workflow, WorkflowId> {
+public class WorkflowService implements Service {
 
-    private final WorkflowStoreConfig workflowStoreConfig;
+    private final StoreConfig storeConfig;
     private WorkflowStore workflowStore;
 
-    public WorkflowStoreService(WorkflowStoreConfig workflowStoreConfig) {
-        this.workflowStoreConfig = workflowStoreConfig;
+    public WorkflowService(StoreConfig storeConfig) {
+        this.storeConfig = storeConfig;
     }
 
-    public static WorkflowStoreService getService() {
-        return (WorkflowStoreService) StoreServiceProvider.getStoreService(WorkflowStoreService.class.getSimpleName());
+    public static WorkflowService getService() {
+        return (WorkflowService) ServiceProvider.getService(WorkflowService.class.getSimpleName());
     }
 
     @Override
     public void init() throws Exception {
-        workflowStore = (WorkflowStore) Class.forName(workflowStoreConfig.getStoreClass())
+        workflowStore = (WorkflowStore) Class.forName(storeConfig.getStoreClass())
                 .getConstructor().newInstance();
-        workflowStore.init(workflowStoreConfig.getConfig());
+        workflowStore.init(storeConfig.getConfig());
     }
 
     @Override
@@ -51,46 +53,42 @@ public class WorkflowStoreService implements StoreService<Workflow, WorkflowId> 
 
     }
 
-    @Override
-    public void store(Workflow workflow) {
+    public void add(Workflow workflow) {
         workflowStore.store(workflow);
     }
 
-    public List<Workflow> load(String namespace) {
+    public List<Workflow> get(String namespace) {
         return workflowStore.load(namespace);
     }
 
-    @Override
-    public Workflow load(WorkflowId workflowId) {
+    public Workflow get(WorkflowId workflowId) {
         return workflowStore.load(workflowId);
     }
 
-    public List<Workflow> load(String namespace, long createdAfter, long createdBefore) {
+    public List<Workflow> get(String namespace, int numberOfDays) {
+        final long currentTimeMillis = System.currentTimeMillis();
+        long createdAfter = currentTimeMillis - (currentTimeMillis % TimeUnit.DAYS.toMillis(1))
+                - TimeUnit.DAYS.toMillis(numberOfDays - 1);
+        long createdBefore = createdAfter + TimeUnit.DAYS.toMillis(numberOfDays);
         return workflowStore.load(namespace, createdAfter, createdBefore);
     }
 
-    public List<Workflow> loadByName(String name, String namespace, long createdAfter, long createdBefore) {
+    public List<Workflow> get(String name, String namespace, int numberOfDays) {
+        final long currentTimeMillis = System.currentTimeMillis();
+        long createdAfter = currentTimeMillis - (currentTimeMillis % TimeUnit.DAYS.toMillis(1))
+                - TimeUnit.DAYS.toMillis(numberOfDays - 1);
+        long createdBefore = createdAfter + TimeUnit.DAYS.toMillis(numberOfDays);
         return workflowStore.loadByName(name, namespace, createdAfter, createdBefore);
     }
 
     public List<Task> getWorkflowTasks(WorkflowId workflowId) {
-        return TaskStoreService.getService().loadByWorkflowId(workflowId.getId(), workflowId.getNamespace());
+        return TaskService.getService().get(workflowId.getId(), workflowId.getNamespace());
     }
 
-    public List<WorkflowTask> getWorkflowTaskDefs(Workflow workflow) {
-        WorkflowDefinitionId workflowDefinitionId =
-                WorkflowDefinitionId.create(workflow.getName(), workflow.getNamespace());
-        final WorkflowDefinition workflowDefinition =
-                WorkflowDefinitionStoreService.getService().load(workflowDefinitionId);
-        return workflowDefinition.getTasks();
-    }
-
-    @Override
     public void update(Workflow workflow) {
         workflowStore.update(workflow);
     }
 
-    @Override
     public void delete(WorkflowId workflowId) {
         workflowStore.delete(workflowId);
     }

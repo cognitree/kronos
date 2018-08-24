@@ -39,7 +39,6 @@ public class WorkflowSchedulerServiceTest {
     @BeforeClass
     public static void init() throws Exception {
         SCHEDULER_APP.start();
-        TaskSchedulerService.getService().deregisterListener(WorkflowSchedulerService.getService());
     }
 
     @AfterClass
@@ -51,7 +50,7 @@ public class WorkflowSchedulerServiceTest {
     public void testValidWorkflow() throws Exception {
         final InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream("valid-workflow.yaml");
         final WorkflowDefinition workflowDefinition = MAPPER.readValue(resourceAsStream, WorkflowDefinition.class);
-        WorkflowSchedulerService.getService().validate(workflowDefinition);
+        WorkflowDefinitionService.getService().validate(workflowDefinition);
     }
 
     @Test(expected = ValidationException.class)
@@ -59,7 +58,7 @@ public class WorkflowSchedulerServiceTest {
         final InputStream resourceAsStream =
                 getClass().getClassLoader().getResourceAsStream("invalid-workflow-missing-tasks.yaml");
         final WorkflowDefinition workflowDefinition = MAPPER.readValue(resourceAsStream, WorkflowDefinition.class);
-        WorkflowSchedulerService.getService().validate(workflowDefinition);
+        WorkflowDefinitionService.getService().validate(workflowDefinition);
     }
 
     @Test(expected = ValidationException.class)
@@ -67,7 +66,7 @@ public class WorkflowSchedulerServiceTest {
         final InputStream resourceAsStream =
                 getClass().getClassLoader().getResourceAsStream("invalid-workflow-disabled-tasks-dependency.yaml");
         final WorkflowDefinition workflowDefinition = MAPPER.readValue(resourceAsStream, WorkflowDefinition.class);
-        WorkflowSchedulerService.getService().validate(workflowDefinition);
+        WorkflowDefinitionService.getService().validate(workflowDefinition);
     }
 
     @Test
@@ -75,7 +74,7 @@ public class WorkflowSchedulerServiceTest {
         final InputStream resourceAsStream =
                 getClass().getClassLoader().getResourceAsStream("valid-workflow.yaml");
         final WorkflowDefinition workflowDefinition = MAPPER.readValue(resourceAsStream, WorkflowDefinition.class);
-        WorkflowSchedulerService.getService().validate(workflowDefinition);
+        WorkflowDefinitionService.getService().validate(workflowDefinition);
         final List<WorkflowDefinition.WorkflowTask> workflowTasks =
                 WorkflowSchedulerService.getService().orderWorkflowTasks(workflowDefinition.getTasks());
         Assert.assertEquals("task one", workflowTasks.get(0).getName());
@@ -89,11 +88,11 @@ public class WorkflowSchedulerServiceTest {
         final InputStream resourceAsStream =
                 getClass().getClassLoader().getResourceAsStream("test-workflow.yaml");
         final WorkflowDefinition workflowDefinition = MAPPER.readValue(resourceAsStream, WorkflowDefinition.class);
-        WorkflowSchedulerService.getService().add(workflowDefinition);
+        WorkflowDefinitionService.getService().add(workflowDefinition);
         sleep(System.currentTimeMillis() % 2000);
         final JobKey jobKey = new JobKey(workflowDefinition.getName(), workflowDefinition.getNamespace());
         Assert.assertTrue(WorkflowSchedulerService.getService().getScheduler().checkExists(jobKey));
-        WorkflowSchedulerService.getService().delete(workflowDefinition);
+        WorkflowDefinitionService.getService().delete(workflowDefinition);
         Assert.assertFalse(WorkflowSchedulerService.getService().getScheduler().checkExists(jobKey));
         sleep(System.currentTimeMillis() % 2000);
         Assert.assertEquals(3, TaskSchedulerService.getService().getTaskProvider().size());
@@ -105,12 +104,9 @@ public class WorkflowSchedulerServiceTest {
         final InputStream resourceAsStream =
                 getClass().getClassLoader().getResourceAsStream("test-workflow.yaml");
         final WorkflowDefinition workflowDefinition = MAPPER.readValue(resourceAsStream, WorkflowDefinition.class);
-        WorkflowSchedulerService.getService().validate(workflowDefinition);
-        final List<WorkflowDefinition.WorkflowTask> workflowTasks =
-                WorkflowSchedulerService.getService().orderWorkflowTasks(workflowDefinition.getTasks());
+        WorkflowDefinitionService.getService().validate(workflowDefinition);
         Assert.assertEquals(0, TaskSchedulerService.getService().getTaskProvider().size());
-        WorkflowSchedulerService.getService()
-                .execute(workflowDefinition.getName(), workflowDefinition.getNamespace(), workflowTasks);
+        WorkflowDefinitionService.getService().execute(workflowDefinition);
         sleep(100);
         Assert.assertEquals(3, TaskSchedulerService.getService().getTaskProvider().size());
     }

@@ -29,7 +29,7 @@ public class WorkflowId {
     private String id;
     private String namespace;
 
-    public static WorkflowId create(String id, String namespace) {
+    public static WorkflowId build(String id, String namespace) {
         final WorkflowId workflowId = new WorkflowId();
         workflowId.setId(id);
         workflowId.setNamespace(namespace);

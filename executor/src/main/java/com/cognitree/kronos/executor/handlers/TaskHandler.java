@@ -42,7 +42,6 @@ public interface TaskHandler {
      * defines how to handle/ execute the task.
      *
      * @param task task to handle.
-     * @throws HandlerException thrown if handler fails to execute the task successfully.
      */
-    TaskResult handle(Task task) throws HandlerException;
+    TaskResult handle(Task task);
 }

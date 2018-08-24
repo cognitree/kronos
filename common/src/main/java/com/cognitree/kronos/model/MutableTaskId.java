@@ -30,7 +30,7 @@ public class MutableTaskId implements TaskId {
     private String workflowId;
     private String namespace;
 
-    public static TaskId create(String id, String workflowId, String namespace) {
+    public static TaskId build(String id, String workflowId, String namespace) {
         final MutableTaskId mutableTaskId = new MutableTaskId();
         mutableTaskId.setId(id);
         mutableTaskId.setWorkflowId(workflowId);

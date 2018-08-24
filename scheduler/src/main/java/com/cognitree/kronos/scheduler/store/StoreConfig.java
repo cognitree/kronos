@@ -21,13 +21,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Objects;
 
-public class NamespaceStoreConfig {
+public class StoreConfig {
 
     private String storeClass;
 
     /**
-     * Configuration required by the namespace store to instantiate itself.
-     * This will be passed as an arg to the method of {@link NamespaceStore#init(ObjectNode)} at the time of instantiation
+     * Configuration required by the store to instantiate itself.
+     * This will be passed as an arg to the method of {@link Store#init(ObjectNode)} at the time of instantiation
      */
     private ObjectNode config;
 
@@ -50,8 +50,8 @@ public class NamespaceStoreConfig {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof NamespaceStoreConfig)) return false;
-        NamespaceStoreConfig that = (NamespaceStoreConfig) o;
+        if (!(o instanceof StoreConfig)) return false;
+        StoreConfig that = (StoreConfig) o;
         return Objects.equals(storeClass, that.storeClass) &&
                 Objects.equals(config, that.config);
     }
@@ -64,7 +64,7 @@ public class NamespaceStoreConfig {
 
     @Override
     public String toString() {
-        return "NamespaceStoreConfig{" +
+        return "StoreConfig{" +
                 "storeClass='" + storeClass + '\'' +
                 ", config=" + config +
                 '}';

@@ -20,10 +20,9 @@ package com.cognitree.kronos.api;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Workflow;
 import com.cognitree.kronos.model.WorkflowId;
-import com.cognitree.kronos.model.definitions.TaskDefinition;
 import com.cognitree.kronos.response.WorkflowResponse;
-import com.cognitree.kronos.scheduler.store.NamespaceStoreService;
-import com.cognitree.kronos.scheduler.store.WorkflowStoreService;
+import com.cognitree.kronos.scheduler.NamespaceService;
+import com.cognitree.kronos.scheduler.WorkflowService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -42,7 +41,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparing;
@@ -59,29 +57,23 @@ public class WorkflowResource {
     @GET
     @ApiOperation(value = "Get all running or executed workflows", response = Workflow.class, responseContainer = "List")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getAllWorkflow(@ApiParam(value = "workflow name")
-                                   @QueryParam("name") String workflowName,
+    public Response getAllWorkflows(@ApiParam(value = "workflow definition name")
+                                   @QueryParam("name") String workflowDefinitionName,
                                    @ApiParam(value = "Number of days to fetch workflow from today", defaultValue = "10")
                                    @DefaultValue(DEFAULT_DAYS) @QueryParam("date_range") int numberOfDays,
                                    @HeaderParam("namespace") String namespace) {
         if (!validateNamespace(namespace)) {
             return Response.status(BAD_REQUEST).entity("no namespace exists with name " + namespace).build();
         }
-        final long currentTimeMillis = System.currentTimeMillis();
-        long createdAfter = currentTimeMillis - (currentTimeMillis % TimeUnit.DAYS.toMillis(1))
-                - TimeUnit.DAYS.toMillis(numberOfDays - 1);
-        long createdBefore = createdAfter + TimeUnit.DAYS.toMillis(numberOfDays);
         final List<Workflow> workflows;
-        if (workflowName == null) {
+        if (workflowDefinitionName == null) {
             logger.info("Received request to get all workflow with date range {} under namespace {}",
                     numberOfDays, namespace);
-            workflows = WorkflowStoreService.getService()
-                    .load(namespace, createdAfter, createdBefore);
+            workflows = WorkflowService.getService().get(namespace, numberOfDays);
         } else {
             logger.info("Received request to get all workflow with name {}, date range {} under namespace {}",
-                    workflowName, numberOfDays, namespace);
-            workflows = WorkflowStoreService.getService()
-                    .loadByName(workflowName, namespace, createdAfter, createdBefore);
+                    workflowDefinitionName, numberOfDays, namespace);
+            workflows = WorkflowService.getService().get(workflowDefinitionName, namespace, numberOfDays);
         }
         return Response.status(OK).entity(workflows.stream().sorted(comparing(Workflow::getCreatedAt).reversed())
                 .collect(Collectors.toList())).build();
@@ -89,7 +81,7 @@ public class WorkflowResource {
 
     @GET
     @Path("{id}")
-    @ApiOperation(value = "Get workflow with id", response = TaskDefinition.class)
+    @ApiOperation(value = "Get workflow with id", response = WorkflowResponse.class)
     @ApiResponses(value = {
             @ApiResponse(code = 404, message = "Workflow not found")})
     @Produces(MediaType.APPLICATION_JSON)
@@ -100,19 +92,19 @@ public class WorkflowResource {
         if (!validateNamespace(namespace)) {
             return Response.status(BAD_REQUEST).entity("no namespace exists with name " + namespace).build();
         }
-        WorkflowId workflowId = WorkflowId.create(id, namespace);
-        final Workflow workflow = WorkflowStoreService.getService().load(workflowId);
+        WorkflowId workflowId = WorkflowId.build(id, namespace);
+        final Workflow workflow = WorkflowService.getService().get(workflowId);
         if (workflow == null) {
             logger.error("No workflow exists with id {} under namespace {}", id, namespace);
             return Response.status(NOT_FOUND).build();
         }
         final List<Task> workflowTasks =
-                WorkflowStoreService.getService().getWorkflowTasks(workflow);
+                WorkflowService.getService().getWorkflowTasks(workflow);
 
         return Response.status(OK).entity(WorkflowResponse.create(workflow, workflowTasks)).build();
     }
 
     private boolean validateNamespace(String name) {
-        return name != null && NamespaceStoreService.getService().load(name) != null;
+        return name != null && NamespaceService.getService().get(name) != null;
     }
 }

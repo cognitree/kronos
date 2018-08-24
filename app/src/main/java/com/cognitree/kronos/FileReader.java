@@ -19,9 +19,8 @@ package com.cognitree.kronos;
 
 import com.cognitree.kronos.model.definitions.TaskDefinition;
 import com.cognitree.kronos.model.definitions.WorkflowDefinition;
-import com.cognitree.kronos.scheduler.WorkflowSchedulerService;
-import com.cognitree.kronos.scheduler.store.TaskDefinitionStoreService;
-import com.cognitree.kronos.scheduler.store.WorkflowDefinitionStoreService;
+import com.cognitree.kronos.scheduler.TaskDefinitionService;
+import com.cognitree.kronos.scheduler.WorkflowDefinitionService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -51,8 +50,8 @@ public class FileReader {
         List<TaskDefinition> taskDefinitions = MAPPER.readValue(resourceAsStream, TASK_DEFINITION_LIST_REF);
 
         for (TaskDefinition taskDefinition : taskDefinitions) {
-            if (TaskDefinitionStoreService.getService().load(taskDefinition) == null) {
-                TaskDefinitionStoreService.getService().store(taskDefinition);
+            if (TaskDefinitionService.getService().get(taskDefinition) == null) {
+                TaskDefinitionService.getService().add(taskDefinition);
             } else {
                 logger.warn("Task definition with id {} already exists", taskDefinition.getIdentity());
             }
@@ -68,10 +67,9 @@ public class FileReader {
             if (workflowDefinition.getNamespace() == null) {
                 workflowDefinition.setNamespace(DEFAULT_NAMESPACE);
             }
-            if (WorkflowDefinitionStoreService.getService().load(workflowDefinition) == null) {
+            if (WorkflowDefinitionService.getService().get(workflowDefinition) == null) {
                 try {
-                    WorkflowSchedulerService.getService().add(workflowDefinition);
-                    WorkflowDefinitionStoreService.getService().store(workflowDefinition);
+                    WorkflowDefinitionService.getService().add(workflowDefinition);
                 } catch (Exception ex) {
                     logger.error("Unable to add workflow definition {}", workflowDefinition, ex);
                 }

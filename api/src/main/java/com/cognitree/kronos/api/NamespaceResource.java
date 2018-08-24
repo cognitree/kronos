@@ -18,7 +18,7 @@
 package com.cognitree.kronos.api;
 
 import com.cognitree.kronos.model.Namespace;
-import com.cognitree.kronos.scheduler.store.NamespaceStoreService;
+import com.cognitree.kronos.scheduler.NamespaceService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -51,9 +51,9 @@ public class NamespaceResource {
     @GET
     @ApiOperation(value = "Get all namespaces", response = Namespace.class, responseContainer = "List")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getAllNamespace() {
+    public Response getAllNamespaces() {
         logger.info("Received request to get all namespaces");
-        final List<Namespace> namespaces = NamespaceStoreService.getService().load();
+        final List<Namespace> namespaces = NamespaceService.getService().get();
         return Response.status(OK).entity(namespaces).build();
     }
 
@@ -66,7 +66,7 @@ public class NamespaceResource {
     public Response getNamespace(@ApiParam(value = "namespace name", required = true)
                                  @PathParam("name") String name) {
         logger.info("Received request to get namespace with name {}", name);
-        final Namespace namespace = NamespaceStoreService.getService().load(name);
+        final Namespace namespace = NamespaceService.getService().get(name);
         if (namespace == null) {
             logger.error("No namespace found with name {}", name);
             return Response.status(NOT_FOUND).build();
@@ -81,11 +81,11 @@ public class NamespaceResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response addNamespace(Namespace namespace) {
         logger.info("Received request to add namespace {}", namespace);
-        if (NamespaceStoreService.getService().load(namespace.getName()) != null) {
+        if (NamespaceService.getService().get(namespace.getName()) != null) {
             logger.error("Namespace already exists with name {}", namespace.getName());
             return Response.status(CONFLICT).build();
         }
-        NamespaceStoreService.getService().store(namespace);
+        NamespaceService.getService().add(namespace);
         return Response.status(CREATED).entity(namespace).build();
     }
 
@@ -99,11 +99,11 @@ public class NamespaceResource {
                                     @PathParam("name") String name, Namespace namespace) {
         namespace.setName(name);
         logger.info("Received request to update namespace with name {} to {}", name, namespace);
-        if (NamespaceStoreService.getService().load(namespace.getName()) == null) {
+        if (NamespaceService.getService().get(namespace.getName()) == null) {
             logger.error("No task definition exists with name {}", name);
             return Response.status(NOT_FOUND).build();
         }
-        NamespaceStoreService.getService().update(namespace);
+        NamespaceService.getService().update(namespace);
         return Response.status(OK).entity(namespace).build();
     }
 
@@ -115,11 +115,11 @@ public class NamespaceResource {
     public Response deleteNamespace(@ApiParam(value = "namespace name", required = true)
                                     @PathParam("name") String name) {
         logger.info("Received request to delete namespace with name {}", name);
-        if (NamespaceStoreService.getService().load(name) == null) {
+        if (NamespaceService.getService().get(name) == null) {
             logger.error("No namespace exists with name {}", name);
             return Response.status(NOT_FOUND).build();
         }
-        NamespaceStoreService.getService().delete(name);
+        NamespaceService.getService().delete(name);
         return Response.status(OK).build();
     }
 }

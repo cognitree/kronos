@@ -19,7 +19,7 @@ package com.cognitree.kronos.api;
 
 import com.cognitree.kronos.model.definitions.TaskDefinition;
 import com.cognitree.kronos.model.definitions.TaskDefinitionId;
-import com.cognitree.kronos.scheduler.store.TaskDefinitionStoreService;
+import com.cognitree.kronos.scheduler.TaskDefinitionService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -52,9 +52,9 @@ public class TaskDefinitionResource {
     @GET
     @ApiOperation(value = "Get all task definitions", response = TaskDefinition.class, responseContainer = "List")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getAllTaskDefinition() {
+    public Response getAllTaskDefinitions() {
         logger.info("Received request to get all task definitions");
-        final List<TaskDefinition> taskDefinitions = TaskDefinitionStoreService.getService().load();
+        final List<TaskDefinition> taskDefinitions = TaskDefinitionService.getService().get();
         return Response.status(OK).entity(taskDefinitions).build();
     }
 
@@ -67,8 +67,8 @@ public class TaskDefinitionResource {
     public Response getTaskDefinition(@ApiParam(value = "task definition name", required = true)
                                       @PathParam("name") String name) {
         logger.info("Received request to get task definition with name {}", name);
-        TaskDefinitionId taskDefinitionId = TaskDefinitionId.create(name);
-        final TaskDefinition taskDefinition = TaskDefinitionStoreService.getService().load(taskDefinitionId);
+        TaskDefinitionId taskDefinitionId = TaskDefinitionId.build(name);
+        final TaskDefinition taskDefinition = TaskDefinitionService.getService().get(taskDefinitionId);
         if (taskDefinition == null) {
             logger.error("No task definition found with name {}", name);
             return Response.status(NOT_FOUND).build();
@@ -83,11 +83,11 @@ public class TaskDefinitionResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response addTaskDefinition(TaskDefinition taskDefinition) {
         logger.info("Received request to add task definition {}", taskDefinition);
-        if (TaskDefinitionStoreService.getService().load(taskDefinition) != null) {
+        if (TaskDefinitionService.getService().get(taskDefinition) != null) {
             logger.error("Task definition already exists with name {}", taskDefinition.getName());
             return Response.status(CONFLICT).build();
         }
-        TaskDefinitionStoreService.getService().store(taskDefinition);
+        TaskDefinitionService.getService().add(taskDefinition);
         return Response.status(CREATED).entity(taskDefinition).build();
     }
 
@@ -101,11 +101,11 @@ public class TaskDefinitionResource {
                                          @PathParam("name") String name, TaskDefinition taskDefinition) {
         taskDefinition.setName(name);
         logger.info("Received request to update task definition with name {} to {}", name, taskDefinition);
-        if (TaskDefinitionStoreService.getService().load(taskDefinition) == null) {
+        if (TaskDefinitionService.getService().get(taskDefinition) == null) {
             logger.error("No task definition exists with name {}", name);
             return Response.status(NOT_FOUND).build();
         }
-        TaskDefinitionStoreService.getService().update(taskDefinition);
+        TaskDefinitionService.getService().update(taskDefinition);
         return Response.status(OK).entity(taskDefinition).build();
     }
 
@@ -117,12 +117,12 @@ public class TaskDefinitionResource {
     public Response deleteTaskDefinition(@ApiParam(value = "task definition name", required = true)
                                          @PathParam("name") String name) {
         logger.info("Received request to delete task definition with name {}", name);
-        TaskDefinitionId taskDefinitionId = TaskDefinitionId.create(name);
-        if (TaskDefinitionStoreService.getService().load(taskDefinitionId) == null) {
+        TaskDefinitionId taskDefinitionId = TaskDefinitionId.build(name);
+        if (TaskDefinitionService.getService().get(taskDefinitionId) == null) {
             logger.error("No task definition exists with name {}", name);
             return Response.status(NOT_FOUND).build();
         }
-        TaskDefinitionStoreService.getService().delete(taskDefinitionId);
+        TaskDefinitionService.getService().delete(taskDefinitionId);
         return Response.status(OK).build();
     }
 }
