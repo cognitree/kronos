@@ -41,10 +41,11 @@ import java.util.List;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
 import static javax.ws.rs.core.Response.Status.OK;
 
-@Path("{res:namespaces|n}")
-@Api(value = "namespace", description = "manage namespaces")
+@Path("/namespaces")
+@Api(value = "namespaces", description = "manage namespaces")
 public class NamespaceResource {
     private static final Logger logger = LoggerFactory.getLogger(NamespaceResource.class);
 
@@ -109,17 +110,12 @@ public class NamespaceResource {
 
     @DELETE
     @Path("{name}")
-    @ApiOperation(value = "Delete namespace")
+    @ApiOperation(value = "Delete namespace (not implemented)")
     @ApiResponses(value = {
-            @ApiResponse(code = 404, message = "Namespace not found")})
+            @ApiResponse(code = 501, message = "not implemented")})
     public Response deleteNamespace(@ApiParam(value = "namespace name", required = true)
                                     @PathParam("name") String name) {
         logger.info("Received request to delete namespace with name {}", name);
-        if (NamespaceService.getService().get(name) == null) {
-            logger.error("No namespace exists with name {}", name);
-            return Response.status(NOT_FOUND).build();
-        }
-        NamespaceService.getService().delete(name);
-        return Response.status(OK).build();
+        return Response.status(NOT_IMPLEMENTED).build();
     }
 }

@@ -63,8 +63,8 @@ public class SchedulerApp {
         NamespaceService.getService().init();
         TaskDefinitionService.getService().init();
         TaskService.getService().init();
-        WorkflowDefinitionService.getService().init();
         WorkflowService.getService().init();
+        JobService.getService().init();
         WorkflowTriggerService.getService().init();
         TaskSchedulerService.getService().init();
         WorkflowSchedulerService.getService().init();
@@ -73,8 +73,8 @@ public class SchedulerApp {
         NamespaceService.getService().start();
         TaskDefinitionService.getService().start();
         TaskService.getService().start();
-        WorkflowDefinitionService.getService().start();
         WorkflowService.getService().start();
+        JobService.getService().start();
         WorkflowTriggerService.getService().start();
         TaskSchedulerService.getService().start();
         WorkflowSchedulerService.getService().start();
@@ -92,12 +92,12 @@ public class SchedulerApp {
         TaskService taskService = new TaskService(schedulerConfig.getTaskStoreConfig());
         ServiceProvider.registerService(taskService);
 
-        WorkflowDefinitionService workflowDefinitionService =
-                new WorkflowDefinitionService(schedulerConfig.getWorkflowDefinitionStoreConfig());
-        ServiceProvider.registerService(workflowDefinitionService);
-
-        WorkflowService workflowService = new WorkflowService(schedulerConfig.getWorkflowStoreConfig());
+        WorkflowService workflowService =
+                new WorkflowService(schedulerConfig.getWorkflowStoreConfig());
         ServiceProvider.registerService(workflowService);
+
+        JobService jobService = new JobService(schedulerConfig.getJobStoreConfig());
+        ServiceProvider.registerService(jobService);
 
         WorkflowTriggerService workflowTriggerService =
                 new WorkflowTriggerService(schedulerConfig.getWorkflowTriggerStoreConfig());
@@ -122,11 +122,11 @@ public class SchedulerApp {
         if (WorkflowTriggerService.getService() != null) {
             WorkflowTriggerService.getService().stop();
         }
+        if (JobService.getService() != null) {
+            JobService.getService().stop();
+        }
         if (WorkflowService.getService() != null) {
             WorkflowService.getService().stop();
-        }
-        if (WorkflowDefinitionService.getService() != null) {
-            WorkflowDefinitionService.getService().stop();
         }
         if (TaskService.getService() != null) {
             TaskService.getService().stop();

@@ -17,8 +17,8 @@
 
 package com.cognitree.kronos.scheduler.store;
 
-import com.cognitree.kronos.model.Workflow;
-import com.cognitree.kronos.model.WorkflowId;
+import com.cognitree.kronos.model.definitions.Workflow;
+import com.cognitree.kronos.model.definitions.WorkflowId;
 
 import java.util.List;
 
@@ -29,9 +29,4 @@ public interface WorkflowStore extends Store<Workflow, WorkflowId> {
 
     List<Workflow> load(String namespace);
 
-    List<Workflow> load(String namespace, long createdAfter, long createdBefore);
-
-    List<Workflow> loadByNameAndTrigger(String name, String trigger, String namespace, long createdAfter, long createdBefore);
-
-    List<Workflow> loadByName(String name, String namespace, long createdAfter, long createdBefore);
 }

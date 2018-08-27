@@ -27,9 +27,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-@JsonSerialize(as = WorkflowDefinition.class)
-@JsonDeserialize(as = WorkflowDefinition.class)
-public class WorkflowDefinition extends WorkflowDefinitionId {
+@JsonSerialize(as = Workflow.class)
+@JsonDeserialize(as = Workflow.class)
+public class Workflow extends WorkflowId {
 
     private String description;
     private List<WorkflowTask> tasks = new ArrayList<>();
@@ -51,7 +51,7 @@ public class WorkflowDefinition extends WorkflowDefinitionId {
     }
 
     @JsonIgnore
-    public WorkflowDefinitionId getIdentity() {
+    public WorkflowId getIdentity() {
         return this;
     }
 
@@ -67,7 +67,7 @@ public class WorkflowDefinition extends WorkflowDefinitionId {
 
     @Override
     public String toString() {
-        return "WorkflowDefinition{" +
+        return "Workflow{" +
                 "description='" + description + '\'' +
                 ", tasks=" + tasks +
                 "} " + super.toString();

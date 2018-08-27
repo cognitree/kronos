@@ -19,16 +19,19 @@ package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
-import com.cognitree.kronos.model.Task;
-import com.cognitree.kronos.model.Workflow;
-import com.cognitree.kronos.model.WorkflowId;
+import com.cognitree.kronos.model.definitions.TaskDefinitionId;
+import com.cognitree.kronos.model.definitions.Workflow;
+import com.cognitree.kronos.model.definitions.WorkflowId;
+import com.cognitree.kronos.model.definitions.WorkflowTrigger;
+import com.cognitree.kronos.scheduler.graph.TopologicalSort;
 import com.cognitree.kronos.scheduler.store.StoreConfig;
 import com.cognitree.kronos.scheduler.store.WorkflowStore;
+import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class WorkflowService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(WorkflowService.class);
@@ -55,15 +58,17 @@ public class WorkflowService implements Service {
     @Override
     public void start() {
         logger.info("Starting workflow service");
+
     }
 
-    public void add(Workflow workflow) {
+    public void add(Workflow workflow) throws ValidationException {
         logger.debug("Received request to add workflow {}", workflow);
+        validate(workflow);
         workflowStore.store(workflow);
     }
 
     public List<Workflow> get(String namespace) {
-        logger.debug("Received request to get all workflows under namespace {}", namespace);
+        logger.debug("Received request to get all workflow under namespace {}", namespace);
         return workflowStore.load(namespace);
     }
 
@@ -72,50 +77,62 @@ public class WorkflowService implements Service {
         return workflowStore.load(workflowId);
     }
 
-    public List<Workflow> get(String namespace, int numberOfDays) {
-        logger.debug("Received request to get all workflows under namespace {} submitted in last {} number of days",
-                namespace, numberOfDays);
-        final long currentTimeMillis = System.currentTimeMillis();
-        long createdAfter = currentTimeMillis - (currentTimeMillis % TimeUnit.DAYS.toMillis(1))
-                - TimeUnit.DAYS.toMillis(numberOfDays - 1);
-        long createdBefore = createdAfter + TimeUnit.DAYS.toMillis(numberOfDays);
-        return workflowStore.load(namespace, createdAfter, createdBefore);
-    }
-
-    public List<Workflow> get(String name, String namespace, int numberOfDays) {
-        logger.debug("Received request to get all workflows with name {} under namespace {} submitted in last {} number of days",
-                name, namespace, numberOfDays);
-        final long currentTimeMillis = System.currentTimeMillis();
-        long createdAfter = currentTimeMillis - (currentTimeMillis % TimeUnit.DAYS.toMillis(1))
-                - TimeUnit.DAYS.toMillis(numberOfDays - 1);
-        long createdBefore = createdAfter + TimeUnit.DAYS.toMillis(numberOfDays);
-        return workflowStore.loadByName(name, namespace, createdAfter, createdBefore);
-    }
-
-    public List<Workflow> get(String name, String trigger,
-                              String namespace, int numberOfDays) {
-        logger.debug("Received request to get all workflows with name {}, trigger {} under namespace {} submitted " +
-                "in last {} number of days", name, trigger, namespace, numberOfDays);
-        final long currentTimeMillis = System.currentTimeMillis();
-        long createdAfter = currentTimeMillis - (currentTimeMillis % TimeUnit.DAYS.toMillis(1))
-                - TimeUnit.DAYS.toMillis(numberOfDays - 1);
-        long createdBefore = createdAfter + TimeUnit.DAYS.toMillis(numberOfDays);
-        return workflowStore.loadByNameAndTrigger(name, trigger, namespace, createdAfter, createdBefore);
-    }
-
-    public List<Task> getWorkflowTasks(WorkflowId workflowId) {
-        logger.debug("Received request to get all tasks executed for workflow {}", workflowId);
-        return TaskService.getService().get(workflowId.getId(), workflowId.getNamespace());
-    }
-
-    public void update(Workflow workflow) {
-        logger.debug("Received request to update workflow to {}", workflow);
+    public void update(Workflow workflow) throws ValidationException {
+        logger.debug("Received request to update workflow {}", workflow);
+        validate(workflow);
+        // TODO optimize the update flow no need to load def everytime it is triggered
         workflowStore.update(workflow);
     }
 
-    public void delete(WorkflowId workflowId) {
+    public void delete(WorkflowId workflowId) throws SchedulerException {
         logger.debug("Received request to delete workflow {}", workflowId);
+        // delete all triggers and delete scheduled jobs
+        final List<WorkflowTrigger> workflowTriggers =
+                WorkflowTriggerService.getService().get(workflowId.getName(), workflowId.getNamespace());
+        for (WorkflowTrigger workflowTrigger : workflowTriggers) {
+            WorkflowTriggerService.getService().delete(workflowTrigger);
+        }
         workflowStore.delete(workflowId);
+    }
+
+    /**
+     * validate workflow
+     *
+     * @param workflow
+     * @return
+     */
+    public void validate(Workflow workflow) throws ValidationException {
+        final HashMap<String, Workflow.WorkflowTask> workflowTaskMap = new HashMap<>();
+        final TopologicalSort<Workflow.WorkflowTask> topologicalSort = new TopologicalSort<>();
+        final List<Workflow.WorkflowTask> workflowTasks = workflow.getTasks();
+        for (Workflow.WorkflowTask task : workflowTasks) {
+            final String taskDefinitionName = task.getTaskDefinitionName();
+            if (TaskDefinitionService.getService().get(TaskDefinitionId.build(taskDefinitionName)) == null) {
+                throw new ValidationException("missing task definition with name " + taskDefinitionName);
+            }
+
+            final String taskName = task.getName();
+            if (task.isEnabled()) {
+                workflowTaskMap.put(taskName, task);
+                topologicalSort.add(task);
+            }
+        }
+
+        for (Workflow.WorkflowTask workflowTask : workflowTasks) {
+            final List<String> dependsOn = workflowTask.getDependsOn();
+            if (dependsOn != null && !dependsOn.isEmpty()) {
+                for (String dependentTask : dependsOn) {
+                    final Workflow.WorkflowTask dependeeTask = workflowTaskMap.get(dependentTask);
+                    if (dependeeTask == null) {
+                        throw new ValidationException("missing task " + dependentTask);
+                    }
+                    topologicalSort.add(dependeeTask, workflowTask);
+                }
+            }
+        }
+        if (!topologicalSort.isDag()) {
+            throw new ValidationException("Invalid workflow contains cyclic dependency)");
+        }
     }
 
     @Override

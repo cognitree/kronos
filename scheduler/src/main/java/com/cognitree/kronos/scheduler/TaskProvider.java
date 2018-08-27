@@ -116,7 +116,7 @@ final class TaskProvider {
         if (dependsOn != null) {
             List<Task> dependentTasks = new ArrayList<>();
             for (String dependentTaskName : dependsOn) {
-                Set<Task> tasks = getDependentTasks(dependentTaskName, task.getWorkflowId(), task.getNamespace());
+                Set<Task> tasks = getDependentTasks(dependentTaskName, task.getJobId(), task.getNamespace());
                 if (tasks.isEmpty()) {
                     logger.error("Missing tasks for dependency info {} for task {}", dependentTaskName, task);
                     return false;
@@ -181,7 +181,7 @@ final class TaskProvider {
     private List<Task> getTasks(String taskName, String workflowId, String namespace) {
         List<Task> tasks = new ArrayList<>();
         for (Task task : graph.nodes()) {
-            if (task.getName().equals(taskName) && task.getWorkflowId().equals(workflowId)
+            if (task.getName().equals(taskName) && task.getJobId().equals(workflowId)
                     && task.getNamespace().equals(namespace)) {
                 tasks.add(task);
             }
@@ -307,8 +307,8 @@ final class TaskProvider {
         for (int i = 0; i < level; i++) {
             outputBuilder.append("  ");
         }
-        outputBuilder.append("- ").append(task.getWorkflowId()).append(":").append(task.getName())
-                .append(":").append(task.getId()).append("(").append(task.getStatus()).append(")\n");
+        outputBuilder.append("- ").append(task.getJobId()).append(":").append(task.getName())
+                .append(":").append(task.getName()).append("(").append(task.getStatus()).append(")\n");
         graph.successors(task).forEach(t -> prepareGraphOutput(t, level + 1, outputBuilder));
     }
 }

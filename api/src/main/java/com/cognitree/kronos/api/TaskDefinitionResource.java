@@ -44,7 +44,7 @@ import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 
-@Path("/definitions/{res:tasks|t}")
+@Path("/definitions/tasks")
 @Api(value = "task definitions", description = "manage task definitions")
 public class TaskDefinitionResource {
     private static final Logger logger = LoggerFactory.getLogger(TaskDefinitionResource.class);

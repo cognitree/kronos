@@ -30,7 +30,6 @@ import java.util.UUID;
 import static com.cognitree.kronos.model.Task.Status.CREATED;
 
 public class MockTaskBuilder {
-    private String id = UUID.randomUUID().toString();
     private String name;
     private String namespace = "default";
     private String workflowId = "test-workflow";
@@ -48,12 +47,6 @@ public class MockTaskBuilder {
     public static MockTaskBuilder getTaskBuilder() {
         return new MockTaskBuilder();
     }
-
-    public MockTaskBuilder setId(String id) {
-        this.id = id;
-        return this;
-    }
-
 
     public MockTaskBuilder setName(String name) {
         this.name = name;
@@ -117,10 +110,9 @@ public class MockTaskBuilder {
 
     public Task build() {
         MutableTask task = new MutableTask();
-        task.setId(id);
         task.setName(name);
         task.setNamespace(namespace);
-        task.setWorkflowId(workflowId);
+        task.setJobId(workflowId);
         task.setType(type);
         task.setStatus(status);
         task.setStatusMessage(statusMessage);

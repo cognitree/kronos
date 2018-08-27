@@ -64,16 +64,16 @@ public class TaskService implements Service {
         return taskStore.load(taskId);
     }
 
-    public List<Task> get(String taskName, String workflowId, String namespace) {
-        logger.debug("Received request to get all tasks with name {} part of workflow {} under namespace {}",
-                taskName, workflowId, namespace);
-        return taskStore.loadByNameAndWorkflowId(taskName, workflowId, namespace);
+    public List<Task> get(String taskName, String jobId, String namespace) {
+        logger.debug("Received request to get all tasks with name {} part of job {} under namespace {}",
+                taskName, jobId, namespace);
+        return taskStore.loadByNameAndJobId(taskName, jobId, namespace);
     }
 
-    public List<Task> get(String workflowId, String namespace) {
-        logger.debug("Received request to get all tasks with workflow id {} under namespace {}",
-                workflowId, namespace);
-        return taskStore.loadByWorkflowId(workflowId, namespace);
+    public List<Task> get(String jobId, String namespace) {
+        logger.debug("Received request to get all tasks with job id {} under namespace {}",
+                jobId, namespace);
+        return taskStore.loadByJobId(jobId, namespace);
     }
 
     public List<Task> get(List<Task.Status> statuses, String namespace) {

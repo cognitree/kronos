@@ -17,17 +17,29 @@
 
 package com.cognitree.kronos.scheduler.store;
 
-import com.cognitree.kronos.model.definitions.WorkflowDefinition;
-import com.cognitree.kronos.model.definitions.WorkflowDefinitionId;
+import com.cognitree.kronos.model.Job;
+import com.cognitree.kronos.model.JobId;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-public class MockWorkflowDefinitionStore implements WorkflowDefinitionStore {
-    private static final Map<WorkflowDefinitionId, WorkflowDefinition> definitionMap = new HashMap<>();
+public class MockJobStore implements JobStore {
+
+    @Override
+    public List<Job> load(String namespace, long createdAfter, long createdBefore) {
+        return null;
+    }
+
+    @Override
+    public List<Job> loadByWorkflowName(String workflowName, String namespace, long createdAfter, long createdBefore) {
+        return null;
+    }
+
+    @Override
+    public List<Job> loadByWorkflowNameAndTrigger(String workflowName, String triggerName, String namespace, long createdAfter, long createdBefore) {
+        return null;
+    }
 
     @Override
     public void init(ObjectNode storeConfig) {
@@ -35,29 +47,27 @@ public class MockWorkflowDefinitionStore implements WorkflowDefinitionStore {
     }
 
     @Override
-    public void store(WorkflowDefinition entity) {
-        final WorkflowDefinitionId workflowDefinitionId =
-                WorkflowDefinitionId.build(entity.getName(), entity.getNamespace());
-        definitionMap.put(workflowDefinitionId, entity);
+    public void store(Job entity) {
+
     }
 
     @Override
-    public List<WorkflowDefinition> load(String namespace) {
+    public List<Job> load(String namespace) {
         return Collections.emptyList();
     }
 
     @Override
-    public WorkflowDefinition load(WorkflowDefinitionId identity) {
-        return definitionMap.get(identity);
+    public Job load(JobId identity) {
+        return null;
     }
 
     @Override
-    public void update(WorkflowDefinition entity) {
+    public void update(Job entity) {
 
     }
 
     @Override
-    public void delete(WorkflowDefinitionId identity) {
+    public void delete(JobId identity) {
 
     }
 

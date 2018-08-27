@@ -32,7 +32,7 @@ public class MockWorkflowTriggerStore implements WorkflowTriggerStore {
     }
 
     @Override
-    public List<WorkflowTrigger> loadByWorkflowName(String name, String namespace) {
+    public List<WorkflowTrigger> loadByWorkflowName(String workflowName, String namespace) {
         return Collections.emptyList();
     }
 

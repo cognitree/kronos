@@ -44,14 +44,14 @@ public class TestTaskHandler implements TaskHandler {
     public TaskResult handle(Task task) {
         logger.info("Received request to handle task {}", task);
 
-        while (!tasks.contains(task.getId())) {
+        while (!tasks.contains(task.getName())) {
             try {
                 Thread.sleep(50);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        tasks.remove(task.getId());
+        tasks.remove(task.getName());
         return TaskResult.SUCCESS;
     }
 }

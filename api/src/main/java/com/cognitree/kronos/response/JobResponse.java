@@ -1,27 +1,27 @@
 package com.cognitree.kronos.response;
 
+import com.cognitree.kronos.model.Job;
 import com.cognitree.kronos.model.Task;
-import com.cognitree.kronos.model.Workflow;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.util.List;
 import java.util.Objects;
 
-@JsonSerialize(as = WorkflowResponse.class)
-@JsonDeserialize(as = WorkflowResponse.class)
-public class WorkflowResponse extends Workflow {
+@JsonSerialize(as = JobResponse.class)
+@JsonDeserialize(as = JobResponse.class)
+public class JobResponse extends Job {
     private List<Task> tasks;
 
-    public static WorkflowResponse create(Workflow workflow, List<Task> tasks) {
-        WorkflowResponse workflowResponse = new WorkflowResponse();
+    public static JobResponse create(Job job, List<Task> tasks) {
+        JobResponse workflowResponse = new JobResponse();
         workflowResponse.setTasks(tasks);
-        workflowResponse.setId(workflow.getId());
-        workflowResponse.setName(workflow.getName());
-        workflowResponse.setNamespace(workflow.getNamespace());
-        workflowResponse.setStatus(workflow.getStatus());
-        workflowResponse.setCreatedAt(workflow.getCreatedAt());
-        workflowResponse.setCompletedAt(workflow.getCompletedAt());
+        workflowResponse.setId(job.getId());
+        workflowResponse.setWorkflowName(job.getWorkflowName());
+        workflowResponse.setNamespace(job.getNamespace());
+        workflowResponse.setStatus(job.getStatus());
+        workflowResponse.setCreatedAt(job.getCreatedAt());
+        workflowResponse.setCompletedAt(job.getCompletedAt());
         return workflowResponse;
     }
 
@@ -36,9 +36,9 @@ public class WorkflowResponse extends Workflow {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof WorkflowResponse)) return false;
+        if (!(o instanceof JobResponse)) return false;
         if (!super.equals(o)) return false;
-        WorkflowResponse that = (WorkflowResponse) o;
+        JobResponse that = (JobResponse) o;
         return Objects.equals(tasks, that.tasks);
     }
 
@@ -50,7 +50,7 @@ public class WorkflowResponse extends Workflow {
 
     @Override
     public String toString() {
-        return "WorkflowResponse{" +
+        return "JobResponse{" +
                 "tasks=" + tasks +
                 "} " + super.toString();
     }

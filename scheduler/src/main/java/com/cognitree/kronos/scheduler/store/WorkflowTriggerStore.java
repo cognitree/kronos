@@ -29,5 +29,5 @@ public interface WorkflowTriggerStore extends Store<WorkflowTrigger, WorkflowTri
 
     List<WorkflowTrigger> load(String namespace);
 
-    List<WorkflowTrigger> loadByWorkflowName(String name, String namespace);
+    List<WorkflowTrigger> loadByWorkflowName(String workflowName, String namespace);
 }

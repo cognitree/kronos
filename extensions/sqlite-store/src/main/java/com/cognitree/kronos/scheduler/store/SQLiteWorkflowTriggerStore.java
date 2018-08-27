@@ -172,7 +172,7 @@ public class SQLiteWorkflowTriggerStore implements WorkflowTriggerStore {
                 return getWorkflowTrigger(resultSet);
             }
         } catch (Exception e) {
-            logger.error("Error loading workflow trigger with id {} from database", triggerId, e);
+            logger.error("Error fetching workflow trigger with id {} from database", triggerId, e);
         }
         return null;
     }

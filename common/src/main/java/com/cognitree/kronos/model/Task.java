@@ -30,8 +30,6 @@ import java.util.Objects;
 @JsonDeserialize(as = Task.class)
 public interface Task extends TaskId {
 
-    String getName();
-
     String getType();
 
     String getTimeoutPolicy();

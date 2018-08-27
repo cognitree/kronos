@@ -33,7 +33,7 @@ public class WorkflowTriggerService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(WorkflowSchedulerService.class);
 
     private final StoreConfig storeConfig;
-    private WorkflowTriggerStore workflowStore;
+    private WorkflowTriggerStore workflowTriggerStore;
 
     public WorkflowTriggerService(StoreConfig storeConfig) {
         this.storeConfig = storeConfig;
@@ -46,9 +46,9 @@ public class WorkflowTriggerService implements Service {
     @Override
     public void init() throws Exception {
         logger.info("Initializing workflow trigger service");
-        workflowStore = (WorkflowTriggerStore) Class.forName(storeConfig.getStoreClass())
+        workflowTriggerStore = (WorkflowTriggerStore) Class.forName(storeConfig.getStoreClass())
                 .getConstructor().newInstance();
-        workflowStore.init(storeConfig.getConfig());
+        workflowTriggerStore.init(storeConfig.getConfig());
     }
 
     @Override
@@ -59,41 +59,41 @@ public class WorkflowTriggerService implements Service {
     public void add(WorkflowTrigger workflowTrigger) throws SchedulerException {
         logger.debug("Received request to add workflow trigger {}", workflowTrigger);
         WorkflowSchedulerService.getService().schedule(workflowTrigger);
-        workflowStore.store(workflowTrigger);
+        workflowTriggerStore.store(workflowTrigger);
     }
 
     public List<WorkflowTrigger> get(String namespace) {
         logger.debug("Received request to get all workflow trigger under namespace {}", namespace);
-        return workflowStore.load(namespace);
+        return workflowTriggerStore.load(namespace);
     }
 
     public WorkflowTrigger get(WorkflowTriggerId workflowTriggerId) {
         logger.debug("Received request to get all workflow trigger {}", workflowTriggerId);
-        return workflowStore.load(workflowTriggerId);
+        return workflowTriggerStore.load(workflowTriggerId);
     }
 
     public List<WorkflowTrigger> get(String workflowName, String namespace) {
         logger.debug("Received request to get all workflow trigger for workflow {} under namespace {}",
                 workflowName, namespace);
-        return workflowStore.loadByWorkflowName(workflowName, namespace);
+        return workflowTriggerStore.loadByWorkflowName(workflowName, namespace);
     }
 
     public void update(WorkflowTrigger workflowTrigger) throws SchedulerException {
         logger.debug("Received request to update workflow trigger to {}", workflowTrigger);
         WorkflowSchedulerService.getService().delete(workflowTrigger);
         WorkflowSchedulerService.getService().schedule(workflowTrigger);
-        workflowStore.update(workflowTrigger);
+        workflowTriggerStore.update(workflowTrigger);
     }
 
     public void delete(WorkflowTriggerId workflowTriggerId) throws SchedulerException {
         logger.debug("Received request to delete workflow trigger {}", workflowTriggerId);
         WorkflowSchedulerService.getService().delete(workflowTriggerId);
-        workflowStore.delete(workflowTriggerId);
+        workflowTriggerStore.delete(workflowTriggerId);
     }
 
     @Override
     public void stop() {
         logger.info("Stopping workflow trigger service");
-        workflowStore.stop();
+        workflowTriggerStore.stop();
     }
 }

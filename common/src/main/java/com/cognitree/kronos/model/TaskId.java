@@ -24,9 +24,9 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonDeserialize(as = MutableTaskId.class)
 public interface TaskId {
 
-    String getId();
+    String getName();
 
-    String getWorkflowId();
+    String getJobId();
 
     String getNamespace();
 }

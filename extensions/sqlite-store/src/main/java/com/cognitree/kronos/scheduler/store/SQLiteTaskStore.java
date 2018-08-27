@@ -45,20 +45,19 @@ public class SQLiteTaskStore implements TaskStore {
     private static final Logger logger = LoggerFactory.getLogger(SQLiteTaskStore.class);
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final String INSERT_TASK = "INSERT INTO tasks VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    private static final String INSERT_TASK = "INSERT INTO tasks VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_TASK = "UPDATE tasks SET status = ?, status_message = ?, submitted_at = ?, " +
-            "completed_at = ?, context = ? WHERE id = ? AND workflow_id = ? AND namespace = ?";
+            "completed_at = ?, context = ? WHERE name = ? AND job_id = ? AND namespace = ?";
     private static final String LOAD_ALL_TASKS_BY_NAMESPACE = "SELECT * FROM tasks WHERE namespace = ?";
-    private static final String LOAD_TASK = "SELECT * FROM tasks WHERE id = ? AND workflow_id = ? AND namespace = ?";
+    private static final String LOAD_TASK = "SELECT * FROM tasks WHERE name = ? AND job_id = ? AND namespace = ?";
     private static final String LOAD_TASK_BY_STATUS = "SELECT * FROM tasks WHERE status IN ($statuses)";
-    private static final String LOAD_TASK_BY_NAME_WORKFLOW_ID = "SELECT * FROM tasks WHERE name = ? AND workflow_id = ?" +
+    private static final String LOAD_TASK_BY_NAME_JOB_ID = "SELECT * FROM tasks WHERE name = ? AND job_id = ?" +
             " AND namespace = ?";
-    private static final String LOAD_TASK_BY_WORKFLOW_ID = "SELECT * FROM tasks WHERE workflow_id = ? AND namespace = ?";
-    private static final String DELETE_TASK = "DELETE FROM tasks WHERE id = ? AND workflow_id = ? AND namespace = ?";
+    private static final String LOAD_TASK_BY_JOB_ID = "SELECT * FROM tasks WHERE job_id = ? AND namespace = ?";
+    private static final String DELETE_TASK = "DELETE FROM tasks WHERE name = ? AND job_id = ? AND namespace = ?";
     private static final String DDL_CREATE_TASK_SQL = "CREATE TABLE IF NOT EXISTS tasks (" +
-            "id string," +
-            "workflow_id string," +
             "name string," +
+            "job_id string," +
             "namespace string," +
             "type string," +
             "timeout_policy string," +
@@ -71,14 +70,10 @@ public class SQLiteTaskStore implements TaskStore {
             "created_at integer," +
             "submitted_at integer," +
             "completed_at integer," +
-            "PRIMARY KEY(id, namespace)" +
+            "PRIMARY KEY(name, job_id, namespace)" +
             ")";
-    private static final String CREATE_TASK_INDEX_NAME_WORKFLOW_SQL = "CREATE INDEX IF NOT EXISTS tasks_name_workflow_idx " +
-            "on tasks (name, workflow_id, namespace)";
-    private static final String CREATE_TASK_INDEX_ID_WORKFLOW_SQL = "CREATE INDEX IF NOT EXISTS tasks_id_workflow_idx " +
-            "on tasks (id, workflow_id, namespace)";
-    private static final String CREATE_TASK_INDEX_WORKFLOW_ID_SQL = "CREATE INDEX IF NOT EXISTS tasks_workflow_idx " +
-            "on tasks (workflow_id, namespace)";
+    private static final String CREATE_TASK_INDEX_JOB_ID_SQL = "CREATE INDEX IF NOT EXISTS tasks_job_id_idx " +
+            "on tasks (job_id, namespace)";
     private static final TypeReference<Map<String, Object>> PROPERTIES_TYPE_REF =
             new TypeReference<Map<String, Object>>() {
             };
@@ -120,9 +115,7 @@ public class SQLiteTaskStore implements TaskStore {
              Statement statement = connection.createStatement()) {
             statement.setQueryTimeout(30);
             statement.executeUpdate(DDL_CREATE_TASK_SQL);
-            statement.executeUpdate(CREATE_TASK_INDEX_NAME_WORKFLOW_SQL);
-            statement.executeUpdate(CREATE_TASK_INDEX_ID_WORKFLOW_SQL);
-            statement.executeUpdate(CREATE_TASK_INDEX_WORKFLOW_ID_SQL);
+            statement.executeUpdate(CREATE_TASK_INDEX_JOB_ID_SQL);
         }
     }
 
@@ -132,9 +125,8 @@ public class SQLiteTaskStore implements TaskStore {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(INSERT_TASK)) {
             int paramIndex = 0;
-            preparedStatement.setString(++paramIndex, task.getId());
-            preparedStatement.setString(++paramIndex, task.getWorkflowId());
             preparedStatement.setString(++paramIndex, task.getName());
+            preparedStatement.setString(++paramIndex, task.getJobId());
             preparedStatement.setString(++paramIndex, task.getNamespace());
             preparedStatement.setString(++paramIndex, task.getType());
             preparedStatement.setString(++paramIndex, task.getTimeoutPolicy());
@@ -178,8 +170,8 @@ public class SQLiteTaskStore implements TaskStore {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_TASK)) {
             int paramIndex = 0;
-            preparedStatement.setString(++paramIndex, taskId.getId());
-            preparedStatement.setString(++paramIndex, taskId.getWorkflowId());
+            preparedStatement.setString(++paramIndex, taskId.getName());
+            preparedStatement.setString(++paramIndex, taskId.getJobId());
             preparedStatement.setString(++paramIndex, taskId.getNamespace());
             final ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -203,8 +195,8 @@ public class SQLiteTaskStore implements TaskStore {
             preparedStatement.setLong(++paramIndex, task.getSubmittedAt());
             preparedStatement.setLong(++paramIndex, task.getCompletedAt());
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(task.getContext()));
-            preparedStatement.setString(++paramIndex, taskId.getId());
-            preparedStatement.setString(++paramIndex, taskId.getWorkflowId());
+            preparedStatement.setString(++paramIndex, taskId.getName());
+            preparedStatement.setString(++paramIndex, taskId.getJobId());
             preparedStatement.setString(++paramIndex, taskId.getNamespace());
             preparedStatement.execute();
         } catch (Exception e) {
@@ -213,12 +205,12 @@ public class SQLiteTaskStore implements TaskStore {
     }
 
     @Override
-    public List<Task> loadByWorkflowId(String workflowId, String namespace) {
-        logger.debug("Received request to get all tasks with workflow id {}, namespace {}", workflowId, namespace);
+    public List<Task> loadByJobId(String jobId, String namespace) {
+        logger.debug("Received request to get all tasks with job id {}, namespace {}", jobId, namespace);
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_TASK_BY_WORKFLOW_ID)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_TASK_BY_JOB_ID)) {
             int paramIndex = 0;
-            preparedStatement.setString(++paramIndex, workflowId);
+            preparedStatement.setString(++paramIndex, jobId);
             preparedStatement.setString(++paramIndex, namespace);
             final ResultSet resultSet = preparedStatement.executeQuery();
             List<Task> tasks = new ArrayList<>();
@@ -227,8 +219,7 @@ public class SQLiteTaskStore implements TaskStore {
             }
             return tasks;
         } catch (Exception e) {
-            logger.error("Error fetching tasks with workflow id {}, namespace {} from database",
-                    workflowId, namespace, e);
+            logger.error("Error fetching tasks with job id {}, namespace {} from database", jobId, namespace, e);
             return Collections.emptyList();
         }
     }
@@ -251,20 +242,20 @@ public class SQLiteTaskStore implements TaskStore {
             }
             return tasks;
         } catch (Exception e) {
-            logger.error("Error loading task with status in {} from database", statuses, e);
+            logger.error("Error fetching task with status in {} from database", statuses, e);
             return Collections.emptyList();
         }
     }
 
     @Override
-    public List<Task> loadByNameAndWorkflowId(String taskName, String workflowId, String namespace) {
-        logger.debug("Received request to get all tasks with name {}, workflow id {}, namespace {}",
-                taskName, workflowId, namespace);
+    public List<Task> loadByNameAndJobId(String taskName, String jobId, String namespace) {
+        logger.debug("Received request to get all tasks with name {}, job id {}, namespace {}",
+                taskName, jobId, namespace);
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_TASK_BY_NAME_WORKFLOW_ID)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_TASK_BY_NAME_JOB_ID)) {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, taskName);
-            preparedStatement.setString(++paramIndex, workflowId);
+            preparedStatement.setString(++paramIndex, jobId);
             preparedStatement.setString(++paramIndex, namespace);
             final ResultSet resultSet = preparedStatement.executeQuery();
             List<Task> tasks = new ArrayList<>();
@@ -273,7 +264,7 @@ public class SQLiteTaskStore implements TaskStore {
             }
             return tasks;
         } catch (Exception e) {
-            logger.error("Error loading task with name {}, workflow id {} from database", taskName, workflowId, e);
+            logger.error("Error fetching task with name {}, job id {} from database", taskName, jobId, e);
             return Collections.emptyList();
         }
     }
@@ -284,8 +275,8 @@ public class SQLiteTaskStore implements TaskStore {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(DELETE_TASK)) {
             int paramIndex = 0;
-            preparedStatement.setString(++paramIndex, identity.getId());
-            preparedStatement.setString(++paramIndex, identity.getWorkflowId());
+            preparedStatement.setString(++paramIndex, identity.getName());
+            preparedStatement.setString(++paramIndex, identity.getJobId());
             preparedStatement.setString(++paramIndex, identity.getNamespace());
             preparedStatement.executeUpdate();
         } catch (Exception e) {
@@ -296,9 +287,8 @@ public class SQLiteTaskStore implements TaskStore {
     private Task getTask(ResultSet resultSet) throws Exception {
         int paramIndex = 0;
         MutableTask task = new MutableTask();
-        task.setId(resultSet.getString(++paramIndex));
-        task.setWorkflowId(resultSet.getString(++paramIndex));
         task.setName(resultSet.getString(++paramIndex));
+        task.setJobId(resultSet.getString(++paramIndex));
         task.setNamespace(resultSet.getString(++paramIndex));
         task.setType(resultSet.getString(++paramIndex));
         task.setTimeoutPolicy(resultSet.getString(++paramIndex));

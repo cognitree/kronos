@@ -39,7 +39,7 @@ public class TypeATaskHandler implements TaskHandler {
 
     @Override
     public TaskResult handle(Task task) {
-        handledTasks.add(task.getId());
+        handledTasks.add(task.getName());
         return TaskResult.SUCCESS;
     }
 }

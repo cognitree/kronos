@@ -37,10 +37,10 @@ public class MockTaskStatusChangeListener implements TaskStatusChangeListener {
     public void statusChanged(Task task, Status from, Status to) {
         // initially all tasks will be in created state
         // update the task status map with created state if task status change notification is received for the first time
-        if (!taskStatusMap.containsKey(task.getId())) {
-            taskStatusMap.put(task.getId(), CREATED);
+        if (!taskStatusMap.containsKey(task.getName())) {
+            taskStatusMap.put(task.getName(), CREATED);
         }
-        final Status lastKnownStatus = taskStatusMap.get(task.getId());
+        final Status lastKnownStatus = taskStatusMap.get(task.getName());
         switch (to) {
             case WAITING:
                 if (lastKnownStatus != CREATED) {
@@ -63,14 +63,17 @@ public class MockTaskStatusChangeListener implements TaskStatusChangeListener {
                 }
                 break;
             case SUCCESSFUL:
+                taskStatusMap.remove(task.getName());
                 if (lastKnownStatus != RUNNING) {
                     Assert.fail("invalid task status change notification");
                 }
                 break;
             case FAILED:
+                taskStatusMap.remove(task.getName());
                 // task can be marked failed from any of the above state
                 break;
         }
-        taskStatusMap.put(task.getId(), to);
+        if (!task.getStatus().isFinal())
+            taskStatusMap.put(task.getName(), to);
     }
 }

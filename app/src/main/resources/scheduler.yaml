@@ -22,17 +22,17 @@ taskStoreConfig:
     username:
     password:
 
-# configure workflow definition store
-workflowDefinitionStoreConfig:
-  storeClass: com.cognitree.kronos.scheduler.store.SQLiteWorkflowDefinitionStore
+# configure workflow store
+workflowStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.SQLiteWorkflowStore
   config:
     connectionURL: jdbc:sqlite:kronos.db
     username:
     password:
 
-# configure workflow store
-workflowStoreConfig:
-  storeClass: com.cognitree.kronos.scheduler.store.SQLiteWorkflowStore
+# configure job store storing runtime instance of workflows
+jobStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.SQLiteJobStore
   config:
     connectionURL: jdbc:sqlite:kronos.db
     username:

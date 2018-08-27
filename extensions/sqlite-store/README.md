@@ -2,20 +2,39 @@
 
 SQLite store is an extension for store which uses [SQLite](https://www.sqlite.org) database to store the state of Kronos.
 
-## Configuring SQLite Workflow Definition Store
+## Configuring SQLite Namespace Store
 
-Update the `workflowDefinitionStoreConfig` section in `scheduler.yaml` to configure to sqlite workflow definition store.
+Update the `namespaceStoreConfig` section in `scheduler.yaml` to configure to sqlite namespace store.
 
 ```
-workflowDefinitionStoreConfig:
-  storeClass: com.cognitree.kronos.scheduler.store.SQLiteWorkflowDefinitionStore
+namespaceStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.SQLiteNamespaceStore
   config:
     connectionURL: jdbc:sqlite:kronos.db
     username:
     password:
 ```
 
-Here, A [SQLiteWorkflowDefinitionStore](src/main/java/com/cognitree/kronos/scheduler/store/SQLiteWorkflowDefinitionStore.java) is configured. Update the `connectionURL`, `username` and `password` to connect to running sqlite db.
+Here, A [SQLiteNamespaceStore](src/main/java/com/cognitree/kronos/scheduler/store/SQLiteNamespaceStore.java) is configured. Update the `connectionURL`, `username` and `password` to connect to running sqlite db.
+Other configurable parameters are
+    - minIdleConnection (minimum number of idle connections in the pool)
+    - maxIdleConnection (maximum number of idle connections in the pool)
+    - maxOpenPreparedStatements (maximum number of open prepared statements)
+
+## Configuring SQLite Task Definition Store
+
+Update the `taskDefinitionStoreConfig` section in `scheduler.yaml` to configure to sqlite task definition store.
+
+```
+taskDefinitionStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.SQLiteTaskDefinitionStore
+  config:
+    connectionURL: jdbc:sqlite:kronos.db
+    username:
+    password:
+```
+
+Here, A [SQLiteTaskDefinitionStore](src/main/java/com/cognitree/kronos/scheduler/store/SQLiteTaskDefinitionStore.java) is configured. Update the `connectionURL`, `username` and `password` to connect to running sqlite db.
 Other configurable parameters are
     - minIdleConnection (minimum number of idle connections in the pool)
     - maxIdleConnection (maximum number of idle connections in the pool)
@@ -40,20 +59,39 @@ Other configurable parameters are
     - maxIdleConnection (maximum number of idle connections in the pool)
     - maxOpenPreparedStatements (maximum number of open prepared statements)
 
-## Configuring SQLite Task Definition Store
+## Configuring SQLite Workflow Trigger Store
 
-Update the `taskDefinitionStoreConfig` section in `scheduler.yaml` to configure to sqlite task definition store.
+Update the `workflowTriggerStoreConfig` section in `scheduler.yaml` to configure to sqlite workflow trigger store.
 
 ```
-taskDefinitionStoreConfig:
-  storeClass: com.cognitree.kronos.scheduler.store.SQLiteTaskDefinitionStore
+workflowTriggerStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.SQLiteWorkflowTriggerStore
   config:
     connectionURL: jdbc:sqlite:kronos.db
     username:
     password:
 ```
 
-Here, A [SQLiteTaskDefinitionStore](src/main/java/com/cognitree/kronos/scheduler/store/SQLiteTaskDefinitionStore.java) is configured. Update the `connectionURL`, `username` and `password` to connect to running sqlite db.
+Here, A [SQLiteWorkflowTriggerStore](src/main/java/com/cognitree/kronos/scheduler/store/SQLiteWorkflowTriggerStore.java) is configured. Update the `connectionURL`, `username` and `password` to connect to running sqlite db.
+Other configurable parameters are
+    - minIdleConnection (minimum number of idle connections in the pool)
+    - maxIdleConnection (maximum number of idle connections in the pool)
+    - maxOpenPreparedStatements (maximum number of open prepared statements)
+
+## Configuring SQLite Job Store
+
+Update the `jobStoreConfig` section in `scheduler.yaml` to configure to sqlite job store storing runtime instances of workflows.
+
+```
+jobStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.SQLiteJobStore
+  config:
+    connectionURL: jdbc:sqlite:kronos.db
+    username:
+    password:
+```
+
+Here, A [SQLiteJobStore](src/main/java/com/cognitree/kronos/scheduler/store/SQLiteJobStore.java) is configured. Update the `connectionURL`, `username` and `password` to connect to running sqlite db.
 Other configurable parameters are
     - minIdleConnection (minimum number of idle connections in the pool)
     - maxIdleConnection (maximum number of idle connections in the pool)

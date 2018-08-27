@@ -17,7 +17,7 @@
 
 package com.cognitree.kronos.scheduler;
 
-import com.cognitree.kronos.model.definitions.WorkflowDefinition;
+import com.cognitree.kronos.model.definitions.Workflow;
 import com.cognitree.kronos.model.definitions.WorkflowTrigger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -50,34 +50,34 @@ public class WorkflowSchedulerServiceTest {
     @Test
     public void testValidWorkflow() throws Exception {
         final InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream("valid-workflow.yaml");
-        final WorkflowDefinition workflowDefinition = MAPPER.readValue(resourceAsStream, WorkflowDefinition.class);
-        WorkflowDefinitionService.getService().validate(workflowDefinition);
+        final Workflow workflow = MAPPER.readValue(resourceAsStream, Workflow.class);
+        WorkflowService.getService().validate(workflow);
     }
 
     @Test(expected = ValidationException.class)
     public void testInValidWorkflowMissingTasks() throws Exception {
         final InputStream resourceAsStream =
                 getClass().getClassLoader().getResourceAsStream("invalid-workflow-missing-tasks.yaml");
-        final WorkflowDefinition workflowDefinition = MAPPER.readValue(resourceAsStream, WorkflowDefinition.class);
-        WorkflowDefinitionService.getService().validate(workflowDefinition);
+        final Workflow workflow = MAPPER.readValue(resourceAsStream, Workflow.class);
+        WorkflowService.getService().validate(workflow);
     }
 
     @Test(expected = ValidationException.class)
     public void testInValidWorkflowDisabledTaskDependency() throws Exception {
         final InputStream resourceAsStream =
                 getClass().getClassLoader().getResourceAsStream("invalid-workflow-disabled-tasks-dependency.yaml");
-        final WorkflowDefinition workflowDefinition = MAPPER.readValue(resourceAsStream, WorkflowDefinition.class);
-        WorkflowDefinitionService.getService().validate(workflowDefinition);
+        final Workflow workflow = MAPPER.readValue(resourceAsStream, Workflow.class);
+        WorkflowService.getService().validate(workflow);
     }
 
     @Test
     public void testResolveWorkflowTasks() throws Exception {
         final InputStream resourceAsStream =
                 getClass().getClassLoader().getResourceAsStream("valid-workflow.yaml");
-        final WorkflowDefinition workflowDefinition = MAPPER.readValue(resourceAsStream, WorkflowDefinition.class);
-        WorkflowDefinitionService.getService().validate(workflowDefinition);
-        final List<WorkflowDefinition.WorkflowTask> workflowTasks =
-                WorkflowSchedulerService.getService().orderWorkflowTasks(workflowDefinition.getTasks());
+        final Workflow workflow = MAPPER.readValue(resourceAsStream, Workflow.class);
+        WorkflowService.getService().validate(workflow);
+        final List<Workflow.WorkflowTask> workflowTasks =
+                WorkflowSchedulerService.getService().orderWorkflowTasks(workflow.getTasks());
         Assert.assertEquals("task one", workflowTasks.get(0).getName());
         Assert.assertEquals("task two", workflowTasks.get(1).getName());
         Assert.assertEquals("task three", workflowTasks.get(2).getName());
@@ -88,12 +88,12 @@ public class WorkflowSchedulerServiceTest {
         TaskSchedulerService.getService().getTaskProvider().reinit();
         final InputStream workflowDefInputStream =
                 getClass().getClassLoader().getResourceAsStream("test-workflow.yaml");
-        final WorkflowDefinition workflowDefinition = MAPPER.readValue(workflowDefInputStream, WorkflowDefinition.class);
-        WorkflowDefinitionService.getService().add(workflowDefinition);
+        final Workflow workflow = MAPPER.readValue(workflowDefInputStream, Workflow.class);
+        WorkflowService.getService().add(workflow);
         final WorkflowTrigger workflowTrigger = new WorkflowTrigger();
         workflowTrigger.setName("test-workflow-trigger");
-        workflowTrigger.setWorkflowName(workflowDefinition.getName());
-        workflowTrigger.setNamespace(workflowDefinition.getNamespace());
+        workflowTrigger.setWorkflowName(workflow.getName());
+        workflowTrigger.setNamespace(workflow.getNamespace());
         workflowTrigger.setSchedule("0/2 * * * * ?");
         final long currentTimeMillis = System.currentTimeMillis();
         workflowTrigger.setStartAt(currentTimeMillis);
@@ -111,15 +111,15 @@ public class WorkflowSchedulerServiceTest {
         TaskSchedulerService.getService().getTaskProvider().reinit();
         final InputStream resourceAsStream =
                 getClass().getClassLoader().getResourceAsStream("test-workflow.yaml");
-        final WorkflowDefinition workflowDefinition = MAPPER.readValue(resourceAsStream, WorkflowDefinition.class);
-        WorkflowDefinitionService.getService().validate(workflowDefinition);
+        final Workflow workflow = MAPPER.readValue(resourceAsStream, Workflow.class);
+        WorkflowService.getService().validate(workflow);
         Assert.assertEquals(0, TaskSchedulerService.getService().getTaskProvider().size());
         final WorkflowTrigger workflowTrigger = new WorkflowTrigger();
         workflowTrigger.setName("test-workflow-trigger");
-        workflowTrigger.setWorkflowName(workflowDefinition.getName());
-        workflowTrigger.setNamespace(workflowDefinition.getNamespace());
+        workflowTrigger.setWorkflowName(workflow.getName());
+        workflowTrigger.setNamespace(workflow.getNamespace());
         workflowTrigger.setSchedule("0/2 * * * * ?");
-        WorkflowSchedulerService.getService().execute(workflowDefinition, workflowTrigger);
+        WorkflowSchedulerService.getService().execute(workflow, workflowTrigger);
         sleep(100);
         Assert.assertEquals(3, TaskSchedulerService.getService().getTaskProvider().size());
     }

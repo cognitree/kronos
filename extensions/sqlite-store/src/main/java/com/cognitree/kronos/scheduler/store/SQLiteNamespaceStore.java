@@ -112,7 +112,7 @@ public class SQLiteNamespaceStore implements NamespaceStore {
             }
             return namespaces;
         } catch (Exception e) {
-            logger.error("Error loading all namespaces from database", e);
+            logger.error("Error fetching all namespaces from database", e);
             return Collections.emptyList();
         }
     }
@@ -129,7 +129,7 @@ public class SQLiteNamespaceStore implements NamespaceStore {
                 return getNamespace(resultSet);
             }
         } catch (Exception e) {
-            logger.error("Error loading namespace with id {} from database", namespaceId, e);
+            logger.error("Error fetching namespace with id {} from database", namespaceId, e);
         }
         return null;
     }

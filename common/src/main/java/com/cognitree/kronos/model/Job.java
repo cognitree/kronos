@@ -17,39 +17,39 @@
 
 package com.cognitree.kronos.model;
 
-import com.cognitree.kronos.model.definitions.WorkflowDefinition;
+import com.cognitree.kronos.model.definitions.Workflow;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import static com.cognitree.kronos.model.Workflow.Status.CREATED;
+import static com.cognitree.kronos.model.Job.Status.CREATED;
 
 /**
- * runtime instance of {@link WorkflowDefinition}
+ * runtime instance of {@link Workflow}
  */
-@JsonSerialize(as = Workflow.class)
-@JsonDeserialize(as = Workflow.class)
-public class Workflow extends WorkflowId {
-    private String name;
-    private String trigger;
+@JsonSerialize(as = Job.class)
+@JsonDeserialize(as = Job.class)
+public class Job extends JobId {
+    private String workflowName;
+    private String triggerName;
     private Status status = CREATED;
     private long createdAt;
     private long completedAt;
 
-    public String getName() {
-        return name;
+    public String getWorkflowName() {
+        return workflowName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setWorkflowName(String workflowName) {
+        this.workflowName = workflowName;
     }
 
-    public String getTrigger() {
-        return trigger;
+    public String getTriggerName() {
+        return triggerName;
     }
 
-    public void setTrigger(String trigger) {
-        this.trigger = trigger;
+    public void setTriggerName(String triggerName) {
+        this.triggerName = triggerName;
     }
 
     public Status getStatus() {
@@ -77,7 +77,7 @@ public class Workflow extends WorkflowId {
     }
 
     @JsonIgnore
-    public WorkflowId getIdentity() {
+    public JobId getIdentity() {
         return this;
     }
 
@@ -93,9 +93,9 @@ public class Workflow extends WorkflowId {
 
     @Override
     public String toString() {
-        return "Workflow{" +
-                "name='" + name + '\'' +
-                ", trigger='" + trigger + '\'' +
+        return "Job{" +
+                "workflowName='" + workflowName + '\'' +
+                ", triggerName='" + triggerName + '\'' +
                 ", status=" + status +
                 ", createdAt=" + createdAt +
                 ", completedAt=" + completedAt +

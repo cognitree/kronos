@@ -54,7 +54,7 @@ public class Application {
         executorApp.start();
         fileReader.loadNamespaces();
         fileReader.loadTaskDefinitions();
-        fileReader.loadWorkflowDefinitions();
+        fileReader.loadWorkflows();
         fileReader.loadWorkflowTriggers();
     }
 

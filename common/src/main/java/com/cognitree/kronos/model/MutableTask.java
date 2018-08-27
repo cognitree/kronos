@@ -32,7 +32,6 @@ import static com.cognitree.kronos.model.Task.Status.CREATED;
 @JsonDeserialize(as = MutableTask.class)
 public class MutableTask extends MutableTaskId implements Task {
 
-    private String name;
     private String type;
     private String timeoutPolicy;
     private String maxExecutionTime;
@@ -45,14 +44,6 @@ public class MutableTask extends MutableTaskId implements Task {
     private long createdAt;
     private long submittedAt;
     private long completedAt;
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
 
     @Override
     public String getType() {
@@ -172,8 +163,7 @@ public class MutableTask extends MutableTaskId implements Task {
     @Override
     public String toString() {
         return "MutableTask{" +
-                "name='" + name + '\'' +
-                ", type='" + type + '\'' +
+                "type='" + type + '\'' +
                 ", timeoutPolicy='" + timeoutPolicy + '\'' +
                 ", maxExecutionTime='" + maxExecutionTime + '\'' +
                 ", dependsOn=" + dependsOn +

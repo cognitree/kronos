@@ -181,8 +181,8 @@ public final class TaskSchedulerService implements Service {
     }
 
     private void createTimeoutTask(Task task) {
-        if (taskTimeoutHandlersMap.containsKey(task.getId())) {
-            logger.debug("Timeout task is already scheduled for task {}", task.getId());
+        if (taskTimeoutHandlersMap.containsKey(task.getName())) {
+            logger.debug("Timeout task is already scheduled for task {}", task.getName());
             return;
         }
 
@@ -195,10 +195,10 @@ public final class TaskSchedulerService implements Service {
             // submit timeout task now
             scheduledExecutorService.submit(timeoutTask);
         } else {
-            logger.info("Initializing timeout task for task {}, scheduled at {}", task.getId(), timeoutTaskTime);
+            logger.info("Initializing timeout task for task {}, scheduled at {}", task.getName(), timeoutTaskTime);
             final ScheduledFuture<?> timeoutTaskFuture =
                     scheduledExecutorService.schedule(timeoutTask, timeoutTaskTime - currentTimeMillis, MILLISECONDS);
-            taskTimeoutHandlersMap.put(task.getId(), timeoutTaskFuture);
+            taskTimeoutHandlersMap.put(task.getName(), timeoutTaskFuture);
         }
     }
 
@@ -362,7 +362,7 @@ public final class TaskSchedulerService implements Service {
                 markDependentTasksAsFailed(task);
                 // do not break
             case SUCCESSFUL:
-                final ScheduledFuture<?> taskTimeoutFuture = taskTimeoutHandlersMap.remove(task.getId());
+                final ScheduledFuture<?> taskTimeoutFuture = taskTimeoutHandlersMap.remove(task.getName());
                 if (taskTimeoutFuture != null) {
                     taskTimeoutFuture.cancel(false);
                 }
@@ -408,7 +408,7 @@ public final class TaskSchedulerService implements Service {
         for (String dependentTaskName : dependsOn) {
             // sort the tasks based on creation time and update the context from the latest task
             Optional<Task> dependentTaskOptional =
-                    taskProvider.getDependentTasks(dependentTaskName, task.getWorkflowId(), task.getNamespace())
+                    taskProvider.getDependentTasks(dependentTaskName, task.getJobId(), task.getNamespace())
                             .stream().max(comparing(Task::getCreatedAt));
             if (dependentTaskOptional.isPresent()) {
                 final Task dependentTask = dependentTaskOptional.get();

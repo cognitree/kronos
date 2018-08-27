@@ -17,18 +17,18 @@
 
 package com.cognitree.kronos.scheduler;
 
+import com.cognitree.kronos.model.Job;
 import com.cognitree.kronos.model.Namespace;
 import com.cognitree.kronos.model.Task;
-import com.cognitree.kronos.model.Workflow;
 import com.cognitree.kronos.model.definitions.TaskDefinition;
-import com.cognitree.kronos.model.definitions.WorkflowDefinition;
+import com.cognitree.kronos.model.definitions.Workflow;
 import com.cognitree.kronos.model.definitions.WorkflowTrigger;
 import com.cognitree.kronos.scheduler.policies.TimeoutPolicyConfig;
+import com.cognitree.kronos.scheduler.store.JobStore;
 import com.cognitree.kronos.scheduler.store.NamespaceStore;
 import com.cognitree.kronos.scheduler.store.StoreConfig;
 import com.cognitree.kronos.scheduler.store.TaskDefinitionStore;
 import com.cognitree.kronos.scheduler.store.TaskStore;
-import com.cognitree.kronos.scheduler.store.WorkflowDefinitionStore;
 import com.cognitree.kronos.scheduler.store.WorkflowStore;
 import com.cognitree.kronos.scheduler.store.WorkflowTriggerStore;
 
@@ -57,15 +57,15 @@ public class SchedulerConfig {
      */
     private StoreConfig taskStoreConfig;
     /**
-     * {@link WorkflowDefinitionStore} configuration, required by the scheduler to instantiate the workflow definition
-     * store to be used for storing {@link WorkflowDefinition}.
-     */
-    private StoreConfig workflowDefinitionStoreConfig;
-    /**
-     * {@link WorkflowStore} configuration, required by the scheduler to instantiate the workflow store to be used for storing
-     * the {@link Workflow}.
+     * {@link WorkflowStore} configuration, required by the scheduler to instantiate the workflow definition
+     * store to be used for storing {@link Workflow}.
      */
     private StoreConfig workflowStoreConfig;
+    /**
+     * {@link JobStore} configuration, required by the scheduler to instantiate the workflow store to be used for storing
+     * the {@link Job}.
+     */
+    private StoreConfig jobStoreConfig;
     /**
      * {@link WorkflowTriggerStore} configuration, required by the scheduler to instantiate the workflow trigger store to be
      * used for storing the {@link WorkflowTrigger}.
@@ -116,20 +116,20 @@ public class SchedulerConfig {
         this.taskStoreConfig = taskStoreConfig;
     }
 
-    public StoreConfig getWorkflowDefinitionStoreConfig() {
-        return workflowDefinitionStoreConfig;
-    }
-
-    public void setWorkflowDefinitionStoreConfig(StoreConfig workflowDefinitionStoreConfig) {
-        this.workflowDefinitionStoreConfig = workflowDefinitionStoreConfig;
-    }
-
     public StoreConfig getWorkflowStoreConfig() {
         return workflowStoreConfig;
     }
 
     public void setWorkflowStoreConfig(StoreConfig workflowStoreConfig) {
         this.workflowStoreConfig = workflowStoreConfig;
+    }
+
+    public StoreConfig getJobStoreConfig() {
+        return jobStoreConfig;
+    }
+
+    public void setJobStoreConfig(StoreConfig jobStoreConfig) {
+        this.jobStoreConfig = jobStoreConfig;
     }
 
     public StoreConfig getWorkflowTriggerStoreConfig() {
@@ -164,8 +164,8 @@ public class SchedulerConfig {
         return Objects.equals(namespaceStoreConfig, that.namespaceStoreConfig) &&
                 Objects.equals(taskDefinitionStoreConfig, that.taskDefinitionStoreConfig) &&
                 Objects.equals(taskStoreConfig, that.taskStoreConfig) &&
-                Objects.equals(workflowDefinitionStoreConfig, that.workflowDefinitionStoreConfig) &&
                 Objects.equals(workflowStoreConfig, that.workflowStoreConfig) &&
+                Objects.equals(jobStoreConfig, that.jobStoreConfig) &&
                 Objects.equals(workflowTriggerStoreConfig, that.workflowTriggerStoreConfig) &&
                 Objects.equals(timeoutPolicyConfig, that.timeoutPolicyConfig) &&
                 Objects.equals(taskPurgeInterval, that.taskPurgeInterval);
@@ -174,7 +174,7 @@ public class SchedulerConfig {
     @Override
     public int hashCode() {
 
-        return Objects.hash(namespaceStoreConfig, taskDefinitionStoreConfig, taskStoreConfig, workflowDefinitionStoreConfig, workflowStoreConfig, workflowTriggerStoreConfig, timeoutPolicyConfig, taskPurgeInterval);
+        return Objects.hash(namespaceStoreConfig, taskDefinitionStoreConfig, taskStoreConfig, workflowStoreConfig, jobStoreConfig, workflowTriggerStoreConfig, timeoutPolicyConfig, taskPurgeInterval);
     }
 
     @Override
@@ -183,8 +183,8 @@ public class SchedulerConfig {
                 "namespaceStoreConfig=" + namespaceStoreConfig +
                 ", taskDefinitionStoreConfig=" + taskDefinitionStoreConfig +
                 ", taskStoreConfig=" + taskStoreConfig +
-                ", workflowDefinitionStoreConfig=" + workflowDefinitionStoreConfig +
                 ", workflowStoreConfig=" + workflowStoreConfig +
+                ", jobStoreConfig=" + jobStoreConfig +
                 ", workflowTriggerStoreConfig=" + workflowTriggerStoreConfig +
                 ", timeoutPolicyConfig=" + timeoutPolicyConfig +
                 ", taskPurgeInterval='" + taskPurgeInterval + '\'' +

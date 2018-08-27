@@ -75,11 +75,6 @@ public class NamespaceService implements Service {
         namespaceStore.store(namespace);
     }
 
-    public void delete(String name) {
-        logger.debug("Received request to delete namespace {}", name);
-        namespaceStore.delete(name);
-    }
-
     @Override
     public void stop() {
         logger.info("Stopping namespace service");

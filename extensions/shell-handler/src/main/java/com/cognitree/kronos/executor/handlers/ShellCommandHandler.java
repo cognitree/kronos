@@ -72,8 +72,8 @@ public class ShellCommandHandler implements TaskHandler {
             return new TaskResult(false, "unable to create directory to store logs");
         }
 
-        processBuilder.redirectError(new File(logDir, task.getName() + "_" + task.getId() + "_stderr.log"));
-        processBuilder.redirectOutput(new File(logDir, task.getName() + "_" + task.getId() + "_stdout.log"));
+        processBuilder.redirectError(new File(logDir, task.getName() + "_" + task.getJobId() + "_stderr.log"));
+        processBuilder.redirectOutput(new File(logDir, task.getName() + "_" + task.getJobId() + "_stdout.log"));
         try {
             Process process = processBuilder.start();
             int exitValue = process.waitFor();

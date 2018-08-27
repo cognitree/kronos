@@ -15,33 +15,33 @@
  * limitations under the License.
  */
 
-package com.cognitree.kronos.model.definitions;
+package com.cognitree.kronos.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.util.Objects;
 
-@JsonSerialize(as = WorkflowDefinitionId.class)
-@JsonDeserialize(as = WorkflowDefinitionId.class)
-public class WorkflowDefinitionId {
+@JsonSerialize(as = JobId.class)
+@JsonDeserialize(as = JobId.class)
+public class JobId {
 
-    private String name;
+    private String id;
     private String namespace;
 
-    public static WorkflowDefinitionId build(String name, String namespace) {
-        final WorkflowDefinitionId workflowDefinitionId = new WorkflowDefinitionId();
-        workflowDefinitionId.setName(name);
-        workflowDefinitionId.setNamespace(namespace);
-        return workflowDefinitionId;
+    public static JobId build(String id, String namespace) {
+        final JobId jobId = new JobId();
+        jobId.setId(id);
+        jobId.setNamespace(namespace);
+        return jobId;
     }
 
-    public String getName() {
-        return name;
+    public String getId() {
+        return id;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getNamespace() {
@@ -56,20 +56,20 @@ public class WorkflowDefinitionId {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        WorkflowDefinitionId that = (WorkflowDefinitionId) o;
-        return Objects.equals(name, that.name) &&
+        JobId that = (JobId) o;
+        return Objects.equals(id, that.id) &&
                 Objects.equals(namespace, that.namespace);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, namespace);
+        return Objects.hash(id, namespace);
     }
 
     @Override
     public String toString() {
-        return "WorkflowDefinitionId{" +
-                "name='" + name + '\'' +
+        return "JobId{" +
+                "id='" + id + '\'' +
                 ", namespace='" + namespace + '\'' +
                 '}';
     }

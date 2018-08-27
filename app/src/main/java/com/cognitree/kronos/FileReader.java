@@ -19,11 +19,11 @@ package com.cognitree.kronos;
 
 import com.cognitree.kronos.model.Namespace;
 import com.cognitree.kronos.model.definitions.TaskDefinition;
-import com.cognitree.kronos.model.definitions.WorkflowDefinition;
+import com.cognitree.kronos.model.definitions.Workflow;
 import com.cognitree.kronos.model.definitions.WorkflowTrigger;
 import com.cognitree.kronos.scheduler.NamespaceService;
 import com.cognitree.kronos.scheduler.TaskDefinitionService;
-import com.cognitree.kronos.scheduler.WorkflowDefinitionService;
+import com.cognitree.kronos.scheduler.WorkflowService;
 import com.cognitree.kronos.scheduler.WorkflowTriggerService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,15 +40,14 @@ public class FileReader {
     private static final Logger logger = LoggerFactory.getLogger(FileReader.class);
 
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
-    private static final String DEFAULT_NAMESPACE = "default";
     private static final TypeReference<List<TaskDefinition>> TASK_DEFINITION_LIST_REF =
             new TypeReference<List<TaskDefinition>>() {
             };
     private static final TypeReference<List<Namespace>> NAMESPACE_LIST_REF =
             new TypeReference<List<Namespace>>() {
             };
-    private static final TypeReference<List<WorkflowDefinition>> WORKFLOW_DEFINITION_LIST_REF =
-            new TypeReference<List<WorkflowDefinition>>() {
+    private static final TypeReference<List<Workflow>> WORKFLOW_LIST_REF =
+            new TypeReference<List<Workflow>>() {
             };
     private static final TypeReference<List<WorkflowTrigger>> WORKFLOW_TRIGGER_LIST_REF =
             new TypeReference<List<WorkflowTrigger>>() {
@@ -86,23 +85,20 @@ public class FileReader {
         }
     }
 
-    public void loadWorkflowDefinitions() throws IOException {
+    public void loadWorkflows() throws IOException {
         final InputStream resourceAsStream =
-                FileReader.class.getClassLoader().getResourceAsStream("workflow-definitions.yaml");
-        List<WorkflowDefinition> workflowDefinitions = MAPPER.readValue(resourceAsStream, WORKFLOW_DEFINITION_LIST_REF);
+                FileReader.class.getClassLoader().getResourceAsStream("workflows.yaml");
+        List<Workflow> workflows = MAPPER.readValue(resourceAsStream, WORKFLOW_LIST_REF);
 
-        for (WorkflowDefinition workflowDefinition : workflowDefinitions) {
-            if (workflowDefinition.getNamespace() == null) {
-                workflowDefinition.setNamespace(DEFAULT_NAMESPACE);
-            }
-            if (WorkflowDefinitionService.getService().get(workflowDefinition) == null) {
+        for (Workflow workflow : workflows) {
+            if (WorkflowService.getService().get(workflow) == null) {
                 try {
-                    WorkflowDefinitionService.getService().add(workflowDefinition);
+                    WorkflowService.getService().add(workflow);
                 } catch (Exception ex) {
-                    logger.error("Unable to add workflow definition {}", workflowDefinition, ex);
+                    logger.error("Unable to add workflow {}", workflow, ex);
                 }
             } else {
-                logger.error("Workflow definition already exists with id {}", workflowDefinition.getIdentity());
+                logger.error("Workflow already exists with id {}", workflow.getIdentity());
             }
         }
     }
@@ -113,9 +109,6 @@ public class FileReader {
         List<WorkflowTrigger> workflowTriggers = MAPPER.readValue(resourceAsStream, WORKFLOW_TRIGGER_LIST_REF);
 
         for (WorkflowTrigger workflowTrigger : workflowTriggers) {
-            if (workflowTrigger.getNamespace() == null) {
-                workflowTrigger.setNamespace(DEFAULT_NAMESPACE);
-            }
             if (WorkflowTriggerService.getService().get(workflowTrigger) == null) {
                 try {
                     WorkflowTriggerService.getService().add(workflowTrigger);

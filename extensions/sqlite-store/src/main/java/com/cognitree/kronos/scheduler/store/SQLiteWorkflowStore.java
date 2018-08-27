@@ -17,8 +17,11 @@
 
 package com.cognitree.kronos.scheduler.store;
 
-import com.cognitree.kronos.model.Workflow;
-import com.cognitree.kronos.model.WorkflowId;
+import com.cognitree.kronos.model.definitions.Workflow;
+import com.cognitree.kronos.model.definitions.Workflow.WorkflowTask;
+import com.cognitree.kronos.model.definitions.WorkflowId;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.slf4j.Logger;
@@ -39,30 +42,25 @@ import java.util.List;
 public class SQLiteWorkflowStore implements WorkflowStore {
     private static final Logger logger = LoggerFactory.getLogger(SQLiteWorkflowStore.class);
 
-    private static final String INSERT_WORKFLOW = "INSERT INTO workflows VALUES (?,?,?,?,?,?,?)";
-    private static final String LOAD_WORKFLOW_BY_NAMESPACE = "SELECT * FROM workflows WHERE namespace = ?";
-    private static final String LOAD_WORKFLOW_BY_ID = "SELECT * FROM workflows WHERE id = ? AND namespace = ?";
-    private static final String LOAD_ALL_WORKFLOW_CREATED_BETWEEN = "SELECT * FROM workflows where namespace = ? " +
-            "AND created_at > ? AND created_at < ?";
-    private static final String LOAD_WORKFLOW_BY_NAME_CREATED_BETWEEN = "SELECT * FROM workflows WHERE name = ? " +
-            "AND namespace = ? AND created_at > ? AND created_at < ?";
-    private static final String LOAD_WORKFLOW_BY_NAME_TRIGGER_CREATED_BETWEEN = "SELECT * FROM workflows WHERE name = ? " +
-            "AND trigger = ? AND namespace = ? AND created_at > ? AND created_at < ?";
-    private static final String UPDATE_WORKFLOW = "UPDATE workflows SET status = ?, created_at = ?, completed_at = ? " +
-            " WHERE id = ? AND namespace = ?";
-    private static final String DELETE_WORKFLOW = "DELETE FROM workflows WHERE id = ? AND namespace = ?";
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final String INSERT_WORKFLOW = "INSERT INTO workflows VALUES (?,?,?,?)";
+    private static final String LOAD_ALL_WORKFLOW_BY_NAMESPACE = "SELECT * FROM workflows " +
+            "WHERE namespace = ?";
+    private static final String UPDATE_WORKFLOW = "UPDATE workflows set description = ?, " +
+            " tasks = ? where name = ? AND namespace = ?";
+    private static final String DELETE_WORKFLOW = "DELETE FROM workflows where name = ? " +
+            "AND namespace = ?";
+    private static final String LOAD_WORKFLOW = "SELECT * FROM workflows where name = ? AND namespace = ?";
     private static final String DDL_CREATE_WORKFLOW_SQL = "CREATE TABLE IF NOT EXISTS workflows (" +
-            "id string," +
             "name string," +
-            "trigger string," +
             "namespace string," +
-            "status string," +
-            "created_at integer," +
-            "completed_at integer," +
-            "PRIMARY KEY(id, namespace)" +
+            "description string," +
+            "tasks string," +
+            "PRIMARY KEY(name, namespace)" +
             ")";
-    private static final String CREATE_WORKFLOW_INDEX_SQL = "CREATE INDEX IF NOT EXISTS workflows_name_namespace_idx " +
-            "on workflows (name, namespace)";
+    private static final TypeReference<List<WorkflowTask>> WORKFLOW_TASK_LIST_TYPE_REF =
+            new TypeReference<List<WorkflowTask>>() {
+            };
 
     private BasicDataSource dataSource;
 
@@ -72,7 +70,6 @@ public class SQLiteWorkflowStore implements WorkflowStore {
         initDataSource(storeConfig);
         initWorkflowStore();
     }
-
 
     private void initDataSource(ObjectNode storeConfig) {
         dataSource = new BasicDataSource();
@@ -99,10 +96,8 @@ public class SQLiteWorkflowStore implements WorkflowStore {
              Statement statement = connection.createStatement()) {
             statement.setQueryTimeout(30);
             statement.executeUpdate(DDL_CREATE_WORKFLOW_SQL);
-            statement.executeUpdate(CREATE_WORKFLOW_INDEX_SQL);
         }
     }
-
 
     @Override
     public void store(Workflow workflow) {
@@ -110,13 +105,10 @@ public class SQLiteWorkflowStore implements WorkflowStore {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(INSERT_WORKFLOW)) {
             int paramIndex = 0;
-            preparedStatement.setString(++paramIndex, workflow.getId());
             preparedStatement.setString(++paramIndex, workflow.getName());
-            preparedStatement.setString(++paramIndex, workflow.getTrigger());
             preparedStatement.setString(++paramIndex, workflow.getNamespace());
-            preparedStatement.setString(++paramIndex, workflow.getStatus().name());
-            preparedStatement.setLong(++paramIndex, workflow.getCreatedAt());
-            preparedStatement.setLong(++paramIndex, workflow.getCompletedAt());
+            preparedStatement.setString(++paramIndex, workflow.getDescription());
+            preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(workflow.getTasks()));
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error storing workflow {} into database", workflow, e);
@@ -125,127 +117,54 @@ public class SQLiteWorkflowStore implements WorkflowStore {
 
     @Override
     public List<Workflow> load(String namespace) {
-        logger.debug("Received request to get all workflow  in namespace {}", namespace);
+        logger.debug("Received request to get all workflows in namespace {}", namespace);
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_WORKFLOW_BY_NAMESPACE)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_ALL_WORKFLOW_BY_NAMESPACE)) {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, namespace);
             final ResultSet resultSet = preparedStatement.executeQuery();
-            final ArrayList<Workflow> workflows = new ArrayList<>();
+            List<Workflow> workflows = new ArrayList<>();
             while (resultSet.next()) {
-                workflows.add(getWorkflow(resultSet));
+                workflows.add(getWorkflowDefinition(resultSet));
             }
             return workflows;
         } catch (Exception e) {
-            logger.error("Error fetching all workflow from database in namespace {}", namespace, e);
+            logger.error("Error fetching all workflows from database in namespace {}", namespace, e);
+            return Collections.emptyList();
         }
-        return Collections.emptyList();
     }
 
     @Override
     public Workflow load(WorkflowId workflowId) {
-        logger.debug("Received request to get workflow with id {}", workflowId);
+        logger.debug("Received request to load workflow with id {}", workflowId);
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_WORKFLOW_BY_ID)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_WORKFLOW)) {
             int paramIndex = 0;
-            preparedStatement.setString(++paramIndex, workflowId.getId());
+            preparedStatement.setString(++paramIndex, workflowId.getName());
             preparedStatement.setString(++paramIndex, workflowId.getNamespace());
             final ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
-                return getWorkflow(resultSet);
+                return getWorkflowDefinition(resultSet);
             }
         } catch (Exception e) {
-            logger.error("Error fetching workflow from database with id {}", workflowId, e);
+            logger.error("Error fetching workflow with id {} from database", workflowId, e);
         }
         return null;
     }
 
     @Override
-    public List<Workflow> load(String namespace, long createdAfter, long createdBefore) {
-        logger.debug("Received request to get all workflow under namespace {}, created after {}, created before {}",
-                namespace, createdAfter, createdBefore);
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_ALL_WORKFLOW_CREATED_BETWEEN)) {
-            int paramIndex = 0;
-            preparedStatement.setString(++paramIndex, namespace);
-            preparedStatement.setLong(++paramIndex, createdAfter);
-            preparedStatement.setLong(++paramIndex, createdBefore);
-            final ResultSet resultSet = preparedStatement.executeQuery();
-            final ArrayList<Workflow> workflows = new ArrayList<>();
-            while (resultSet.next()) {
-                workflows.add(getWorkflow(resultSet));
-            }
-            return workflows;
-        } catch (Exception e) {
-            logger.error("Error fetching all workflow from database under namespace {} created after {}, created before {}",
-                    namespace, createdAfter, createdBefore, e);
-        }
-        return Collections.emptyList();
-    }
-
-    @Override
-    public List<Workflow> loadByName(String name, String namespace, long createdAfter, long createdBefore) {
-        logger.debug("Received request to get workflow with name {}, namespace {}, created after {}", name, namespace, createdAfter);
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_WORKFLOW_BY_NAME_CREATED_BETWEEN)) {
-            int paramIndex = 0;
-            preparedStatement.setString(++paramIndex, name);
-            preparedStatement.setString(++paramIndex, namespace);
-            preparedStatement.setLong(++paramIndex, createdAfter);
-            preparedStatement.setLong(++paramIndex, createdBefore);
-            final ResultSet resultSet = preparedStatement.executeQuery();
-            final ArrayList<Workflow> workflows = new ArrayList<>();
-            while (resultSet.next()) {
-                workflows.add(getWorkflow(resultSet));
-            }
-            return workflows;
-        } catch (Exception e) {
-            logger.error("Error fetching workflow from database with name {}, namespace {}", name, namespace, e);
-        }
-        return Collections.emptyList();
-    }
-
-    @Override
-    public List<Workflow> loadByNameAndTrigger(String name, String trigger, String namespace,
-                                               long createdAfter, long createdBefore) {
-        logger.debug("Received request to get all workflow with name {} under namespace {}, trigger {}," +
-                " created after {}, created before {}", name, namespace, trigger, createdAfter, createdBefore);
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_WORKFLOW_BY_NAME_TRIGGER_CREATED_BETWEEN)) {
-            int paramIndex = 0;
-            preparedStatement.setString(++paramIndex, name);
-            preparedStatement.setString(++paramIndex, trigger);
-            preparedStatement.setString(++paramIndex, namespace);
-            preparedStatement.setLong(++paramIndex, createdAfter);
-            preparedStatement.setLong(++paramIndex, createdBefore);
-            final ResultSet resultSet = preparedStatement.executeQuery();
-            final ArrayList<Workflow> workflows = new ArrayList<>();
-            while (resultSet.next()) {
-                workflows.add(getWorkflow(resultSet));
-            }
-            return workflows;
-        } catch (Exception e) {
-            logger.error("Error fetching all workflow from database under namespace {} created after {}, created before {}",
-                    namespace, createdAfter, createdBefore, e);
-        }
-        return Collections.emptyList();
-    }
-
-    @Override
     public void update(Workflow workflow) {
-        final WorkflowId workflowId = workflow.getIdentity();
-        logger.info("Received request to update workflow with id {} to {}", workflowId, workflow);
+        logger.debug("Received request to update workflow {}", workflow);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_WORKFLOW)) {
             int paramIndex = 0;
-            preparedStatement.setString(++paramIndex, workflow.getStatus().name());
-            preparedStatement.setLong(++paramIndex, workflow.getCreatedAt());
-            preparedStatement.setLong(++paramIndex, workflow.getCompletedAt());
-            preparedStatement.setString(++paramIndex, workflowId.getId());
-            preparedStatement.setString(++paramIndex, workflowId.getNamespace());
+            preparedStatement.setString(++paramIndex, workflow.getDescription());
+            preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(workflow.getTasks()));
+            preparedStatement.setString(++paramIndex, workflow.getName());
+            preparedStatement.setString(++paramIndex, workflow.getNamespace());
             preparedStatement.execute();
         } catch (Exception e) {
-            logger.error("Error updating workflow with id {} to {}", workflowId, workflow, e);
+            logger.error("Error updating workflow {} into database", workflow, e);
         }
     }
 
@@ -255,7 +174,7 @@ public class SQLiteWorkflowStore implements WorkflowStore {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(DELETE_WORKFLOW)) {
             int paramIndex = 0;
-            preparedStatement.setString(++paramIndex, workflowId.getId());
+            preparedStatement.setString(++paramIndex, workflowId.getName());
             preparedStatement.setString(++paramIndex, workflowId.getNamespace());
             preparedStatement.executeUpdate();
         } catch (Exception e) {
@@ -263,16 +182,13 @@ public class SQLiteWorkflowStore implements WorkflowStore {
         }
     }
 
-    private Workflow getWorkflow(ResultSet resultSet) throws Exception {
+    private Workflow getWorkflowDefinition(ResultSet resultSet) throws Exception {
         int paramIndex = 0;
         Workflow workflow = new Workflow();
-        workflow.setId(resultSet.getString(++paramIndex));
         workflow.setName(resultSet.getString(++paramIndex));
-        workflow.setTrigger(resultSet.getString(++paramIndex));
         workflow.setNamespace(resultSet.getString(++paramIndex));
-        workflow.setStatus(Workflow.Status.valueOf(resultSet.getString(++paramIndex)));
-        workflow.setCreatedAt(resultSet.getLong(++paramIndex));
-        workflow.setCompletedAt(resultSet.getLong(++paramIndex));
+        workflow.setDescription(resultSet.getString(++paramIndex));
+        workflow.setTasks(MAPPER.readValue(resultSet.getString(++paramIndex), WORKFLOW_TASK_LIST_TYPE_REF));
         return workflow;
     }
 
