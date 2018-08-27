@@ -17,10 +17,14 @@
 
 package com.cognitree.kronos;
 
+import com.cognitree.kronos.model.Namespace;
 import com.cognitree.kronos.model.definitions.TaskDefinition;
 import com.cognitree.kronos.model.definitions.WorkflowDefinition;
+import com.cognitree.kronos.model.definitions.WorkflowTrigger;
+import com.cognitree.kronos.scheduler.NamespaceService;
 import com.cognitree.kronos.scheduler.TaskDefinitionService;
 import com.cognitree.kronos.scheduler.WorkflowDefinitionService;
+import com.cognitree.kronos.scheduler.WorkflowTriggerService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -40,8 +44,14 @@ public class FileReader {
     private static final TypeReference<List<TaskDefinition>> TASK_DEFINITION_LIST_REF =
             new TypeReference<List<TaskDefinition>>() {
             };
+    private static final TypeReference<List<Namespace>> NAMESPACE_LIST_REF =
+            new TypeReference<List<Namespace>>() {
+            };
     private static final TypeReference<List<WorkflowDefinition>> WORKFLOW_DEFINITION_LIST_REF =
             new TypeReference<List<WorkflowDefinition>>() {
+            };
+    private static final TypeReference<List<WorkflowTrigger>> WORKFLOW_TRIGGER_LIST_REF =
+            new TypeReference<List<WorkflowTrigger>>() {
             };
 
     public void loadTaskDefinitions() throws IOException {
@@ -54,6 +64,24 @@ public class FileReader {
                 TaskDefinitionService.getService().add(taskDefinition);
             } else {
                 logger.warn("Task definition with id {} already exists", taskDefinition.getIdentity());
+            }
+        }
+    }
+
+    public void loadNamespaces() throws IOException {
+        final InputStream resourceAsStream =
+                FileReader.class.getClassLoader().getResourceAsStream("namespaces.yaml");
+        List<Namespace> namespaces = MAPPER.readValue(resourceAsStream, NAMESPACE_LIST_REF);
+
+        for (Namespace namespace : namespaces) {
+            if (NamespaceService.getService().get(namespace.getIdentity()) == null) {
+                try {
+                    NamespaceService.getService().add(namespace);
+                } catch (Exception ex) {
+                    logger.error("Unable to add namespace {}", namespace, ex);
+                }
+            } else {
+                logger.error("Namespace already exists with name {}", namespace.getIdentity());
             }
         }
     }
@@ -79,4 +107,24 @@ public class FileReader {
         }
     }
 
+    public void loadWorkflowTriggers() throws IOException {
+        final InputStream resourceAsStream =
+                FileReader.class.getClassLoader().getResourceAsStream("workflow-triggers.yaml");
+        List<WorkflowTrigger> workflowTriggers = MAPPER.readValue(resourceAsStream, WORKFLOW_TRIGGER_LIST_REF);
+
+        for (WorkflowTrigger workflowTrigger : workflowTriggers) {
+            if (workflowTrigger.getNamespace() == null) {
+                workflowTrigger.setNamespace(DEFAULT_NAMESPACE);
+            }
+            if (WorkflowTriggerService.getService().get(workflowTrigger) == null) {
+                try {
+                    WorkflowTriggerService.getService().add(workflowTrigger);
+                } catch (Exception ex) {
+                    logger.error("Unable to add workflow trigger {}", workflowTrigger, ex);
+                }
+            } else {
+                logger.error("Workflow trigger already exists with id {}", workflowTrigger.getIdentity());
+            }
+        }
+    }
 }

@@ -120,6 +120,7 @@ public final class TaskSchedulerService implements Service {
      */
     @Override
     public void init() throws Exception {
+        logger.info("Initializing task scheduler service");
         initTaskProvider();
         initProducer();
         initConsumer();
@@ -209,6 +210,7 @@ public final class TaskSchedulerService implements Service {
 
     @Override
     public void start() {
+        logger.info("Starting task scheduler service");
         final long pollInterval = DateTimeUtil.resolveDuration(consumerConfig.getPollInterval());
         scheduledExecutorService.scheduleAtFixedRate(this::consumeTaskStatus, pollInterval, pollInterval, MILLISECONDS);
         scheduledExecutorService.scheduleAtFixedRate(() -> logger.debug("{}", taskProvider.toString()), 5, 5, MINUTES);

@@ -1,7 +1,6 @@
 - name: workflow
-#  namespace: default
+  namespace: cognitree
   description: test workflow
-  schedule: 5 0/2 * 1/1 * ? *
   tasks:
     - name: taskOne
       taskDefinitionName: echo
@@ -16,7 +15,7 @@
       properties:
         args: Hello World from task three
       dependsOn:
-        - name: taskTwo
+        - taskTwo
 #    - name: SparkPi
 #      taskDefinitionName: SparkPi
 #      properties:

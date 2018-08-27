@@ -1,7 +1,6 @@
 name: test-workflow
-namespace: default
+namespace: cognitree
 description: test workflow
-schedule: 5 0/2 * 1/1 * ? *
 tasks:
   - name: task one
     taskDefinitionName: echo

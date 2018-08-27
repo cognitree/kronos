@@ -17,7 +17,6 @@
 
 package com.cognitree.kronos.api;
 
-import com.cognitree.kronos.model.Workflow;
 import com.cognitree.kronos.model.definitions.WorkflowDefinition;
 import com.cognitree.kronos.model.definitions.WorkflowDefinitionId;
 import com.cognitree.kronos.scheduler.NamespaceService;
@@ -46,6 +45,7 @@ import java.util.List;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -114,35 +114,8 @@ public class WorkflowDefinitionResource {
             WorkflowDefinitionService.getService().add(workflowDefinition);
         } catch (ValidationException e) {
             return Response.status(BAD_REQUEST).entity(e.getMessage()).build();
-        } catch (SchedulerException e) {
-            return Response.status(INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         }
-        return Response.status(OK).entity(workflowDefinition).build();
-    }
-
-    @POST
-    @Path("{name}/execute")
-    @ApiOperation(value = "Execute workflow definition with name", response = WorkflowDefinition.class)
-    @ApiResponses(value = {
-            @ApiResponse(code = 404, message = "Workflow definition not found")})
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response executeWorkflowDefinition(@ApiParam(value = "workflow definition name", required = true)
-                                              @PathParam("name") String workflowDefName,
-                                              @HeaderParam("namespace") String namespace) {
-        logger.info("Received request to execute workflow definition with name {} under namespace {}",
-                workflowDefName, namespace);
-        if (!validateNamespace(namespace)) {
-            return Response.status(BAD_REQUEST).entity("no namespace exists with name " + namespace).build();
-        }
-        WorkflowDefinitionId workflowDefinitionId = WorkflowDefinitionId.build(workflowDefName, namespace);
-        final WorkflowDefinition workflowDefinition =
-                WorkflowDefinitionService.getService().get(workflowDefinitionId);
-        if (workflowDefinition == null) {
-            logger.error("No workflow definition exists with name {} under namespace {}", workflowDefName, namespace);
-            return Response.status(NOT_FOUND).build();
-        }
-        Workflow workflow = WorkflowDefinitionService.getService().execute(workflowDefinition);
-        return Response.status(OK).entity(workflow).build();
+        return Response.status(CREATED).entity(workflowDefinition).build();
     }
 
     @PUT
@@ -170,8 +143,6 @@ public class WorkflowDefinitionResource {
             WorkflowDefinitionService.getService().update(workflowDefinition);
         } catch (ValidationException e) {
             return Response.status(BAD_REQUEST).entity(e.getMessage()).build();
-        } catch (SchedulerException e) {
-            return Response.status(INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         }
         return Response.status(OK).entity(workflowDefinition).build();
     }

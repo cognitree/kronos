@@ -52,8 +52,10 @@ public class Application {
         logger.info("Starting application");
         schedulerApp.start();
         executorApp.start();
+        fileReader.loadNamespaces();
         fileReader.loadTaskDefinitions();
         fileReader.loadWorkflowDefinitions();
+        fileReader.loadWorkflowTriggers();
     }
 
     public void stop() {

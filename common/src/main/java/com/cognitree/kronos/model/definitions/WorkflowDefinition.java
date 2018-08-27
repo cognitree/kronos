@@ -34,49 +34,12 @@ public class WorkflowDefinition extends WorkflowDefinitionId {
     private String description;
     private List<WorkflowTask> tasks = new ArrayList<>();
 
-    private Long startAt;
-    private String schedule;
-    private Long endAt;
-    private boolean isEnabled = true;
-
     public String getDescription() {
         return description;
     }
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public Long getStartAt() {
-        return startAt;
-    }
-
-    public void setStartAt(Long startAt) {
-        this.startAt = startAt;
-    }
-
-    public String getSchedule() {
-        return schedule;
-    }
-
-    public void setSchedule(String schedule) {
-        this.schedule = schedule;
-    }
-
-    public Long getEndAt() {
-        return endAt;
-    }
-
-    public void setEndAt(Long endAt) {
-        this.endAt = endAt;
-    }
-
-    public boolean isEnabled() {
-        return isEnabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        isEnabled = enabled;
     }
 
     public List<WorkflowTask> getTasks() {
@@ -107,10 +70,6 @@ public class WorkflowDefinition extends WorkflowDefinitionId {
         return "WorkflowDefinition{" +
                 "description='" + description + '\'' +
                 ", tasks=" + tasks +
-                ", startAt=" + startAt +
-                ", schedule='" + schedule + '\'' +
-                ", endAt=" + endAt +
-                ", isEnabled=" + isEnabled +
                 "} " + super.toString();
     }
 

@@ -37,6 +37,11 @@ public class MockWorkflowStore implements WorkflowStore {
     }
 
     @Override
+    public List<Workflow> loadByNameAndTrigger(String name, String trigger, String namespace, long createdAfter, long createdBefore) {
+        return null;
+    }
+
+    @Override
     public void init(ObjectNode storeConfig) {
 
     }

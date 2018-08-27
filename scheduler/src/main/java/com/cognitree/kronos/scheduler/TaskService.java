@@ -23,10 +23,13 @@ import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.TaskId;
 import com.cognitree.kronos.scheduler.store.StoreConfig;
 import com.cognitree.kronos.scheduler.store.TaskStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 public class TaskService implements Service {
+    private static final Logger logger = LoggerFactory.getLogger(TaskService.class);
 
     private StoreConfig storeConfig;
     private TaskStore taskStore;
@@ -40,48 +43,62 @@ public class TaskService implements Service {
     }
 
     public void init() throws Exception {
+        logger.info("Initializing task service");
         taskStore = (TaskStore) Class.forName(storeConfig.getStoreClass())
                 .getConstructor().newInstance();
         taskStore.init(storeConfig.getConfig());
     }
 
     public void start() {
+        logger.info("Starting task service");
 
     }
 
     public List<Task> get(String namespace) {
+        logger.debug("Received request to get all tasks under namespace {}", namespace);
         return taskStore.load(namespace);
     }
 
     public Task get(TaskId taskId) {
+        logger.debug("Received request to get task {}", taskId);
         return taskStore.load(taskId);
     }
 
     public List<Task> get(String taskName, String workflowId, String namespace) {
+        logger.debug("Received request to get all tasks with name {} part of workflow {} under namespace {}",
+                taskName, workflowId, namespace);
         return taskStore.loadByNameAndWorkflowId(taskName, workflowId, namespace);
     }
 
     public List<Task> get(String workflowId, String namespace) {
+        logger.debug("Received request to get all tasks with workflow id {} under namespace {}",
+                workflowId, namespace);
         return taskStore.loadByWorkflowId(workflowId, namespace);
     }
 
     public List<Task> get(List<Task.Status> statuses, String namespace) {
+        logger.debug("Received request to get all tasks having status in {} under namespace {}",
+                statuses, namespace);
         return taskStore.load(statuses, namespace);
     }
 
     public void add(Task task) {
+        logger.debug("Received request to add task {}", task);
         taskStore.store(task);
     }
 
     public void update(Task task) {
+        logger.debug("Received request to update task {}", task);
         taskStore.update(task);
     }
 
     public void delete(TaskId taskId) {
+        logger.debug("Received request to delete task {}", taskId);
         taskStore.delete(taskId);
     }
 
     public void stop() {
+        logger.info("Stopping task service");
         taskStore.stop();
     }
 }

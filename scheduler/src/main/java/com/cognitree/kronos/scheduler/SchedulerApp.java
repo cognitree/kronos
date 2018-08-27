@@ -65,6 +65,7 @@ public class SchedulerApp {
         TaskService.getService().init();
         WorkflowDefinitionService.getService().init();
         WorkflowService.getService().init();
+        WorkflowTriggerService.getService().init();
         TaskSchedulerService.getService().init();
         WorkflowSchedulerService.getService().init();
 
@@ -74,6 +75,7 @@ public class SchedulerApp {
         TaskService.getService().start();
         WorkflowDefinitionService.getService().start();
         WorkflowService.getService().start();
+        WorkflowTriggerService.getService().start();
         TaskSchedulerService.getService().start();
         WorkflowSchedulerService.getService().start();
     }
@@ -97,6 +99,10 @@ public class SchedulerApp {
         WorkflowService workflowService = new WorkflowService(schedulerConfig.getWorkflowStoreConfig());
         ServiceProvider.registerService(workflowService);
 
+        WorkflowTriggerService workflowTriggerService =
+                new WorkflowTriggerService(schedulerConfig.getWorkflowTriggerStoreConfig());
+        ServiceProvider.registerService(workflowTriggerService);
+
         TaskSchedulerService taskSchedulerService = new TaskSchedulerService(schedulerConfig, queueConfig);
         ServiceProvider.registerService(taskSchedulerService);
 
@@ -106,26 +112,30 @@ public class SchedulerApp {
 
     public void stop() {
         logger.info("Stopping scheduler app");
+        // stop services in the reverse order
         if (WorkflowSchedulerService.getService() != null) {
             WorkflowSchedulerService.getService().stop();
         }
         if (TaskSchedulerService.getService() != null) {
             TaskSchedulerService.getService().stop();
         }
-        if (NamespaceService.getService() != null) {
-            NamespaceService.getService().stop();
+        if (WorkflowTriggerService.getService() != null) {
+            WorkflowTriggerService.getService().stop();
         }
-        if (TaskDefinitionService.getService() != null) {
-            TaskDefinitionService.getService().stop();
-        }
-        if (TaskService.getService() != null) {
-            TaskService.getService().stop();
+        if (WorkflowService.getService() != null) {
+            WorkflowService.getService().stop();
         }
         if (WorkflowDefinitionService.getService() != null) {
             WorkflowDefinitionService.getService().stop();
         }
-        if (WorkflowService.getService() != null) {
-            WorkflowService.getService().stop();
+        if (TaskService.getService() != null) {
+            TaskService.getService().stop();
+        }
+        if (TaskDefinitionService.getService() != null) {
+            TaskDefinitionService.getService().stop();
+        }
+        if (NamespaceService.getService() != null) {
+            NamespaceService.getService().stop();
         }
     }
 }

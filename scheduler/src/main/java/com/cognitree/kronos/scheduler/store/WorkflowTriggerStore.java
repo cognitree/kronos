@@ -17,21 +17,17 @@
 
 package com.cognitree.kronos.scheduler.store;
 
-import com.cognitree.kronos.model.Workflow;
-import com.cognitree.kronos.model.WorkflowId;
+import com.cognitree.kronos.model.definitions.WorkflowTrigger;
+import com.cognitree.kronos.model.definitions.WorkflowTriggerId;
 
 import java.util.List;
 
 /**
- * An interface exposing API's to provide {@link Workflow} persistence.
+ * An interface exposing API's to provide {@link WorkflowTrigger} persistence.
  */
-public interface WorkflowStore extends Store<Workflow, WorkflowId> {
+public interface WorkflowTriggerStore extends Store<WorkflowTrigger, WorkflowTriggerId> {
 
-    List<Workflow> load(String namespace);
+    List<WorkflowTrigger> load(String namespace);
 
-    List<Workflow> load(String namespace, long createdAfter, long createdBefore);
-
-    List<Workflow> loadByNameAndTrigger(String name, String trigger, String namespace, long createdAfter, long createdBefore);
-
-    List<Workflow> loadByName(String name, String namespace, long createdAfter, long createdBefore);
+    List<WorkflowTrigger> loadByWorkflowName(String name, String namespace);
 }

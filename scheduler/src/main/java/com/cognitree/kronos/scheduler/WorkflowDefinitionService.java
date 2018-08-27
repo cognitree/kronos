@@ -19,10 +19,10 @@ package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
-import com.cognitree.kronos.model.Workflow;
 import com.cognitree.kronos.model.definitions.TaskDefinitionId;
 import com.cognitree.kronos.model.definitions.WorkflowDefinition;
 import com.cognitree.kronos.model.definitions.WorkflowDefinitionId;
+import com.cognitree.kronos.model.definitions.WorkflowTrigger;
 import com.cognitree.kronos.scheduler.graph.TopologicalSort;
 import com.cognitree.kronos.scheduler.store.StoreConfig;
 import com.cognitree.kronos.scheduler.store.WorkflowDefinitionStore;
@@ -49,6 +49,7 @@ public class WorkflowDefinitionService implements Service {
 
     @Override
     public void init() throws Exception {
+        logger.info("Initializing workflow definition service");
         workflowDefinitionStore = (WorkflowDefinitionStore) Class.forName(storeConfig.getStoreClass())
                 .getConstructor().newInstance();
         workflowDefinitionStore.init(storeConfig.getConfig());
@@ -56,47 +57,41 @@ public class WorkflowDefinitionService implements Service {
 
     @Override
     public void start() {
+        logger.info("Starting workflow definition service");
 
     }
 
-    public void add(WorkflowDefinition workflowDefinition) throws ValidationException, SchedulerException {
+    public void add(WorkflowDefinition workflowDefinition) throws ValidationException {
         logger.debug("Received request to add workflow definition {}", workflowDefinition);
         validate(workflowDefinition);
-        if (workflowDefinition.getSchedule() != null) {
-            WorkflowSchedulerService.getService().schedule(workflowDefinition);
-        }
         workflowDefinitionStore.store(workflowDefinition);
     }
 
     public List<WorkflowDefinition> get(String namespace) {
+        logger.debug("Received request to get all workflow definition under namespace {}", namespace);
         return workflowDefinitionStore.load(namespace);
     }
 
     public WorkflowDefinition get(WorkflowDefinitionId workflowDefinitionId) {
+        logger.debug("Received request to get workflow definition {}", workflowDefinitionId);
         return workflowDefinitionStore.load(workflowDefinitionId);
     }
 
-    public void update(WorkflowDefinition workflowDefinition) throws ValidationException, SchedulerException {
+    public void update(WorkflowDefinition workflowDefinition) throws ValidationException {
         logger.debug("Received request to update workflow definition {}", workflowDefinition);
         validate(workflowDefinition);
-        // delete the old workflow definition
-        WorkflowSchedulerService.getService().delete(workflowDefinition.getIdentity());
-        // schedule new workflow only if schedule is present
-        if (workflowDefinition.getSchedule() != null) {
-            WorkflowSchedulerService.getService().schedule(workflowDefinition);
-        }
+        // TODO optimize the update flow no need to load def everytime it is triggered
         workflowDefinitionStore.update(workflowDefinition);
-    }
-
-    public Workflow execute(WorkflowDefinition workflowDefinition) {
-        logger.debug("Received request to execute workflow definition {}", workflowDefinition);
-        return WorkflowSchedulerService.getService().execute(workflowDefinition.getName(),
-                workflowDefinition.getNamespace(), workflowDefinition.getTasks());
     }
 
     public void delete(WorkflowDefinitionId workflowDefinitionId) throws SchedulerException {
         logger.debug("Received request to delete workflow definition {}", workflowDefinitionId);
-        WorkflowSchedulerService.getService().delete(workflowDefinitionId);
+        // delete all triggers and delete scheduled jobs
+        final List<WorkflowTrigger> workflowTriggers =
+                WorkflowTriggerService.getService().get(workflowDefinitionId.getName(), workflowDefinitionId.getNamespace());
+        for (WorkflowTrigger workflowTrigger : workflowTriggers) {
+            WorkflowTriggerService.getService().delete(workflowTrigger);
+        }
         workflowDefinitionStore.delete(workflowDefinitionId);
     }
 
@@ -142,6 +137,7 @@ public class WorkflowDefinitionService implements Service {
 
     @Override
     public void stop() {
+        logger.info("Stopping workflow definition service");
         workflowDefinitionStore.stop();
     }
 }

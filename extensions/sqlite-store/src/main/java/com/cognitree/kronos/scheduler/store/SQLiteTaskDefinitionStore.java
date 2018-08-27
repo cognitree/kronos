@@ -43,7 +43,7 @@ public class SQLiteTaskDefinitionStore implements TaskDefinitionStore {
     private static final Logger logger = LoggerFactory.getLogger(SQLiteTaskDefinitionStore.class);
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final String INSERT_REPLACE_TASK_DEFINITION_DEFINITION = "INSERT INTO task_definitions VALUES (?,?,?)";
+    private static final String INSERT_TASK_DEFINITION = "INSERT INTO task_definitions VALUES (?,?,?)";
     private static final String LOAD_TASK_DEFINITION_BY_NAME = "SELECT * FROM task_definitions WHERE name = ?";
     private static final String LOAD_ALL_TASK_DEFINITION = "SELECT * FROM task_definitions";
     private static final String UPDATE_TASK_DEFINITION = "UPDATE task_definitions SET type = ?, properties = ? " +
@@ -100,7 +100,7 @@ public class SQLiteTaskDefinitionStore implements TaskDefinitionStore {
     public void store(TaskDefinition taskDefinition) {
         logger.debug("Received request to store task definition {}", taskDefinition);
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(INSERT_REPLACE_TASK_DEFINITION_DEFINITION)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(INSERT_TASK_DEFINITION)) {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, taskDefinition.getName());
             preparedStatement.setString(++paramIndex, taskDefinition.getType());

@@ -45,7 +45,7 @@ public class SQLiteTaskStore implements TaskStore {
     private static final Logger logger = LoggerFactory.getLogger(SQLiteTaskStore.class);
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final String INSERT_REPLACE_TASK = "INSERT INTO tasks VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    private static final String INSERT_TASK = "INSERT INTO tasks VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_TASK = "UPDATE tasks SET status = ?, status_message = ?, submitted_at = ?, " +
             "completed_at = ?, context = ? WHERE id = ? AND workflow_id = ? AND namespace = ?";
     private static final String LOAD_ALL_TASKS_BY_NAMESPACE = "SELECT * FROM tasks WHERE namespace = ?";
@@ -130,7 +130,7 @@ public class SQLiteTaskStore implements TaskStore {
     public void store(Task task) {
         logger.debug("Received request to store task {}", task);
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(INSERT_REPLACE_TASK)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(INSERT_TASK)) {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, task.getId());
             preparedStatement.setString(++paramIndex, task.getWorkflowId());

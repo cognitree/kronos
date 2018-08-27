@@ -18,6 +18,7 @@
 package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.model.definitions.WorkflowDefinition;
+import com.cognitree.kronos.model.definitions.WorkflowTrigger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.AfterClass;
@@ -85,17 +86,24 @@ public class WorkflowSchedulerServiceTest {
     @Test
     public void testScheduleWorkflow() throws Exception {
         TaskSchedulerService.getService().getTaskProvider().reinit();
-        final InputStream resourceAsStream =
+        final InputStream workflowDefInputStream =
                 getClass().getClassLoader().getResourceAsStream("test-workflow.yaml");
-        final WorkflowDefinition workflowDefinition = MAPPER.readValue(resourceAsStream, WorkflowDefinition.class);
+        final WorkflowDefinition workflowDefinition = MAPPER.readValue(workflowDefInputStream, WorkflowDefinition.class);
         WorkflowDefinitionService.getService().add(workflowDefinition);
-        sleep(System.currentTimeMillis() % 2000);
-        final JobKey jobKey = new JobKey(workflowDefinition.getName(), workflowDefinition.getNamespace());
+        final WorkflowTrigger workflowTrigger = new WorkflowTrigger();
+        workflowTrigger.setName("test-workflow-trigger");
+        workflowTrigger.setWorkflowName(workflowDefinition.getName());
+        workflowTrigger.setNamespace(workflowDefinition.getNamespace());
+        workflowTrigger.setSchedule("0/2 * * * * ?");
+        final long currentTimeMillis = System.currentTimeMillis();
+        workflowTrigger.setStartAt(currentTimeMillis);
+        workflowTrigger.setEndAt(currentTimeMillis + 2000 - (currentTimeMillis % 2000));
+        WorkflowTriggerService.getService().add(workflowTrigger);
+        final JobKey jobKey = new JobKey(workflowTrigger.getWorkflowName() + ":" + workflowTrigger.getName(),
+                workflowTrigger.getNamespace());
         Assert.assertTrue(WorkflowSchedulerService.getService().getScheduler().checkExists(jobKey));
-        WorkflowDefinitionService.getService().delete(workflowDefinition);
+        sleep(2000);
         Assert.assertFalse(WorkflowSchedulerService.getService().getScheduler().checkExists(jobKey));
-        sleep(System.currentTimeMillis() % 2000);
-        Assert.assertEquals(3, TaskSchedulerService.getService().getTaskProvider().size());
     }
 
     @Test
@@ -106,7 +114,12 @@ public class WorkflowSchedulerServiceTest {
         final WorkflowDefinition workflowDefinition = MAPPER.readValue(resourceAsStream, WorkflowDefinition.class);
         WorkflowDefinitionService.getService().validate(workflowDefinition);
         Assert.assertEquals(0, TaskSchedulerService.getService().getTaskProvider().size());
-        WorkflowDefinitionService.getService().execute(workflowDefinition);
+        final WorkflowTrigger workflowTrigger = new WorkflowTrigger();
+        workflowTrigger.setName("test-workflow-trigger");
+        workflowTrigger.setWorkflowName(workflowDefinition.getName());
+        workflowTrigger.setNamespace(workflowDefinition.getNamespace());
+        workflowTrigger.setSchedule("0/2 * * * * ?");
+        WorkflowSchedulerService.getService().execute(workflowDefinition, workflowTrigger);
         sleep(100);
         Assert.assertEquals(3, TaskSchedulerService.getService().getTaskProvider().size());
     }

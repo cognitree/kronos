@@ -22,10 +22,13 @@ import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.Namespace;
 import com.cognitree.kronos.scheduler.store.NamespaceStore;
 import com.cognitree.kronos.scheduler.store.StoreConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 public class NamespaceService implements Service {
+    private static final Logger logger = LoggerFactory.getLogger(NamespaceService.class);
 
     private final StoreConfig storeConfig;
     private NamespaceStore namespaceStore;
@@ -40,6 +43,7 @@ public class NamespaceService implements Service {
 
     @Override
     public void init() throws Exception {
+        logger.info("Initializing namespace service");
         namespaceStore = (NamespaceStore) Class.forName(storeConfig.getStoreClass())
                 .getConstructor().newInstance();
         namespaceStore.init(storeConfig.getConfig());
@@ -47,31 +51,38 @@ public class NamespaceService implements Service {
 
     @Override
     public void start() {
+        logger.info("Starting namespace service");
 
     }
 
     public List<Namespace> get() {
+        logger.debug("Received request to get all namespaces");
         return namespaceStore.load();
     }
 
-    public Namespace get(String namespaceId) {
-        return namespaceStore.load(namespaceId);
+    public Namespace get(String name) {
+        logger.debug("Received request to get namespace with name {}", name);
+        return namespaceStore.load(name);
     }
 
     public void add(Namespace namespace) {
+        logger.debug("Received request to add namespace {}", namespace);
         namespaceStore.store(namespace);
     }
 
     public void update(Namespace namespace) {
+        logger.debug("Received request to update namespace to {}", namespace);
         namespaceStore.store(namespace);
     }
 
-    public void delete(String namespaceId) {
-        namespaceStore.delete(namespaceId);
+    public void delete(String name) {
+        logger.debug("Received request to delete namespace {}", name);
+        namespaceStore.delete(name);
     }
 
     @Override
     public void stop() {
+        logger.info("Stopping namespace service");
         namespaceStore.stop();
     }
 

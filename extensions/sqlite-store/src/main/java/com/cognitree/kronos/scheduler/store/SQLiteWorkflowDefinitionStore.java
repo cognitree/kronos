@@ -43,20 +43,19 @@ public class SQLiteWorkflowDefinitionStore implements WorkflowDefinitionStore {
     private static final Logger logger = LoggerFactory.getLogger(SQLiteWorkflowDefinitionStore.class);
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final String INSERT_REPLACE_WORKFLOW_DEFINITION_DEFINITION = "INSERT INTO workflow_definitions VALUES (?,?,?,?,?,?)";
+    private static final String INSERT_WORKFLOW_DEFINITION = "INSERT INTO workflow_definitions VALUES (?,?,?,?)";
     private static final String LOAD_ALL_WORKFLOW_DEFINITION_BY_NAMESPACE = "SELECT * FROM workflow_definitions " +
             "WHERE namespace = ?";
-    private static final String UPDATE_WORKFLOW_DEFINITION = "UPDATE workflow_definitions set description = ?, schedule = ?," +
-            " tasks = ?, enabled = ? where name = ? AND namespace = ?";
-    private static final String DELETE_WORKFLOW_DEFINITION = "DELETE FROM workflow_definitions where name = ? AND namespace = ?";
+    private static final String UPDATE_WORKFLOW_DEFINITION = "UPDATE workflow_definitions set description = ?, " +
+            " tasks = ? where name = ? AND namespace = ?";
+    private static final String DELETE_WORKFLOW_DEFINITION = "DELETE FROM workflow_definitions where name = ? " +
+            "AND namespace = ?";
     private static final String LOAD_WORKFLOW = "SELECT * FROM workflow_definitions where name = ? AND namespace = ?";
     private static final String DDL_CREATE_WORKFLOW_DEFINITION_SQL = "CREATE TABLE IF NOT EXISTS workflow_definitions (" +
             "name string," +
             "namespace string," +
             "description string," +
-            "schedule string," +
             "tasks string," +
-            "enabled boolean," +
             "PRIMARY KEY(name, namespace)" +
             ")";
     private static final TypeReference<List<WorkflowTask>> WORKFLOW_TASK_LIST_TYPE_REF =
@@ -104,14 +103,12 @@ public class SQLiteWorkflowDefinitionStore implements WorkflowDefinitionStore {
     public void store(WorkflowDefinition workflowDefinition) {
         logger.debug("Received request to store workflow definition {}", workflowDefinition);
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(INSERT_REPLACE_WORKFLOW_DEFINITION_DEFINITION)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(INSERT_WORKFLOW_DEFINITION)) {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, workflowDefinition.getName());
             preparedStatement.setString(++paramIndex, workflowDefinition.getNamespace());
             preparedStatement.setString(++paramIndex, workflowDefinition.getDescription());
-            preparedStatement.setString(++paramIndex, workflowDefinition.getSchedule());
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(workflowDefinition.getTasks()));
-            preparedStatement.setBoolean(++paramIndex, workflowDefinition.isEnabled());
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error storing workflow definition {} into database", workflowDefinition, e);
@@ -162,9 +159,7 @@ public class SQLiteWorkflowDefinitionStore implements WorkflowDefinitionStore {
              PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_WORKFLOW_DEFINITION)) {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, workflowDefinition.getDescription());
-            preparedStatement.setString(++paramIndex, workflowDefinition.getSchedule());
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(workflowDefinition.getTasks()));
-            preparedStatement.setBoolean(++paramIndex, workflowDefinition.isEnabled());
             preparedStatement.setString(++paramIndex, workflowDefinition.getName());
             preparedStatement.setString(++paramIndex, workflowDefinition.getNamespace());
             preparedStatement.execute();
@@ -193,9 +188,7 @@ public class SQLiteWorkflowDefinitionStore implements WorkflowDefinitionStore {
         workflowDefinition.setName(resultSet.getString(++paramIndex));
         workflowDefinition.setNamespace(resultSet.getString(++paramIndex));
         workflowDefinition.setDescription(resultSet.getString(++paramIndex));
-        workflowDefinition.setSchedule(resultSet.getString(++paramIndex));
         workflowDefinition.setTasks(MAPPER.readValue(resultSet.getString(++paramIndex), WORKFLOW_TASK_LIST_TYPE_REF));
-        workflowDefinition.setEnabled(resultSet.getBoolean(++paramIndex));
         return workflowDefinition;
     }
 

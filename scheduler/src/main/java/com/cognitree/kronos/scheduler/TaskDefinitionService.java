@@ -23,10 +23,13 @@ import com.cognitree.kronos.model.definitions.TaskDefinition;
 import com.cognitree.kronos.model.definitions.TaskDefinitionId;
 import com.cognitree.kronos.scheduler.store.StoreConfig;
 import com.cognitree.kronos.scheduler.store.TaskDefinitionStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 public class TaskDefinitionService implements Service {
+    private static final Logger logger = LoggerFactory.getLogger(TaskDefinitionService.class);
 
     private final StoreConfig storeConfig;
     private TaskDefinitionStore taskDefinitionStore;
@@ -41,6 +44,7 @@ public class TaskDefinitionService implements Service {
 
     @Override
     public void init() throws Exception {
+        logger.info("Initializing task definition service");
         taskDefinitionStore = (TaskDefinitionStore) Class.forName(storeConfig.getStoreClass())
                 .getConstructor().newInstance();
         taskDefinitionStore.init(storeConfig.getConfig());
@@ -48,31 +52,37 @@ public class TaskDefinitionService implements Service {
 
     @Override
     public void start() {
-
+        logger.info("Starting task definition service");
     }
 
     public List<TaskDefinition> get() {
+        logger.debug("Received request to get all task definitions");
         return taskDefinitionStore.load();
     }
 
     public TaskDefinition get(TaskDefinitionId taskDefinitionId) {
+        logger.debug("Received request to get task definition {}", taskDefinitionId);
         return taskDefinitionStore.load(taskDefinitionId);
     }
 
     public void add(TaskDefinition taskDefinition) {
+        logger.debug("Received request to add task definition {}", taskDefinition);
         taskDefinitionStore.store(taskDefinition);
     }
 
     public void update(TaskDefinition taskDefinition) {
+        logger.debug("Received request to update task definition to {}", taskDefinition);
         taskDefinitionStore.store(taskDefinition);
     }
 
     public void delete(TaskDefinitionId taskDefinitionId) {
+        logger.debug("Received request to delete task definition {}", taskDefinitionId);
         taskDefinitionStore.delete(taskDefinitionId);
     }
 
     @Override
     public void stop() {
+        logger.info("Stopping task definition service");
         taskDefinitionStore.stop();
     }
 

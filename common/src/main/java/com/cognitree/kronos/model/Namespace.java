@@ -1,5 +1,7 @@
 package com.cognitree.kronos.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.Objects;
 
 public class Namespace {
@@ -20,6 +22,11 @@ public class Namespace {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    @JsonIgnore
+    public String getIdentity() {
+        return name;
     }
 
     @Override

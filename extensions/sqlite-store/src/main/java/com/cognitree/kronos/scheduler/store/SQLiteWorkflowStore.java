@@ -39,26 +39,30 @@ import java.util.List;
 public class SQLiteWorkflowStore implements WorkflowStore {
     private static final Logger logger = LoggerFactory.getLogger(SQLiteWorkflowStore.class);
 
-    private static final String INSERT_REPLACE_WORKFLOW = "INSERT INTO workflows VALUES (?,?,?,?,?,?)";
+    private static final String INSERT_WORKFLOW = "INSERT INTO workflows VALUES (?,?,?,?,?,?,?)";
     private static final String LOAD_WORKFLOW_BY_NAMESPACE = "SELECT * FROM workflows WHERE namespace = ?";
     private static final String LOAD_WORKFLOW_BY_ID = "SELECT * FROM workflows WHERE id = ? AND namespace = ?";
-    private static final String LOAD_WORKFLOW_BY_NAME_CREATED_AFTER = "SELECT * FROM workflows WHERE name = ? AND namespace = ?" +
-            " AND created_at > ? AND created_at < ?";
-    private static final String LOAD_ALL_WORKFLOW_CREATED_AFTER = "SELECT * FROM workflows where namespace = ? AND" +
-            " created_at > ? AND created_at < ?";
+    private static final String LOAD_ALL_WORKFLOW_CREATED_BETWEEN = "SELECT * FROM workflows where namespace = ? " +
+            "AND created_at > ? AND created_at < ?";
+    private static final String LOAD_WORKFLOW_BY_NAME_CREATED_BETWEEN = "SELECT * FROM workflows WHERE name = ? " +
+            "AND namespace = ? AND created_at > ? AND created_at < ?";
+    private static final String LOAD_WORKFLOW_BY_NAME_TRIGGER_CREATED_BETWEEN = "SELECT * FROM workflows WHERE name = ? " +
+            "AND trigger = ? AND namespace = ? AND created_at > ? AND created_at < ?";
     private static final String UPDATE_WORKFLOW = "UPDATE workflows SET status = ?, created_at = ?, completed_at = ? " +
             " WHERE id = ? AND namespace = ?";
     private static final String DELETE_WORKFLOW = "DELETE FROM workflows WHERE id = ? AND namespace = ?";
     private static final String DDL_CREATE_WORKFLOW_SQL = "CREATE TABLE IF NOT EXISTS workflows (" +
             "id string," +
             "name string," +
+            "trigger string," +
             "namespace string," +
             "status string," +
             "created_at integer," +
             "completed_at integer," +
             "PRIMARY KEY(id, namespace)" +
             ")";
-    private static final String CREATE_WORKFLOW_INDEX_SQL = "CREATE INDEX IF NOT EXISTS workflows_name_namespace_idx on workflows (name, namespace)";
+    private static final String CREATE_WORKFLOW_INDEX_SQL = "CREATE INDEX IF NOT EXISTS workflows_name_namespace_idx " +
+            "on workflows (name, namespace)";
 
     private BasicDataSource dataSource;
 
@@ -104,10 +108,11 @@ public class SQLiteWorkflowStore implements WorkflowStore {
     public void store(Workflow workflow) {
         logger.debug("Received request to store workflow {}", workflow);
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(INSERT_REPLACE_WORKFLOW)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(INSERT_WORKFLOW)) {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, workflow.getId());
             preparedStatement.setString(++paramIndex, workflow.getName());
+            preparedStatement.setString(++paramIndex, workflow.getTrigger());
             preparedStatement.setString(++paramIndex, workflow.getNamespace());
             preparedStatement.setString(++paramIndex, workflow.getStatus().name());
             preparedStatement.setLong(++paramIndex, workflow.getCreatedAt());
@@ -160,7 +165,7 @@ public class SQLiteWorkflowStore implements WorkflowStore {
         logger.debug("Received request to get all workflow under namespace {}, created after {}, created before {}",
                 namespace, createdAfter, createdBefore);
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_ALL_WORKFLOW_CREATED_AFTER)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_ALL_WORKFLOW_CREATED_BETWEEN)) {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, namespace);
             preparedStatement.setLong(++paramIndex, createdAfter);
@@ -182,7 +187,7 @@ public class SQLiteWorkflowStore implements WorkflowStore {
     public List<Workflow> loadByName(String name, String namespace, long createdAfter, long createdBefore) {
         logger.debug("Received request to get workflow with name {}, namespace {}, created after {}", name, namespace, createdAfter);
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_WORKFLOW_BY_NAME_CREATED_AFTER)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_WORKFLOW_BY_NAME_CREATED_BETWEEN)) {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, name);
             preparedStatement.setString(++paramIndex, namespace);
@@ -196,6 +201,32 @@ public class SQLiteWorkflowStore implements WorkflowStore {
             return workflows;
         } catch (Exception e) {
             logger.error("Error fetching workflow from database with name {}, namespace {}", name, namespace, e);
+        }
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<Workflow> loadByNameAndTrigger(String name, String trigger, String namespace,
+                                               long createdAfter, long createdBefore) {
+        logger.debug("Received request to get all workflow with name {} under namespace {}, trigger {}," +
+                " created after {}, created before {}", name, namespace, trigger, createdAfter, createdBefore);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_WORKFLOW_BY_NAME_TRIGGER_CREATED_BETWEEN)) {
+            int paramIndex = 0;
+            preparedStatement.setString(++paramIndex, name);
+            preparedStatement.setString(++paramIndex, trigger);
+            preparedStatement.setString(++paramIndex, namespace);
+            preparedStatement.setLong(++paramIndex, createdAfter);
+            preparedStatement.setLong(++paramIndex, createdBefore);
+            final ResultSet resultSet = preparedStatement.executeQuery();
+            final ArrayList<Workflow> workflows = new ArrayList<>();
+            while (resultSet.next()) {
+                workflows.add(getWorkflow(resultSet));
+            }
+            return workflows;
+        } catch (Exception e) {
+            logger.error("Error fetching all workflow from database under namespace {} created after {}, created before {}",
+                    namespace, createdAfter, createdBefore, e);
         }
         return Collections.emptyList();
     }
@@ -237,6 +268,7 @@ public class SQLiteWorkflowStore implements WorkflowStore {
         Workflow workflow = new Workflow();
         workflow.setId(resultSet.getString(++paramIndex));
         workflow.setName(resultSet.getString(++paramIndex));
+        workflow.setTrigger(resultSet.getString(++paramIndex));
         workflow.setNamespace(resultSet.getString(++paramIndex));
         workflow.setStatus(Workflow.Status.valueOf(resultSet.getString(++paramIndex)));
         workflow.setCreatedAt(resultSet.getLong(++paramIndex));

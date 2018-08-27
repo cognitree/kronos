@@ -31,6 +31,7 @@ import static com.cognitree.kronos.model.Workflow.Status.CREATED;
 @JsonDeserialize(as = Workflow.class)
 public class Workflow extends WorkflowId {
     private String name;
+    private String trigger;
     private Status status = CREATED;
     private long createdAt;
     private long completedAt;
@@ -41,6 +42,14 @@ public class Workflow extends WorkflowId {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getTrigger() {
+        return trigger;
+    }
+
+    public void setTrigger(String trigger) {
+        this.trigger = trigger;
     }
 
     public Status getStatus() {
@@ -86,6 +95,7 @@ public class Workflow extends WorkflowId {
     public String toString() {
         return "Workflow{" +
                 "name='" + name + '\'' +
+                ", trigger='" + trigger + '\'' +
                 ", status=" + status +
                 ", createdAt=" + createdAt +
                 ", completedAt=" + completedAt +

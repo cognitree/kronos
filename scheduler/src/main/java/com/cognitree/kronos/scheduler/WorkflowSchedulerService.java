@@ -29,6 +29,8 @@ import com.cognitree.kronos.model.definitions.TaskDefinitionId;
 import com.cognitree.kronos.model.definitions.WorkflowDefinition;
 import com.cognitree.kronos.model.definitions.WorkflowDefinition.WorkflowTask;
 import com.cognitree.kronos.model.definitions.WorkflowDefinitionId;
+import com.cognitree.kronos.model.definitions.WorkflowTrigger;
+import com.cognitree.kronos.model.definitions.WorkflowTriggerId;
 import com.cognitree.kronos.scheduler.graph.TopologicalSort;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.CronTrigger;
@@ -71,6 +73,7 @@ public final class WorkflowSchedulerService implements Service {
 
     @Override
     public void init() throws Exception {
+        logger.info("Initializing workflow scheduler service");
         scheduler = StdSchedulerFactory.getDefaultScheduler();
         scheduleExistingWorkflows();
         TaskSchedulerService.getService().registerListener(new WorkflowLifecycleHandler());
@@ -78,85 +81,91 @@ public final class WorkflowSchedulerService implements Service {
 
     private void scheduleExistingWorkflows() {
         final List<Namespace> namespaces = NamespaceService.getService().get();
-        final List<WorkflowDefinition> workflowDefinitions = new ArrayList<>();
+        final List<WorkflowTrigger> workflowTriggers = new ArrayList<>();
         namespaces.forEach(namespace ->
-                workflowDefinitions.addAll(WorkflowDefinitionService.getService().get(namespace.getName())));
-        workflowDefinitions.forEach(workflowDefinition -> {
-            logger.info("Scheduling existing workflow definition {}", workflowDefinition);
+                workflowTriggers.addAll(WorkflowTriggerService.getService().get(namespace.getName())));
+        workflowTriggers.forEach(workflowTrigger -> {
+            logger.info("Scheduling existing workflow trigger {}", workflowTrigger);
             try {
-                schedule(workflowDefinition);
+                schedule(workflowTrigger);
             } catch (Exception e) {
-                logger.error("Error scheduling workflow definition {}", workflowDefinition, e);
+                logger.error("Error scheduling workflow trigger {}", workflowTrigger, e);
             }
         });
     }
 
     @Override
     public void start() throws Exception {
+        logger.info("Starting workflow scheduler service");
         scheduler.start();
     }
 
-    void schedule(WorkflowDefinition workflowDefinition) throws SchedulerException {
-        if (!workflowDefinition.isEnabled()) {
-            logger.warn("Workflow definition {} is disabled from scheduling", workflowDefinition);
+    void schedule(WorkflowTrigger workflowTrigger) throws SchedulerException {
+        if (!workflowTrigger.isEnabled()) {
+            logger.warn("Workflow trigger {} is disabled from scheduling", workflowTrigger);
             return;
         }
 
-        final WorkflowDefinitionId workflowDefinitionId = workflowDefinition.getIdentity();
+        final WorkflowDefinitionId workflowDefinitionId =
+                WorkflowDefinitionId.build(workflowTrigger.getWorkflowName(), workflowTrigger.getNamespace());
+
         JobDataMap jobDataMap = new JobDataMap();
-        jobDataMap.put("name", workflowDefinitionId.getName());
-        jobDataMap.put("namespace", workflowDefinitionId.getNamespace());
-        jobDataMap.put("tasks", workflowDefinition.getTasks());
+        jobDataMap.put("workflowDefinitionId", workflowDefinitionId);
+        jobDataMap.put("trigger", workflowTrigger);
         JobDetail jobDetail = newJob(WorkflowSchedulerJob.class)
-                .withIdentity(getWorkflowJobKey(workflowDefinition))
+                .withIdentity(getWorkflowJobKey(workflowTrigger))
                 .usingJobData(jobDataMap)
                 .build();
 
-        CronScheduleBuilder jobSchedule = getJobSchedule(workflowDefinition);
+        CronScheduleBuilder jobSchedule = getJobSchedule(workflowTrigger);
         final TriggerBuilder<CronTrigger> triggerBuilder = newTrigger()
-                .withIdentity(getWorkflowTriggerKey(workflowDefinition))
+                .withIdentity(getWorkflowTriggerKey(workflowTrigger))
                 .withSchedule(jobSchedule);
-        final Long startAt = workflowDefinition.getStartAt();
-        if (startAt != null && startAt > 0) {
+        final long startAt = workflowTrigger.getStartAt();
+        if (startAt > 0) {
             triggerBuilder.startAt(new Date(startAt));
         }
-        final Long endAt = workflowDefinition.getEndAt();
-        if (endAt != null && endAt > 0) {
+        final long endAt = workflowTrigger.getEndAt();
+        if (endAt > 0) {
             triggerBuilder.endAt(new Date(endAt));
         }
         scheduler.scheduleJob(jobDetail, triggerBuilder.build());
     }
 
-    private JobKey getWorkflowJobKey(WorkflowDefinitionId workflowDefinitionId) {
-        return new JobKey(workflowDefinitionId.getName(), workflowDefinitionId.getNamespace());
+    private JobKey getWorkflowJobKey(WorkflowTriggerId workflowTriggerId) {
+        return new JobKey(workflowTriggerId.getWorkflowName() + ":" + workflowTriggerId.getName(),
+                workflowTriggerId.getNamespace());
     }
 
-    private TriggerKey getWorkflowTriggerKey(WorkflowDefinitionId workflowDefinitionId) {
-        return new TriggerKey(workflowDefinitionId.getName(), workflowDefinitionId.getNamespace());
+    private TriggerKey getWorkflowTriggerKey(WorkflowTriggerId workflowTriggerId) {
+        return new TriggerKey(workflowTriggerId.getWorkflowName() + ":" + workflowTriggerId.getName(),
+                workflowTriggerId.getNamespace());
     }
 
-    private CronScheduleBuilder getJobSchedule(WorkflowDefinition workflowDefinition) {
-        return CronScheduleBuilder.cronSchedule(workflowDefinition.getSchedule());
+    private CronScheduleBuilder getJobSchedule(WorkflowTrigger workflowTrigger) {
+        return CronScheduleBuilder.cronSchedule(workflowTrigger.getSchedule());
     }
 
-    Workflow execute(String workflowName, String workflowNamespace, List<WorkflowTask> workflowTasks) {
-        logger.info("Executing workflow definition with name {}, namespace {}, tasks {}",
-                workflowName, workflowNamespace, workflowTasks);
-        final Workflow workflow = createWorkflow(workflowName, workflowNamespace);
+    Workflow execute(WorkflowDefinition workflowDefinition, WorkflowTrigger workflowTrigger) {
+        logger.info("Received request to execute workflow definition {} by trigger {}",
+                workflowDefinition, workflowTrigger);
+        final Workflow workflow = createWorkflow(workflowDefinition.getName(),
+                workflowDefinition.getNamespace(), workflowTrigger.getName());
         WorkflowService.getService().add(workflow);
         logger.debug("Executing workflow {}", workflow);
-        orderWorkflowTasks(workflowTasks).forEach(workflowTask ->
+        orderWorkflowTasks(workflowDefinition.getTasks()).forEach(workflowTask ->
                 scheduleWorkflowTask(workflowTask, workflow.getId(), workflow.getNamespace()));
         workflow.setStatus(RUNNING);
         WorkflowService.getService().update(workflow);
         return workflow;
     }
 
-    private Workflow createWorkflow(String workflowName, String workflowNamespace) {
+    private Workflow createWorkflow(String workflowName, String workflowNamespace, String trigger) {
         final Workflow workflow = new Workflow();
         workflow.setId(UUID.randomUUID().toString());
         workflow.setName(workflowName);
         workflow.setNamespace(workflowNamespace);
+        workflow.setTrigger(trigger);
         workflow.setCreatedAt(System.currentTimeMillis());
         return workflow;
     }
@@ -218,9 +227,9 @@ public final class WorkflowSchedulerService implements Service {
         return task;
     }
 
-    void delete(WorkflowDefinitionId workflowDefinitionId) throws SchedulerException {
-        logger.info("Received request to delete workflow definition with id {}", workflowDefinitionId);
-        scheduler.deleteJob(getWorkflowJobKey(workflowDefinitionId));
+    void delete(WorkflowTriggerId workflowTriggerId) throws SchedulerException {
+        logger.info("Received request to delete workflow trigger {}", workflowTriggerId);
+        scheduler.deleteJob(getWorkflowJobKey(workflowTriggerId));
     }
 
     // used in junit
@@ -230,6 +239,7 @@ public final class WorkflowSchedulerService implements Service {
 
     @Override
     public void stop() {
+        logger.info("Stopping workflow scheduler service");
         try {
             logger.info("Stopping task reader service...");
             if (scheduler != null && !scheduler.isShutdown()) {
@@ -276,10 +286,12 @@ public final class WorkflowSchedulerService implements Service {
         public void execute(JobExecutionContext jobExecutionContext) {
             final JobDataMap jobDataMap = jobExecutionContext.getJobDetail().getJobDataMap();
             logger.trace("received request to execute workflow with data map {}", jobDataMap.getWrappedMap());
-            final String workflowName = (String) jobDataMap.get("name");
-            final String workflowNamespace = (String) jobDataMap.get("namespace");
-            final List<WorkflowTask> workflowTasks = (List<WorkflowTask>) jobDataMap.get("tasks");
-            WorkflowSchedulerService.getService().execute(workflowName, workflowNamespace, workflowTasks);
+            final WorkflowDefinitionId workflowDefinitionId =
+                    (WorkflowDefinitionId) jobDataMap.get("workflowDefinitionId");
+            final WorkflowTrigger trigger = (WorkflowTrigger) jobDataMap.get("trigger");
+            final WorkflowDefinition workflowDefinition =
+                    WorkflowDefinitionService.getService().get(workflowDefinitionId);
+            WorkflowSchedulerService.getService().execute(workflowDefinition, trigger);
         }
     }
 }

@@ -22,6 +22,7 @@ import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Workflow;
 import com.cognitree.kronos.model.definitions.TaskDefinition;
 import com.cognitree.kronos.model.definitions.WorkflowDefinition;
+import com.cognitree.kronos.model.definitions.WorkflowTrigger;
 import com.cognitree.kronos.scheduler.policies.TimeoutPolicyConfig;
 import com.cognitree.kronos.scheduler.store.NamespaceStore;
 import com.cognitree.kronos.scheduler.store.StoreConfig;
@@ -29,6 +30,7 @@ import com.cognitree.kronos.scheduler.store.TaskDefinitionStore;
 import com.cognitree.kronos.scheduler.store.TaskStore;
 import com.cognitree.kronos.scheduler.store.WorkflowDefinitionStore;
 import com.cognitree.kronos.scheduler.store.WorkflowStore;
+import com.cognitree.kronos.scheduler.store.WorkflowTriggerStore;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -64,6 +66,11 @@ public class SchedulerConfig {
      * the {@link Workflow}.
      */
     private StoreConfig workflowStoreConfig;
+    /**
+     * {@link WorkflowTriggerStore} configuration, required by the scheduler to instantiate the workflow trigger store to be
+     * used for storing the {@link WorkflowTrigger}.
+     */
+    private StoreConfig workflowTriggerStoreConfig;
     /**
      * Map of policy configuration, required by the scheduler to configure timeout policies to apply in case of timeout.
      * <p>
@@ -125,6 +132,14 @@ public class SchedulerConfig {
         this.workflowStoreConfig = workflowStoreConfig;
     }
 
+    public StoreConfig getWorkflowTriggerStoreConfig() {
+        return workflowTriggerStoreConfig;
+    }
+
+    public void setWorkflowTriggerStoreConfig(StoreConfig workflowTriggerStoreConfig) {
+        this.workflowTriggerStoreConfig = workflowTriggerStoreConfig;
+    }
+
     public Map<String, TimeoutPolicyConfig> getTimeoutPolicyConfig() {
         return timeoutPolicyConfig;
     }
@@ -151,6 +166,7 @@ public class SchedulerConfig {
                 Objects.equals(taskStoreConfig, that.taskStoreConfig) &&
                 Objects.equals(workflowDefinitionStoreConfig, that.workflowDefinitionStoreConfig) &&
                 Objects.equals(workflowStoreConfig, that.workflowStoreConfig) &&
+                Objects.equals(workflowTriggerStoreConfig, that.workflowTriggerStoreConfig) &&
                 Objects.equals(timeoutPolicyConfig, that.timeoutPolicyConfig) &&
                 Objects.equals(taskPurgeInterval, that.taskPurgeInterval);
     }
@@ -158,7 +174,7 @@ public class SchedulerConfig {
     @Override
     public int hashCode() {
 
-        return Objects.hash(namespaceStoreConfig, taskDefinitionStoreConfig, taskStoreConfig, workflowDefinitionStoreConfig, workflowStoreConfig, timeoutPolicyConfig, taskPurgeInterval);
+        return Objects.hash(namespaceStoreConfig, taskDefinitionStoreConfig, taskStoreConfig, workflowDefinitionStoreConfig, workflowStoreConfig, workflowTriggerStoreConfig, timeoutPolicyConfig, taskPurgeInterval);
     }
 
     @Override
@@ -169,6 +185,7 @@ public class SchedulerConfig {
                 ", taskStoreConfig=" + taskStoreConfig +
                 ", workflowDefinitionStoreConfig=" + workflowDefinitionStoreConfig +
                 ", workflowStoreConfig=" + workflowStoreConfig +
+                ", workflowTriggerStoreConfig=" + workflowTriggerStoreConfig +
                 ", timeoutPolicyConfig=" + timeoutPolicyConfig +
                 ", taskPurgeInterval='" + taskPurgeInterval + '\'' +
                 '}';

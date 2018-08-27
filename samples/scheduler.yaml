@@ -38,5 +38,13 @@ workflowStoreConfig:
     username:
     password:
 
+# configure workflow store
+workflowTriggerStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.SQLiteWorkflowTriggerStore
+  config:
+    connectionURL: jdbc:sqlite:kronos.db
+    username:
+    password:
+
 # time to wait before removing executed tasks from memory
 taskPurgeInterval: 1d

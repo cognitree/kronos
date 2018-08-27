@@ -58,22 +58,35 @@ public class WorkflowResource {
     @ApiOperation(value = "Get all running or executed workflows", response = Workflow.class, responseContainer = "List")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllWorkflows(@ApiParam(value = "workflow definition name")
-                                   @QueryParam("name") String workflowDefinitionName,
-                                   @ApiParam(value = "Number of days to fetch workflow from today", defaultValue = "10")
-                                   @DefaultValue(DEFAULT_DAYS) @QueryParam("date_range") int numberOfDays,
-                                   @HeaderParam("namespace") String namespace) {
+                                    @QueryParam("name") String workflowName,
+                                    @ApiParam(value = "workflow trigger name")
+                                    @QueryParam("trigger") String triggerName,
+                                    @ApiParam(value = "Number of days to fetch workflow from today", defaultValue = "10")
+                                    @DefaultValue(DEFAULT_DAYS) @QueryParam("date_range") int numberOfDays,
+                                    @HeaderParam("namespace") String namespace) {
         if (!validateNamespace(namespace)) {
             return Response.status(BAD_REQUEST).entity("no namespace exists with name " + namespace).build();
         }
+
+        if (triggerName != null && workflowName == null) {
+            return Response.status(BAD_REQUEST)
+                    .entity("workflow definition name is mandatory if trigger name is specified").build();
+        }
+
         final List<Workflow> workflows;
-        if (workflowDefinitionName == null) {
+        if (triggerName != null) {
+            logger.info("Received request to get all workflow for workflow definition {} submitted by workflow trigger {}" +
+                            " in date range {} under namespace {}",
+                    workflowName, triggerName, numberOfDays, namespace);
+            workflows = WorkflowService.getService().get(workflowName, triggerName, namespace, numberOfDays);
+        } else if (workflowName != null) {
+            logger.info("Received request to get all workflow with name {}, date range {} under namespace {}",
+                    workflowName, numberOfDays, namespace);
+            workflows = WorkflowService.getService().get(workflowName, namespace, numberOfDays);
+        } else {
             logger.info("Received request to get all workflow with date range {} under namespace {}",
                     numberOfDays, namespace);
             workflows = WorkflowService.getService().get(namespace, numberOfDays);
-        } else {
-            logger.info("Received request to get all workflow with name {}, date range {} under namespace {}",
-                    workflowDefinitionName, numberOfDays, namespace);
-            workflows = WorkflowService.getService().get(workflowDefinitionName, namespace, numberOfDays);
         }
         return Response.status(OK).entity(workflows.stream().sorted(comparing(Workflow::getCreatedAt).reversed())
                 .collect(Collectors.toList())).build();
