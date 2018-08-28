@@ -3,7 +3,7 @@
   description: sample workflow with tasks of type spark
   tasks:
     - name: SparkPi
-      taskDefinitionName: SparkPi
+      taskDefinition: SparkPi
       properties:
         submitRequest:
           appResource: file:/spark-examples_2.11-2.3.1.jar

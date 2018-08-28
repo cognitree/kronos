@@ -106,7 +106,7 @@ public class WorkflowService implements Service {
         final TopologicalSort<Workflow.WorkflowTask> topologicalSort = new TopologicalSort<>();
         final List<Workflow.WorkflowTask> workflowTasks = workflow.getTasks();
         for (Workflow.WorkflowTask task : workflowTasks) {
-            final String taskDefinitionName = task.getTaskDefinitionName();
+            final String taskDefinitionName = task.getTaskDefinition();
             if (TaskDefinitionService.getService().get(TaskDefinitionId.build(taskDefinitionName)) == null) {
                 throw new ValidationException("missing task definition with name " + taskDefinitionName);
             }

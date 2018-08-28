@@ -3,21 +3,21 @@
   description: test workflow
   tasks:
     - name: taskOne
-      taskDefinitionName: echo
+      taskDefinition: echo
       properties:
         args: Hello World from task one
     - name: taskTwo
-      taskDefinitionName: echo
+      taskDefinition: echo
       properties:
         args: Hello World from task two
     - name: taskThree
-      taskDefinitionName: echo
+      taskDefinition: echo
       properties:
         args: Hello World from task three
       dependsOn:
         - taskTwo
 #    - name: SparkPi
-#      taskDefinitionName: SparkPi
+#      taskDefinition: SparkPi
 #      properties:
 #        submitRequest:
 #          appResource: file:/spark-examples_2.11-2.3.1.jar

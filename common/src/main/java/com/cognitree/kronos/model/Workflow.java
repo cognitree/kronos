@@ -76,7 +76,7 @@ public class Workflow extends WorkflowId {
     public static class WorkflowTask {
 
         private String name;
-        private String taskDefinitionName;
+        private String taskDefinition;
         private Map<String, Object> properties = new HashMap<>();
         private List<String> dependsOn = new ArrayList<>();
 
@@ -93,12 +93,12 @@ public class Workflow extends WorkflowId {
             this.name = name;
         }
 
-        public String getTaskDefinitionName() {
-            return taskDefinitionName;
+        public String getTaskDefinition() {
+            return taskDefinition;
         }
 
-        public void setTaskDefinitionName(String taskDefinitionName) {
-            this.taskDefinitionName = taskDefinitionName;
+        public void setTaskDefinition(String taskDefinition) {
+            this.taskDefinition = taskDefinition;
         }
 
         public Map<String, Object> getProperties() {
@@ -148,7 +148,7 @@ public class Workflow extends WorkflowId {
             WorkflowTask that = (WorkflowTask) o;
             return isEnabled == that.isEnabled &&
                     Objects.equals(name, that.name) &&
-                    Objects.equals(taskDefinitionName, that.taskDefinitionName) &&
+                    Objects.equals(taskDefinition, that.taskDefinition) &&
                     Objects.equals(properties, that.properties) &&
                     Objects.equals(dependsOn, that.dependsOn) &&
                     Objects.equals(maxExecutionTime, that.maxExecutionTime) &&
@@ -158,14 +158,14 @@ public class Workflow extends WorkflowId {
         @Override
         public int hashCode() {
 
-            return Objects.hash(name, taskDefinitionName, properties, dependsOn, maxExecutionTime, timeoutPolicy, isEnabled);
+            return Objects.hash(name, taskDefinition, properties, dependsOn, maxExecutionTime, timeoutPolicy, isEnabled);
         }
 
         @Override
         public String toString() {
             return "WorkflowTask{" +
                     "name='" + name + '\'' +
-                    ", taskDefinitionName='" + taskDefinitionName + '\'' +
+                    ", taskDefinition='" + taskDefinition + '\'' +
                     ", properties=" + properties +
                     ", dependsOn=" + dependsOn +
                     ", maxExecutionTime='" + maxExecutionTime + '\'' +

@@ -3,15 +3,15 @@ namespace: cognitree
 description: test workflow
 tasks:
   - name: task one
-    taskDefinitionName: echo
+    taskDefinition: echo
     properties:
       args: Hello World from task one
   - name: task two
-    taskDefinitionName: sleep
+    taskDefinition: sleep
     properties:
       args: 30
   - name: task three
-    taskDefinitionName: echo
+    taskDefinition: echo
     properties:
       args: Hello World from task three
     dependsOn:

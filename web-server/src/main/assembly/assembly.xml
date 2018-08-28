@@ -38,7 +38,7 @@
             <outputDirectory>docs</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>src/main/resources</directory>
+            <directory>src/main/conf</directory>
             <outputDirectory>conf</outputDirectory>
         </fileSet>
         <fileSet>

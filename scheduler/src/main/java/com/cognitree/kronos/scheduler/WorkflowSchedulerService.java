@@ -218,7 +218,7 @@ public final class WorkflowSchedulerService implements Service {
             return;
         }
 
-        TaskDefinitionId taskDefinitionId = TaskDefinitionId.build(workflowTask.getTaskDefinitionName());
+        TaskDefinitionId taskDefinitionId = TaskDefinitionId.build(workflowTask.getTaskDefinition());
         final TaskDefinition taskDefinition = TaskDefinitionService.getService().get(taskDefinitionId);
         final Task task = createTask(workflowId, workflowTask, taskDefinition, namespace);
         TaskSchedulerService.getService().schedule(task);

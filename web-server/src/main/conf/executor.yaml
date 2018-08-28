@@ -5,3 +5,6 @@ taskHandlerConfig:
     handlerClass: com.cognitree.kronos.executor.handlers.ShellCommandHandler
     # max parallel tasks handler is allowed to execute at any point of time
     maxParallelTasks: 4
+  spark:
+    handlerClass: com.cognitree.kronos.executor.handlers.SparkHandler
+    maxParallelTasks: 4
