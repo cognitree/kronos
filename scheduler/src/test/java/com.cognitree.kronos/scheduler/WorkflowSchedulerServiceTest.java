@@ -99,8 +99,8 @@ public class WorkflowSchedulerServiceTest {
         workflowTrigger.setStartAt(currentTimeMillis);
         workflowTrigger.setEndAt(currentTimeMillis + 2000 - (currentTimeMillis % 2000));
         WorkflowTriggerService.getService().add(workflowTrigger);
-        final JobKey jobKey = new JobKey(workflowTrigger.getWorkflowName() + ":" + workflowTrigger.getName(),
-                workflowTrigger.getNamespace());
+        final JobKey jobKey = new JobKey(workflowTrigger.getName(),
+                workflowTrigger.getWorkflowName() + ":" + workflowTrigger.getNamespace());
         Assert.assertTrue(WorkflowSchedulerService.getService().getScheduler().checkExists(jobKey));
         sleep(2000);
         Assert.assertFalse(WorkflowSchedulerService.getService().getScheduler().checkExists(jobKey));

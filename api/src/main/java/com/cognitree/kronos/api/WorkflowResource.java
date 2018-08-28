@@ -138,6 +138,8 @@ public class WorkflowResource {
             WorkflowService.getService().update(workflow);
         } catch (ValidationException e) {
             return Response.status(BAD_REQUEST).entity(e.getMessage()).build();
+        } catch (SchedulerException e) {
+            return Response.status(INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         }
         return Response.status(OK).entity(workflow).build();
     }

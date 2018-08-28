@@ -19,6 +19,8 @@ package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
+import com.cognitree.kronos.model.Workflow;
+import com.cognitree.kronos.model.WorkflowId;
 import com.cognitree.kronos.model.WorkflowTrigger;
 import com.cognitree.kronos.model.WorkflowTriggerId;
 import com.cognitree.kronos.scheduler.store.StoreConfig;
@@ -58,7 +60,9 @@ public class WorkflowTriggerService implements Service {
 
     public void add(WorkflowTrigger workflowTrigger) throws SchedulerException {
         logger.debug("Received request to add workflow trigger {}", workflowTrigger);
-        WorkflowSchedulerService.getService().schedule(workflowTrigger);
+        final Workflow workflow = WorkflowService.getService()
+                .get(WorkflowId.build(workflowTrigger.getWorkflowName(), workflowTrigger.getNamespace()));
+        WorkflowSchedulerService.getService().schedule(workflow, workflowTrigger);
         workflowTriggerStore.store(workflowTrigger);
     }
 
@@ -81,7 +85,9 @@ public class WorkflowTriggerService implements Service {
     public void update(WorkflowTrigger workflowTrigger) throws SchedulerException {
         logger.debug("Received request to update workflow trigger to {}", workflowTrigger);
         WorkflowSchedulerService.getService().delete(workflowTrigger);
-        WorkflowSchedulerService.getService().schedule(workflowTrigger);
+        final Workflow workflow = WorkflowService.getService()
+                .get(WorkflowId.build(workflowTrigger.getWorkflowName(), workflowTrigger.getNamespace()));
+        WorkflowSchedulerService.getService().schedule(workflow, workflowTrigger);
         workflowTriggerStore.update(workflowTrigger);
     }
 

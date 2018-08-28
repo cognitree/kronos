@@ -77,10 +77,10 @@ public class WorkflowService implements Service {
         return workflowStore.load(workflowId);
     }
 
-    public void update(Workflow workflow) throws ValidationException {
+    public void update(Workflow workflow) throws ValidationException, SchedulerException {
         logger.debug("Received request to update workflow {}", workflow);
         validate(workflow);
-        // TODO optimize the update flow no need to load def everytime it is triggered
+        WorkflowSchedulerService.getService().update(workflow);
         workflowStore.update(workflow);
     }
 
