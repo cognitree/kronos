@@ -25,17 +25,17 @@ public interface Store<E, T> {
      * called during initialization phase to initialize the store.
      *
      * @param storeConfig configuration used to initialize the store.
-     * @throws Exception
+     * @throws StoreException
      */
     void init(ObjectNode storeConfig) throws Exception;
 
-    void store(E entity);
+    void store(E entity) throws StoreException;
 
-    E load(T identity);
+    E load(T identity) throws StoreException;
 
-    void update(E entity);
+    void update(E entity) throws StoreException;
 
-    void delete(T identity);
+    void delete(T identity) throws StoreException;
 
     void stop();
 }

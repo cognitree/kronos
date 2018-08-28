@@ -30,7 +30,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -88,7 +87,7 @@ public class SQLiteNamespaceStore implements NamespaceStore {
     }
 
     @Override
-    public void store(Namespace namespace) {
+    public void store(Namespace namespace) throws StoreException {
         logger.debug("Received request to store namespace {}", namespace);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(INSERT_NAMESPACE)) {
@@ -98,11 +97,12 @@ public class SQLiteNamespaceStore implements NamespaceStore {
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error storing namespace {} into database", namespace, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
     @Override
-    public List<Namespace> load() {
+    public List<Namespace> load() throws StoreException {
         logger.debug("Received request to get all namespaces");
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_ALL_NAMESPACES)) {
@@ -114,12 +114,12 @@ public class SQLiteNamespaceStore implements NamespaceStore {
             return namespaces;
         } catch (Exception e) {
             logger.error("Error fetching all namespaces from database", e);
-            return Collections.emptyList();
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
     @Override
-    public Namespace load(NamespaceId namespaceId) {
+    public Namespace load(NamespaceId namespaceId) throws StoreException {
         logger.debug("Received request to load namespace with id {}", namespaceId);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_NAMESPACE)) {
@@ -131,12 +131,13 @@ public class SQLiteNamespaceStore implements NamespaceStore {
             }
         } catch (Exception e) {
             logger.error("Error fetching namespace with id {} from database", namespaceId, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
         return null;
     }
 
     @Override
-    public void update(Namespace namespace) {
+    public void update(Namespace namespace) throws StoreException {
         logger.debug("Received request to update namespace to {}", namespace);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_NAMESPACE)) {
@@ -146,11 +147,12 @@ public class SQLiteNamespaceStore implements NamespaceStore {
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error updating namespace to {}", namespace, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
     @Override
-    public void delete(NamespaceId namespaceId) {
+    public void delete(NamespaceId namespaceId) throws StoreException {
         logger.debug("Received request to delete namespace with id {}", namespaceId);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(DELETE_NAMESPACE)) {
@@ -159,6 +161,7 @@ public class SQLiteNamespaceStore implements NamespaceStore {
             preparedStatement.executeUpdate();
         } catch (Exception e) {
             logger.error("Error deleting namespace with id {} from database", namespaceId, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 

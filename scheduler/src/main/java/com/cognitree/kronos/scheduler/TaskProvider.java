@@ -60,24 +60,27 @@ final class TaskProvider {
 
     private final MutableGraph<Task> graph = GraphBuilder.directed().build();
 
-    void init() {
+    void init() throws ServiceException {
         logger.info("Initializing task provider from task store");
         final List<Namespace> namespaces = NamespaceService.getService().get();
         final List<Task> tasks = new ArrayList<>();
-        namespaces.forEach(namespace ->
-                TaskService.getService()
-                        .get(Arrays.asList(CREATED, WAITING, SCHEDULED, SUBMITTED, RUNNING), namespace.getName()));
+        for (Namespace namespace : namespaces) {
+            TaskService.getService()
+                    .get(Arrays.asList(CREATED, WAITING, SCHEDULED, SUBMITTED, RUNNING), namespace.getName());
+        }
         if (!tasks.isEmpty()) {
             tasks.sort(Comparator.comparing(Task::getCreatedAt));
             tasks.forEach(this::addToGraph);
-            tasks.forEach(this::resolve);
+            for (Task task : tasks) {
+                resolve(task);
+            }
         }
     }
 
     /**
      * re initialize task provider from task store
      */
-    synchronized void reinit() {
+    synchronized void reinit() throws ServiceException {
         // clear in memory state
         clearGraph();
         // reinitialize in memory state from backing store
@@ -90,7 +93,7 @@ final class TaskProvider {
         nodes.forEach(graph::removeNode);
     }
 
-    synchronized boolean add(Task task) {
+    synchronized boolean add(Task task) throws ServiceException {
         if (TaskService.getService().get(task) == null) {
             addToGraph(task);
             TaskService.getService().add(task);
@@ -111,7 +114,7 @@ final class TaskProvider {
      * @param task
      * @return false when dependant tasks are in failed state or not found, true otherwise
      */
-    synchronized boolean resolve(Task task) {
+    synchronized boolean resolve(Task task) throws ServiceException {
         final List<String> dependsOn = task.getDependsOn();
         if (dependsOn != null) {
             List<Task> dependentTasks = new ArrayList<>();
@@ -134,7 +137,7 @@ final class TaskProvider {
         return true;
     }
 
-    synchronized Task getTask(TaskId taskId) {
+    synchronized Task getTask(TaskId taskId) throws ServiceException {
         for (Task task : graph.nodes()) {
             if (task.getIdentity().equals(taskId)) {
                 return task;
@@ -149,13 +152,13 @@ final class TaskProvider {
     }
 
     /**
-     * For statement A depends on B, A is the depender and B is the dependee.
+     * For statement A depends on B, A is the dependent and B is the dependee.
      *
-     * @param dependerTask
+     * @param dependentTask
      * @param dependeeTask
      */
-    private void addDependency(Task dependerTask, Task dependeeTask) {
-        graph.putEdge(dependerTask, dependeeTask);
+    private void addDependency(Task dependentTask, Task dependeeTask) {
+        graph.putEdge(dependentTask, dependeeTask);
     }
 
     synchronized List<Task> getReadyTasks() {
@@ -197,7 +200,7 @@ final class TaskProvider {
                 .allMatch(t -> t.getStatus().equals(SUCCESSFUL));
     }
 
-    void update(Task task) {
+    void update(Task task) throws ServiceException {
         logger.debug("Received request to update task {}", task);
         TaskService.getService().update(task);
     }
@@ -223,7 +226,7 @@ final class TaskProvider {
     }
 
     /**
-     * Returns Set of tasks for deletion if namespace of tasks (namespace is defined by connected depender or dependee task)
+     * Returns Set of tasks for deletion if namespace of tasks (namespace is defined by connected dependent or dependee task)
      * have been executed and trigger timestamp is older than cleanUpTimestamp.
      * <p>
      * Returns empty set if any of the tasks fails to match above mentioned criteria.
@@ -235,7 +238,7 @@ final class TaskProvider {
         while (!tasksToValidate.isEmpty()) {
             Task taskToValidate = tasksToValidate.poll();
             if (taskToValidate != null && taskToValidate.getCreatedAt() < cleanUpTimestamp &&
-                    (taskToValidate.getStatus() == SUCCESSFUL || taskToValidate.getStatus() == FAILED)) {
+                    (taskToValidate.getStatus().isFinal())) {
                 Set<Task> predecessorTasks = graph.predecessors(taskToValidate);
                 for (Task predecessorTask : predecessorTasks) {
                     if (!tasksToDelete.contains(predecessorTask)) {

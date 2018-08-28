@@ -27,6 +27,6 @@ import java.util.List;
  */
 public interface WorkflowStore extends Store<Workflow, WorkflowId> {
 
-    List<Workflow> load(String namespace);
+    List<Workflow> load(String namespace) throws StoreException;
 
 }

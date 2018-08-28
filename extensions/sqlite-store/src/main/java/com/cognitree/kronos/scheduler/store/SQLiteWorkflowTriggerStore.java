@@ -30,7 +30,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -99,7 +98,7 @@ public class SQLiteWorkflowTriggerStore implements WorkflowTriggerStore {
     }
 
     @Override
-    public void store(WorkflowTrigger workflowTrigger) {
+    public void store(WorkflowTrigger workflowTrigger) throws StoreException {
         logger.debug("Received request to store workflow trigger {}", workflowTrigger);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(INSERT_WORKFLOW_TRIGGER)) {
@@ -114,11 +113,12 @@ public class SQLiteWorkflowTriggerStore implements WorkflowTriggerStore {
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error storing workflow trigger {} into database", workflowTrigger, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
     @Override
-    public List<WorkflowTrigger> load(String namespace) {
+    public List<WorkflowTrigger> load(String namespace) throws StoreException {
         logger.debug("Received request to get all workflow triggers in namespace {}", namespace);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_ALL_WORKFLOW_TRIGGER_BY_NAMESPACE)) {
@@ -132,12 +132,12 @@ public class SQLiteWorkflowTriggerStore implements WorkflowTriggerStore {
             return workflowTriggers;
         } catch (Exception e) {
             logger.error("Error fetching workflow triggers from database in namespace {}", namespace, e);
-            return Collections.emptyList();
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
     @Override
-    public List<WorkflowTrigger> loadByWorkflowName(String workflowName, String namespace) {
+    public List<WorkflowTrigger> loadByWorkflowName(String workflowName, String namespace) throws StoreException {
         logger.debug("Received request to get all workflow triggers with workflow name {} in namespace {}",
                 workflowName, namespace);
         try (Connection connection = dataSource.getConnection();
@@ -154,12 +154,12 @@ public class SQLiteWorkflowTriggerStore implements WorkflowTriggerStore {
         } catch (Exception e) {
             logger.error("Error fetching workflow triggers from database with workflow name {} in namespace {}",
                     workflowName, namespace, e);
-            return Collections.emptyList();
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
     @Override
-    public WorkflowTrigger load(WorkflowTriggerId triggerId) {
+    public WorkflowTrigger load(WorkflowTriggerId triggerId) throws StoreException {
         logger.debug("Received request to load workflow trigger with id {}", triggerId);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_WORKFLOW_TRIGGER)) {
@@ -173,12 +173,13 @@ public class SQLiteWorkflowTriggerStore implements WorkflowTriggerStore {
             }
         } catch (Exception e) {
             logger.error("Error fetching workflow trigger with id {} from database", triggerId, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
         return null;
     }
 
     @Override
-    public void update(WorkflowTrigger workflowTrigger) {
+    public void update(WorkflowTrigger workflowTrigger) throws StoreException {
         logger.debug("Received request to update workflow trigger to {}", workflowTrigger);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_WORKFLOW_TRIGGER)) {
@@ -193,11 +194,12 @@ public class SQLiteWorkflowTriggerStore implements WorkflowTriggerStore {
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error updating workflow trigger {} into database", workflowTrigger, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
     @Override
-    public void delete(WorkflowTriggerId triggerId) {
+    public void delete(WorkflowTriggerId triggerId) throws StoreException {
         logger.debug("Received request to delete workflow trigger with id {}", triggerId);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(DELETE_WORKFLOW_TRIGGER)) {
@@ -208,6 +210,7 @@ public class SQLiteWorkflowTriggerStore implements WorkflowTriggerStore {
             preparedStatement.executeUpdate();
         } catch (Exception e) {
             logger.error("Error delete workflow trigger with id {} from database", triggerId, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 

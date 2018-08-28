@@ -63,7 +63,7 @@ public class TaskSchedulerServiceTest {
     }
 
     @Before
-    public void initialize() {
+    public void initialize() throws ServiceException {
         // reinit will clear all the tasks from task provider
         TaskSchedulerService.getService().reinitTaskProvider();
         // clear off any old records from topic test
@@ -71,7 +71,7 @@ public class TaskSchedulerServiceTest {
     }
 
     @Test
-    public void testAddTask() throws InterruptedException, IOException {
+    public void testAddTask() throws InterruptedException, IOException, ServiceException {
         Task taskOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setType(TASK_TYPE).build();
         Assert.assertEquals(0, TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE).size());
         TaskSchedulerService.getService().schedule(taskOne);
@@ -86,7 +86,7 @@ public class TaskSchedulerServiceTest {
     }
 
     @Test
-    public void testAddDuplicateTask() throws InterruptedException, IOException {
+    public void testAddDuplicateTask() throws InterruptedException, IOException, ServiceException {
         Task taskOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setType(TASK_TYPE).build();
         Assert.assertEquals(0, TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE).size());
         TaskSchedulerService.getService().schedule(taskOne);
@@ -102,7 +102,7 @@ public class TaskSchedulerServiceTest {
     }
 
     @Test
-    public void testAddIndependentTasks() throws IOException, InterruptedException {
+    public void testAddIndependentTasks() throws IOException, InterruptedException, ServiceException {
         final TaskProvider taskProvider = TaskSchedulerService.getService().getTaskProvider();
         Task taskOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setType(TASK_TYPE).build();
         TaskSchedulerService.getService().schedule(taskOne);
@@ -136,7 +136,7 @@ public class TaskSchedulerServiceTest {
     }
 
     @Test
-    public void addTaskWithMissingDependency() throws InterruptedException, IOException {
+    public void addTaskWithMissingDependency() throws InterruptedException, IOException, ServiceException {
         final long createdAt = System.currentTimeMillis();
         Task taskOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setType(TASK_TYPE).setCreatedAt(createdAt).build();
         List<String> dependsOn = new ArrayList<>();
@@ -157,7 +157,7 @@ public class TaskSchedulerServiceTest {
     }
 
     @Test
-    public void testAddTaskWithDifferentWorkflowIdWithDependency() throws InterruptedException, IOException {
+    public void testAddTaskWithDifferentWorkflowIdWithDependency() throws InterruptedException, IOException, ServiceException {
         final long createdAt = System.currentTimeMillis();
         Task taskOneGroupOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setJob("workflowOne")
                 .setType(TASK_TYPE).setCreatedAt(createdAt).build();
@@ -228,7 +228,7 @@ public class TaskSchedulerServiceTest {
     }
 
     @Test
-    public void testAddTaskInDifferentNamespaceWithDependency() throws InterruptedException, IOException {
+    public void testAddTaskInDifferentNamespaceWithDependency() throws InterruptedException, IOException, ServiceException {
         final long createdAt = System.currentTimeMillis();
         Task taskOneGroupOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setNamespace("namespaceOne")
                 .setType(TASK_TYPE).setCreatedAt(createdAt).build();
@@ -299,7 +299,7 @@ public class TaskSchedulerServiceTest {
     }
 
     @Test
-    public void testTaskTimeout() throws InterruptedException, JsonProcessingException {
+    public void testTaskTimeout() throws InterruptedException, JsonProcessingException, ServiceException {
         final long createdAt = System.currentTimeMillis();
         Task taskOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setType(TASK_TYPE).setMaxExecutionTime("500")
                 .setCreatedAt(createdAt).build();
@@ -324,7 +324,7 @@ public class TaskSchedulerServiceTest {
     }
 
     @Test
-    public void testTaskCleanup() throws InterruptedException, JsonProcessingException {
+    public void testTaskCleanup() throws InterruptedException, JsonProcessingException, ServiceException {
         // set task created at time to a lower value than the task purge interval configured in scheduler.yaml
         final long taskPurgeInterval = DateTimeUtil.resolveDuration("1d");
         final long createdAt = System.currentTimeMillis() - taskPurgeInterval - MINUTES.toMillis(1);

@@ -23,6 +23,7 @@ import com.cognitree.kronos.model.Namespace;
 import com.cognitree.kronos.model.NamespaceId;
 import com.cognitree.kronos.scheduler.store.NamespaceStore;
 import com.cognitree.kronos.scheduler.store.StoreConfig;
+import com.cognitree.kronos.scheduler.store.StoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,24 +57,44 @@ public class NamespaceService implements Service {
 
     }
 
-    public List<Namespace> get() {
+    public List<Namespace> get() throws ServiceException {
         logger.debug("Received request to get all namespaces");
-        return namespaceStore.load();
+        try {
+            return namespaceStore.load();
+        } catch (StoreException e) {
+            logger.error("unable to get all namespaces", e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public Namespace get(NamespaceId namespaceId) {
+    public Namespace get(NamespaceId namespaceId) throws ServiceException {
         logger.debug("Received request to get namespace with id {}", namespaceId);
-        return namespaceStore.load(namespaceId);
+        try {
+            return namespaceStore.load(namespaceId);
+        } catch (StoreException e) {
+            logger.error("unable to get namespace with id {}", namespaceId, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public void add(Namespace namespace) {
+    public void add(Namespace namespace) throws ServiceException {
         logger.debug("Received request to add namespace {}", namespace);
-        namespaceStore.store(namespace);
+        try {
+            namespaceStore.store(namespace);
+        } catch (StoreException e) {
+            logger.error("unable to add namespace {}", namespace, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public void update(Namespace namespace) {
+    public void update(Namespace namespace) throws ServiceException {
         logger.debug("Received request to update namespace to {}", namespace);
-        namespaceStore.store(namespace);
+        try {
+            namespaceStore.store(namespace);
+        } catch (StoreException e) {
+            logger.error("unable to update namespace to {}", namespace, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
     @Override

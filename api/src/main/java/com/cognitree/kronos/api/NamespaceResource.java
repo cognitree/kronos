@@ -20,6 +20,7 @@ package com.cognitree.kronos.api;
 import com.cognitree.kronos.model.Namespace;
 import com.cognitree.kronos.model.NamespaceId;
 import com.cognitree.kronos.scheduler.NamespaceService;
+import com.cognitree.kronos.scheduler.ServiceException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -53,7 +54,7 @@ public class NamespaceResource {
     @GET
     @ApiOperation(value = "Get all namespaces", response = Namespace.class, responseContainer = "List")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getAllNamespaces() {
+    public Response getAllNamespaces() throws ServiceException {
         logger.info("Received request to get all namespaces");
         final List<Namespace> namespaces = NamespaceService.getService().get();
         return Response.status(OK).entity(namespaces).build();
@@ -66,7 +67,7 @@ public class NamespaceResource {
             @ApiResponse(code = 404, message = "Namespace not found")})
     @Produces(MediaType.APPLICATION_JSON)
     public Response getNamespace(@ApiParam(value = "namespace name", required = true)
-                                 @PathParam("name") String name) {
+                                 @PathParam("name") String name) throws ServiceException {
         logger.info("Received request to get namespace with name {}", name);
         final Namespace namespace = NamespaceService.getService().get(NamespaceId.build(name));
         if (namespace == null) {
@@ -81,7 +82,7 @@ public class NamespaceResource {
     @ApiResponses(value = {
             @ApiResponse(code = 409, message = "Namespace already exists")})
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addNamespace(Namespace namespace) {
+    public Response addNamespace(Namespace namespace) throws ServiceException {
         logger.info("Received request to add namespace {}", namespace);
         if (NamespaceService.getService().get(namespace) != null) {
             logger.error("Namespace already exists with name {}", namespace.getName());
@@ -99,7 +100,7 @@ public class NamespaceResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateNamespace(@ApiParam(value = "namespace name", required = true)
                                     @PathParam("name") String name,
-                                    Namespace namespace) {
+                                    Namespace namespace) throws ServiceException {
         namespace.setName(name);
         logger.info("Received request to update namespace with name {} to {}", name, namespace);
         if (NamespaceService.getService().get(namespace) == null) {

@@ -24,6 +24,7 @@ import com.cognitree.kronos.model.JobId;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.scheduler.store.JobStore;
 import com.cognitree.kronos.scheduler.store.StoreConfig;
+import com.cognitree.kronos.scheduler.store.StoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,64 +58,112 @@ public class JobService implements Service {
         logger.info("Starting job service");
     }
 
-    public void add(Job job) {
+    public void add(Job job) throws ServiceException {
         logger.debug("Received request to add job {}", job);
-        jobStore.store(job);
+        try {
+            jobStore.store(job);
+        } catch (StoreException e) {
+            logger.error("unable to add job {}", job, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public List<Job> get(String namespace) {
+    public List<Job> get(String namespace) throws ServiceException {
         logger.debug("Received request to get all jobs under namespace {}", namespace);
-        return jobStore.load(namespace);
+        try {
+            return jobStore.load(namespace);
+        } catch (StoreException e) {
+            logger.error("unable to get all jobs under namespace {}", namespace, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public Job get(JobId jobId) {
+    public Job get(JobId jobId) throws ServiceException {
         logger.debug("Received request to get job {}", jobId);
-        return jobStore.load(jobId);
+        try {
+            return jobStore.load(jobId);
+        } catch (StoreException e) {
+            logger.error("unable to get job {}", jobId, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public List<Job> get(String namespace, int numberOfDays) {
+    public List<Job> get(String namespace, int numberOfDays) throws ServiceException {
         logger.debug("Received request to get all jobs under namespace {} submitted in last {} number of days",
                 namespace, numberOfDays);
         final long currentTimeMillis = System.currentTimeMillis();
         long createdAfter = currentTimeMillis - (currentTimeMillis % TimeUnit.DAYS.toMillis(1))
                 - TimeUnit.DAYS.toMillis(numberOfDays - 1);
         long createdBefore = createdAfter + TimeUnit.DAYS.toMillis(numberOfDays);
-        return jobStore.load(namespace, createdAfter, createdBefore);
+        try {
+            return jobStore.load(namespace, createdAfter, createdBefore);
+        } catch (StoreException e) {
+            logger.error("unable to get all jobs under namespace {} submitted in last {} number of days",
+                    namespace, numberOfDays, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public List<Job> get(String workflowName, String namespace, int numberOfDays) {
+    public List<Job> get(String workflowName, String namespace, int numberOfDays) throws ServiceException {
         logger.debug("Received request to get all jobs with workflow name {} under namespace {} submitted " +
                 "in last {} number of days", workflowName, namespace, numberOfDays);
         final long currentTimeMillis = System.currentTimeMillis();
         long createdAfter = currentTimeMillis - (currentTimeMillis % TimeUnit.DAYS.toMillis(1))
                 - TimeUnit.DAYS.toMillis(numberOfDays - 1);
         long createdBefore = createdAfter + TimeUnit.DAYS.toMillis(numberOfDays);
-        return jobStore.loadByWorkflowName(workflowName, namespace, createdAfter, createdBefore);
+        try {
+            return jobStore.loadByWorkflowName(workflowName, namespace, createdAfter, createdBefore);
+        } catch (StoreException e) {
+            logger.error("unable to get all jobs with workflow name {} under namespace {} submitted " +
+                    "in last {} number of days", workflowName, namespace, numberOfDays, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public List<Job> get(String workflowName, String triggerName, String namespace, int numberOfDays) {
+    public List<Job> get(String workflowName, String triggerName, String namespace, int numberOfDays) throws ServiceException {
         logger.debug("Received request to get all jobs with workflow name {}, trigger {} under namespace {} submitted " +
                 "in last {} number of days", workflowName, triggerName, namespace, numberOfDays);
         final long currentTimeMillis = System.currentTimeMillis();
         long createdAfter = currentTimeMillis - (currentTimeMillis % TimeUnit.DAYS.toMillis(1))
                 - TimeUnit.DAYS.toMillis(numberOfDays - 1);
         long createdBefore = createdAfter + TimeUnit.DAYS.toMillis(numberOfDays);
-        return jobStore.loadByWorkflowNameAndTriggerName(workflowName, triggerName, namespace, createdAfter, createdBefore);
+        try {
+            return jobStore.loadByWorkflowNameAndTriggerName(workflowName, triggerName, namespace, createdAfter, createdBefore);
+        } catch (StoreException e) {
+            logger.error("unable to get all jobs with workflow name {}, trigger {} under namespace {} submitted " +
+                    "in last {} number of days", workflowName, triggerName, namespace, numberOfDays, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public List<Task> getTasks(JobId jobId) {
+    public List<Task> getTasks(JobId jobId) throws ServiceException {
         logger.debug("Received request to get all tasks executed for job {}", jobId);
-        return TaskService.getService().get(jobId.getId(), jobId.getNamespace());
+        try {
+            return TaskService.getService().get(jobId.getId(), jobId.getNamespace());
+        } catch (ServiceException e) {
+            logger.error("unable to get all tasks executed for job {}", jobId, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public void update(Job job) {
+    public void update(Job job) throws ServiceException {
         logger.debug("Received request to update job to {}", job);
-        jobStore.update(job);
+        try {
+            jobStore.update(job);
+        } catch (StoreException e) {
+            logger.error("unable to update job to {}", job, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public void delete(JobId jobId) {
+    public void delete(JobId jobId) throws ServiceException {
         logger.debug("Received request to delete job {}", jobId);
-        jobStore.delete(jobId);
+        try {
+            jobStore.delete(jobId);
+        } catch (StoreException e) {
+            logger.error("unable to delete job {}", jobId, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
     @Override

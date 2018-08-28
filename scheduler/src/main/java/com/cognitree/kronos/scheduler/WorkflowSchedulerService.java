@@ -79,12 +79,13 @@ public final class WorkflowSchedulerService implements Service {
         TaskSchedulerService.getService().registerListener(new WorkflowLifecycleHandler());
     }
 
-    private void scheduleExistingWorkflows() {
+    private void scheduleExistingWorkflows() throws ServiceException {
         final List<Namespace> namespaces = NamespaceService.getService().get();
         final List<Workflow> workflows = new ArrayList<>();
-        namespaces.forEach(namespace ->
-                workflows.addAll(WorkflowService.getService().get(namespace.getName())));
-        workflows.forEach(workflow -> {
+        for (Namespace namespace : namespaces) {
+            workflows.addAll(WorkflowService.getService().get(namespace.getName()));
+        }
+        for (Workflow workflow : workflows) {
             final List<WorkflowTrigger> workflowTriggers =
                     WorkflowTriggerService.getService().get(workflow.getName(), workflow.getNamespace());
             workflowTriggers.forEach(workflowTrigger -> {
@@ -95,7 +96,7 @@ public final class WorkflowSchedulerService implements Service {
                     logger.error("Error scheduling workflow {} with trigger {}", workflow, workflowTrigger, e);
                 }
             });
-        });
+        }
     }
 
     @Override
@@ -164,13 +165,14 @@ public final class WorkflowSchedulerService implements Service {
         return CronScheduleBuilder.cronSchedule(workflowTrigger.getSchedule());
     }
 
-    Job execute(Workflow workflow, WorkflowTrigger workflowTrigger) {
+    Job execute(Workflow workflow, WorkflowTrigger workflowTrigger) throws ServiceException {
         logger.info("Received request to execute workflow {} by trigger {}", workflow, workflowTrigger);
         final Job job = createWorkflowJob(workflow.getName(), workflow.getNamespace(), workflowTrigger.getName());
         JobService.getService().add(job);
         logger.debug("Executing workflow {}", job);
-        orderWorkflowTasks(workflow.getTasks()).forEach(workflowTask ->
-                scheduleWorkflowTask(workflowTask, job.getId(), job.getNamespace()));
+        for (WorkflowTask workflowTask : orderWorkflowTasks(workflow.getTasks())) {
+            scheduleWorkflowTask(workflowTask, job.getId(), job.getNamespace());
+        }
         job.setStatus(RUNNING);
         JobService.getService().update(job);
         return job;
@@ -210,7 +212,8 @@ public final class WorkflowSchedulerService implements Service {
         return topologicalSort.sort();
     }
 
-    private void scheduleWorkflowTask(WorkflowTask workflowTask, String workflowId, String namespace) {
+    private void scheduleWorkflowTask(WorkflowTask workflowTask, String workflowId,
+                                      String namespace) throws ServiceException {
         logger.debug("scheduling workflow task {} for workflow with id {}, namespace {}",
                 workflowTask, workflowId, namespace);
         if (!workflowTask.isEnabled()) {
@@ -275,21 +278,24 @@ public final class WorkflowSchedulerService implements Service {
             }
             final String jobId = task.getJob();
             final String namespace = task.getNamespace();
+            try {
+                final List<Task> tasks = TaskService.getService().get(jobId, namespace);
+                if (tasks.isEmpty()) {
+                    return;
+                }
+                final boolean isWorkflowComplete = tasks.stream()
+                        .allMatch(workflowTask -> workflowTask.getStatus().isFinal());
 
-            final List<Task> tasks = TaskService.getService().get(jobId, namespace);
-            if (tasks.isEmpty()) {
-                return;
-            }
-            final boolean isWorkflowComplete = tasks.stream()
-                    .allMatch(workflowTask -> workflowTask.getStatus().isFinal());
-
-            if (isWorkflowComplete) {
-                final boolean isSuccessful = tasks.stream()
-                        .allMatch(workflowTask -> workflowTask.getStatus() == Task.Status.SUCCESSFUL);
-                final Job job = JobService.getService().get(JobId.build(jobId, namespace));
-                job.setStatus(isSuccessful ? SUCCESSFUL : FAILED);
-                job.setCompletedAt(System.currentTimeMillis());
-                JobService.getService().update(job);
+                if (isWorkflowComplete) {
+                    final boolean isSuccessful = tasks.stream()
+                            .allMatch(workflowTask -> workflowTask.getStatus() == Task.Status.SUCCESSFUL);
+                    final Job job = JobService.getService().get(JobId.build(jobId, namespace));
+                    job.setStatus(isSuccessful ? SUCCESSFUL : FAILED);
+                    job.setCompletedAt(System.currentTimeMillis());
+                    JobService.getService().update(job);
+                }
+            } catch (ServiceException e) {
+                logger.error("Error handling status change for task {}, from {} to {}", task, from, to, e);
             }
         }
     }
@@ -304,7 +310,11 @@ public final class WorkflowSchedulerService implements Service {
             logger.trace("received request to execute workflow with data map {}", jobDataMap.getWrappedMap());
             final Workflow workflow = (Workflow) jobDataMap.get("workflow");
             final WorkflowTrigger trigger = (WorkflowTrigger) jobDataMap.get("trigger");
-            WorkflowSchedulerService.getService().execute(workflow, trigger);
+            try {
+                WorkflowSchedulerService.getService().execute(workflow, trigger);
+            } catch (ServiceException e) {
+                logger.error("Error executing workflow {} for trigger {}", workflow, trigger, e);
+            }
         }
     }
 }

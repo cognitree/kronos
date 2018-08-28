@@ -27,5 +27,5 @@ import java.util.List;
  */
 public interface NamespaceStore extends Store<Namespace, NamespaceId> {
 
-    List<Namespace> load();
+    List<Namespace> load() throws StoreException;
 }

@@ -22,6 +22,7 @@ import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.TaskId;
 import com.cognitree.kronos.scheduler.store.StoreConfig;
+import com.cognitree.kronos.scheduler.store.StoreException;
 import com.cognitree.kronos.scheduler.store.TaskStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,41 +55,78 @@ public class TaskService implements Service {
 
     }
 
-    public List<Task> get(String namespace) {
+    public List<Task> get(String namespace) throws ServiceException {
         logger.debug("Received request to get all tasks under namespace {}", namespace);
-        return taskStore.load(namespace);
+        try {
+            return taskStore.load(namespace);
+        } catch (StoreException e) {
+            logger.error("unable to get all tasks under namespace {}", namespace, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public Task get(TaskId taskId) {
+    public Task get(TaskId taskId) throws ServiceException {
         logger.debug("Received request to get task {}", taskId);
-        return taskStore.load(taskId);
+        try {
+            return taskStore.load(taskId);
+        } catch (StoreException e) {
+            logger.error("unable to get task {}", taskId, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public List<Task> get(String jobId, String namespace) {
+    public List<Task> get(String jobId, String namespace) throws ServiceException {
         logger.debug("Received request to get all tasks with job id {} under namespace {}",
                 jobId, namespace);
-        return taskStore.loadByJobId(jobId, namespace);
+        try {
+            return taskStore.loadByJobId(jobId, namespace);
+        } catch (StoreException e) {
+            logger.error("unable to get all tasks with job id {} under namespace {}",
+                    jobId, namespace, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public List<Task> get(List<Task.Status> statuses, String namespace) {
+    public List<Task> get(List<Task.Status> statuses, String namespace) throws ServiceException {
         logger.debug("Received request to get all tasks having status in {} under namespace {}",
                 statuses, namespace);
-        return taskStore.load(statuses, namespace);
+        try {
+            return taskStore.load(statuses, namespace);
+        } catch (StoreException e) {
+            logger.error("unable to get all tasks having status in {} under namespace {}",
+                    statuses, namespace, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public void add(Task task) {
+    public void add(Task task) throws ServiceException {
         logger.debug("Received request to add task {}", task);
-        taskStore.store(task);
+        try {
+            taskStore.store(task);
+        } catch (StoreException e) {
+            logger.error("unable to add task {}", task, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public void update(Task task) {
+    public void update(Task task) throws ServiceException {
         logger.debug("Received request to update task {}", task);
-        taskStore.update(task);
+        try {
+            taskStore.update(task);
+        } catch (StoreException e) {
+            logger.error("unable to update task {}", task, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public void delete(TaskId taskId) {
+    public void delete(TaskId taskId) throws ServiceException {
         logger.debug("Received request to delete task {}", taskId);
-        taskStore.delete(taskId);
+        try {
+            taskStore.delete(taskId);
+        } catch (StoreException e) {
+            logger.error("unable to delete task {}", taskId, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
     public void stop() {

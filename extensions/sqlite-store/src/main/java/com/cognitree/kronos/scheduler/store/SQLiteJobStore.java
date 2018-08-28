@@ -30,7 +30,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -108,7 +107,7 @@ public class SQLiteJobStore implements JobStore {
 
 
     @Override
-    public void store(Job job) {
+    public void store(Job job) throws StoreException {
         logger.debug("Received request to store job {}", job);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(INSERT_JOB)) {
@@ -123,11 +122,12 @@ public class SQLiteJobStore implements JobStore {
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error storing job {} into database", job, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
     @Override
-    public List<Job> load(String namespace) {
+    public List<Job> load(String namespace) throws StoreException {
         logger.debug("Received request to get all jobs in namespace {}", namespace);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_JOB_BY_NAMESPACE)) {
@@ -141,12 +141,12 @@ public class SQLiteJobStore implements JobStore {
             return jobs;
         } catch (Exception e) {
             logger.error("Error fetching all jobs from database in namespace {}", namespace, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
-        return Collections.emptyList();
     }
 
     @Override
-    public Job load(JobId jobId) {
+    public Job load(JobId jobId) throws StoreException {
         logger.debug("Received request to get job with id {}", jobId);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_JOB_BY_ID)) {
@@ -159,12 +159,13 @@ public class SQLiteJobStore implements JobStore {
             }
         } catch (Exception e) {
             logger.error("Error fetching job from database with id {}", jobId, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
         return null;
     }
 
     @Override
-    public List<Job> load(String namespace, long createdAfter, long createdBefore) {
+    public List<Job> load(String namespace, long createdAfter, long createdBefore) throws StoreException {
         logger.debug("Received request to get all jobs under namespace {}, created after {}, created before {}",
                 namespace, createdAfter, createdBefore);
         try (Connection connection = dataSource.getConnection();
@@ -182,12 +183,12 @@ public class SQLiteJobStore implements JobStore {
         } catch (Exception e) {
             logger.error("Error fetching all jobs from database under namespace {} created after {}, created before {}",
                     namespace, createdAfter, createdBefore, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
-        return Collections.emptyList();
     }
 
     @Override
-    public List<Job> loadByWorkflowName(String workflowName, String namespace, long createdAfter, long createdBefore) {
+    public List<Job> loadByWorkflowName(String workflowName, String namespace, long createdAfter, long createdBefore) throws StoreException {
         logger.debug("Received request to get jobs with workflow name {}, namespace {}, created after {}",
                 workflowName, namespace, createdAfter);
         try (Connection connection = dataSource.getConnection();
@@ -206,13 +207,13 @@ public class SQLiteJobStore implements JobStore {
         } catch (Exception e) {
             logger.error("Error fetching jobs from database with workflow name {}, namespace {}",
                     workflowName, namespace, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
-        return Collections.emptyList();
     }
 
     @Override
     public List<Job> loadByWorkflowNameAndTriggerName(String workflowName, String triggerName, String namespace,
-                                                      long createdAfter, long createdBefore) {
+                                                      long createdAfter, long createdBefore) throws StoreException {
         logger.debug("Received request to get all jobs with workflow name {} under namespace {}, triggerName {}," +
                 " created after {}, created before {}", workflowName, namespace, triggerName, createdAfter, createdBefore);
         try (Connection connection = dataSource.getConnection();
@@ -232,12 +233,12 @@ public class SQLiteJobStore implements JobStore {
         } catch (Exception e) {
             logger.error("Error fetching all jobs from database with workflow name {} under namespace {} " +
                     "created after {}, created before {}", workflowName, namespace, createdAfter, createdBefore, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
-        return Collections.emptyList();
     }
 
     @Override
-    public void update(Job job) {
+    public void update(Job job) throws StoreException {
         final JobId jobId = job.getIdentity();
         logger.info("Received request to update job to {}", job);
         try (Connection connection = dataSource.getConnection();
@@ -251,11 +252,12 @@ public class SQLiteJobStore implements JobStore {
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error updating job to {}", job, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
     @Override
-    public void delete(JobId jobId) {
+    public void delete(JobId jobId) throws StoreException {
         logger.debug("Received request to delete job with id {}", jobId);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(DELETE_JOB)) {
@@ -265,6 +267,7 @@ public class SQLiteJobStore implements JobStore {
             preparedStatement.executeUpdate();
         } catch (Exception e) {
             logger.error("Error deleting job with id {} from database", jobId, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 

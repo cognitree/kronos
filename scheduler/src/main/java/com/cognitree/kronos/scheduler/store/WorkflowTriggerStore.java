@@ -27,7 +27,7 @@ import java.util.List;
  */
 public interface WorkflowTriggerStore extends Store<WorkflowTrigger, WorkflowTriggerId> {
 
-    List<WorkflowTrigger> load(String namespace);
+    List<WorkflowTrigger> load(String namespace) throws StoreException;
 
-    List<WorkflowTrigger> loadByWorkflowName(String workflowName, String namespace);
+    List<WorkflowTrigger> loadByWorkflowName(String workflowName, String namespace) throws StoreException;
 }

@@ -22,6 +22,7 @@ import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.definitions.TaskDefinition;
 import com.cognitree.kronos.model.definitions.TaskDefinitionId;
 import com.cognitree.kronos.scheduler.store.StoreConfig;
+import com.cognitree.kronos.scheduler.store.StoreException;
 import com.cognitree.kronos.scheduler.store.TaskDefinitionStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,29 +56,54 @@ public class TaskDefinitionService implements Service {
         logger.info("Starting task definition service");
     }
 
-    public List<TaskDefinition> get() {
+    public List<TaskDefinition> get() throws ServiceException {
         logger.debug("Received request to get all task definitions");
-        return taskDefinitionStore.load();
+        try {
+            return taskDefinitionStore.load();
+        } catch (StoreException e) {
+            logger.error("unable to get all task definitions", e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public TaskDefinition get(TaskDefinitionId taskDefinitionId) {
+    public TaskDefinition get(TaskDefinitionId taskDefinitionId) throws ServiceException {
         logger.debug("Received request to get task definition {}", taskDefinitionId);
-        return taskDefinitionStore.load(taskDefinitionId);
+        try {
+            return taskDefinitionStore.load(taskDefinitionId);
+        } catch (StoreException e) {
+            logger.error("unable to get task definition {}", taskDefinitionId, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public void add(TaskDefinition taskDefinition) {
+    public void add(TaskDefinition taskDefinition) throws ServiceException {
         logger.debug("Received request to add task definition {}", taskDefinition);
-        taskDefinitionStore.store(taskDefinition);
+        try {
+            taskDefinitionStore.store(taskDefinition);
+        } catch (StoreException e) {
+            logger.error("unable to add task definition {}", taskDefinition, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public void update(TaskDefinition taskDefinition) {
+    public void update(TaskDefinition taskDefinition) throws ServiceException {
         logger.debug("Received request to update task definition to {}", taskDefinition);
-        taskDefinitionStore.store(taskDefinition);
+        try {
+            taskDefinitionStore.store(taskDefinition);
+        } catch (StoreException e) {
+            logger.error("unable to update task definition to {}", taskDefinition, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public void delete(TaskDefinitionId taskDefinitionId) {
+    public void delete(TaskDefinitionId taskDefinitionId) throws ServiceException {
         logger.debug("Received request to delete task definition {}", taskDefinitionId);
-        taskDefinitionStore.delete(taskDefinitionId);
+        try {
+            taskDefinitionStore.delete(taskDefinitionId);
+        } catch (StoreException e) {
+            logger.error("unable to delete task definition {}", taskDefinitionId, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
     @Override

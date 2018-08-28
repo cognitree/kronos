@@ -24,6 +24,7 @@ import com.cognitree.kronos.model.WorkflowId;
 import com.cognitree.kronos.model.WorkflowTrigger;
 import com.cognitree.kronos.model.WorkflowTriggerId;
 import com.cognitree.kronos.scheduler.store.StoreConfig;
+import com.cognitree.kronos.scheduler.store.StoreException;
 import com.cognitree.kronos.scheduler.store.WorkflowTriggerStore;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
@@ -58,43 +59,74 @@ public class WorkflowTriggerService implements Service {
         logger.info("Starting workflow trigger service");
     }
 
-    public void add(WorkflowTrigger workflowTrigger) throws SchedulerException {
+    public void add(WorkflowTrigger workflowTrigger) throws SchedulerException, ServiceException {
         logger.debug("Received request to add workflow trigger {}", workflowTrigger);
         final Workflow workflow = WorkflowService.getService()
                 .get(WorkflowId.build(workflowTrigger.getWorkflow(), workflowTrigger.getNamespace()));
         WorkflowSchedulerService.getService().schedule(workflow, workflowTrigger);
-        workflowTriggerStore.store(workflowTrigger);
+        try {
+            workflowTriggerStore.store(workflowTrigger);
+        } catch (StoreException e) {
+            logger.error("unable to add workflow trigger {}", workflowTrigger, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public List<WorkflowTrigger> get(String namespace) {
-        logger.debug("Received request to get all workflow trigger under namespace {}", namespace);
-        return workflowTriggerStore.load(namespace);
+    public List<WorkflowTrigger> get(String namespace) throws ServiceException {
+        logger.debug("Received request to get all workflow triggers under namespace {}", namespace);
+        try {
+            return workflowTriggerStore.load(namespace);
+        } catch (StoreException e) {
+            logger.error("unable to get all workflow triggers under namespace {}", namespace, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public WorkflowTrigger get(WorkflowTriggerId workflowTriggerId) {
-        logger.debug("Received request to get all workflow trigger {}", workflowTriggerId);
-        return workflowTriggerStore.load(workflowTriggerId);
+    public WorkflowTrigger get(WorkflowTriggerId workflowTriggerId) throws ServiceException {
+        logger.debug("Received request to get workflow trigger with id {}", workflowTriggerId);
+        try {
+            return workflowTriggerStore.load(workflowTriggerId);
+        } catch (StoreException e) {
+            logger.error("unable to get workflow trigger with id {}", workflowTriggerId, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public List<WorkflowTrigger> get(String workflowName, String namespace) {
-        logger.debug("Received request to get all workflow trigger for workflow {} under namespace {}",
+    public List<WorkflowTrigger> get(String workflowName, String namespace) throws ServiceException {
+        logger.debug("Received request to get all workflow triggers for workflow {} under namespace {}",
                 workflowName, namespace);
-        return workflowTriggerStore.loadByWorkflowName(workflowName, namespace);
+        try {
+            return workflowTriggerStore.loadByWorkflowName(workflowName, namespace);
+        } catch (StoreException e) {
+            logger.error("unable to get all workflow triggers for workflow {} under namespace {}",
+                    workflowName, namespace, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public void update(WorkflowTrigger workflowTrigger) throws SchedulerException {
+    public void update(WorkflowTrigger workflowTrigger) throws SchedulerException, ServiceException {
         logger.debug("Received request to update workflow trigger to {}", workflowTrigger);
         WorkflowSchedulerService.getService().delete(workflowTrigger);
         final Workflow workflow = WorkflowService.getService()
                 .get(WorkflowId.build(workflowTrigger.getWorkflow(), workflowTrigger.getNamespace()));
         WorkflowSchedulerService.getService().schedule(workflow, workflowTrigger);
-        workflowTriggerStore.update(workflowTrigger);
+        try {
+            workflowTriggerStore.update(workflowTrigger);
+        } catch (StoreException e) {
+            logger.error("unable to update workflow trigger to {}", workflowTrigger, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public void delete(WorkflowTriggerId workflowTriggerId) throws SchedulerException {
+    public void delete(WorkflowTriggerId workflowTriggerId) throws SchedulerException, ServiceException {
         logger.debug("Received request to delete workflow trigger {}", workflowTriggerId);
         WorkflowSchedulerService.getService().delete(workflowTriggerId);
-        workflowTriggerStore.delete(workflowTriggerId);
+        try {
+            workflowTriggerStore.delete(workflowTriggerId);
+        } catch (StoreException e) {
+            logger.error("unable to delete workflow trigger {}", workflowTriggerId, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
     @Override

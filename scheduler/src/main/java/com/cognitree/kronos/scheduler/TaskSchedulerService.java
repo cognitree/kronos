@@ -130,14 +130,14 @@ public final class TaskSchedulerService implements Service {
         isInitialized = true;
     }
 
-    private void initTaskProvider() {
+    private void initTaskProvider() throws ServiceException {
         logger.info("Initializing task provider");
         taskProvider = new TaskProvider();
         taskProvider.init();
     }
 
     // used in junit to reinitialize task provider from store
-    void reinitTaskProvider() {
+    void reinitTaskProvider() throws ServiceException {
         taskProvider.reinit();
         resolveCreatedTasks();
         scheduleReadyTasks();
@@ -202,10 +202,12 @@ public final class TaskSchedulerService implements Service {
         }
     }
 
-    private void resolveCreatedTasks() {
+    private void resolveCreatedTasks() throws ServiceException {
         final List<Task> tasks = taskProvider.getTasks(Collections.singletonList(CREATED));
         tasks.sort(comparing(Task::getCreatedAt));
-        tasks.forEach(this::resolve);
+        for (Task task : tasks) {
+            resolve(task);
+        }
     }
 
     @Override
@@ -226,6 +228,8 @@ public final class TaskSchedulerService implements Service {
                         taskUpdate.getStatusMessage(), taskUpdate.getContext());
             } catch (IOException e) {
                 logger.error("Error parsing task status message {}", taskStatusAsString, e);
+            } catch (ServiceException e) {
+                logger.error("Error handling task status message {}", taskStatusAsString, e);
             }
         }
     }
@@ -258,7 +262,7 @@ public final class TaskSchedulerService implements Service {
         statusChangeListeners.remove(statusChangeListener);
     }
 
-    synchronized void schedule(Task task) {
+    synchronized void schedule(Task task) throws ServiceException {
         logger.info("Received request to schedule task: {}", task);
         final boolean isAdded = taskProvider.add(task);
         if (isAdded) {
@@ -266,7 +270,7 @@ public final class TaskSchedulerService implements Service {
         }
     }
 
-    private void resolve(Task task) {
+    private void resolve(Task task) throws ServiceException {
         final boolean isResolved = taskProvider.resolve(task);
         if (isResolved) {
             updateStatus(task, WAITING, null);
@@ -276,11 +280,12 @@ public final class TaskSchedulerService implements Service {
         }
     }
 
-    private void updateStatus(TaskId taskId, Status status, String statusMessage) {
+    private void updateStatus(TaskId taskId, Status status, String statusMessage) throws ServiceException {
         updateStatus(taskId, status, statusMessage, null);
     }
 
-    private void updateStatus(TaskId taskId, Status status, String statusMessage, Map<String, Object> context) {
+    private void updateStatus(TaskId taskId, Status status, String statusMessage,
+                              Map<String, Object> context) throws ServiceException {
         final Task task = taskProvider.getTask(taskId);
         if (task == null) {
             logger.error("No task found with id {}", taskId);
@@ -289,7 +294,8 @@ public final class TaskSchedulerService implements Service {
         updateStatus(task, status, statusMessage, context);
     }
 
-    private void updateStatus(Task task, Status status, String statusMessage, Map<String, Object> context) {
+    private void updateStatus(Task task, Status status, String statusMessage,
+                              Map<String, Object> context) throws ServiceException {
         logger.info("Received request to update status of task {} to {} " +
                 "with status message {}", task, status, statusMessage);
         Status currentStatus = task.getStatus();
@@ -346,7 +352,7 @@ public final class TaskSchedulerService implements Service {
         });
     }
 
-    private void handleTaskStatusChange(Task task, Status status) {
+    private void handleTaskStatusChange(Task task, Status status) throws ServiceException {
         switch (status) {
             case CREATED:
                 break;
@@ -372,9 +378,10 @@ public final class TaskSchedulerService implements Service {
         }
     }
 
-    private void markDependentTasksAsFailed(Task task) {
-        taskProvider.getDependentTasks(task)
-                .forEach(dependentTask -> updateStatus(dependentTask, FAILED, FAILED_TO_RESOLVE_DEPENDENCY));
+    private void markDependentTasksAsFailed(Task task) throws ServiceException {
+        for (Task dependentTask : taskProvider.getDependentTasks(task)) {
+            updateStatus(dependentTask, FAILED, FAILED_TO_RESOLVE_DEPENDENCY);
+        }
     }
 
     /**
@@ -391,7 +398,12 @@ public final class TaskSchedulerService implements Service {
                     updateStatus(task, SCHEDULED, null);
                 } catch (Exception e) {
                     logger.error("Error submitting task {} to queue", task, e);
-                    updateStatus(task, FAILED, TASK_SUBMISSION_FAILED);
+                    try {
+                        updateStatus(task, FAILED, TASK_SUBMISSION_FAILED);
+                    } catch (ServiceException se) {
+                        logger.error("error updating task status to {} with message {} for task {}",
+                                FAILED, TASK_SUBMISSION_FAILED, task, e);
+                    }
                 }
             }
         }
@@ -402,7 +414,7 @@ public final class TaskSchedulerService implements Service {
      *
      * @param task
      */
-    private void updateTaskContext(Task task) {
+    private void updateTaskContext(Task task) throws ServiceException {
         final List<String> dependsOn = task.getDependsOn();
         final Map<String, Object> dependentTaskContext = new LinkedHashMap<>();
         for (String dependentTaskName : dependsOn) {
@@ -510,7 +522,12 @@ public final class TaskSchedulerService implements Service {
         @Override
         public void run() {
             logger.info("Task {} has timed out, marking task as failed", task);
-            updateStatus(task, FAILED, TIMED_OUT);
+            try {
+                updateStatus(task, FAILED, TIMED_OUT);
+            } catch (ServiceException e) {
+                logger.error("error updating task status to {} with message {} for task {}",
+                        FAILED, TIMED_OUT, task, e);
+            }
             final TimeoutPolicy timeoutPolicy = timeoutPolicyMap.get(task.getTimeoutPolicy());
             if (timeoutPolicy != null) {
                 logger.info("Applying timeout policy {} on task {}", timeoutPolicy, task);

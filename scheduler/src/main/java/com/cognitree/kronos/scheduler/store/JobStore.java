@@ -27,12 +27,13 @@ import java.util.List;
  */
 public interface JobStore extends Store<Job, JobId> {
 
-    List<Job> load(String namespace);
+    List<Job> load(String namespace) throws StoreException;
 
-    List<Job> load(String namespace, long createdAfter, long createdBefore);
+    List<Job> load(String namespace, long createdAfter, long createdBefore) throws StoreException;
 
     List<Job> loadByWorkflowNameAndTriggerName(String workflowName, String triggerName, String namespace,
-                                               long createdAfter, long createdBefore);
+                                               long createdAfter, long createdBefore) throws StoreException;
 
-    List<Job> loadByWorkflowName(String workflowName, String namespace, long createdAfter, long createdBefore);
+    List<Job> loadByWorkflowName(String workflowName, String namespace,
+                                 long createdAfter, long createdBefore) throws StoreException;
 }

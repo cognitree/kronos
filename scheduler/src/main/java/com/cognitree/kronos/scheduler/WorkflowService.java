@@ -25,6 +25,7 @@ import com.cognitree.kronos.model.WorkflowTrigger;
 import com.cognitree.kronos.model.definitions.TaskDefinitionId;
 import com.cognitree.kronos.scheduler.graph.TopologicalSort;
 import com.cognitree.kronos.scheduler.store.StoreConfig;
+import com.cognitree.kronos.scheduler.store.StoreException;
 import com.cognitree.kronos.scheduler.store.WorkflowStore;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
@@ -61,38 +62,64 @@ public class WorkflowService implements Service {
 
     }
 
-    public void add(Workflow workflow) throws ValidationException {
+    public void add(Workflow workflow) throws ValidationException, ServiceException {
         logger.debug("Received request to add workflow {}", workflow);
-        validate(workflow);
-        workflowStore.store(workflow);
+        try {
+            validate(workflow);
+            workflowStore.store(workflow);
+        } catch (StoreException e) {
+            logger.error("unable to store workflow {}", workflow, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public List<Workflow> get(String namespace) {
+    public List<Workflow> get(String namespace) throws ServiceException {
         logger.debug("Received request to get all workflow under namespace {}", namespace);
-        return workflowStore.load(namespace);
+        try {
+            return workflowStore.load(namespace);
+        } catch (StoreException e) {
+            logger.error("unable to get all workflow under namespace {}", namespace, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public Workflow get(WorkflowId workflowId) {
+    public Workflow get(WorkflowId workflowId) throws ServiceException {
         logger.debug("Received request to get workflow {}", workflowId);
-        return workflowStore.load(workflowId);
+        try {
+            return workflowStore.load(workflowId);
+        } catch (StoreException e) {
+            logger.error("unable to get workflow {}", workflowId, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public void update(Workflow workflow) throws ValidationException, SchedulerException {
+    public void update(Workflow workflow) throws ValidationException, SchedulerException, ServiceException {
         logger.debug("Received request to update workflow {}", workflow);
-        validate(workflow);
-        WorkflowSchedulerService.getService().update(workflow);
-        workflowStore.update(workflow);
+        try {
+            validate(workflow);
+            WorkflowSchedulerService.getService().update(workflow);
+            workflowStore.update(workflow);
+        } catch (StoreException e) {
+            logger.error("unable to update workflow {}", workflow, e);
+            throw new ServiceException(e.getMessage());
+        }
     }
 
-    public void delete(WorkflowId workflowId) throws SchedulerException {
+    public void delete(WorkflowId workflowId) throws SchedulerException, ServiceException {
         logger.debug("Received request to delete workflow {}", workflowId);
         // delete all triggers and delete scheduled jobs
-        final List<WorkflowTrigger> workflowTriggers =
-                WorkflowTriggerService.getService().get(workflowId.getName(), workflowId.getNamespace());
-        for (WorkflowTrigger workflowTrigger : workflowTriggers) {
-            WorkflowTriggerService.getService().delete(workflowTrigger);
+        final List<WorkflowTrigger> workflowTriggers;
+        try {
+            workflowTriggers = WorkflowTriggerService.getService().get(workflowId.getName(), workflowId.getNamespace());
+            for (WorkflowTrigger workflowTrigger : workflowTriggers) {
+                WorkflowTriggerService.getService().delete(workflowTrigger);
+            }
+            workflowStore.delete(workflowId);
+        } catch (StoreException e) {
+            logger.error("unable to delete workflow {}", workflowId, e);
+            throw new ServiceException(e.getMessage());
         }
-        workflowStore.delete(workflowId);
+
     }
 
     /**
@@ -101,7 +128,7 @@ public class WorkflowService implements Service {
      * @param workflow
      * @return
      */
-    public void validate(Workflow workflow) throws ValidationException {
+    public void validate(Workflow workflow) throws ValidationException, ServiceException {
         final HashMap<String, Workflow.WorkflowTask> workflowTaskMap = new HashMap<>();
         final TopologicalSort<Workflow.WorkflowTask> topologicalSort = new TopologicalSort<>();
         final List<Workflow.WorkflowTask> workflowTasks = workflow.getTasks();

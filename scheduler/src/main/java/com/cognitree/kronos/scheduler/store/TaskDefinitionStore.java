@@ -27,5 +27,5 @@ import java.util.List;
  */
 public interface TaskDefinitionStore extends Store<TaskDefinition, TaskDefinitionId> {
 
-    List<TaskDefinition> load();
+    List<TaskDefinition> load() throws StoreException;
 }

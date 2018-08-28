@@ -33,7 +33,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -100,7 +99,7 @@ public class SQLiteWorkflowStore implements WorkflowStore {
     }
 
     @Override
-    public void store(Workflow workflow) {
+    public void store(Workflow workflow) throws StoreException {
         logger.debug("Received request to store workflow {}", workflow);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(INSERT_WORKFLOW)) {
@@ -112,11 +111,12 @@ public class SQLiteWorkflowStore implements WorkflowStore {
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error storing workflow {} into database", workflow, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
     @Override
-    public List<Workflow> load(String namespace) {
+    public List<Workflow> load(String namespace) throws StoreException {
         logger.debug("Received request to get all workflows in namespace {}", namespace);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_ALL_WORKFLOW_BY_NAMESPACE)) {
@@ -130,12 +130,12 @@ public class SQLiteWorkflowStore implements WorkflowStore {
             return workflows;
         } catch (Exception e) {
             logger.error("Error fetching all workflows from database in namespace {}", namespace, e);
-            return Collections.emptyList();
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
     @Override
-    public Workflow load(WorkflowId workflowId) {
+    public Workflow load(WorkflowId workflowId) throws StoreException {
         logger.debug("Received request to load workflow with id {}", workflowId);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_WORKFLOW)) {
@@ -148,12 +148,13 @@ public class SQLiteWorkflowStore implements WorkflowStore {
             }
         } catch (Exception e) {
             logger.error("Error fetching workflow with id {} from database", workflowId, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
         return null;
     }
 
     @Override
-    public void update(Workflow workflow) {
+    public void update(Workflow workflow) throws StoreException {
         logger.debug("Received request to update workflow to {}", workflow);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_WORKFLOW)) {
@@ -165,11 +166,12 @@ public class SQLiteWorkflowStore implements WorkflowStore {
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error updating workflow {} into database", workflow, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
     @Override
-    public void delete(WorkflowId workflowId) {
+    public void delete(WorkflowId workflowId) throws StoreException {
         logger.debug("Received request to delete workflow with id {}", workflowId);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(DELETE_WORKFLOW)) {
@@ -179,6 +181,7 @@ public class SQLiteWorkflowStore implements WorkflowStore {
             preparedStatement.executeUpdate();
         } catch (Exception e) {
             logger.error("Error deleting workflow with id {} from database", workflowId, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 

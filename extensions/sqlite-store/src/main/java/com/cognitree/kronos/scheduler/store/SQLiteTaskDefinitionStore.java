@@ -32,7 +32,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -97,7 +96,7 @@ public class SQLiteTaskDefinitionStore implements TaskDefinitionStore {
     }
 
     @Override
-    public void store(TaskDefinition taskDefinition) {
+    public void store(TaskDefinition taskDefinition) throws StoreException {
         logger.debug("Received request to store task definition {}", taskDefinition);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(INSERT_TASK_DEFINITION)) {
@@ -108,11 +107,12 @@ public class SQLiteTaskDefinitionStore implements TaskDefinitionStore {
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error storing task definition {} into database", taskDefinition, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
     @Override
-    public List<TaskDefinition> load() {
+    public List<TaskDefinition> load() throws StoreException {
         logger.debug("Received request to load all task definition");
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_ALL_TASK_DEFINITION)) {
@@ -124,12 +124,12 @@ public class SQLiteTaskDefinitionStore implements TaskDefinitionStore {
             return taskDefinitions;
         } catch (Exception e) {
             logger.error("Error fetching all task definition from database", e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
-        return Collections.emptyList();
     }
 
     @Override
-    public TaskDefinition load(TaskDefinitionId taskDefinitionId) {
+    public TaskDefinition load(TaskDefinitionId taskDefinitionId) throws StoreException {
         logger.debug("Received request to load task definition with id {}", taskDefinitionId);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_TASK_DEFINITION_BY_NAME)) {
@@ -141,12 +141,13 @@ public class SQLiteTaskDefinitionStore implements TaskDefinitionStore {
             }
         } catch (Exception e) {
             logger.error("Error fetching task definition with id {} from database", taskDefinitionId, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
         return null;
     }
 
     @Override
-    public void update(TaskDefinition taskDefinition) {
+    public void update(TaskDefinition taskDefinition) throws StoreException {
         TaskDefinitionId taskDefinitionId = taskDefinition.getIdentity();
         logger.debug("Received request to update task definition to {}", taskDefinition);
         try (Connection connection = dataSource.getConnection();
@@ -158,11 +159,12 @@ public class SQLiteTaskDefinitionStore implements TaskDefinitionStore {
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error updating task definition to {}", taskDefinition, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
     @Override
-    public void delete(TaskDefinitionId taskDefinitionId) {
+    public void delete(TaskDefinitionId taskDefinitionId) throws StoreException {
         logger.debug("Received request to delete task definition with id {}", taskDefinitionId);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(DELETE_TASK_DEFINITION_BY_NAME)) {
@@ -171,6 +173,7 @@ public class SQLiteTaskDefinitionStore implements TaskDefinitionStore {
             preparedStatement.executeUpdate();
         } catch (Exception e) {
             logger.error("Error deleting task definition with id {} from database", taskDefinitionId, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 

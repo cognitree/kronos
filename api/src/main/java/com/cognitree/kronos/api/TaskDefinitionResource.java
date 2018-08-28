@@ -19,6 +19,7 @@ package com.cognitree.kronos.api;
 
 import com.cognitree.kronos.model.definitions.TaskDefinition;
 import com.cognitree.kronos.model.definitions.TaskDefinitionId;
+import com.cognitree.kronos.scheduler.ServiceException;
 import com.cognitree.kronos.scheduler.TaskDefinitionService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -52,7 +53,7 @@ public class TaskDefinitionResource {
     @GET
     @ApiOperation(value = "Get all task definitions", response = TaskDefinition.class, responseContainer = "List")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getAllTaskDefinitions() {
+    public Response getAllTaskDefinitions() throws ServiceException {
         logger.info("Received request to get all task definitions");
         final List<TaskDefinition> taskDefinitions = TaskDefinitionService.getService().get();
         return Response.status(OK).entity(taskDefinitions).build();
@@ -65,7 +66,7 @@ public class TaskDefinitionResource {
             @ApiResponse(code = 404, message = "Task definition not found")})
     @Produces(MediaType.APPLICATION_JSON)
     public Response getTaskDefinition(@ApiParam(value = "task definition name", required = true)
-                                      @PathParam("name") String name) {
+                                      @PathParam("name") String name) throws ServiceException {
         logger.info("Received request to get task definition with name {}", name);
         TaskDefinitionId taskDefinitionId = TaskDefinitionId.build(name);
         final TaskDefinition taskDefinition = TaskDefinitionService.getService().get(taskDefinitionId);
@@ -81,7 +82,7 @@ public class TaskDefinitionResource {
     @ApiResponses(value = {
             @ApiResponse(code = 409, message = "Task definition already exists")})
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addTaskDefinition(TaskDefinition taskDefinition) {
+    public Response addTaskDefinition(TaskDefinition taskDefinition) throws ServiceException {
         logger.info("Received request to add task definition {}", taskDefinition);
         if (TaskDefinitionService.getService().get(taskDefinition) != null) {
             logger.error("Task definition already exists with name {}", taskDefinition.getName());
@@ -98,7 +99,7 @@ public class TaskDefinitionResource {
             @ApiResponse(code = 404, message = "Task definition not found")})
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateTaskDefinition(@ApiParam(value = "task definition name", required = true)
-                                         @PathParam("name") String name, TaskDefinition taskDefinition) {
+                                         @PathParam("name") String name, TaskDefinition taskDefinition) throws ServiceException {
         taskDefinition.setName(name);
         logger.info("Received request to update task definition with name {} to {}", name, taskDefinition);
         if (TaskDefinitionService.getService().get(taskDefinition) == null) {
@@ -115,7 +116,7 @@ public class TaskDefinitionResource {
     @ApiResponses(value = {
             @ApiResponse(code = 404, message = "Task definition not found")})
     public Response deleteTaskDefinition(@ApiParam(value = "task definition name", required = true)
-                                         @PathParam("name") String name) {
+                                         @PathParam("name") String name) throws ServiceException {
         logger.info("Received request to delete task definition with name {}", name);
         TaskDefinitionId taskDefinitionId = TaskDefinitionId.build(name);
         if (TaskDefinitionService.getService().get(taskDefinitionId) == null) {

@@ -24,6 +24,7 @@ import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.response.JobResponse;
 import com.cognitree.kronos.scheduler.JobService;
 import com.cognitree.kronos.scheduler.NamespaceService;
+import com.cognitree.kronos.scheduler.ServiceException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -64,7 +65,7 @@ public class JobResource {
                                @QueryParam("trigger") String triggerName,
                                @ApiParam(value = "Number of days to fetch jobs from today", defaultValue = "10")
                                @DefaultValue(DEFAULT_DAYS) @QueryParam("date_range") int numberOfDays,
-                               @HeaderParam("namespace") String namespace) {
+                               @HeaderParam("namespace") String namespace) throws ServiceException {
         if (!validateNamespace(namespace)) {
             return Response.status(BAD_REQUEST).entity("no namespace exists with name " + namespace).build();
         }
@@ -101,7 +102,7 @@ public class JobResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getJob(@ApiParam(value = "job id", required = true)
                            @PathParam("id") String id,
-                           @HeaderParam("namespace") String namespace) {
+                           @HeaderParam("namespace") String namespace) throws ServiceException {
         logger.info("Received request to get job with id {} under namespace {}", id, namespace);
         if (!validateNamespace(namespace)) {
             return Response.status(BAD_REQUEST).entity("no namespace exists with name " + namespace).build();
@@ -116,7 +117,7 @@ public class JobResource {
         return Response.status(OK).entity(JobResponse.create(job, tasks)).build();
     }
 
-    private boolean validateNamespace(String name) {
+    private boolean validateNamespace(String name) throws ServiceException {
         return name != null && NamespaceService.getService().get(NamespaceId.build(name)) != null;
     }
 }

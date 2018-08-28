@@ -22,6 +22,7 @@ import com.cognitree.kronos.model.Workflow;
 import com.cognitree.kronos.model.WorkflowTrigger;
 import com.cognitree.kronos.model.definitions.TaskDefinition;
 import com.cognitree.kronos.scheduler.NamespaceService;
+import com.cognitree.kronos.scheduler.ServiceException;
 import com.cognitree.kronos.scheduler.TaskDefinitionService;
 import com.cognitree.kronos.scheduler.WorkflowService;
 import com.cognitree.kronos.scheduler.WorkflowTriggerService;
@@ -53,7 +54,7 @@ public class FileReader {
             new TypeReference<List<WorkflowTrigger>>() {
             };
 
-    public void loadTaskDefinitions() throws IOException {
+    public void loadTaskDefinitions() throws IOException, ServiceException {
         final InputStream resourceAsStream =
                 FileReader.class.getClassLoader().getResourceAsStream("task-definitions.yaml");
         List<TaskDefinition> taskDefinitions = MAPPER.readValue(resourceAsStream, TASK_DEFINITION_LIST_REF);
@@ -67,7 +68,7 @@ public class FileReader {
         }
     }
 
-    public void loadNamespaces() throws IOException {
+    public void loadNamespaces() throws IOException, ServiceException {
         final InputStream resourceAsStream =
                 FileReader.class.getClassLoader().getResourceAsStream("namespaces.yaml");
         List<Namespace> namespaces = MAPPER.readValue(resourceAsStream, NAMESPACE_LIST_REF);
@@ -85,7 +86,7 @@ public class FileReader {
         }
     }
 
-    public void loadWorkflows() throws IOException {
+    public void loadWorkflows() throws IOException, ServiceException {
         final InputStream resourceAsStream =
                 FileReader.class.getClassLoader().getResourceAsStream("workflows.yaml");
         List<Workflow> workflows = MAPPER.readValue(resourceAsStream, WORKFLOW_LIST_REF);
@@ -103,7 +104,7 @@ public class FileReader {
         }
     }
 
-    public void loadWorkflowTriggers() throws IOException {
+    public void loadWorkflowTriggers() throws IOException, ServiceException {
         final InputStream resourceAsStream =
                 FileReader.class.getClassLoader().getResourceAsStream("workflow-triggers.yaml");
         List<WorkflowTrigger> workflowTriggers = MAPPER.readValue(resourceAsStream, WORKFLOW_TRIGGER_LIST_REF);

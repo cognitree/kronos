@@ -118,7 +118,7 @@ public class SQLiteTaskStore implements TaskStore {
     }
 
     @Override
-    public void store(Task task) {
+    public void store(Task task) throws StoreException {
         logger.debug("Received request to store task {}", task);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(INSERT_TASK)) {
@@ -140,11 +140,12 @@ public class SQLiteTaskStore implements TaskStore {
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error storing task {} into database", task, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
     @Override
-    public List<Task> load(String namespace) {
+    public List<Task> load(String namespace) throws StoreException {
         logger.debug("Received request to get all tasks in namespace {}", namespace);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_ALL_TASKS_BY_NAMESPACE)) {
@@ -158,12 +159,12 @@ public class SQLiteTaskStore implements TaskStore {
             return tasks;
         } catch (Exception e) {
             logger.error("Error loading all tasks from database in namespace {}", namespace, e);
-            return Collections.emptyList();
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
     @Override
-    public Task load(TaskId taskId) {
+    public Task load(TaskId taskId) throws StoreException {
         logger.debug("Received request to load task with id {}", taskId);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_TASK)) {
@@ -177,12 +178,13 @@ public class SQLiteTaskStore implements TaskStore {
             }
         } catch (Exception e) {
             logger.error("Error loading task with id {} from database", taskId, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
         return null;
     }
 
     @Override
-    public void update(Task task) {
+    public void update(Task task) throws StoreException {
         TaskId taskId = task.getIdentity();
         logger.debug("Received request to update task to {}", task);
         try (Connection connection = dataSource.getConnection();
@@ -199,11 +201,12 @@ public class SQLiteTaskStore implements TaskStore {
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error updating task with to {}", task, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
     @Override
-    public List<Task> loadByJobId(String jobId, String namespace) {
+    public List<Task> loadByJobId(String jobId, String namespace) throws StoreException {
         logger.debug("Received request to get all tasks with job id {}, namespace {}", jobId, namespace);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_TASK_BY_JOB_ID)) {
@@ -218,12 +221,12 @@ public class SQLiteTaskStore implements TaskStore {
             return tasks;
         } catch (Exception e) {
             logger.error("Error fetching tasks with job id {}, namespace {} from database", jobId, namespace, e);
-            return Collections.emptyList();
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
     @Override
-    public List<Task> load(List<Status> statuses, String namespace) {
+    public List<Task> load(List<Status> statuses, String namespace) throws StoreException {
         // TODO handle namespace
         logger.debug("Received request to get all tasks with status in {}, namespace {}", statuses, namespace);
         String placeHolders = String.join(",", Collections.nCopies(statuses.size(), "?"));
@@ -241,12 +244,12 @@ public class SQLiteTaskStore implements TaskStore {
             return tasks;
         } catch (Exception e) {
             logger.error("Error fetching task with status in {} from database", statuses, e);
-            return Collections.emptyList();
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
     @Override
-    public void delete(TaskId identity) {
+    public void delete(TaskId identity) throws StoreException {
         logger.debug("Received request to delete task with id {}", identity);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(DELETE_TASK)) {
@@ -257,6 +260,7 @@ public class SQLiteTaskStore implements TaskStore {
             preparedStatement.executeUpdate();
         } catch (Exception e) {
             logger.error("Error deleting task with id {} from database", identity, e);
+            throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 

@@ -22,6 +22,7 @@ import com.cognitree.kronos.model.WorkflowId;
 import com.cognitree.kronos.model.WorkflowTrigger;
 import com.cognitree.kronos.model.WorkflowTriggerId;
 import com.cognitree.kronos.scheduler.NamespaceService;
+import com.cognitree.kronos.scheduler.ServiceException;
 import com.cognitree.kronos.scheduler.WorkflowService;
 import com.cognitree.kronos.scheduler.WorkflowTriggerService;
 import io.swagger.annotations.Api;
@@ -62,7 +63,7 @@ public class WorkflowTriggerResource {
     @ApiOperation(value = "Get all workflow triggers", response = WorkflowTrigger.class, responseContainer = "List")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllWorkflowTriggers(@PathParam("workflow") String workflowName,
-                                           @HeaderParam("namespace") String namespace) {
+                                           @HeaderParam("namespace") String namespace) throws ServiceException {
         if (!validateNamespace(namespace)) {
             return Response.status(BAD_REQUEST).entity("no namespace exists with name " + namespace).build();
         }
@@ -89,7 +90,7 @@ public class WorkflowTriggerResource {
                                        @PathParam("workflow") String workflowName,
                                        @ApiParam(value = "workflow trigger triggerName", required = true)
                                        @PathParam("name") String triggerName,
-                                       @HeaderParam("namespace") String namespace) {
+                                       @HeaderParam("namespace") String namespace) throws ServiceException {
         logger.info("Received request to get workflow trigger with name {} for workflow {} under namespace {}",
                 triggerName, workflowName, namespace);
         if (!validateNamespace(namespace)) {
@@ -119,7 +120,7 @@ public class WorkflowTriggerResource {
     public Response createWorkflowTrigger(@ApiParam(value = "workflow name", required = true)
                                           @PathParam("workflow") String workflowName,
                                           @HeaderParam("namespace") String namespace,
-                                          WorkflowTrigger workflowTrigger) {
+                                          WorkflowTrigger workflowTrigger) throws ServiceException {
         // override workflow name and namespace
         workflowTrigger.setWorkflow(workflowName);
         workflowTrigger.setNamespace(namespace);
@@ -158,7 +159,7 @@ public class WorkflowTriggerResource {
                                           @ApiParam(value = "workflow trigger name", required = true)
                                           @PathParam("name") String triggerName,
                                           @HeaderParam("namespace") String namespace,
-                                          WorkflowTrigger workflowTrigger) {
+                                          WorkflowTrigger workflowTrigger) throws ServiceException {
         // override workflow name and namespace
         workflowTrigger.setWorkflow(workflowName);
         workflowTrigger.setNamespace(namespace);
@@ -197,7 +198,7 @@ public class WorkflowTriggerResource {
                                           @PathParam("workflow") String workflowName,
                                           @ApiParam(value = "workflow trigger name", required = true)
                                           @PathParam("name") String triggerName,
-                                          @HeaderParam("namespace") String namespace) {
+                                          @HeaderParam("namespace") String namespace) throws ServiceException {
         logger.info("Received request to delete workflow trigger with name {} for workflow {} under namespace {}",
                 triggerName, workflowName, namespace);
         if (!validateNamespace(namespace)) {
@@ -224,7 +225,7 @@ public class WorkflowTriggerResource {
     }
 
 
-    private boolean validateNamespace(String name) {
+    private boolean validateNamespace(String name) throws ServiceException {
         return name != null && NamespaceService.getService().get(NamespaceId.build(name)) != null;
     }
 }
