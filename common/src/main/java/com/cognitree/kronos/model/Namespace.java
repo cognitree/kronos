@@ -1,7 +1,11 @@
 package com.cognitree.kronos.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+@JsonSerialize(as = Namespace.class)
+@JsonDeserialize(as = Namespace.class)
 public class Namespace extends NamespaceId {
     private String description;
 

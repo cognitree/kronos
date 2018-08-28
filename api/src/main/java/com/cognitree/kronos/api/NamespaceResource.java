@@ -102,7 +102,7 @@ public class NamespaceResource {
                                     Namespace namespace) {
         namespace.setName(name);
         logger.info("Received request to update namespace with name {} to {}", name, namespace);
-        if (NamespaceService.getService().get(NamespaceId.build(name)) == null) {
+        if (NamespaceService.getService().get(namespace) == null) {
             logger.error("No task definition exists with name {}", name);
             return Response.status(NOT_FOUND).build();
         }

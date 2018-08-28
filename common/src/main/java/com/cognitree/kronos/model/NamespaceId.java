@@ -1,7 +1,12 @@
 package com.cognitree.kronos.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import java.util.Objects;
 
+@JsonSerialize(as = NamespaceId.class)
+@JsonDeserialize(as = NamespaceId.class)
 public class NamespaceId {
     private String name;
 
