@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.cognitree.kronos.model.definitions;
+package com.cognitree.kronos.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;

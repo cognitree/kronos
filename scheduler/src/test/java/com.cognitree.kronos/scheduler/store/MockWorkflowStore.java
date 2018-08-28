@@ -17,8 +17,8 @@
 
 package com.cognitree.kronos.scheduler.store;
 
-import com.cognitree.kronos.model.definitions.Workflow;
-import com.cognitree.kronos.model.definitions.WorkflowId;
+import com.cognitree.kronos.model.Workflow;
+import com.cognitree.kronos.model.WorkflowId;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Collections;
@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 public class MockWorkflowStore implements WorkflowStore {
-    private static final Map<WorkflowId, Workflow> definitionMap = new HashMap<>();
+    private static final Map<WorkflowId, Workflow> workflowMap = new HashMap<>();
 
     @Override
     public void init(ObjectNode storeConfig) {
@@ -36,9 +36,8 @@ public class MockWorkflowStore implements WorkflowStore {
 
     @Override
     public void store(Workflow entity) {
-        final WorkflowId workflowId =
-                WorkflowId.build(entity.getName(), entity.getNamespace());
-        definitionMap.put(workflowId, entity);
+        final WorkflowId workflowId = WorkflowId.build(entity.getName(), entity.getNamespace());
+        workflowMap.put(workflowId, entity);
     }
 
     @Override
@@ -48,7 +47,7 @@ public class MockWorkflowStore implements WorkflowStore {
 
     @Override
     public Workflow load(WorkflowId identity) {
-        return definitionMap.get(identity);
+        return workflowMap.get(identity);
     }
 
     @Override

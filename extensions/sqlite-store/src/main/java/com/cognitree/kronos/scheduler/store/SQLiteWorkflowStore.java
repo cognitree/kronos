@@ -17,9 +17,9 @@
 
 package com.cognitree.kronos.scheduler.store;
 
-import com.cognitree.kronos.model.definitions.Workflow;
-import com.cognitree.kronos.model.definitions.Workflow.WorkflowTask;
-import com.cognitree.kronos.model.definitions.WorkflowId;
+import com.cognitree.kronos.model.Workflow;
+import com.cognitree.kronos.model.Workflow.WorkflowTask;
+import com.cognitree.kronos.model.WorkflowId;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -125,7 +125,7 @@ public class SQLiteWorkflowStore implements WorkflowStore {
             final ResultSet resultSet = preparedStatement.executeQuery();
             List<Workflow> workflows = new ArrayList<>();
             while (resultSet.next()) {
-                workflows.add(getWorkflowDefinition(resultSet));
+                workflows.add(getWorkflow(resultSet));
             }
             return workflows;
         } catch (Exception e) {
@@ -144,7 +144,7 @@ public class SQLiteWorkflowStore implements WorkflowStore {
             preparedStatement.setString(++paramIndex, workflowId.getNamespace());
             final ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
-                return getWorkflowDefinition(resultSet);
+                return getWorkflow(resultSet);
             }
         } catch (Exception e) {
             logger.error("Error fetching workflow with id {} from database", workflowId, e);
@@ -154,7 +154,7 @@ public class SQLiteWorkflowStore implements WorkflowStore {
 
     @Override
     public void update(Workflow workflow) {
-        logger.debug("Received request to update workflow {}", workflow);
+        logger.debug("Received request to update workflow to {}", workflow);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_WORKFLOW)) {
             int paramIndex = 0;
@@ -182,7 +182,7 @@ public class SQLiteWorkflowStore implements WorkflowStore {
         }
     }
 
-    private Workflow getWorkflowDefinition(ResultSet resultSet) throws Exception {
+    private Workflow getWorkflow(ResultSet resultSet) throws Exception {
         int paramIndex = 0;
         Workflow workflow = new Workflow();
         workflow.setName(resultSet.getString(++paramIndex));

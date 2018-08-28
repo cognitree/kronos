@@ -20,6 +20,7 @@ package com.cognitree.kronos.scheduler;
 import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.MutableTask;
+import com.cognitree.kronos.model.MutableTaskId;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.Task.TaskUpdate;
@@ -407,11 +408,9 @@ public final class TaskSchedulerService implements Service {
         final Map<String, Object> dependentTaskContext = new LinkedHashMap<>();
         for (String dependentTaskName : dependsOn) {
             // sort the tasks based on creation time and update the context from the latest task
-            Optional<Task> dependentTaskOptional =
-                    taskProvider.getDependentTasks(dependentTaskName, task.getJobId(), task.getNamespace())
-                            .stream().max(comparing(Task::getCreatedAt));
-            if (dependentTaskOptional.isPresent()) {
-                final Task dependentTask = dependentTaskOptional.get();
+            TaskId dependentTaskId = MutableTaskId.build(dependentTaskName, task.getJobId(), task.getNamespace());
+            Task dependentTask = taskProvider.getTask(dependentTaskId);
+            if (dependentTask != null) {
                 if (dependentTask.getContext() != null && !dependentTask.getContext().isEmpty()) {
                     dependentTask.getContext().forEach((key, value) ->
                             dependentTaskContext.put(dependentTask.getName() + "." + key, value));

@@ -118,25 +118,25 @@ public class SQLiteNamespaceStore implements NamespaceStore {
     }
 
     @Override
-    public Namespace load(String namespaceId) {
-        logger.debug("Received request to load namespace with id {}", namespaceId);
+    public Namespace load(String name) {
+        logger.debug("Received request to load namespace with name {}", name);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_NAMESPACE)) {
             int paramIndex = 0;
-            preparedStatement.setString(++paramIndex, namespaceId);
+            preparedStatement.setString(++paramIndex, name);
             final ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 return getNamespace(resultSet);
             }
         } catch (Exception e) {
-            logger.error("Error fetching namespace with id {} from database", namespaceId, e);
+            logger.error("Error fetching namespace with name {} from database", name, e);
         }
         return null;
     }
 
     @Override
     public void update(Namespace namespace) {
-        logger.debug("Received request to update namespace with id {} to {}", namespace.getName(), namespace);
+        logger.debug("Received request to update namespace to {}", namespace);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_NAMESPACE)) {
             int paramIndex = 0;
@@ -144,20 +144,20 @@ public class SQLiteNamespaceStore implements NamespaceStore {
             preparedStatement.setString(++paramIndex, namespace.getName());
             preparedStatement.execute();
         } catch (Exception e) {
-            logger.error("Error updating namespace with id {} to {}", namespace.getName(), namespace, e);
+            logger.error("Error updating namespace to {}", namespace, e);
         }
     }
 
     @Override
-    public void delete(String namespaceId) {
-        logger.debug("Received request to delete namespace with id {}", namespaceId);
+    public void delete(String name) {
+        logger.debug("Received request to delete namespace with name {}", name);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(DELETE_NAMESPACE)) {
             int paramIndex = 0;
-            preparedStatement.setString(++paramIndex, namespaceId);
+            preparedStatement.setString(++paramIndex, name);
             preparedStatement.executeUpdate();
         } catch (Exception e) {
-            logger.error("Error deleting namespace with id {} from database", namespaceId, e);
+            logger.error("Error deleting namespace with id {} from database", name, e);
         }
     }
 

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.cognitree.kronos.model.definitions;
+package com.cognitree.kronos.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -31,11 +31,11 @@ public class WorkflowTriggerId {
     private String namespace;
 
     public static WorkflowTriggerId build(String name, String workflowName, String namespace) {
-        final WorkflowTriggerId workflowDefinitionId = new WorkflowTriggerId();
-        workflowDefinitionId.setName(name);
-        workflowDefinitionId.setWorkflowName(workflowName);
-        workflowDefinitionId.setNamespace(namespace);
-        return workflowDefinitionId;
+        final WorkflowTriggerId workflowTriggerId = new WorkflowTriggerId();
+        workflowTriggerId.setName(name);
+        workflowTriggerId.setWorkflowName(workflowName);
+        workflowTriggerId.setNamespace(namespace);
+        return workflowTriggerId;
     }
 
     public String getName() {

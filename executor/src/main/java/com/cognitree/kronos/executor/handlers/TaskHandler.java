@@ -28,7 +28,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  */
 public interface TaskHandler {
 
-
     /**
      * for each configured handler during initialization phase a call is made to initialize handler using
      * {@link TaskHandlerConfig#config}. Any property required by the handler to instantiate itself

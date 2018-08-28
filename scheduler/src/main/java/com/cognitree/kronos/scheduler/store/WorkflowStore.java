@@ -17,8 +17,8 @@
 
 package com.cognitree.kronos.scheduler.store;
 
-import com.cognitree.kronos.model.definitions.Workflow;
-import com.cognitree.kronos.model.definitions.WorkflowId;
+import com.cognitree.kronos.model.Workflow;
+import com.cognitree.kronos.model.WorkflowId;
 
 import java.util.List;
 

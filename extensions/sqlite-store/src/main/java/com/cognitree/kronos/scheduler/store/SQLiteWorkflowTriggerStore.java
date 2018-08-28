@@ -17,8 +17,8 @@
 
 package com.cognitree.kronos.scheduler.store;
 
-import com.cognitree.kronos.model.definitions.WorkflowTrigger;
-import com.cognitree.kronos.model.definitions.WorkflowTriggerId;
+import com.cognitree.kronos.model.WorkflowTrigger;
+import com.cognitree.kronos.model.WorkflowTriggerId;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.slf4j.Logger;
@@ -179,7 +179,7 @@ public class SQLiteWorkflowTriggerStore implements WorkflowTriggerStore {
 
     @Override
     public void update(WorkflowTrigger workflowTrigger) {
-        logger.debug("Received request to update workflow trigger {}", workflowTrigger);
+        logger.debug("Received request to update workflow trigger to {}", workflowTrigger);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_WORKFLOW_TRIGGER)) {
             int paramIndex = 0;

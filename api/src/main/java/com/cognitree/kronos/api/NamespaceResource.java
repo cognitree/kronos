@@ -97,7 +97,8 @@ public class NamespaceResource {
             @ApiResponse(code = 404, message = "Namespace not found")})
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateNamespace(@ApiParam(value = "namespace name", required = true)
-                                    @PathParam("name") String name, Namespace namespace) {
+                                    @PathParam("name") String name,
+                                    Namespace namespace) {
         namespace.setName(name);
         logger.info("Received request to update namespace with name {} to {}", name, namespace);
         if (NamespaceService.getService().get(namespace.getName()) == null) {

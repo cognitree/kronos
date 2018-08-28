@@ -17,7 +17,6 @@
 
 package com.cognitree.kronos.model;
 
-import com.cognitree.kronos.model.definitions.Workflow;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -25,7 +24,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import static com.cognitree.kronos.model.Job.Status.CREATED;
 
 /**
- * runtime instance of {@link Workflow}
+ * runtime instance of {@link Workflow}.
+ * A {@link Job} is created every time a workflow is triggered for execution.
  */
 @JsonSerialize(as = Job.class)
 @JsonDeserialize(as = Job.class)

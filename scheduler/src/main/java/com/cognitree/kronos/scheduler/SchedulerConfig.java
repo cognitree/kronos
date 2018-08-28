@@ -21,8 +21,8 @@ import com.cognitree.kronos.model.Job;
 import com.cognitree.kronos.model.Namespace;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.definitions.TaskDefinition;
-import com.cognitree.kronos.model.definitions.Workflow;
-import com.cognitree.kronos.model.definitions.WorkflowTrigger;
+import com.cognitree.kronos.model.Workflow;
+import com.cognitree.kronos.model.WorkflowTrigger;
 import com.cognitree.kronos.scheduler.policies.TimeoutPolicyConfig;
 import com.cognitree.kronos.scheduler.store.JobStore;
 import com.cognitree.kronos.scheduler.store.NamespaceStore;
@@ -62,15 +62,15 @@ public class SchedulerConfig {
      */
     private StoreConfig workflowStoreConfig;
     /**
-     * {@link JobStore} configuration, required by the scheduler to instantiate the workflow store to be used for storing
-     * the {@link Job}.
-     */
-    private StoreConfig jobStoreConfig;
-    /**
      * {@link WorkflowTriggerStore} configuration, required by the scheduler to instantiate the workflow trigger store to be
      * used for storing the {@link WorkflowTrigger}.
      */
     private StoreConfig workflowTriggerStoreConfig;
+    /**
+     * {@link JobStore} configuration, required by the scheduler to instantiate the workflow store to be used for storing
+     * the {@link Job}.
+     */
+    private StoreConfig jobStoreConfig;
     /**
      * Map of policy configuration, required by the scheduler to configure timeout policies to apply in case of timeout.
      * <p>
@@ -124,20 +124,20 @@ public class SchedulerConfig {
         this.workflowStoreConfig = workflowStoreConfig;
     }
 
-    public StoreConfig getJobStoreConfig() {
-        return jobStoreConfig;
-    }
-
-    public void setJobStoreConfig(StoreConfig jobStoreConfig) {
-        this.jobStoreConfig = jobStoreConfig;
-    }
-
     public StoreConfig getWorkflowTriggerStoreConfig() {
         return workflowTriggerStoreConfig;
     }
 
     public void setWorkflowTriggerStoreConfig(StoreConfig workflowTriggerStoreConfig) {
         this.workflowTriggerStoreConfig = workflowTriggerStoreConfig;
+    }
+
+    public StoreConfig getJobStoreConfig() {
+        return jobStoreConfig;
+    }
+
+    public void setJobStoreConfig(StoreConfig jobStoreConfig) {
+        this.jobStoreConfig = jobStoreConfig;
     }
 
     public Map<String, TimeoutPolicyConfig> getTimeoutPolicyConfig() {
@@ -165,8 +165,8 @@ public class SchedulerConfig {
                 Objects.equals(taskDefinitionStoreConfig, that.taskDefinitionStoreConfig) &&
                 Objects.equals(taskStoreConfig, that.taskStoreConfig) &&
                 Objects.equals(workflowStoreConfig, that.workflowStoreConfig) &&
-                Objects.equals(jobStoreConfig, that.jobStoreConfig) &&
                 Objects.equals(workflowTriggerStoreConfig, that.workflowTriggerStoreConfig) &&
+                Objects.equals(jobStoreConfig, that.jobStoreConfig) &&
                 Objects.equals(timeoutPolicyConfig, that.timeoutPolicyConfig) &&
                 Objects.equals(taskPurgeInterval, that.taskPurgeInterval);
     }
@@ -174,7 +174,7 @@ public class SchedulerConfig {
     @Override
     public int hashCode() {
 
-        return Objects.hash(namespaceStoreConfig, taskDefinitionStoreConfig, taskStoreConfig, workflowStoreConfig, jobStoreConfig, workflowTriggerStoreConfig, timeoutPolicyConfig, taskPurgeInterval);
+        return Objects.hash(namespaceStoreConfig, taskDefinitionStoreConfig, taskStoreConfig, workflowStoreConfig, workflowTriggerStoreConfig, jobStoreConfig, timeoutPolicyConfig, taskPurgeInterval);
     }
 
     @Override
@@ -184,8 +184,8 @@ public class SchedulerConfig {
                 ", taskDefinitionStoreConfig=" + taskDefinitionStoreConfig +
                 ", taskStoreConfig=" + taskStoreConfig +
                 ", workflowStoreConfig=" + workflowStoreConfig +
-                ", jobStoreConfig=" + jobStoreConfig +
                 ", workflowTriggerStoreConfig=" + workflowTriggerStoreConfig +
+                ", jobStoreConfig=" + jobStoreConfig +
                 ", timeoutPolicyConfig=" + timeoutPolicyConfig +
                 ", taskPurgeInterval='" + taskPurgeInterval + '\'' +
                 '}';

@@ -51,8 +51,6 @@ public class SQLiteTaskStore implements TaskStore {
     private static final String LOAD_ALL_TASKS_BY_NAMESPACE = "SELECT * FROM tasks WHERE namespace = ?";
     private static final String LOAD_TASK = "SELECT * FROM tasks WHERE name = ? AND job_id = ? AND namespace = ?";
     private static final String LOAD_TASK_BY_STATUS = "SELECT * FROM tasks WHERE status IN ($statuses)";
-    private static final String LOAD_TASK_BY_NAME_JOB_ID = "SELECT * FROM tasks WHERE name = ? AND job_id = ?" +
-            " AND namespace = ?";
     private static final String LOAD_TASK_BY_JOB_ID = "SELECT * FROM tasks WHERE job_id = ? AND namespace = ?";
     private static final String DELETE_TASK = "DELETE FROM tasks WHERE name = ? AND job_id = ? AND namespace = ?";
     private static final String DDL_CREATE_TASK_SQL = "CREATE TABLE IF NOT EXISTS tasks (" +
@@ -186,7 +184,7 @@ public class SQLiteTaskStore implements TaskStore {
     @Override
     public void update(Task task) {
         TaskId taskId = task.getIdentity();
-        logger.debug("Received request to update task with id {} to {}", taskId, task);
+        logger.debug("Received request to update task to {}", task);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_TASK)) {
             int paramIndex = 0;
@@ -200,7 +198,7 @@ public class SQLiteTaskStore implements TaskStore {
             preparedStatement.setString(++paramIndex, taskId.getNamespace());
             preparedStatement.execute();
         } catch (Exception e) {
-            logger.error("Error updating task with id {} to {}", taskId, task, e);
+            logger.error("Error updating task with to {}", task, e);
         }
     }
 
@@ -243,28 +241,6 @@ public class SQLiteTaskStore implements TaskStore {
             return tasks;
         } catch (Exception e) {
             logger.error("Error fetching task with status in {} from database", statuses, e);
-            return Collections.emptyList();
-        }
-    }
-
-    @Override
-    public List<Task> loadByNameAndJobId(String taskName, String jobId, String namespace) {
-        logger.debug("Received request to get all tasks with name {}, job id {}, namespace {}",
-                taskName, jobId, namespace);
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_TASK_BY_NAME_JOB_ID)) {
-            int paramIndex = 0;
-            preparedStatement.setString(++paramIndex, taskName);
-            preparedStatement.setString(++paramIndex, jobId);
-            preparedStatement.setString(++paramIndex, namespace);
-            final ResultSet resultSet = preparedStatement.executeQuery();
-            List<Task> tasks = new ArrayList<>();
-            while (resultSet.next()) {
-                tasks.add(getTask(resultSet));
-            }
-            return tasks;
-        } catch (Exception e) {
-            logger.error("Error fetching task with name {}, job id {} from database", taskName, jobId, e);
             return Collections.emptyList();
         }
     }

@@ -30,9 +30,9 @@ public class MutableTaskId implements TaskId {
     private String jobId;
     private String namespace;
 
-    public static TaskId build(String id, String jobId, String namespace) {
+    public static TaskId build(String name, String jobId, String namespace) {
         final MutableTaskId mutableTaskId = new MutableTaskId();
-        mutableTaskId.setName(id);
+        mutableTaskId.setName(name);
         mutableTaskId.setJobId(jobId);
         mutableTaskId.setNamespace(namespace);
         return mutableTaskId;

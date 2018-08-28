@@ -1,4 +1,4 @@
-package com.cognitree.kronos.model.definitions;
+package com.cognitree.kronos.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;

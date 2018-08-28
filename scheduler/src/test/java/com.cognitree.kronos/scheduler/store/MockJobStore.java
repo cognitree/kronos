@@ -37,7 +37,8 @@ public class MockJobStore implements JobStore {
     }
 
     @Override
-    public List<Job> loadByWorkflowNameAndTrigger(String workflowName, String triggerName, String namespace, long createdAfter, long createdBefore) {
+    public List<Job> loadByWorkflowNameAndTrigger(String workflowName, String triggerName, String namespace,
+                                                  long createdAfter, long createdBefore) {
         return null;
     }
 

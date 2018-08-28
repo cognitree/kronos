@@ -148,7 +148,7 @@ public class SQLiteTaskDefinitionStore implements TaskDefinitionStore {
     @Override
     public void update(TaskDefinition taskDefinition) {
         TaskDefinitionId taskDefinitionId = taskDefinition.getIdentity();
-        logger.debug("Received request to update task definition with id {} to {}", taskDefinitionId, taskDefinition);
+        logger.debug("Received request to update task definition to {}", taskDefinition);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_TASK_DEFINITION)) {
             int paramIndex = 0;
@@ -157,7 +157,7 @@ public class SQLiteTaskDefinitionStore implements TaskDefinitionStore {
             preparedStatement.setString(++paramIndex, taskDefinitionId.getName());
             preparedStatement.execute();
         } catch (Exception e) {
-            logger.error("Error updating task definition with id {} to {}", taskDefinitionId, taskDefinition, e);
+            logger.error("Error updating task definition to {}", taskDefinition, e);
         }
     }
 

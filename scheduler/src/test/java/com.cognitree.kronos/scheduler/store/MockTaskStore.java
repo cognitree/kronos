@@ -68,11 +68,6 @@ public class MockTaskStore implements TaskStore {
     }
 
     @Override
-    public List<Task> loadByNameAndJobId(String taskName, String jobId, String namespace) {
-        return Collections.emptyList();
-    }
-
-    @Override
     public void stop() {
 
     }

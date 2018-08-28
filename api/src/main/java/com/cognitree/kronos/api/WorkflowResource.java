@@ -17,8 +17,8 @@
 
 package com.cognitree.kronos.api;
 
-import com.cognitree.kronos.model.definitions.Workflow;
-import com.cognitree.kronos.model.definitions.WorkflowId;
+import com.cognitree.kronos.model.Workflow;
+import com.cognitree.kronos.model.WorkflowId;
 import com.cognitree.kronos.scheduler.NamespaceService;
 import com.cognitree.kronos.scheduler.ValidationException;
 import com.cognitree.kronos.scheduler.WorkflowService;

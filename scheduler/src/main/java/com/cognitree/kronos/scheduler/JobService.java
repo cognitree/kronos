@@ -102,7 +102,7 @@ public class JobService implements Service {
         return jobStore.loadByWorkflowNameAndTrigger(workflowName, triggerName, namespace, createdAfter, createdBefore);
     }
 
-    public List<Task> getWorkflowTasks(JobId jobId) {
+    public List<Task> getTasks(JobId jobId) {
         logger.debug("Received request to get all tasks executed for job {}", jobId);
         return TaskService.getService().get(jobId.getId(), jobId.getNamespace());
     }

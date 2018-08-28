@@ -30,17 +30,17 @@ workflowStoreConfig:
     username:
     password:
 
-# configure job store storing runtime instances of workflows
-jobStoreConfig:
-  storeClass: com.cognitree.kronos.scheduler.store.MockJobStore
+# configure workflow store
+workflowTriggerStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.MockWorkflowTriggerStore
   config:
     connectionURL: jdbc:sqlite:kronos.db
     username:
     password:
 
-# configure workflow store
-workflowTriggerStoreConfig:
-  storeClass: com.cognitree.kronos.scheduler.store.MockWorkflowTriggerStore
+# configure job store storing runtime instances of workflows
+jobStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.MockJobStore
   config:
     connectionURL: jdbc:sqlite:kronos.db
     username:

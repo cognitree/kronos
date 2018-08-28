@@ -33,6 +33,4 @@ public interface TaskStore extends Store<Task, TaskId> {
     List<Task> loadByJobId(String jobId, String namespace);
 
     List<Task> load(List<Status> statuses, String namespace);
-
-    List<Task> loadByNameAndJobId(String taskName, String jobId, String namespace);
 }

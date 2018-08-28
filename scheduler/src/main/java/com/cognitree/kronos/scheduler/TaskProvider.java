@@ -17,6 +17,7 @@
 
 package com.cognitree.kronos.scheduler;
 
+import com.cognitree.kronos.model.MutableTaskId;
 import com.cognitree.kronos.model.Namespace;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
@@ -34,7 +35,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -116,52 +116,22 @@ final class TaskProvider {
         if (dependsOn != null) {
             List<Task> dependentTasks = new ArrayList<>();
             for (String dependentTaskName : dependsOn) {
-                Set<Task> tasks = getDependentTasks(dependentTaskName, task.getJobId(), task.getNamespace());
-                if (tasks.isEmpty()) {
-                    logger.error("Missing tasks for dependency info {} for task {}", dependentTaskName, task);
+                TaskId dependentTaskId = MutableTaskId.build(dependentTaskName, task.getJobId(), task.getNamespace());
+                Task dependentTask = getTask(dependentTaskId);
+                if (dependentTask == null) {
+                    logger.error("No dependent task with id {} not found", dependentTaskId);
                     return false;
                 }
-                // check if any of the dependee tasks is FAILED
-                boolean isAnyDependeeFailed = tasks.stream().anyMatch(t -> t.getStatus().equals(FAILED));
-                if (isAnyDependeeFailed) {
-                    logger.error("Failed dependent tasks found for dependency info {} for task {}", dependentTaskName, task);
+
+                if (dependentTask.getStatus() == FAILED) {
+                    logger.error("Dependent task with id {} is in failed state", dependentTaskId);
                     return false;
                 }
-                dependentTasks.addAll(tasks);
+                dependentTasks.add(dependentTask);
             }
             dependentTasks.forEach(dependentTask -> addDependency(dependentTask, task));
         }
         return true;
-    }
-
-    // used in junit test case
-    Set<Task> getDependentTasks(String dependentTaskName, String workflowId, String namespace) {
-        final TreeSet<Task> candidateDependentTasks = new TreeSet<>(Comparator.comparing(Task::getCreatedAt));
-
-        // retrieve all dependent task in memory
-        final List<Task> tasksInMemory = getTasks(dependentTaskName, workflowId, namespace);
-        candidateDependentTasks.addAll(tasksInMemory);
-
-        // retrieve all dependent task in store only if tasks in memory is empty
-        if (candidateDependentTasks.isEmpty()) {
-            final List<Task> tasksInStore = TaskService.getService()
-                    .get(dependentTaskName, workflowId, namespace);
-            if (tasksInStore != null && !tasksInStore.isEmpty()) {
-                candidateDependentTasks.addAll(tasksInStore);
-            }
-        }
-
-        return candidateDependentTasks.isEmpty() ? Collections.emptySet() : candidateDependentTasks;
-    }
-
-    /**
-     * For statement A depends on B, A is the depender and B is the dependee.
-     *
-     * @param dependerTask
-     * @param dependeeTask
-     */
-    private void addDependency(Task dependerTask, Task dependeeTask) {
-        graph.putEdge(dependerTask, dependeeTask);
     }
 
     synchronized Task getTask(TaskId taskId) {
@@ -178,15 +148,14 @@ final class TaskProvider {
         return task;
     }
 
-    private List<Task> getTasks(String taskName, String workflowId, String namespace) {
-        List<Task> tasks = new ArrayList<>();
-        for (Task task : graph.nodes()) {
-            if (task.getName().equals(taskName) && task.getJobId().equals(workflowId)
-                    && task.getNamespace().equals(namespace)) {
-                tasks.add(task);
-            }
-        }
-        return tasks;
+    /**
+     * For statement A depends on B, A is the depender and B is the dependee.
+     *
+     * @param dependerTask
+     * @param dependeeTask
+     */
+    private void addDependency(Task dependerTask, Task dependeeTask) {
+        graph.putEdge(dependerTask, dependeeTask);
     }
 
     synchronized List<Task> getReadyTasks() {

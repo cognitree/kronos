@@ -1,7 +1,6 @@
 - name: MyWorkflow
   namespace: default
   description: sample workflow with tasks of type spark
-  schedule: 0 0/1 * 1/1 * ? *
   tasks:
     - name: SparkPi
       taskDefinitionName: SparkPi

@@ -136,7 +136,7 @@ public class SQLiteJobStore implements JobStore {
             final ResultSet resultSet = preparedStatement.executeQuery();
             final ArrayList<Job> jobs = new ArrayList<>();
             while (resultSet.next()) {
-                jobs.add(getWorkflow(resultSet));
+                jobs.add(getJob(resultSet));
             }
             return jobs;
         } catch (Exception e) {
@@ -155,7 +155,7 @@ public class SQLiteJobStore implements JobStore {
             preparedStatement.setString(++paramIndex, jobId.getNamespace());
             final ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
-                return getWorkflow(resultSet);
+                return getJob(resultSet);
             }
         } catch (Exception e) {
             logger.error("Error fetching job from database with id {}", jobId, e);
@@ -176,7 +176,7 @@ public class SQLiteJobStore implements JobStore {
             final ResultSet resultSet = preparedStatement.executeQuery();
             final ArrayList<Job> jobs = new ArrayList<>();
             while (resultSet.next()) {
-                jobs.add(getWorkflow(resultSet));
+                jobs.add(getJob(resultSet));
             }
             return jobs;
         } catch (Exception e) {
@@ -200,7 +200,7 @@ public class SQLiteJobStore implements JobStore {
             final ResultSet resultSet = preparedStatement.executeQuery();
             final ArrayList<Job> jobs = new ArrayList<>();
             while (resultSet.next()) {
-                jobs.add(getWorkflow(resultSet));
+                jobs.add(getJob(resultSet));
             }
             return jobs;
         } catch (Exception e) {
@@ -226,7 +226,7 @@ public class SQLiteJobStore implements JobStore {
             final ResultSet resultSet = preparedStatement.executeQuery();
             final ArrayList<Job> jobs = new ArrayList<>();
             while (resultSet.next()) {
-                jobs.add(getWorkflow(resultSet));
+                jobs.add(getJob(resultSet));
             }
             return jobs;
         } catch (Exception e) {
@@ -239,7 +239,7 @@ public class SQLiteJobStore implements JobStore {
     @Override
     public void update(Job job) {
         final JobId jobId = job.getIdentity();
-        logger.info("Received request to update job with id {} to {}", jobId, job);
+        logger.info("Received request to update job to {}", job);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_JOB)) {
             int paramIndex = 0;
@@ -250,7 +250,7 @@ public class SQLiteJobStore implements JobStore {
             preparedStatement.setString(++paramIndex, jobId.getNamespace());
             preparedStatement.execute();
         } catch (Exception e) {
-            logger.error("Error updating job with id {} to {}", jobId, job, e);
+            logger.error("Error updating job to {}", job, e);
         }
     }
 
@@ -268,7 +268,7 @@ public class SQLiteJobStore implements JobStore {
         }
     }
 
-    private Job getWorkflow(ResultSet resultSet) throws Exception {
+    private Job getJob(ResultSet resultSet) throws Exception {
         int paramIndex = 0;
         Job job = new Job();
         job.setId(resultSet.getString(++paramIndex));

@@ -19,8 +19,8 @@ package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
-import com.cognitree.kronos.model.definitions.WorkflowTrigger;
-import com.cognitree.kronos.model.definitions.WorkflowTriggerId;
+import com.cognitree.kronos.model.WorkflowTrigger;
+import com.cognitree.kronos.model.WorkflowTriggerId;
 import com.cognitree.kronos.scheduler.store.StoreConfig;
 import com.cognitree.kronos.scheduler.store.WorkflowTriggerStore;
 import org.quartz.SchedulerException;

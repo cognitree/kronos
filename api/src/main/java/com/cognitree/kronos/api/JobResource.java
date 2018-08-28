@@ -111,10 +111,8 @@ public class JobResource {
             logger.error("No job exists with id {} under namespace {}", id, namespace);
             return Response.status(NOT_FOUND).build();
         }
-        final List<Task> workflowTasks =
-                JobService.getService().getWorkflowTasks(job);
-
-        return Response.status(OK).entity(JobResponse.create(job, workflowTasks)).build();
+        final List<Task> tasks = JobService.getService().getTasks(job);
+        return Response.status(OK).entity(JobResponse.create(job, tasks)).build();
     }
 
     private boolean validateNamespace(String name) {

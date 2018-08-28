@@ -17,8 +17,8 @@
 
 package com.cognitree.kronos.scheduler;
 
-import com.cognitree.kronos.model.definitions.Workflow;
-import com.cognitree.kronos.model.definitions.WorkflowTrigger;
+import com.cognitree.kronos.model.Workflow;
+import com.cognitree.kronos.model.WorkflowTrigger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.AfterClass;

@@ -17,9 +17,9 @@
 
 package com.cognitree.kronos.api;
 
-import com.cognitree.kronos.model.definitions.WorkflowId;
-import com.cognitree.kronos.model.definitions.WorkflowTrigger;
-import com.cognitree.kronos.model.definitions.WorkflowTriggerId;
+import com.cognitree.kronos.model.WorkflowId;
+import com.cognitree.kronos.model.WorkflowTrigger;
+import com.cognitree.kronos.model.WorkflowTriggerId;
 import com.cognitree.kronos.scheduler.NamespaceService;
 import com.cognitree.kronos.scheduler.WorkflowService;
 import com.cognitree.kronos.scheduler.WorkflowTriggerService;

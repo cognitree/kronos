@@ -14,15 +14,15 @@ public class JobResponse extends Job {
     private List<Task> tasks;
 
     public static JobResponse create(Job job, List<Task> tasks) {
-        JobResponse workflowResponse = new JobResponse();
-        workflowResponse.setTasks(tasks);
-        workflowResponse.setId(job.getId());
-        workflowResponse.setWorkflowName(job.getWorkflowName());
-        workflowResponse.setNamespace(job.getNamespace());
-        workflowResponse.setStatus(job.getStatus());
-        workflowResponse.setCreatedAt(job.getCreatedAt());
-        workflowResponse.setCompletedAt(job.getCompletedAt());
-        return workflowResponse;
+        JobResponse jobResponse = new JobResponse();
+        jobResponse.setTasks(tasks);
+        jobResponse.setId(job.getId());
+        jobResponse.setWorkflowName(job.getWorkflowName());
+        jobResponse.setNamespace(job.getNamespace());
+        jobResponse.setStatus(job.getStatus());
+        jobResponse.setCreatedAt(job.getCreatedAt());
+        jobResponse.setCompletedAt(job.getCompletedAt());
+        return jobResponse;
     }
 
     public List<Task> getTasks() {
