@@ -27,13 +27,13 @@ import java.util.Objects;
 public class WorkflowTriggerId {
 
     private String name;
-    private String workflowName;
+    private String workflow;
     private String namespace;
 
     public static WorkflowTriggerId build(String name, String workflowName, String namespace) {
         final WorkflowTriggerId workflowTriggerId = new WorkflowTriggerId();
         workflowTriggerId.setName(name);
-        workflowTriggerId.setWorkflowName(workflowName);
+        workflowTriggerId.setWorkflow(workflowName);
         workflowTriggerId.setNamespace(namespace);
         return workflowTriggerId;
     }
@@ -46,12 +46,12 @@ public class WorkflowTriggerId {
         this.name = name;
     }
 
-    public String getWorkflowName() {
-        return workflowName;
+    public String getWorkflow() {
+        return workflow;
     }
 
-    public void setWorkflowName(String workflowName) {
-        this.workflowName = workflowName;
+    public void setWorkflow(String workflow) {
+        this.workflow = workflow;
     }
 
     public String getNamespace() {
@@ -68,21 +68,21 @@ public class WorkflowTriggerId {
         if (!(o instanceof WorkflowTriggerId)) return false;
         WorkflowTriggerId that = (WorkflowTriggerId) o;
         return Objects.equals(name, that.name) &&
-                Objects.equals(workflowName, that.workflowName) &&
+                Objects.equals(workflow, that.workflow) &&
                 Objects.equals(namespace, that.namespace);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(name, workflowName, namespace);
+        return Objects.hash(name, workflow, namespace);
     }
 
     @Override
     public String toString() {
         return "WorkflowTriggerId{" +
                 "name='" + name + '\'' +
-                ", workflowName='" + workflowName + '\'' +
+                ", workflow='" + workflow + '\'' +
                 ", namespace='" + namespace + '\'' +
                 '}';
     }

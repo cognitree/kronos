@@ -30,26 +30,26 @@ import static com.cognitree.kronos.model.Job.Status.CREATED;
 @JsonSerialize(as = Job.class)
 @JsonDeserialize(as = Job.class)
 public class Job extends JobId {
-    private String workflowName;
-    private String triggerName;
+    private String workflow;
+    private String trigger;
     private Status status = CREATED;
     private long createdAt;
     private long completedAt;
 
-    public String getWorkflowName() {
-        return workflowName;
+    public String getWorkflow() {
+        return workflow;
     }
 
-    public void setWorkflowName(String workflowName) {
-        this.workflowName = workflowName;
+    public void setWorkflow(String workflow) {
+        this.workflow = workflow;
     }
 
-    public String getTriggerName() {
-        return triggerName;
+    public String getTrigger() {
+        return trigger;
     }
 
-    public void setTriggerName(String triggerName) {
-        this.triggerName = triggerName;
+    public void setTrigger(String trigger) {
+        this.trigger = trigger;
     }
 
     public Status getStatus() {
@@ -94,8 +94,8 @@ public class Job extends JobId {
     @Override
     public String toString() {
         return "Job{" +
-                "workflowName='" + workflowName + '\'' +
-                ", triggerName='" + triggerName + '\'' +
+                "workflow='" + workflow + '\'' +
+                ", trigger='" + trigger + '\'' +
                 ", status=" + status +
                 ", createdAt=" + createdAt +
                 ", completedAt=" + completedAt +

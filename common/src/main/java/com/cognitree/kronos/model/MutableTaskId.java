@@ -27,13 +27,13 @@ import java.util.Objects;
 public class MutableTaskId implements TaskId {
 
     private String name;
-    private String jobId;
+    private String job;
     private String namespace;
 
     public static TaskId build(String name, String jobId, String namespace) {
         final MutableTaskId mutableTaskId = new MutableTaskId();
         mutableTaskId.setName(name);
-        mutableTaskId.setJobId(jobId);
+        mutableTaskId.setJob(jobId);
         mutableTaskId.setNamespace(namespace);
         return mutableTaskId;
     }
@@ -48,12 +48,12 @@ public class MutableTaskId implements TaskId {
     }
 
     @Override
-    public String getJobId() {
-        return jobId;
+    public String getJob() {
+        return job;
     }
 
-    public void setJobId(String jobId) {
-        this.jobId = jobId;
+    public void setJob(String job) {
+        this.job = job;
     }
 
     @Override
@@ -71,21 +71,21 @@ public class MutableTaskId implements TaskId {
         if (!(o instanceof MutableTaskId)) return false;
         MutableTaskId taskId = (MutableTaskId) o;
         return Objects.equals(name, taskId.name) &&
-                Objects.equals(jobId, taskId.jobId) &&
+                Objects.equals(job, taskId.job) &&
                 Objects.equals(namespace, taskId.namespace);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(name, jobId, namespace);
+        return Objects.hash(name, job, namespace);
     }
 
     @Override
     public String toString() {
         return "MutableTaskId{" +
                 "name='" + name + '\'' +
-                ", jobId='" + jobId + '\'' +
+                ", job='" + job + '\'' +
                 ", namespace='" + namespace + '\'' +
                 '}';
     }

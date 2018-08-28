@@ -105,7 +105,7 @@ public class SQLiteWorkflowTriggerStore implements WorkflowTriggerStore {
              PreparedStatement preparedStatement = connection.prepareStatement(INSERT_WORKFLOW_TRIGGER)) {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, workflowTrigger.getName());
-            preparedStatement.setString(++paramIndex, workflowTrigger.getWorkflowName());
+            preparedStatement.setString(++paramIndex, workflowTrigger.getWorkflow());
             preparedStatement.setString(++paramIndex, workflowTrigger.getNamespace());
             preparedStatement.setLong(++paramIndex, workflowTrigger.getStartAt());
             preparedStatement.setString(++paramIndex, workflowTrigger.getSchedule());
@@ -165,7 +165,7 @@ public class SQLiteWorkflowTriggerStore implements WorkflowTriggerStore {
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_WORKFLOW_TRIGGER)) {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, triggerId.getName());
-            preparedStatement.setString(++paramIndex, triggerId.getWorkflowName());
+            preparedStatement.setString(++paramIndex, triggerId.getWorkflow());
             preparedStatement.setString(++paramIndex, triggerId.getNamespace());
             final ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -188,7 +188,7 @@ public class SQLiteWorkflowTriggerStore implements WorkflowTriggerStore {
             preparedStatement.setLong(++paramIndex, workflowTrigger.getEndAt());
             preparedStatement.setBoolean(++paramIndex, workflowTrigger.isEnabled());
             preparedStatement.setString(++paramIndex, workflowTrigger.getName());
-            preparedStatement.setString(++paramIndex, workflowTrigger.getWorkflowName());
+            preparedStatement.setString(++paramIndex, workflowTrigger.getWorkflow());
             preparedStatement.setString(++paramIndex, workflowTrigger.getNamespace());
             preparedStatement.execute();
         } catch (Exception e) {
@@ -203,7 +203,7 @@ public class SQLiteWorkflowTriggerStore implements WorkflowTriggerStore {
              PreparedStatement preparedStatement = connection.prepareStatement(DELETE_WORKFLOW_TRIGGER)) {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, triggerId.getName());
-            preparedStatement.setString(++paramIndex, triggerId.getWorkflowName());
+            preparedStatement.setString(++paramIndex, triggerId.getWorkflow());
             preparedStatement.setString(++paramIndex, triggerId.getNamespace());
             preparedStatement.executeUpdate();
         } catch (Exception e) {
@@ -215,7 +215,7 @@ public class SQLiteWorkflowTriggerStore implements WorkflowTriggerStore {
         int paramIndex = 0;
         WorkflowTrigger workflowTrigger = new WorkflowTrigger();
         workflowTrigger.setName(resultSet.getString(++paramIndex));
-        workflowTrigger.setWorkflowName(resultSet.getString(++paramIndex));
+        workflowTrigger.setWorkflow(resultSet.getString(++paramIndex));
         workflowTrigger.setNamespace(resultSet.getString(++paramIndex));
         workflowTrigger.setStartAt(resultSet.getLong(++paramIndex));
         workflowTrigger.setSchedule(resultSet.getString(++paramIndex));

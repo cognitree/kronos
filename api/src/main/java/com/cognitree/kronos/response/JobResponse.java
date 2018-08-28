@@ -17,7 +17,7 @@ public class JobResponse extends Job {
         JobResponse jobResponse = new JobResponse();
         jobResponse.setTasks(tasks);
         jobResponse.setId(job.getId());
-        jobResponse.setWorkflowName(job.getWorkflowName());
+        jobResponse.setWorkflow(job.getWorkflow());
         jobResponse.setNamespace(job.getNamespace());
         jobResponse.setStatus(job.getStatus());
         jobResponse.setCreatedAt(job.getCreatedAt());

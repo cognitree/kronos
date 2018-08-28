@@ -31,7 +31,7 @@ import static com.cognitree.kronos.model.Task.Status.CREATED;
 public class MockTaskBuilder {
     private String name;
     private String namespace = "default";
-    private String workflowId = "test-workflow";
+    private String job = "test-workflow";
     private String type;
     private String timeoutPolicy;
     private String maxExecutionTime = "1h";
@@ -57,8 +57,8 @@ public class MockTaskBuilder {
         return this;
     }
 
-    public MockTaskBuilder setWorkflowId(String workflowId) {
-        this.workflowId = workflowId;
+    public MockTaskBuilder setJob(String job) {
+        this.job = job;
         return this;
     }
 
@@ -111,7 +111,7 @@ public class MockTaskBuilder {
         MutableTask task = new MutableTask();
         task.setName(name);
         task.setNamespace(namespace);
-        task.setJobId(workflowId);
+        task.setJob(job);
         task.setType(type);
         task.setStatus(status);
         task.setStatusMessage(statusMessage);

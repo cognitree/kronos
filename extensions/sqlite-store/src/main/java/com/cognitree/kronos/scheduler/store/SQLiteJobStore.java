@@ -114,8 +114,8 @@ public class SQLiteJobStore implements JobStore {
              PreparedStatement preparedStatement = connection.prepareStatement(INSERT_JOB)) {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, job.getId());
-            preparedStatement.setString(++paramIndex, job.getWorkflowName());
-            preparedStatement.setString(++paramIndex, job.getTriggerName());
+            preparedStatement.setString(++paramIndex, job.getWorkflow());
+            preparedStatement.setString(++paramIndex, job.getTrigger());
             preparedStatement.setString(++paramIndex, job.getNamespace());
             preparedStatement.setString(++paramIndex, job.getStatus().name());
             preparedStatement.setLong(++paramIndex, job.getCreatedAt());
@@ -211,8 +211,8 @@ public class SQLiteJobStore implements JobStore {
     }
 
     @Override
-    public List<Job> loadByWorkflowNameAndTrigger(String workflowName, String triggerName, String namespace,
-                                                  long createdAfter, long createdBefore) {
+    public List<Job> loadByWorkflowNameAndTriggerName(String workflowName, String triggerName, String namespace,
+                                                      long createdAfter, long createdBefore) {
         logger.debug("Received request to get all jobs with workflow name {} under namespace {}, triggerName {}," +
                 " created after {}, created before {}", workflowName, namespace, triggerName, createdAfter, createdBefore);
         try (Connection connection = dataSource.getConnection();
@@ -272,8 +272,8 @@ public class SQLiteJobStore implements JobStore {
         int paramIndex = 0;
         Job job = new Job();
         job.setId(resultSet.getString(++paramIndex));
-        job.setWorkflowName(resultSet.getString(++paramIndex));
-        job.setTriggerName(resultSet.getString(++paramIndex));
+        job.setWorkflow(resultSet.getString(++paramIndex));
+        job.setTrigger(resultSet.getString(++paramIndex));
         job.setNamespace(resultSet.getString(++paramIndex));
         job.setStatus(Job.Status.valueOf(resultSet.getString(++paramIndex)));
         job.setCreatedAt(resultSet.getLong(++paramIndex));

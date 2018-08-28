@@ -124,7 +124,7 @@ public class SQLiteTaskStore implements TaskStore {
              PreparedStatement preparedStatement = connection.prepareStatement(INSERT_TASK)) {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, task.getName());
-            preparedStatement.setString(++paramIndex, task.getJobId());
+            preparedStatement.setString(++paramIndex, task.getJob());
             preparedStatement.setString(++paramIndex, task.getNamespace());
             preparedStatement.setString(++paramIndex, task.getType());
             preparedStatement.setString(++paramIndex, task.getTimeoutPolicy());
@@ -169,7 +169,7 @@ public class SQLiteTaskStore implements TaskStore {
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_TASK)) {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, taskId.getName());
-            preparedStatement.setString(++paramIndex, taskId.getJobId());
+            preparedStatement.setString(++paramIndex, taskId.getJob());
             preparedStatement.setString(++paramIndex, taskId.getNamespace());
             final ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -194,7 +194,7 @@ public class SQLiteTaskStore implements TaskStore {
             preparedStatement.setLong(++paramIndex, task.getCompletedAt());
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(task.getContext()));
             preparedStatement.setString(++paramIndex, taskId.getName());
-            preparedStatement.setString(++paramIndex, taskId.getJobId());
+            preparedStatement.setString(++paramIndex, taskId.getJob());
             preparedStatement.setString(++paramIndex, taskId.getNamespace());
             preparedStatement.execute();
         } catch (Exception e) {
@@ -252,7 +252,7 @@ public class SQLiteTaskStore implements TaskStore {
              PreparedStatement preparedStatement = connection.prepareStatement(DELETE_TASK)) {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, identity.getName());
-            preparedStatement.setString(++paramIndex, identity.getJobId());
+            preparedStatement.setString(++paramIndex, identity.getJob());
             preparedStatement.setString(++paramIndex, identity.getNamespace());
             preparedStatement.executeUpdate();
         } catch (Exception e) {
@@ -264,7 +264,7 @@ public class SQLiteTaskStore implements TaskStore {
         int paramIndex = 0;
         MutableTask task = new MutableTask();
         task.setName(resultSet.getString(++paramIndex));
-        task.setJobId(resultSet.getString(++paramIndex));
+        task.setJob(resultSet.getString(++paramIndex));
         task.setNamespace(resultSet.getString(++paramIndex));
         task.setType(resultSet.getString(++paramIndex));
         task.setTimeoutPolicy(resultSet.getString(++paramIndex));

@@ -121,7 +121,7 @@ public class WorkflowTriggerResource {
                                           @HeaderParam("namespace") String namespace,
                                           WorkflowTrigger workflowTrigger) {
         // override workflow name and namespace
-        workflowTrigger.setWorkflowName(workflowName);
+        workflowTrigger.setWorkflow(workflowName);
         workflowTrigger.setNamespace(namespace);
         logger.info("Received request to create workflow trigger {} for workflow {} under namespace {}",
                 workflowTrigger, workflowName, namespace);
@@ -160,7 +160,7 @@ public class WorkflowTriggerResource {
                                           @HeaderParam("namespace") String namespace,
                                           WorkflowTrigger workflowTrigger) {
         // override workflow name and namespace
-        workflowTrigger.setWorkflowName(workflowName);
+        workflowTrigger.setWorkflow(workflowName);
         workflowTrigger.setNamespace(namespace);
         logger.info("Received request to update workflow trigger {} for workflow {} under namespace {} to {}",
                 triggerName, workflowName, namespace, workflowTrigger);

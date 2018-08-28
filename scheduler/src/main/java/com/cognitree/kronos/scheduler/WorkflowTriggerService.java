@@ -61,7 +61,7 @@ public class WorkflowTriggerService implements Service {
     public void add(WorkflowTrigger workflowTrigger) throws SchedulerException {
         logger.debug("Received request to add workflow trigger {}", workflowTrigger);
         final Workflow workflow = WorkflowService.getService()
-                .get(WorkflowId.build(workflowTrigger.getWorkflowName(), workflowTrigger.getNamespace()));
+                .get(WorkflowId.build(workflowTrigger.getWorkflow(), workflowTrigger.getNamespace()));
         WorkflowSchedulerService.getService().schedule(workflow, workflowTrigger);
         workflowTriggerStore.store(workflowTrigger);
     }
@@ -86,7 +86,7 @@ public class WorkflowTriggerService implements Service {
         logger.debug("Received request to update workflow trigger to {}", workflowTrigger);
         WorkflowSchedulerService.getService().delete(workflowTrigger);
         final Workflow workflow = WorkflowService.getService()
-                .get(WorkflowId.build(workflowTrigger.getWorkflowName(), workflowTrigger.getNamespace()));
+                .get(WorkflowId.build(workflowTrigger.getWorkflow(), workflowTrigger.getNamespace()));
         WorkflowSchedulerService.getService().schedule(workflow, workflowTrigger);
         workflowTriggerStore.update(workflowTrigger);
     }

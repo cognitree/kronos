@@ -159,7 +159,7 @@ public class TaskSchedulerServiceTest {
     @Test
     public void testAddTaskWithDifferentWorkflowIdWithDependency() throws InterruptedException, IOException {
         final long createdAt = System.currentTimeMillis();
-        Task taskOneGroupOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setWorkflowId("workflowOne")
+        Task taskOneGroupOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setJob("workflowOne")
                 .setType(TASK_TYPE).setCreatedAt(createdAt).build();
         TaskSchedulerService.getService().schedule(taskOneGroupOne);
         Assert.assertEquals(SCHEDULED, taskOneGroupOne.getStatus());
@@ -170,7 +170,7 @@ public class TaskSchedulerServiceTest {
         sleep(100);
         Assert.assertEquals(SUCCESSFUL, taskOneGroupOne.getStatus());
 
-        Task taskOneGroupTwo = MockTaskBuilder.getTaskBuilder().setName("taskOne").setWorkflowId("workflowTwo")
+        Task taskOneGroupTwo = MockTaskBuilder.getTaskBuilder().setName("taskOne").setJob("workflowTwo")
                 .setType(TASK_TYPE).setCreatedAt(createdAt).build();
         TaskSchedulerService.getService().schedule(taskOneGroupTwo);
         Assert.assertEquals(SCHEDULED, taskOneGroupTwo.getStatus());
@@ -181,7 +181,7 @@ public class TaskSchedulerServiceTest {
         sleep(100);
         Assert.assertEquals(FAILED, taskOneGroupTwo.getStatus());
 
-        Task taskTwoGroupOne = MockTaskBuilder.getTaskBuilder().setName("taskTwo").setWorkflowId("workflowOne")
+        Task taskTwoGroupOne = MockTaskBuilder.getTaskBuilder().setName("taskTwo").setJob("workflowOne")
                 .setType(TASK_TYPE).setCreatedAt(createdAt + 1).build();
         TaskSchedulerService.getService().schedule(taskTwoGroupOne);
         Assert.assertEquals(SCHEDULED, taskTwoGroupOne.getStatus());
@@ -192,7 +192,7 @@ public class TaskSchedulerServiceTest {
         sleep(100);
         Assert.assertEquals(SUCCESSFUL, taskTwoGroupOne.getStatus());
 
-        Task taskTwoGroupTwo = MockTaskBuilder.getTaskBuilder().setName("taskTwo").setWorkflowId("workflowTwo")
+        Task taskTwoGroupTwo = MockTaskBuilder.getTaskBuilder().setName("taskTwo").setJob("workflowTwo")
                 .setType(TASK_TYPE).setCreatedAt(createdAt + 1).build();
         TaskSchedulerService.getService().schedule(taskTwoGroupTwo);
         Assert.assertEquals(SCHEDULED, taskTwoGroupTwo.getStatus());
@@ -207,7 +207,7 @@ public class TaskSchedulerServiceTest {
         dependsOn.add("taskOne");
         dependsOn.add("taskTwo");
 
-        Task taskThreeGroupOne = MockTaskBuilder.getTaskBuilder().setName("taskThree").setWorkflowId("workflowOne")
+        Task taskThreeGroupOne = MockTaskBuilder.getTaskBuilder().setName("taskThree").setJob("workflowOne")
                 .setType(TASK_TYPE).setDependsOn(dependsOn).setCreatedAt(createdAt + 5).build();
         TaskSchedulerService.getService().schedule(taskThreeGroupOne);
         Assert.assertEquals(SCHEDULED, taskThreeGroupOne.getStatus());
@@ -218,7 +218,7 @@ public class TaskSchedulerServiceTest {
         sleep(100);
         Assert.assertEquals(SUCCESSFUL, taskThreeGroupOne.getStatus());
 
-        Task taskThreeGroupTwo = MockTaskBuilder.getTaskBuilder().setName("taskThree").setWorkflowId("workflowTwo")
+        Task taskThreeGroupTwo = MockTaskBuilder.getTaskBuilder().setName("taskThree").setJob("workflowTwo")
                 .setType(TASK_TYPE).setDependsOn(dependsOn).setCreatedAt(createdAt + 5).build();
         TaskSchedulerService.getService().schedule(taskThreeGroupTwo);
         tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);

@@ -148,12 +148,12 @@ public final class WorkflowSchedulerService implements Service {
 
     private JobKey getJobKey(WorkflowTriggerId workflowTriggerId) {
         return new JobKey(workflowTriggerId.getName(),
-                getGroup(workflowTriggerId.getWorkflowName(), workflowTriggerId.getNamespace()));
+                getGroup(workflowTriggerId.getWorkflow(), workflowTriggerId.getNamespace()));
     }
 
     private TriggerKey getTriggerKey(WorkflowTriggerId workflowTriggerId) {
         return new TriggerKey(workflowTriggerId.getName(),
-                getGroup(workflowTriggerId.getWorkflowName(), workflowTriggerId.getNamespace()));
+                getGroup(workflowTriggerId.getWorkflow(), workflowTriggerId.getNamespace()));
     }
 
     private String getGroup(String workflowName, String namespace) {
@@ -179,9 +179,9 @@ public final class WorkflowSchedulerService implements Service {
     private Job createWorkflowJob(String workflowName, String workflowNamespace, String trigger) {
         final Job job = new Job();
         job.setId(UUID.randomUUID().toString());
-        job.setWorkflowName(workflowName);
+        job.setWorkflow(workflowName);
         job.setNamespace(workflowNamespace);
-        job.setTriggerName(trigger);
+        job.setTrigger(trigger);
         job.setCreatedAt(System.currentTimeMillis());
         return job;
     }
@@ -228,7 +228,7 @@ public final class WorkflowSchedulerService implements Service {
                             TaskDefinition taskDefinition, String namespace) {
         MutableTask task = new MutableTask();
         task.setName(UUID.randomUUID().toString());
-        task.setJobId(workflowId);
+        task.setJob(workflowId);
         task.setName(workflowTask.getName());
         task.setNamespace(namespace);
         task.setType(taskDefinition.getType());
@@ -273,7 +273,7 @@ public final class WorkflowSchedulerService implements Service {
             if (!to.isFinal()) {
                 return;
             }
-            final String jobId = task.getJobId();
+            final String jobId = task.getJob();
             final String namespace = task.getNamespace();
 
             final List<Task> tasks = TaskService.getService().get(jobId, namespace);

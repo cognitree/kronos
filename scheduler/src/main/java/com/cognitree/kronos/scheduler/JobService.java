@@ -99,7 +99,7 @@ public class JobService implements Service {
         long createdAfter = currentTimeMillis - (currentTimeMillis % TimeUnit.DAYS.toMillis(1))
                 - TimeUnit.DAYS.toMillis(numberOfDays - 1);
         long createdBefore = createdAfter + TimeUnit.DAYS.toMillis(numberOfDays);
-        return jobStore.loadByWorkflowNameAndTrigger(workflowName, triggerName, namespace, createdAfter, createdBefore);
+        return jobStore.loadByWorkflowNameAndTriggerName(workflowName, triggerName, namespace, createdAfter, createdBefore);
     }
 
     public List<Task> getTasks(JobId jobId) {

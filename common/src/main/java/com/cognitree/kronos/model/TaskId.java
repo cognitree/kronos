@@ -26,7 +26,7 @@ public interface TaskId {
 
     String getName();
 
-    String getJobId();
+    String getJob();
 
     String getNamespace();
 }

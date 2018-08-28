@@ -407,7 +407,7 @@ public final class TaskSchedulerService implements Service {
         final Map<String, Object> dependentTaskContext = new LinkedHashMap<>();
         for (String dependentTaskName : dependsOn) {
             // sort the tasks based on creation time and update the context from the latest task
-            TaskId dependentTaskId = MutableTaskId.build(dependentTaskName, task.getJobId(), task.getNamespace());
+            TaskId dependentTaskId = MutableTaskId.build(dependentTaskName, task.getJob(), task.getNamespace());
             Task dependentTask = taskProvider.getTask(dependentTaskId);
             if (dependentTask != null) {
                 if (dependentTask.getContext() != null && !dependentTask.getContext().isEmpty()) {

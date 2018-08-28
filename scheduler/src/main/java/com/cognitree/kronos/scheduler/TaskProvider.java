@@ -116,7 +116,7 @@ final class TaskProvider {
         if (dependsOn != null) {
             List<Task> dependentTasks = new ArrayList<>();
             for (String dependentTaskName : dependsOn) {
-                TaskId dependentTaskId = MutableTaskId.build(dependentTaskName, task.getJobId(), task.getNamespace());
+                TaskId dependentTaskId = MutableTaskId.build(dependentTaskName, task.getJob(), task.getNamespace());
                 Task dependentTask = getTask(dependentTaskId);
                 if (dependentTask == null) {
                     logger.error("No dependent task with id {} not found", dependentTaskId);
@@ -276,7 +276,7 @@ final class TaskProvider {
         for (int i = 0; i < level; i++) {
             outputBuilder.append("  ");
         }
-        outputBuilder.append("- ").append(task.getJobId()).append(":").append(task.getName())
+        outputBuilder.append("- ").append(task.getJob()).append(":").append(task.getName())
                 .append(":").append(task.getName()).append("(").append(task.getStatus()).append(")\n");
         graph.successors(task).forEach(t -> prepareGraphOutput(t, level + 1, outputBuilder));
     }

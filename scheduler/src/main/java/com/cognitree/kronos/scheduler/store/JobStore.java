@@ -31,8 +31,8 @@ public interface JobStore extends Store<Job, JobId> {
 
     List<Job> load(String namespace, long createdAfter, long createdBefore);
 
-    List<Job> loadByWorkflowNameAndTrigger(String workflowName, String triggerName, String namespace,
-                                           long createdAfter, long createdBefore);
+    List<Job> loadByWorkflowNameAndTriggerName(String workflowName, String triggerName, String namespace,
+                                               long createdAfter, long createdBefore);
 
     List<Job> loadByWorkflowName(String workflowName, String namespace, long createdAfter, long createdBefore);
 }

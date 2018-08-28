@@ -92,7 +92,7 @@ public class WorkflowSchedulerServiceTest {
         WorkflowService.getService().add(workflow);
         final WorkflowTrigger workflowTrigger = new WorkflowTrigger();
         workflowTrigger.setName("test-workflow-trigger");
-        workflowTrigger.setWorkflowName(workflow.getName());
+        workflowTrigger.setWorkflow(workflow.getName());
         workflowTrigger.setNamespace(workflow.getNamespace());
         workflowTrigger.setSchedule("0/2 * * * * ?");
         final long currentTimeMillis = System.currentTimeMillis();
@@ -100,7 +100,7 @@ public class WorkflowSchedulerServiceTest {
         workflowTrigger.setEndAt(currentTimeMillis + 2000 - (currentTimeMillis % 2000));
         WorkflowTriggerService.getService().add(workflowTrigger);
         final JobKey jobKey = new JobKey(workflowTrigger.getName(),
-                workflowTrigger.getWorkflowName() + ":" + workflowTrigger.getNamespace());
+                workflowTrigger.getWorkflow() + ":" + workflowTrigger.getNamespace());
         Assert.assertTrue(WorkflowSchedulerService.getService().getScheduler().checkExists(jobKey));
         sleep(2000);
         Assert.assertFalse(WorkflowSchedulerService.getService().getScheduler().checkExists(jobKey));
@@ -116,7 +116,7 @@ public class WorkflowSchedulerServiceTest {
         Assert.assertEquals(0, TaskSchedulerService.getService().getTaskProvider().size());
         final WorkflowTrigger workflowTrigger = new WorkflowTrigger();
         workflowTrigger.setName("test-workflow-trigger");
-        workflowTrigger.setWorkflowName(workflow.getName());
+        workflowTrigger.setWorkflow(workflow.getName());
         workflowTrigger.setNamespace(workflow.getNamespace());
         workflowTrigger.setSchedule("0/2 * * * * ?");
         WorkflowSchedulerService.getService().execute(workflow, workflowTrigger);
