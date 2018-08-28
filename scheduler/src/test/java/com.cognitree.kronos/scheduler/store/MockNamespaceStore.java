@@ -18,6 +18,7 @@
 package com.cognitree.kronos.scheduler.store;
 
 import com.cognitree.kronos.model.Namespace;
+import com.cognitree.kronos.model.NamespaceId;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Collections;
@@ -41,7 +42,7 @@ public class MockNamespaceStore implements NamespaceStore {
     }
 
     @Override
-    public Namespace load(String identity) {
+    public Namespace load(NamespaceId identity) {
         return null;
     }
 
@@ -51,7 +52,7 @@ public class MockNamespaceStore implements NamespaceStore {
     }
 
     @Override
-    public void delete(String identity) {
+    public void delete(NamespaceId identity) {
 
     }
 

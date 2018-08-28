@@ -30,7 +30,7 @@ workflowStoreConfig:
     username:
     password:
 
-# configure workflow store
+# configure workflow trigger store
 workflowTriggerStoreConfig:
   storeClass: com.cognitree.kronos.scheduler.store.SQLiteWorkflowTriggerStore
   config:

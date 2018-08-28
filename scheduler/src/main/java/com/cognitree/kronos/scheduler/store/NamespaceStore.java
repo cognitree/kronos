@@ -18,13 +18,14 @@
 package com.cognitree.kronos.scheduler.store;
 
 import com.cognitree.kronos.model.Namespace;
+import com.cognitree.kronos.model.NamespaceId;
 
 import java.util.List;
 
 /**
  * An interface exposing API's to provide {@link Namespace} persistence.
  */
-public interface NamespaceStore extends Store<Namespace, String> {
+public interface NamespaceStore extends Store<Namespace, NamespaceId> {
 
     List<Namespace> load();
 }

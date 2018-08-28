@@ -18,6 +18,7 @@
 package com.cognitree.kronos.api;
 
 import com.cognitree.kronos.model.Namespace;
+import com.cognitree.kronos.model.NamespaceId;
 import com.cognitree.kronos.scheduler.NamespaceService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -67,7 +68,7 @@ public class NamespaceResource {
     public Response getNamespace(@ApiParam(value = "namespace name", required = true)
                                  @PathParam("name") String name) {
         logger.info("Received request to get namespace with name {}", name);
-        final Namespace namespace = NamespaceService.getService().get(name);
+        final Namespace namespace = NamespaceService.getService().get(NamespaceId.build(name));
         if (namespace == null) {
             logger.error("No namespace found with name {}", name);
             return Response.status(NOT_FOUND).build();
@@ -82,7 +83,7 @@ public class NamespaceResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response addNamespace(Namespace namespace) {
         logger.info("Received request to add namespace {}", namespace);
-        if (NamespaceService.getService().get(namespace.getName()) != null) {
+        if (NamespaceService.getService().get(namespace) != null) {
             logger.error("Namespace already exists with name {}", namespace.getName());
             return Response.status(CONFLICT).build();
         }
@@ -101,7 +102,7 @@ public class NamespaceResource {
                                     Namespace namespace) {
         namespace.setName(name);
         logger.info("Received request to update namespace with name {} to {}", name, namespace);
-        if (NamespaceService.getService().get(namespace.getName()) == null) {
+        if (NamespaceService.getService().get(NamespaceId.build(name)) == null) {
             logger.error("No task definition exists with name {}", name);
             return Response.status(NOT_FOUND).build();
         }

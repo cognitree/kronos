@@ -17,6 +17,7 @@
 
 package com.cognitree.kronos.api;
 
+import com.cognitree.kronos.model.NamespaceId;
 import com.cognitree.kronos.model.Workflow;
 import com.cognitree.kronos.model.WorkflowId;
 import com.cognitree.kronos.scheduler.NamespaceService;
@@ -170,6 +171,6 @@ public class WorkflowResource {
     }
 
     private boolean validateNamespace(String name) {
-        return name != null && NamespaceService.getService().get(name) != null;
+        return name != null && NamespaceService.getService().get(NamespaceId.build(name)) != null;
     }
 }

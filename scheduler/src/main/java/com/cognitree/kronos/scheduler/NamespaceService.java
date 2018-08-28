@@ -20,6 +20,7 @@ package com.cognitree.kronos.scheduler;
 import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.Namespace;
+import com.cognitree.kronos.model.NamespaceId;
 import com.cognitree.kronos.scheduler.store.NamespaceStore;
 import com.cognitree.kronos.scheduler.store.StoreConfig;
 import org.slf4j.Logger;
@@ -60,9 +61,9 @@ public class NamespaceService implements Service {
         return namespaceStore.load();
     }
 
-    public Namespace get(String name) {
-        logger.debug("Received request to get namespace with name {}", name);
-        return namespaceStore.load(name);
+    public Namespace get(NamespaceId namespaceId) {
+        logger.debug("Received request to get namespace with id {}", namespaceId);
+        return namespaceStore.load(namespaceId);
     }
 
     public void add(Namespace namespace) {

@@ -19,6 +19,7 @@ package com.cognitree.kronos.api;
 
 import com.cognitree.kronos.model.Job;
 import com.cognitree.kronos.model.JobId;
+import com.cognitree.kronos.model.NamespaceId;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.response.JobResponse;
 import com.cognitree.kronos.scheduler.JobService;
@@ -58,9 +59,9 @@ public class JobResource {
     @ApiOperation(value = "Get all running or executed jobs", response = Job.class, responseContainer = "List")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllJobs(@ApiParam(value = "workflow name")
-                               @QueryParam("workflowName") String workflowName,
+                               @QueryParam("workflow") String workflowName,
                                @ApiParam(value = "workflow trigger name")
-                               @QueryParam("triggerName") String triggerName,
+                               @QueryParam("trigger") String triggerName,
                                @ApiParam(value = "Number of days to fetch jobs from today", defaultValue = "10")
                                @DefaultValue(DEFAULT_DAYS) @QueryParam("date_range") int numberOfDays,
                                @HeaderParam("namespace") String namespace) {
@@ -116,6 +117,6 @@ public class JobResource {
     }
 
     private boolean validateNamespace(String name) {
-        return name != null && NamespaceService.getService().get(name) != null;
+        return name != null && NamespaceService.getService().get(NamespaceId.build(name)) != null;
     }
 }

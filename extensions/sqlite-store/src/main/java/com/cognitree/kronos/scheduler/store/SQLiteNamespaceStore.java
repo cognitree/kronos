@@ -18,6 +18,7 @@
 package com.cognitree.kronos.scheduler.store;
 
 import com.cognitree.kronos.model.Namespace;
+import com.cognitree.kronos.model.NamespaceId;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.slf4j.Logger;
@@ -118,18 +119,18 @@ public class SQLiteNamespaceStore implements NamespaceStore {
     }
 
     @Override
-    public Namespace load(String name) {
-        logger.debug("Received request to load namespace with name {}", name);
+    public Namespace load(NamespaceId namespaceId) {
+        logger.debug("Received request to load namespace with id {}", namespaceId);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_NAMESPACE)) {
             int paramIndex = 0;
-            preparedStatement.setString(++paramIndex, name);
+            preparedStatement.setString(++paramIndex, namespaceId.getName());
             final ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 return getNamespace(resultSet);
             }
         } catch (Exception e) {
-            logger.error("Error fetching namespace with name {} from database", name, e);
+            logger.error("Error fetching namespace with id {} from database", namespaceId, e);
         }
         return null;
     }
@@ -149,15 +150,15 @@ public class SQLiteNamespaceStore implements NamespaceStore {
     }
 
     @Override
-    public void delete(String name) {
-        logger.debug("Received request to delete namespace with name {}", name);
+    public void delete(NamespaceId namespaceId) {
+        logger.debug("Received request to delete namespace with id {}", namespaceId);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(DELETE_NAMESPACE)) {
             int paramIndex = 0;
-            preparedStatement.setString(++paramIndex, name);
+            preparedStatement.setString(++paramIndex, namespaceId.getName());
             preparedStatement.executeUpdate();
         } catch (Exception e) {
-            logger.error("Error deleting namespace with id {} from database", name, e);
+            logger.error("Error deleting namespace with id {} from database", namespaceId, e);
         }
     }
 

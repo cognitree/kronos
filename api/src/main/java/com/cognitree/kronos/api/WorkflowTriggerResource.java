@@ -17,6 +17,7 @@
 
 package com.cognitree.kronos.api;
 
+import com.cognitree.kronos.model.NamespaceId;
 import com.cognitree.kronos.model.WorkflowId;
 import com.cognitree.kronos.model.WorkflowTrigger;
 import com.cognitree.kronos.model.WorkflowTriggerId;
@@ -57,10 +58,10 @@ public class WorkflowTriggerResource {
     private static final Logger logger = LoggerFactory.getLogger(WorkflowTriggerResource.class);
 
     @GET
-    @Path("{workflowName}/triggers")
+    @Path("{workflow}/triggers")
     @ApiOperation(value = "Get all workflow triggers", response = WorkflowTrigger.class, responseContainer = "List")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getAllWorkflowTriggers(@PathParam("workflowName") String workflowName,
+    public Response getAllWorkflowTriggers(@PathParam("workflow") String workflowName,
                                            @HeaderParam("namespace") String namespace) {
         if (!validateNamespace(namespace)) {
             return Response.status(BAD_REQUEST).entity("no namespace exists with name " + namespace).build();
@@ -79,15 +80,15 @@ public class WorkflowTriggerResource {
     }
 
     @GET
-    @Path("{workflowName}/triggers/{triggerName}")
+    @Path("{workflow}/triggers/{name}")
     @ApiOperation(value = "Get workflow trigger with triggerName", response = WorkflowTrigger.class)
     @ApiResponses(value = {
             @ApiResponse(code = 404, message = "Workflow trigger not found")})
     @Produces(MediaType.APPLICATION_JSON)
     public Response getWorkflowTrigger(@ApiParam(value = "workflow triggerName", required = true)
-                                       @PathParam("workflowName") String workflowName,
+                                       @PathParam("workflow") String workflowName,
                                        @ApiParam(value = "workflow trigger triggerName", required = true)
-                                       @PathParam("triggerName") String triggerName,
+                                       @PathParam("name") String triggerName,
                                        @HeaderParam("namespace") String namespace) {
         logger.info("Received request to get workflow trigger with name {} for workflow {} under namespace {}",
                 triggerName, workflowName, namespace);
@@ -110,13 +111,13 @@ public class WorkflowTriggerResource {
     }
 
     @POST
-    @Path("{workflowName}/triggers")
+    @Path("{workflow}/triggers")
     @ApiOperation(value = "Create workflow trigger", response = WorkflowTrigger.class)
     @ApiResponses(value = {
             @ApiResponse(code = 404, message = "Workflow trigger not found")})
     @Produces(MediaType.APPLICATION_JSON)
     public Response createWorkflowTrigger(@ApiParam(value = "workflow name", required = true)
-                                          @PathParam("workflowName") String workflowName,
+                                          @PathParam("workflow") String workflowName,
                                           @HeaderParam("namespace") String namespace,
                                           WorkflowTrigger workflowTrigger) {
         // override workflow name and namespace
@@ -147,22 +148,22 @@ public class WorkflowTriggerResource {
     }
 
     @PUT
-    @Path("{workflowName}/triggers/{name}")
+    @Path("{workflow}/triggers/{name}")
     @ApiOperation(value = "Update workflow trigger", response = WorkflowTrigger.class)
     @ApiResponses(value = {
             @ApiResponse(code = 404, message = "Workflow trigger not found")})
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateWorkflowTrigger(@ApiParam(value = "workflow name", required = true)
-                                          @PathParam("workflowName") String workflowName,
+                                          @PathParam("workflow") String workflowName,
                                           @ApiParam(value = "workflow trigger name", required = true)
-                                          @PathParam("name") String name,
+                                          @PathParam("name") String triggerName,
                                           @HeaderParam("namespace") String namespace,
                                           WorkflowTrigger workflowTrigger) {
         // override workflow name and namespace
         workflowTrigger.setWorkflowName(workflowName);
         workflowTrigger.setNamespace(namespace);
         logger.info("Received request to update workflow trigger {} for workflow {} under namespace {} to {}",
-                name, workflowName, namespace, workflowTrigger);
+                triggerName, workflowName, namespace, workflowTrigger);
         if (!validateNamespace(namespace)) {
             return Response.status(BAD_REQUEST).entity("no namespace exists with name " + namespace).build();
         }
@@ -187,18 +188,18 @@ public class WorkflowTriggerResource {
     }
 
     @DELETE
-    @Path("{workflowName}/triggers/{name}")
+    @Path("{workflow}/triggers/{name}")
     @ApiOperation(value = "Delete workflow trigger with name")
     @ApiResponses(value = {
             @ApiResponse(code = 404, message = "Workflow trigger not found")})
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteWorkflowTrigger(@ApiParam(value = "workflow name", required = true)
-                                          @PathParam("workflowName") String workflowName,
+                                          @PathParam("workflow") String workflowName,
                                           @ApiParam(value = "workflow trigger name", required = true)
-                                          @PathParam("name") String name,
+                                          @PathParam("name") String triggerName,
                                           @HeaderParam("namespace") String namespace) {
         logger.info("Received request to delete workflow trigger with name {} for workflow {} under namespace {}",
-                name, workflowName, namespace);
+                triggerName, workflowName, namespace);
         if (!validateNamespace(namespace)) {
             return Response.status(BAD_REQUEST).entity("no namespace exists with name " + namespace).build();
         }
@@ -208,10 +209,10 @@ public class WorkflowTriggerResource {
             return Response.status(BAD_REQUEST).entity("no workflow exists with name " + workflowName).build();
         }
 
-        WorkflowTriggerId triggerId = WorkflowTriggerId.build(name, workflowName, namespace);
+        WorkflowTriggerId triggerId = WorkflowTriggerId.build(triggerName, workflowName, namespace);
         final WorkflowTrigger workflowTrigger = WorkflowTriggerService.getService().get(triggerId);
         if (workflowTrigger == null) {
-            logger.error("No workflow trigger exists with name {} under namespace {}", name, namespace);
+            logger.error("No workflow trigger exists with name {} under namespace {}", triggerName, namespace);
             return Response.status(NOT_FOUND).build();
         }
         try {
@@ -224,6 +225,6 @@ public class WorkflowTriggerResource {
 
 
     private boolean validateNamespace(String name) {
-        return name != null && NamespaceService.getService().get(name) != null;
+        return name != null && NamespaceService.getService().get(NamespaceId.build(name)) != null;
     }
 }

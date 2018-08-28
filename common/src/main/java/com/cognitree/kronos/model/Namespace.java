@@ -2,19 +2,8 @@ package com.cognitree.kronos.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import java.util.Objects;
-
-public class Namespace {
-    private String name;
+public class Namespace extends NamespaceId {
     private String description;
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
 
     public String getDescription() {
         return description;
@@ -25,30 +14,24 @@ public class Namespace {
     }
 
     @JsonIgnore
-    public String getIdentity() {
-        return name;
+    public NamespaceId getIdentity() {
+        return this;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Namespace)) return false;
-        Namespace namespace = (Namespace) o;
-        return Objects.equals(name, namespace.name) &&
-                Objects.equals(description, namespace.description);
+        return super.equals(o);
     }
 
     @Override
     public int hashCode() {
-
-        return Objects.hash(name, description);
+        return super.hashCode();
     }
 
     @Override
     public String toString() {
         return "Namespace{" +
-                "name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                '}';
+                "description='" + description + '\'' +
+                "} " + super.toString();
     }
 }
