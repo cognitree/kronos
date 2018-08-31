@@ -18,6 +18,7 @@
 package com.cognitree.kronos.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -29,6 +30,7 @@ import java.util.Objects;
 
 @JsonSerialize(as = Workflow.class)
 @JsonDeserialize(as = Workflow.class)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Workflow extends WorkflowId {
 
     private String description;
@@ -73,10 +75,11 @@ public class Workflow extends WorkflowId {
                 "} " + super.toString();
     }
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class WorkflowTask {
 
         private String name;
-        private String taskDefinition;
+        private String type;
         private Map<String, Object> properties = new HashMap<>();
         private List<String> dependsOn = new ArrayList<>();
 
@@ -93,12 +96,12 @@ public class Workflow extends WorkflowId {
             this.name = name;
         }
 
-        public String getTaskDefinition() {
-            return taskDefinition;
+        public String getType() {
+            return type;
         }
 
-        public void setTaskDefinition(String taskDefinition) {
-            this.taskDefinition = taskDefinition;
+        public void setType(String type) {
+            this.type = type;
         }
 
         public Map<String, Object> getProperties() {
@@ -148,7 +151,7 @@ public class Workflow extends WorkflowId {
             WorkflowTask that = (WorkflowTask) o;
             return isEnabled == that.isEnabled &&
                     Objects.equals(name, that.name) &&
-                    Objects.equals(taskDefinition, that.taskDefinition) &&
+                    Objects.equals(type, that.type) &&
                     Objects.equals(properties, that.properties) &&
                     Objects.equals(dependsOn, that.dependsOn) &&
                     Objects.equals(maxExecutionTime, that.maxExecutionTime) &&
@@ -158,14 +161,14 @@ public class Workflow extends WorkflowId {
         @Override
         public int hashCode() {
 
-            return Objects.hash(name, taskDefinition, properties, dependsOn, maxExecutionTime, timeoutPolicy, isEnabled);
+            return Objects.hash(name, type, properties, dependsOn, maxExecutionTime, timeoutPolicy, isEnabled);
         }
 
         @Override
         public String toString() {
             return "WorkflowTask{" +
                     "name='" + name + '\'' +
-                    ", taskDefinition='" + taskDefinition + '\'' +
+                    ", type='" + type + '\'' +
                     ", properties=" + properties +
                     ", dependsOn=" + dependsOn +
                     ", maxExecutionTime='" + maxExecutionTime + '\'' +

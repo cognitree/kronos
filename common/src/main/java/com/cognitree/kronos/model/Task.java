@@ -46,11 +46,11 @@ public interface Task extends TaskId {
 
     Map<String, Object> getContext();
 
-    long getCreatedAt();
+    Long getCreatedAt();
 
-    long getSubmittedAt();
+    Long getSubmittedAt();
 
-    long getCompletedAt();
+    Long getCompletedAt();
 
     @JsonIgnore
     TaskId getIdentity();

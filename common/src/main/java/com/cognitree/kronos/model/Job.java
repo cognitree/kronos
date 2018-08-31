@@ -18,6 +18,7 @@
 package com.cognitree.kronos.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -29,12 +30,13 @@ import static com.cognitree.kronos.model.Job.Status.CREATED;
  */
 @JsonSerialize(as = Job.class)
 @JsonDeserialize(as = Job.class)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Job extends JobId {
     private String workflow;
     private String trigger;
     private Status status = CREATED;
-    private long createdAt;
-    private long completedAt;
+    private Long createdAt;
+    private Long completedAt;
 
     public String getWorkflow() {
         return workflow;
@@ -60,19 +62,19 @@ public class Job extends JobId {
         this.status = status;
     }
 
-    public long getCreatedAt() {
+    public Long getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(long createdAt) {
+    public void setCreatedAt(Long createdAt) {
         this.createdAt = createdAt;
     }
 
-    public long getCompletedAt() {
+    public Long getCompletedAt() {
         return completedAt;
     }
 
-    public void setCompletedAt(long completedAt) {
+    public void setCompletedAt(Long completedAt) {
         this.completedAt = completedAt;
     }
 

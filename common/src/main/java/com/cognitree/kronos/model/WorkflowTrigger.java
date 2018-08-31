@@ -1,22 +1,24 @@
 package com.cognitree.kronos.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @JsonSerialize(as = WorkflowTrigger.class)
 @JsonDeserialize(as = WorkflowTrigger.class)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class WorkflowTrigger extends WorkflowTriggerId {
-    private long startAt;
+    private Long startAt;
     private String schedule;
-    private long endAt;
+    private Long endAt;
     private boolean isEnabled = true;
 
-    public long getStartAt() {
+    public Long getStartAt() {
         return startAt;
     }
 
-    public void setStartAt(long startAt) {
+    public void setStartAt(Long startAt) {
         this.startAt = startAt;
     }
 

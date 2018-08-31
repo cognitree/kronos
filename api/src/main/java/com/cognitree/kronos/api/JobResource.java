@@ -19,12 +19,11 @@ package com.cognitree.kronos.api;
 
 import com.cognitree.kronos.model.Job;
 import com.cognitree.kronos.model.JobId;
-import com.cognitree.kronos.model.NamespaceId;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.response.JobResponse;
 import com.cognitree.kronos.scheduler.JobService;
-import com.cognitree.kronos.scheduler.NamespaceService;
 import com.cognitree.kronos.scheduler.ServiceException;
+import com.cognitree.kronos.scheduler.ValidationException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -65,11 +64,7 @@ public class JobResource {
                                @QueryParam("trigger") String triggerName,
                                @ApiParam(value = "Number of days to fetch jobs from today", defaultValue = "10")
                                @DefaultValue(DEFAULT_DAYS) @QueryParam("date_range") int numberOfDays,
-                               @HeaderParam("namespace") String namespace) throws ServiceException {
-        if (!validateNamespace(namespace)) {
-            return Response.status(BAD_REQUEST).entity("no namespace exists with name " + namespace).build();
-        }
-
+                               @HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
         if (triggerName != null && workflowName == null) {
             return Response.status(BAD_REQUEST)
                     .entity("workflow name is mandatory if trigger name is specified").build();
@@ -102,11 +97,8 @@ public class JobResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getJob(@ApiParam(value = "job id", required = true)
                            @PathParam("id") String id,
-                           @HeaderParam("namespace") String namespace) throws ServiceException {
+                           @HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
         logger.info("Received request to get job with id {} under namespace {}", id, namespace);
-        if (!validateNamespace(namespace)) {
-            return Response.status(BAD_REQUEST).entity("no namespace exists with name " + namespace).build();
-        }
         JobId jobId = JobId.build(id, namespace);
         final Job job = JobService.getService().get(jobId);
         if (job == null) {
@@ -115,9 +107,5 @@ public class JobResource {
         }
         final List<Task> tasks = JobService.getService().getTasks(job);
         return Response.status(OK).entity(JobResponse.create(job, tasks)).build();
-    }
-
-    private boolean validateNamespace(String name) throws ServiceException {
-        return name != null && NamespaceService.getService().get(NamespaceId.build(name)) != null;
     }
 }

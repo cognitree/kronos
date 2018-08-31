@@ -21,6 +21,7 @@ import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import org.junit.Assert;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,17 +31,21 @@ import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
 import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
 import static com.cognitree.kronos.model.Task.Status.WAITING;
 
-public class MockTaskStatusChangeListener implements TaskStatusChangeListener {
-    private Map<String, Status> taskStatusMap = new HashMap<>();
+public class TestTaskStatusChangeListener implements TaskStatusChangeListener {
+    private Map<Task, Status> TASK_STATUS_MAP = Collections.synchronizedMap(new HashMap<>());
+
+    public boolean isStatusReceived(Task task) {
+        return TASK_STATUS_MAP.containsKey(task);
+    }
 
     @Override
     public void statusChanged(Task task, Status from, Status to) {
         // initially all tasks will be in created state
         // update the task status map with created state if task status change notification is received for the first time
-        if (!taskStatusMap.containsKey(task.getName())) {
-            taskStatusMap.put(task.getName(), CREATED);
+        if (!TASK_STATUS_MAP.containsKey(task)) {
+            TASK_STATUS_MAP.put(task, CREATED);
         }
-        final Status lastKnownStatus = taskStatusMap.get(task.getName());
+        final Status lastKnownStatus = TASK_STATUS_MAP.get(task);
         switch (to) {
             case WAITING:
                 if (lastKnownStatus != CREATED) {
@@ -63,17 +68,13 @@ public class MockTaskStatusChangeListener implements TaskStatusChangeListener {
                 }
                 break;
             case SUCCESSFUL:
-                taskStatusMap.remove(task.getName());
                 if (lastKnownStatus != RUNNING) {
                     Assert.fail("invalid task status change notification");
                 }
                 break;
             case FAILED:
-                taskStatusMap.remove(task.getName());
-                // task can be marked failed from any of the above state
                 break;
         }
-        if (!task.getStatus().isFinal())
-            taskStatusMap.put(task.getName(), to);
+        TASK_STATUS_MAP.put(task, task.getStatus());
     }
 }

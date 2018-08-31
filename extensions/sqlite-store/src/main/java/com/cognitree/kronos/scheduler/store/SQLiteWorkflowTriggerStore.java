@@ -43,8 +43,8 @@ public class SQLiteWorkflowTriggerStore implements WorkflowTriggerStore {
             "WHERE namespace = ?";
     private static final String LOAD_ALL_WORKFLOW_TRIGGER_BY_WORKFLOW_NAME = "SELECT * FROM workflow_triggers " +
             "WHERE workflow_name = ? AND namespace = ?";
-    private static final String UPDATE_WORKFLOW_TRIGGER = "UPDATE workflow_triggers set description = ?, schedule = ?," +
-            " tasks = ?, enabled = ? where name = ? AND workflow_name = ? AND namespace = ?";
+    private static final String UPDATE_WORKFLOW_TRIGGER = "UPDATE workflow_triggers set start_at = ?, schedule = ?," +
+            " end_at = ?, enabled = ? where name = ? AND workflow_name = ? AND namespace = ?";
     private static final String DELETE_WORKFLOW_TRIGGER = "DELETE FROM workflow_triggers where name = ? " +
             "AND workflow_name = ? AND namespace = ?";
     private static final String LOAD_WORKFLOW_TRIGGER = "SELECT * FROM workflow_triggers where name = ? " +
@@ -53,9 +53,9 @@ public class SQLiteWorkflowTriggerStore implements WorkflowTriggerStore {
             "name string," +
             "workflow_name string," +
             "namespace string," +
-            "startAt string," +
+            "start_at integer," +
             "schedule string," +
-            "endAt string," +
+            "end_at integer," +
             "enabled boolean," +
             "PRIMARY KEY(name, workflow_name, namespace)" +
             ")";
@@ -106,9 +106,9 @@ public class SQLiteWorkflowTriggerStore implements WorkflowTriggerStore {
             preparedStatement.setString(++paramIndex, workflowTrigger.getName());
             preparedStatement.setString(++paramIndex, workflowTrigger.getWorkflow());
             preparedStatement.setString(++paramIndex, workflowTrigger.getNamespace());
-            preparedStatement.setLong(++paramIndex, workflowTrigger.getStartAt());
+            SQLiteUtil.setLong(preparedStatement, ++paramIndex, workflowTrigger.getStartAt());
             preparedStatement.setString(++paramIndex, workflowTrigger.getSchedule());
-            preparedStatement.setLong(++paramIndex, workflowTrigger.getEndAt());
+            SQLiteUtil.setLong(preparedStatement, ++paramIndex, workflowTrigger.getEndAt());
             preparedStatement.setBoolean(++paramIndex, workflowTrigger.isEnabled());
             preparedStatement.execute();
         } catch (Exception e) {
@@ -184,9 +184,9 @@ public class SQLiteWorkflowTriggerStore implements WorkflowTriggerStore {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_WORKFLOW_TRIGGER)) {
             int paramIndex = 0;
-            preparedStatement.setLong(++paramIndex, workflowTrigger.getStartAt());
+            SQLiteUtil.setLong(preparedStatement, ++paramIndex, workflowTrigger.getStartAt());
             preparedStatement.setString(++paramIndex, workflowTrigger.getSchedule());
-            preparedStatement.setLong(++paramIndex, workflowTrigger.getEndAt());
+            SQLiteUtil.setLong(preparedStatement, ++paramIndex, workflowTrigger.getEndAt());
             preparedStatement.setBoolean(++paramIndex, workflowTrigger.isEnabled());
             preparedStatement.setString(++paramIndex, workflowTrigger.getName());
             preparedStatement.setString(++paramIndex, workflowTrigger.getWorkflow());
@@ -220,9 +220,9 @@ public class SQLiteWorkflowTriggerStore implements WorkflowTriggerStore {
         workflowTrigger.setName(resultSet.getString(++paramIndex));
         workflowTrigger.setWorkflow(resultSet.getString(++paramIndex));
         workflowTrigger.setNamespace(resultSet.getString(++paramIndex));
-        workflowTrigger.setStartAt(resultSet.getLong(++paramIndex));
+        workflowTrigger.setStartAt(SQLiteUtil.getLong(resultSet, ++paramIndex));
         workflowTrigger.setSchedule(resultSet.getString(++paramIndex));
-        workflowTrigger.setEndAt(resultSet.getLong(++paramIndex));
+        workflowTrigger.setEndAt(SQLiteUtil.getLong(resultSet, ++paramIndex));
         workflowTrigger.setEnabled(resultSet.getBoolean(++paramIndex));
         return workflowTrigger;
     }

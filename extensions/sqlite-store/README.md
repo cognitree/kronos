@@ -21,25 +21,6 @@ Other configurable parameters are
     - maxIdleConnection (maximum number of idle connections in the pool)
     - maxOpenPreparedStatements (maximum number of open prepared statements)
 
-## Configuring SQLite Task Definition Store
-
-Update the `taskDefinitionStoreConfig` section in `scheduler.yaml` to configure to sqlite task definition store.
-
-```
-taskDefinitionStoreConfig:
-  storeClass: com.cognitree.kronos.scheduler.store.SQLiteTaskDefinitionStore
-  config:
-    connectionURL: jdbc:sqlite:kronos.db
-    username:
-    password:
-```
-
-Here, A [SQLiteTaskDefinitionStore](src/main/java/com/cognitree/kronos/scheduler/store/SQLiteTaskDefinitionStore.java) is configured. Update the `connectionURL`, `username` and `password` to connect to running sqlite db.
-Other configurable parameters are
-    - minIdleConnection (minimum number of idle connections in the pool)
-    - maxIdleConnection (maximum number of idle connections in the pool)
-    - maxOpenPreparedStatements (maximum number of open prepared statements)
-
 ## Configuring SQLite Workflow Store
 
 Update the `workflowStoreConfig` section in `scheduler.yaml` to configure to sqlite workflow store.

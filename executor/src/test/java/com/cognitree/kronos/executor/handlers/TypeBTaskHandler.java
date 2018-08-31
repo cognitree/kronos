@@ -41,6 +41,6 @@ public class TypeBTaskHandler implements TaskHandler {
     @Override
     public TaskResult handle(Task task) {
         handledTasks.add(task.getName());
-        return TaskResult.SUCCESS;
+        return new TaskResult(false, "error handling task");
     }
 }

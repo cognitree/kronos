@@ -90,7 +90,7 @@ public class NamespaceService implements Service {
     public void update(Namespace namespace) throws ServiceException {
         logger.debug("Received request to update namespace to {}", namespace);
         try {
-            namespaceStore.store(namespace);
+            namespaceStore.update(namespace);
         } catch (StoreException e) {
             logger.error("unable to update namespace to {}", namespace, e);
             throw new ServiceException(e.getMessage());

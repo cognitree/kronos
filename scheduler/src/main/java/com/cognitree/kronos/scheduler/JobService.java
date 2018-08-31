@@ -21,6 +21,8 @@ import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.Job;
 import com.cognitree.kronos.model.JobId;
+import com.cognitree.kronos.model.Namespace;
+import com.cognitree.kronos.model.NamespaceId;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.scheduler.store.JobStore;
 import com.cognitree.kronos.scheduler.store.StoreConfig;
@@ -58,8 +60,9 @@ public class JobService implements Service {
         logger.info("Starting job service");
     }
 
-    public void add(Job job) throws ServiceException {
+    public void add(Job job) throws ServiceException, ValidationException {
         logger.debug("Received request to add job {}", job);
+        validateNamespace(job.getNamespace());
         try {
             jobStore.store(job);
         } catch (StoreException e) {
@@ -68,8 +71,9 @@ public class JobService implements Service {
         }
     }
 
-    public List<Job> get(String namespace) throws ServiceException {
+    public List<Job> get(String namespace) throws ServiceException, ValidationException {
         logger.debug("Received request to get all jobs under namespace {}", namespace);
+        validateNamespace(namespace);
         try {
             return jobStore.load(namespace);
         } catch (StoreException e) {
@@ -78,8 +82,9 @@ public class JobService implements Service {
         }
     }
 
-    public Job get(JobId jobId) throws ServiceException {
+    public Job get(JobId jobId) throws ServiceException, ValidationException {
         logger.debug("Received request to get job {}", jobId);
+        validateNamespace(jobId.getNamespace());
         try {
             return jobStore.load(jobId);
         } catch (StoreException e) {
@@ -88,9 +93,10 @@ public class JobService implements Service {
         }
     }
 
-    public List<Job> get(String namespace, int numberOfDays) throws ServiceException {
+    public List<Job> get(String namespace, int numberOfDays) throws ServiceException, ValidationException {
         logger.debug("Received request to get all jobs under namespace {} submitted in last {} number of days",
                 namespace, numberOfDays);
+        validateNamespace(namespace);
         final long currentTimeMillis = System.currentTimeMillis();
         long createdAfter = currentTimeMillis - (currentTimeMillis % TimeUnit.DAYS.toMillis(1))
                 - TimeUnit.DAYS.toMillis(numberOfDays - 1);
@@ -104,9 +110,10 @@ public class JobService implements Service {
         }
     }
 
-    public List<Job> get(String workflowName, String namespace, int numberOfDays) throws ServiceException {
+    public List<Job> get(String workflowName, String namespace, int numberOfDays) throws ServiceException, ValidationException {
         logger.debug("Received request to get all jobs with workflow name {} under namespace {} submitted " +
                 "in last {} number of days", workflowName, namespace, numberOfDays);
+        validateNamespace(namespace);
         final long currentTimeMillis = System.currentTimeMillis();
         long createdAfter = currentTimeMillis - (currentTimeMillis % TimeUnit.DAYS.toMillis(1))
                 - TimeUnit.DAYS.toMillis(numberOfDays - 1);
@@ -120,9 +127,10 @@ public class JobService implements Service {
         }
     }
 
-    public List<Job> get(String workflowName, String triggerName, String namespace, int numberOfDays) throws ServiceException {
+    public List<Job> get(String workflowName, String triggerName, String namespace, int numberOfDays) throws ServiceException, ValidationException {
         logger.debug("Received request to get all jobs with workflow name {}, trigger {} under namespace {} submitted " +
                 "in last {} number of days", workflowName, triggerName, namespace, numberOfDays);
+        validateNamespace(namespace);
         final long currentTimeMillis = System.currentTimeMillis();
         long createdAfter = currentTimeMillis - (currentTimeMillis % TimeUnit.DAYS.toMillis(1))
                 - TimeUnit.DAYS.toMillis(numberOfDays - 1);
@@ -136,8 +144,9 @@ public class JobService implements Service {
         }
     }
 
-    public List<Task> getTasks(JobId jobId) throws ServiceException {
+    public List<Task> getTasks(JobId jobId) throws ServiceException, ValidationException {
         logger.debug("Received request to get all tasks executed for job {}", jobId);
+        validateNamespace(jobId.getNamespace());
         try {
             return TaskService.getService().get(jobId.getId(), jobId.getNamespace());
         } catch (ServiceException e) {
@@ -146,8 +155,9 @@ public class JobService implements Service {
         }
     }
 
-    public void update(Job job) throws ServiceException {
+    public void update(Job job) throws ServiceException, ValidationException {
         logger.debug("Received request to update job to {}", job);
+        validateNamespace(job.getNamespace());
         try {
             jobStore.update(job);
         } catch (StoreException e) {
@@ -156,13 +166,21 @@ public class JobService implements Service {
         }
     }
 
-    public void delete(JobId jobId) throws ServiceException {
+    public void delete(JobId jobId) throws ServiceException, ValidationException {
         logger.debug("Received request to delete job {}", jobId);
+        validateNamespace(jobId.getNamespace());
         try {
             jobStore.delete(jobId);
         } catch (StoreException e) {
             logger.error("unable to delete job {}", jobId, e);
             throw new ServiceException(e.getMessage());
+        }
+    }
+
+    private void validateNamespace(String name) throws ValidationException, ServiceException {
+        final Namespace namespace = NamespaceService.getService().get(NamespaceId.build(name));
+        if (namespace == null) {
+            throw new ValidationException("no namespace exists with name " + name);
         }
     }
 

@@ -1,0 +1,20 @@
+# name and namespace is set as part of test case
+description: invalid workflow with missing tasks
+tasks:
+  - name: taskOne
+    type: typeSuccess
+    properties:
+      keyA: valA
+      keyB: valB
+  - name: taskTwo
+    type: typeSuccess
+    properties:
+      keyA: valA
+      keyB: valB
+  - name: taskThree
+    type: typeSuccess
+    properties:
+      keyA: valA
+      keyB: valB
+    dependsOn:
+      - taskFour

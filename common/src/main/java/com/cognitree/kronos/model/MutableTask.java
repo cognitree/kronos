@@ -18,6 +18,7 @@
 package com.cognitree.kronos.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -30,6 +31,7 @@ import static com.cognitree.kronos.model.Task.Status.CREATED;
 
 @JsonSerialize(as = MutableTask.class)
 @JsonDeserialize(as = MutableTask.class)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class MutableTask extends MutableTaskId implements Task {
 
     private String type;
@@ -41,9 +43,9 @@ public class MutableTask extends MutableTaskId implements Task {
 
     private Status status = CREATED;
     private String statusMessage;
-    private long createdAt;
-    private long submittedAt;
-    private long completedAt;
+    private Long createdAt;
+    private Long submittedAt;
+    private Long completedAt;
 
     @Override
     public String getType() {
@@ -118,29 +120,29 @@ public class MutableTask extends MutableTaskId implements Task {
     }
 
     @Override
-    public long getCreatedAt() {
+    public Long getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(long createdAt) {
+    public void setCreatedAt(Long createdAt) {
         this.createdAt = createdAt;
     }
 
     @Override
-    public long getSubmittedAt() {
+    public Long getSubmittedAt() {
         return submittedAt;
     }
 
-    public void setSubmittedAt(long submittedAt) {
+    public void setSubmittedAt(Long submittedAt) {
         this.submittedAt = submittedAt;
     }
 
     @Override
-    public long getCompletedAt() {
+    public Long getCompletedAt() {
         return completedAt;
     }
 
-    public void setCompletedAt(long completedAt) {
+    public void setCompletedAt(Long completedAt) {
         this.completedAt = completedAt;
     }
 

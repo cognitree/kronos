@@ -17,10 +17,8 @@
 
 package com.cognitree.kronos.api;
 
-import com.cognitree.kronos.model.NamespaceId;
 import com.cognitree.kronos.model.Workflow;
 import com.cognitree.kronos.model.WorkflowId;
-import com.cognitree.kronos.scheduler.NamespaceService;
 import com.cognitree.kronos.scheduler.ServiceException;
 import com.cognitree.kronos.scheduler.ValidationException;
 import com.cognitree.kronos.scheduler.WorkflowService;
@@ -45,10 +43,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 
@@ -60,11 +56,8 @@ public class WorkflowResource {
     @GET
     @ApiOperation(value = "Get all workflows", response = Workflow.class, responseContainer = "List")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getAllWorkflows(@HeaderParam("namespace") String namespace) throws ServiceException {
+    public Response getAllWorkflows(@HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
         logger.info("Received request to get all workflows under namespace {}", namespace);
-        if (!validateNamespace(namespace)) {
-            return Response.status(BAD_REQUEST).entity("no namespace exists with name " + namespace).build();
-        }
         final List<Workflow> workflows = WorkflowService.getService().get(namespace);
         return Response.status(OK).entity(workflows).build();
     }
@@ -77,14 +70,10 @@ public class WorkflowResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getWorkflow(@ApiParam(value = "workflow name", required = true)
                                 @PathParam("name") String name,
-                                @HeaderParam("namespace") String namespace) throws ServiceException {
+                                @HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
         logger.info("Received request to get workflow with name {} under namespace {}", name, namespace);
-        if (!validateNamespace(namespace)) {
-            return Response.status(BAD_REQUEST).entity("no namespace exists with name " + namespace).build();
-        }
         WorkflowId workflowId = WorkflowId.build(name, namespace);
-        final Workflow workflow =
-                WorkflowService.getService().get(workflowId);
+        final Workflow workflow = WorkflowService.getService().get(workflowId);
         if (workflow == null) {
             logger.error("No workflow exists with name {} under namespace {}", name, namespace);
             return Response.status(NOT_FOUND).build();
@@ -97,21 +86,14 @@ public class WorkflowResource {
     @ApiResponses(value = {
             @ApiResponse(code = 409, message = "Workflow already exists")})
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addWorkflow(@HeaderParam("namespace") String namespace, Workflow workflow) throws ServiceException {
+    public Response addWorkflow(@HeaderParam("namespace") String namespace, Workflow workflow) throws ServiceException, ValidationException {
         workflow.setNamespace(namespace);
         logger.info("Received request to add workflow {} under namespace {}", workflow, namespace);
-        if (!validateNamespace(namespace)) {
-            return Response.status(BAD_REQUEST).entity("no namespace exists with name " + namespace).build();
-        }
         if (WorkflowService.getService().get(workflow) != null) {
             logger.error("Workflow already exists with name {} under namespace {}", workflow.getName(), namespace);
             return Response.status(CONFLICT).build();
         }
-        try {
-            WorkflowService.getService().add(workflow);
-        } catch (ValidationException e) {
-            return Response.status(BAD_REQUEST).entity(e.getMessage()).build();
-        }
+        WorkflowService.getService().add(workflow);
         return Response.status(CREATED).entity(workflow).build();
     }
 
@@ -124,25 +106,16 @@ public class WorkflowResource {
     public Response updateWorkflow(@ApiParam(value = "workflow name", required = true)
                                    @PathParam("name") String name,
                                    @HeaderParam("namespace") String namespace,
-                                   Workflow workflow) throws ServiceException {
+                                   Workflow workflow) throws ServiceException, ValidationException, SchedulerException {
         workflow.setName(name);
         workflow.setNamespace(namespace);
         logger.info("Received request to update workflow with name {} under namespace {} to {}",
                 name, namespace, workflow);
-        if (!validateNamespace(namespace)) {
-            return Response.status(BAD_REQUEST).entity("no namespace exists with name " + namespace).build();
-        }
         if (WorkflowService.getService().get(workflow) == null) {
             logger.error("No workflow exists with name {} under namespace {}", name, namespace);
             return Response.status(NOT_FOUND).build();
         }
-        try {
-            WorkflowService.getService().update(workflow);
-        } catch (ValidationException e) {
-            return Response.status(BAD_REQUEST).entity(e.getMessage()).build();
-        } catch (SchedulerException e) {
-            return Response.status(INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
-        }
+        WorkflowService.getService().update(workflow);
         return Response.status(OK).entity(workflow).build();
     }
 
@@ -153,25 +126,14 @@ public class WorkflowResource {
             @ApiResponse(code = 404, message = "Workflow not found")})
     public Response deleteWorkflow(@ApiParam(value = "workflow name", required = true)
                                    @PathParam("name") String name,
-                                   @HeaderParam("namespace") String namespace) throws ServiceException {
+                                   @HeaderParam("namespace") String namespace) throws ServiceException, SchedulerException, ValidationException {
         logger.info("Received request to delete workflow with name {} under namespace {}", name, namespace);
-        if (!validateNamespace(namespace)) {
-            return Response.status(BAD_REQUEST).entity("no namespace exists with name " + namespace).build();
-        }
         WorkflowId workflowId = WorkflowId.build(name, namespace);
         if (WorkflowService.getService().get(workflowId) == null) {
             logger.error("No workflow exists with name {} under namespace {}", name, namespace);
             return Response.status(NOT_FOUND).build();
         }
-        try {
-            WorkflowService.getService().delete(workflowId);
-        } catch (SchedulerException ex) {
-            return Response.status(INTERNAL_SERVER_ERROR).entity(ex.getMessage()).build();
-        }
+        WorkflowService.getService().delete(workflowId);
         return Response.status(OK).build();
-    }
-
-    private boolean validateNamespace(String name) throws ServiceException {
-        return name != null && NamespaceService.getService().get(NamespaceId.build(name)) != null;
     }
 }

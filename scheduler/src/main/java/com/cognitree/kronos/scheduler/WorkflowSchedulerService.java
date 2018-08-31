@@ -28,8 +28,6 @@ import com.cognitree.kronos.model.Workflow;
 import com.cognitree.kronos.model.Workflow.WorkflowTask;
 import com.cognitree.kronos.model.WorkflowTrigger;
 import com.cognitree.kronos.model.WorkflowTriggerId;
-import com.cognitree.kronos.model.definitions.TaskDefinition;
-import com.cognitree.kronos.model.definitions.TaskDefinitionId;
 import com.cognitree.kronos.scheduler.graph.TopologicalSort;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.CronTrigger;
@@ -79,7 +77,7 @@ public final class WorkflowSchedulerService implements Service {
         TaskSchedulerService.getService().registerListener(new WorkflowLifecycleHandler());
     }
 
-    private void scheduleExistingWorkflows() throws ServiceException {
+    private void scheduleExistingWorkflows() throws ServiceException, ValidationException {
         final List<Namespace> namespaces = NamespaceService.getService().get();
         final List<Workflow> workflows = new ArrayList<>();
         for (Namespace namespace : namespaces) {
@@ -123,12 +121,12 @@ public final class WorkflowSchedulerService implements Service {
         final TriggerBuilder<CronTrigger> triggerBuilder = newTrigger()
                 .withIdentity(getTriggerKey(workflowTrigger))
                 .withSchedule(jobSchedule);
-        final long startAt = workflowTrigger.getStartAt();
-        if (startAt > 0) {
+        final Long startAt = workflowTrigger.getStartAt();
+        if (startAt != null && startAt > 0) {
             triggerBuilder.startAt(new Date(startAt));
         }
-        final long endAt = workflowTrigger.getEndAt();
-        if (endAt > 0) {
+        final Long endAt = workflowTrigger.getEndAt();
+        if (endAt != null && endAt > 0) {
             triggerBuilder.endAt(new Date(endAt));
         }
         scheduler.scheduleJob(jobDetail, triggerBuilder.build());
@@ -165,7 +163,7 @@ public final class WorkflowSchedulerService implements Service {
         return CronScheduleBuilder.cronSchedule(workflowTrigger.getSchedule());
     }
 
-    Job execute(Workflow workflow, WorkflowTrigger workflowTrigger) throws ServiceException {
+    Job execute(Workflow workflow, WorkflowTrigger workflowTrigger) throws ServiceException, ValidationException {
         logger.info("Received request to execute workflow {} by trigger {}", workflow, workflowTrigger);
         final Job job = createWorkflowJob(workflow.getName(), workflow.getNamespace(), workflowTrigger.getName());
         JobService.getService().add(job);
@@ -221,27 +219,21 @@ public final class WorkflowSchedulerService implements Service {
             return;
         }
 
-        TaskDefinitionId taskDefinitionId = TaskDefinitionId.build(workflowTask.getTaskDefinition());
-        final TaskDefinition taskDefinition = TaskDefinitionService.getService().get(taskDefinitionId);
-        final Task task = createTask(workflowId, workflowTask, taskDefinition, namespace);
+        final Task task = createTask(workflowId, workflowTask, namespace);
         TaskSchedulerService.getService().schedule(task);
     }
 
-    private Task createTask(String workflowId, WorkflowTask workflowTask,
-                            TaskDefinition taskDefinition, String namespace) {
+    private Task createTask(String workflowId, WorkflowTask workflowTask, String namespace) {
         MutableTask task = new MutableTask();
         task.setName(UUID.randomUUID().toString());
         task.setJob(workflowId);
         task.setName(workflowTask.getName());
         task.setNamespace(namespace);
-        task.setType(taskDefinition.getType());
+        task.setType(workflowTask.getType());
         task.setMaxExecutionTime(workflowTask.getMaxExecutionTime());
         task.setTimeoutPolicy(workflowTask.getTimeoutPolicy());
         task.setDependsOn(workflowTask.getDependsOn());
-        final HashMap<String, Object> taskProperties = new HashMap<>();
-        taskProperties.putAll(taskDefinition.getProperties());
-        taskProperties.putAll(workflowTask.getProperties());
-        task.setProperties(taskProperties);
+        task.setProperties(workflowTask.getProperties());
         task.setCreatedAt(System.currentTimeMillis());
         return task;
     }
@@ -294,7 +286,7 @@ public final class WorkflowSchedulerService implements Service {
                     job.setCompletedAt(System.currentTimeMillis());
                     JobService.getService().update(job);
                 }
-            } catch (ServiceException e) {
+            } catch (ServiceException | ValidationException e) {
                 logger.error("Error handling status change for task {}, from {} to {}", task, from, to, e);
             }
         }
@@ -312,7 +304,7 @@ public final class WorkflowSchedulerService implements Service {
             final WorkflowTrigger trigger = (WorkflowTrigger) jobDataMap.get("trigger");
             try {
                 WorkflowSchedulerService.getService().execute(workflow, trigger);
-            } catch (ServiceException e) {
+            } catch (ServiceException | ValidationException e) {
                 logger.error("Error executing workflow {} for trigger {}", workflow, trigger, e);
             }
         }

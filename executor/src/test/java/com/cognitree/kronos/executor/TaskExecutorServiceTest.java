@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
+import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.RUNNING;
 import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
 import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
@@ -71,6 +72,18 @@ public class TaskExecutorServiceTest {
         sleep(100);
         consumeTaskStatus(tasksMap);
         Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
+    }
+
+    @Test
+    public void testTaskExecutionNegative() throws JsonProcessingException, InterruptedException {
+        final HashMap<TaskId, Task> tasksMap = new HashMap<>();
+        Task taskOne = MockTaskBuilder.getTaskBuilder().setName("failTask").setType("typeB").setStatus(SCHEDULED).build();
+        tasksMap.put(taskOne, taskOne);
+        TaskExecutionService.getService().getProducer().send(taskOne.getType(), MAPPER.writeValueAsString(taskOne));
+        sleep(100);
+        consumeTaskStatus(tasksMap);
+        Assert.assertEquals(FAILED, taskOne.getStatus());
+        Assert.assertEquals("error handling task", taskOne.getStatusMessage());
     }
 
     @Test

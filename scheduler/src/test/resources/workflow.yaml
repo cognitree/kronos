@@ -1,0 +1,22 @@
+# name and namespace is set in the test case
+description: test workflow
+tasks:
+  - name: taskOne
+    type: typeSuccess
+    properties:
+      keyA: valA
+      keyB: valB
+  - name: taskTwo
+    type: typeSuccess
+    properties:
+      keyA: valA
+      keyB: valB
+    dependsOn:
+      - taskOne
+  - name: taskThree
+    type: typeSuccess
+    properties:
+      keyA: valA
+      keyB: valB
+    dependsOn:
+      - taskTwo

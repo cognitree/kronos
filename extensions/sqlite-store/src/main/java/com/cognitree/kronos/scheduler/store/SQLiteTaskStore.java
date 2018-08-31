@@ -134,9 +134,9 @@ public class SQLiteTaskStore implements TaskStore {
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(task.getContext()));
             preparedStatement.setString(++paramIndex, task.getStatus().name());
             preparedStatement.setString(++paramIndex, task.getStatusMessage());
-            preparedStatement.setLong(++paramIndex, task.getCreatedAt());
-            preparedStatement.setLong(++paramIndex, task.getSubmittedAt());
-            preparedStatement.setLong(++paramIndex, task.getCompletedAt());
+            SQLiteUtil.setLong(preparedStatement, ++paramIndex, task.getCreatedAt());
+            SQLiteUtil.setLong(preparedStatement, ++paramIndex, task.getSubmittedAt());
+            SQLiteUtil.setLong(preparedStatement, ++paramIndex, task.getCompletedAt());
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error storing task {} into database", task, e);
@@ -192,8 +192,8 @@ public class SQLiteTaskStore implements TaskStore {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, task.getStatus().name());
             preparedStatement.setString(++paramIndex, task.getStatusMessage());
-            preparedStatement.setLong(++paramIndex, task.getSubmittedAt());
-            preparedStatement.setLong(++paramIndex, task.getCompletedAt());
+            SQLiteUtil.setLong(preparedStatement, ++paramIndex, task.getSubmittedAt());
+            SQLiteUtil.setLong(preparedStatement, ++paramIndex, task.getCompletedAt());
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(task.getContext()));
             preparedStatement.setString(++paramIndex, taskId.getName());
             preparedStatement.setString(++paramIndex, taskId.getJob());
@@ -278,9 +278,9 @@ public class SQLiteTaskStore implements TaskStore {
         task.setContext(MAPPER.readValue(resultSet.getString(++paramIndex), PROPERTIES_TYPE_REF));
         task.setStatus(Status.valueOf(resultSet.getString(++paramIndex)));
         task.setStatusMessage(resultSet.getString(++paramIndex));
-        task.setCreatedAt(resultSet.getLong(++paramIndex));
-        task.setSubmittedAt(resultSet.getLong(++paramIndex));
-        task.setCompletedAt(resultSet.getLong(++paramIndex));
+        task.setCreatedAt(SQLiteUtil.getLong(resultSet, ++paramIndex));
+        task.setSubmittedAt(SQLiteUtil.getLong(resultSet, ++paramIndex));
+        task.setCompletedAt(SQLiteUtil.getLong(resultSet, ++paramIndex));
         return task;
     }
 

@@ -20,10 +20,9 @@ package com.cognitree.kronos;
 import com.cognitree.kronos.model.Namespace;
 import com.cognitree.kronos.model.Workflow;
 import com.cognitree.kronos.model.WorkflowTrigger;
-import com.cognitree.kronos.model.definitions.TaskDefinition;
 import com.cognitree.kronos.scheduler.NamespaceService;
 import com.cognitree.kronos.scheduler.ServiceException;
-import com.cognitree.kronos.scheduler.TaskDefinitionService;
+import com.cognitree.kronos.scheduler.ValidationException;
 import com.cognitree.kronos.scheduler.WorkflowService;
 import com.cognitree.kronos.scheduler.WorkflowTriggerService;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -41,9 +40,6 @@ public class FileReader {
     private static final Logger logger = LoggerFactory.getLogger(FileReader.class);
 
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
-    private static final TypeReference<List<TaskDefinition>> TASK_DEFINITION_LIST_REF =
-            new TypeReference<List<TaskDefinition>>() {
-            };
     private static final TypeReference<List<Namespace>> NAMESPACE_LIST_REF =
             new TypeReference<List<Namespace>>() {
             };
@@ -53,20 +49,6 @@ public class FileReader {
     private static final TypeReference<List<WorkflowTrigger>> WORKFLOW_TRIGGER_LIST_REF =
             new TypeReference<List<WorkflowTrigger>>() {
             };
-
-    public void loadTaskDefinitions() throws IOException, ServiceException {
-        final InputStream resourceAsStream =
-                FileReader.class.getClassLoader().getResourceAsStream("task-definitions.yaml");
-        List<TaskDefinition> taskDefinitions = MAPPER.readValue(resourceAsStream, TASK_DEFINITION_LIST_REF);
-
-        for (TaskDefinition taskDefinition : taskDefinitions) {
-            if (TaskDefinitionService.getService().get(taskDefinition) == null) {
-                TaskDefinitionService.getService().add(taskDefinition);
-            } else {
-                logger.warn("Task definition with id {} already exists", taskDefinition.getIdentity());
-            }
-        }
-    }
 
     public void loadNamespaces() throws IOException, ServiceException {
         final InputStream resourceAsStream =
@@ -86,7 +68,7 @@ public class FileReader {
         }
     }
 
-    public void loadWorkflows() throws IOException, ServiceException {
+    public void loadWorkflows() throws IOException, ServiceException, ValidationException {
         final InputStream resourceAsStream =
                 FileReader.class.getClassLoader().getResourceAsStream("workflows.yaml");
         List<Workflow> workflows = MAPPER.readValue(resourceAsStream, WORKFLOW_LIST_REF);
@@ -104,7 +86,7 @@ public class FileReader {
         }
     }
 
-    public void loadWorkflowTriggers() throws IOException, ServiceException {
+    public void loadWorkflowTriggers() throws IOException, ServiceException, ValidationException {
         final InputStream resourceAsStream =
                 FileReader.class.getClassLoader().getResourceAsStream("workflow-triggers.yaml");
         List<WorkflowTrigger> workflowTriggers = MAPPER.readValue(resourceAsStream, WORKFLOW_TRIGGER_LIST_REF);

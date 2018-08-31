@@ -1,0 +1,21 @@
+# name and namespace is set as part of test case
+description: invalid workflow with dependency on disabled tasks
+tasks:
+  - name: taskOne
+    type: typeSuccess
+    properties:
+      keyA: valA
+      keyB: valB
+  - name: taskTwo
+    type: typeSuccess
+    properties:
+      keyA: valA
+      keyB: valB
+    enabled: false
+  - name: taskThree
+    type: typeSuccess
+    properties:
+      keyA: valA
+      keyB: valB
+    dependsOn:
+      - taskTwo

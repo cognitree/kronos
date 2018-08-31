@@ -6,14 +6,6 @@ namespaceStoreConfig:
     username:
     password:
 
-# configure task definition store
-taskDefinitionStoreConfig:
-  storeClass: com.cognitree.kronos.scheduler.store.SQLiteTaskDefinitionStore
-  config:
-    connectionURL: jdbc:sqlite:kronos.db
-    username:
-    password:
-
 # configure task store
 taskStoreConfig:
   storeClass: com.cognitree.kronos.scheduler.store.SQLiteTaskStore

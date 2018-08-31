@@ -61,7 +61,6 @@ public class SchedulerApp {
 
         // initialize service
         NamespaceService.getService().init();
-        TaskDefinitionService.getService().init();
         TaskService.getService().init();
         WorkflowService.getService().init();
         JobService.getService().init();
@@ -71,7 +70,6 @@ public class SchedulerApp {
 
         // start service
         NamespaceService.getService().start();
-        TaskDefinitionService.getService().start();
         TaskService.getService().start();
         WorkflowService.getService().start();
         JobService.getService().start();
@@ -84,10 +82,6 @@ public class SchedulerApp {
         NamespaceService namespaceService =
                 new NamespaceService(schedulerConfig.getNamespaceStoreConfig());
         ServiceProvider.registerService(namespaceService);
-
-        TaskDefinitionService taskDefinitionService =
-                new TaskDefinitionService(schedulerConfig.getTaskDefinitionStoreConfig());
-        ServiceProvider.registerService(taskDefinitionService);
 
         TaskService taskService = new TaskService(schedulerConfig.getTaskStoreConfig());
         ServiceProvider.registerService(taskService);
@@ -130,9 +124,6 @@ public class SchedulerApp {
         }
         if (TaskService.getService() != null) {
             TaskService.getService().stop();
-        }
-        if (TaskDefinitionService.getService() != null) {
-            TaskDefinitionService.getService().stop();
         }
         if (NamespaceService.getService() != null) {
             NamespaceService.getService().stop();

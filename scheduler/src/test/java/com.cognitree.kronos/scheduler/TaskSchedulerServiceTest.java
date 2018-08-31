@@ -20,6 +20,7 @@ package com.cognitree.kronos.scheduler;
 import com.cognitree.kronos.MockTaskBuilder;
 import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
+import com.cognitree.kronos.model.Task.TaskUpdate;
 import com.cognitree.kronos.util.DateTimeUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,7 +28,9 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -45,6 +48,7 @@ import static com.cognitree.kronos.util.Messages.TIMED_OUT;
 import static java.lang.Thread.sleep;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TaskSchedulerServiceTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -54,7 +58,6 @@ public class TaskSchedulerServiceTest {
     @BeforeClass
     public static void init() throws Exception {
         SCHEDULER_APP.start();
-        TaskSchedulerService.getService().registerListener(new MockTaskStatusChangeListener());
     }
 
     @AfterClass
@@ -66,43 +69,10 @@ public class TaskSchedulerServiceTest {
     public void initialize() throws ServiceException {
         // reinit will clear all the tasks from task provider
         TaskSchedulerService.getService().reinitTaskProvider();
-        // clear off any old records from topic test
-        TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
     }
 
     @Test
     public void testAddTask() throws InterruptedException, IOException, ServiceException {
-        Task taskOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setType(TASK_TYPE).build();
-        Assert.assertEquals(0, TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE).size());
-        TaskSchedulerService.getService().schedule(taskOne);
-        final List<String> tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
-        Assert.assertEquals(1, tasks.size());
-        Assert.assertEquals(taskOne, MAPPER.readValue(tasks.get(0), MutableTask.class));
-        Assert.assertEquals(1, TaskSchedulerService.getService().getTaskProvider().size());
-        Assert.assertEquals(SCHEDULED, taskOne.getStatus());
-        finishExecution(taskOne);
-        sleep(100);
-        Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
-    }
-
-    @Test
-    public void testAddDuplicateTask() throws InterruptedException, IOException, ServiceException {
-        Task taskOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setType(TASK_TYPE).build();
-        Assert.assertEquals(0, TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE).size());
-        TaskSchedulerService.getService().schedule(taskOne);
-        TaskSchedulerService.getService().schedule(taskOne);
-        final List<String> tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
-        Assert.assertEquals(1, tasks.size());
-        Assert.assertEquals(taskOne, MAPPER.readValue(tasks.get(0), MutableTask.class));
-        Assert.assertEquals(1, TaskSchedulerService.getService().getTaskProvider().size());
-        Assert.assertEquals(SCHEDULED, taskOne.getStatus());
-        finishExecution(taskOne);
-        sleep(500);
-        Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
-    }
-
-    @Test
-    public void testAddIndependentTasks() throws IOException, InterruptedException, ServiceException {
         final TaskProvider taskProvider = TaskSchedulerService.getService().getTaskProvider();
         Task taskOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setType(TASK_TYPE).build();
         TaskSchedulerService.getService().schedule(taskOne);
@@ -136,7 +106,22 @@ public class TaskSchedulerServiceTest {
     }
 
     @Test
-    public void addTaskWithMissingDependency() throws InterruptedException, IOException, ServiceException {
+    public void testAddDuplicateTask() throws InterruptedException, IOException, ServiceException {
+        Task taskOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setType(TASK_TYPE).build();
+        TaskSchedulerService.getService().schedule(taskOne);
+        TaskSchedulerService.getService().schedule(taskOne);
+        final List<String> tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
+        Assert.assertEquals(1, tasks.size());
+        Assert.assertEquals(taskOne, MAPPER.readValue(tasks.get(0), MutableTask.class));
+        Assert.assertEquals(1, TaskSchedulerService.getService().getTaskProvider().size());
+        Assert.assertEquals(SCHEDULED, taskOne.getStatus());
+        finishExecution(taskOne);
+        sleep(500);
+        Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
+    }
+
+    @Test
+    public void testAddTaskWithMissingDependency() throws InterruptedException, IOException, ServiceException {
         final long createdAt = System.currentTimeMillis();
         Task taskOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setType(TASK_TYPE).setCreatedAt(createdAt).build();
         List<String> dependsOn = new ArrayList<>();
@@ -157,7 +142,7 @@ public class TaskSchedulerServiceTest {
     }
 
     @Test
-    public void testAddTaskWithDifferentWorkflowIdWithDependency() throws InterruptedException, IOException, ServiceException {
+    public void testAddTaskInWorkflowSameName() throws InterruptedException, IOException, ServiceException {
         final long createdAt = System.currentTimeMillis();
         Task taskOneGroupOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setJob("workflowOne")
                 .setType(TASK_TYPE).setCreatedAt(createdAt).build();
@@ -228,7 +213,7 @@ public class TaskSchedulerServiceTest {
     }
 
     @Test
-    public void testAddTaskInDifferentNamespaceWithDependency() throws InterruptedException, IOException, ServiceException {
+    public void testAddTaskInDifferentNamespace() throws InterruptedException, IOException, ServiceException {
         final long createdAt = System.currentTimeMillis();
         Task taskOneGroupOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setNamespace("namespaceOne")
                 .setType(TASK_TYPE).setCreatedAt(createdAt).build();
@@ -400,6 +385,29 @@ public class TaskSchedulerServiceTest {
         Assert.assertNull(task.getProperties().get("keyFive"));
     }
 
+    @Test
+    public void testTaskStatusListener() throws ServiceException, IOException, InterruptedException {
+        final TestTaskStatusChangeListener taskStatusChangeListener = new TestTaskStatusChangeListener();
+        TaskSchedulerService.getService().registerListener(taskStatusChangeListener);
+        Task taskOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setType(TASK_TYPE).build();
+        TaskSchedulerService.getService().schedule(taskOne);
+        Assert.assertEquals(SCHEDULED, taskOne.getStatus());
+        finishExecution(taskOne);
+        sleep(100);
+        Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
+        Assert.assertTrue(taskStatusChangeListener.isStatusReceived(taskOne));
+
+        TaskSchedulerService.getService().deregisterListener(taskStatusChangeListener);
+        Task taskTwo = MockTaskBuilder.getTaskBuilder().setName("taskTwo").setType(TASK_TYPE).build();
+        TaskSchedulerService.getService().schedule(taskTwo);
+
+        Assert.assertEquals(SCHEDULED, taskTwo.getStatus());
+        finishExecution(taskTwo);
+        sleep(100);
+        Assert.assertEquals(SUCCESSFUL, taskTwo.getStatus());
+        Assert.assertFalse(taskStatusChangeListener.isStatusReceived(taskTwo));
+    }
+
     private void finishExecution(Task task) throws JsonProcessingException {
         pushStatusUpdate(task, SUBMITTED);
         pushStatusUpdate(task, RUNNING);
@@ -407,7 +415,7 @@ public class TaskSchedulerServiceTest {
     }
 
     private void pushStatusUpdate(Task task, Task.Status status) throws JsonProcessingException {
-        Task.TaskUpdate taskUpdate = new Task.TaskUpdate();
+        TaskUpdate taskUpdate = new TaskUpdate();
         taskUpdate.setTaskId(task);
         taskUpdate.setStatus(status);
         taskUpdate.setStatusMessage(task.getStatusMessage());

@@ -3,22 +3,35 @@
   description: test workflow
   tasks:
     - name: taskOne
-      taskDefinition: echo
+      type: shellCommand
       properties:
+        cmd: echo
         args: Hello World from task one
+        workingDir: /tmp/
+        logDir: /tmp/
     - name: taskTwo
-      taskDefinition: echo
+      type: shellCommand
       properties:
+        cmd: echo
         args: Hello World from task two
+        workingDir: /tmp/
+        logDir: /tmp/
     - name: taskThree
-      taskDefinition: echo
+      type: shellCommand
       properties:
+        cmd: echo
         args: Hello World from task three
+        workingDir: /tmp/
+        logDir: /tmp/
       dependsOn:
         - taskTwo
 #    - name: SparkPi
-#      taskDefinition: SparkPi
+#      type: spark
 #      properties:
+#        sparkVersion: 2.3.1
+#        masterHost: localhost
+#        masterPort: 6066
+#        clusterMode: spark
 #        submitRequest:
 #          appResource: file:/spark-examples_2.11-2.3.1.jar
 #          appArgs: []

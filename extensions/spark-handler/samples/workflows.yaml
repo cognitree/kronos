@@ -3,7 +3,12 @@
   description: sample workflow with tasks of type spark
   tasks:
     - name: SparkPi
-      taskDefinition: SparkPi
+      type: spark
+      properties:
+        sparkVersion: 2.3.1
+        masterHost: localhost
+        masterPort: 6066
+        clusterMode: spark
       properties:
         submitRequest:
           appResource: file:/spark-examples_2.11-2.3.1.jar

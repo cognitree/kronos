@@ -53,7 +53,6 @@ public class Application {
         schedulerApp.start();
         executorApp.start();
         fileReader.loadNamespaces();
-        fileReader.loadTaskDefinitions();
         fileReader.loadWorkflows();
         fileReader.loadWorkflowTriggers();
     }

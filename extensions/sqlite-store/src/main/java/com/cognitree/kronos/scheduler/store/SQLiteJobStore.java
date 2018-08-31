@@ -117,8 +117,8 @@ public class SQLiteJobStore implements JobStore {
             preparedStatement.setString(++paramIndex, job.getTrigger());
             preparedStatement.setString(++paramIndex, job.getNamespace());
             preparedStatement.setString(++paramIndex, job.getStatus().name());
-            preparedStatement.setLong(++paramIndex, job.getCreatedAt());
-            preparedStatement.setLong(++paramIndex, job.getCompletedAt());
+            SQLiteUtil.setLong(preparedStatement, ++paramIndex, job.getCreatedAt());
+            SQLiteUtil.setLong(preparedStatement, ++paramIndex, job.getCompletedAt());
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error storing job {} into database", job, e);
@@ -245,8 +245,8 @@ public class SQLiteJobStore implements JobStore {
              PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_JOB)) {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, job.getStatus().name());
-            preparedStatement.setLong(++paramIndex, job.getCreatedAt());
-            preparedStatement.setLong(++paramIndex, job.getCompletedAt());
+            SQLiteUtil.setLong(preparedStatement, ++paramIndex, job.getCreatedAt());
+            SQLiteUtil.setLong(preparedStatement, ++paramIndex, job.getCompletedAt());
             preparedStatement.setString(++paramIndex, jobId.getId());
             preparedStatement.setString(++paramIndex, jobId.getNamespace());
             preparedStatement.execute();
@@ -279,8 +279,8 @@ public class SQLiteJobStore implements JobStore {
         job.setTrigger(resultSet.getString(++paramIndex));
         job.setNamespace(resultSet.getString(++paramIndex));
         job.setStatus(Job.Status.valueOf(resultSet.getString(++paramIndex)));
-        job.setCreatedAt(resultSet.getLong(++paramIndex));
-        job.setCompletedAt(resultSet.getLong(++paramIndex));
+        job.setCreatedAt(SQLiteUtil.getLong(resultSet, ++paramIndex));
+        job.setCompletedAt(SQLiteUtil.getLong(resultSet, ++paramIndex));
         return job;
     }
 

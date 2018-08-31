@@ -1,0 +1,20 @@
+# name and namespace will be set while creating a workflow
+description: sample workflow
+tasks:
+  - name: taskOne
+    type: typeSuccess
+    properties:
+      keyA: valA
+      keyB: valB
+  - name: taskTwo
+    type: typeFailure
+    properties:
+      keyA: valA
+      keyB: valB
+  - name: taskThree
+    type: typeSuccess
+    properties:
+      keyA: valA
+      keyB: valB
+    dependsOn:
+      - taskTwo
