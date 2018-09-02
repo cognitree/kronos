@@ -28,9 +28,9 @@ import java.util.List;
  */
 public interface TaskStore extends Store<Task, TaskId> {
 
-    List<Task> load(String namespace) throws StoreException;
+    List<Task> loadByStatusIn(String namespace) throws StoreException;
 
     List<Task> loadByJobId(String jobId, String namespace) throws StoreException;
 
-    List<Task> load(List<Status> statuses, String namespace) throws StoreException;
+    List<Task> loadByStatus(List<Status> statuses, String namespace) throws StoreException;
 }

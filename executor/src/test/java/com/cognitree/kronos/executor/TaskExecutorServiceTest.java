@@ -24,6 +24,7 @@ import com.cognitree.kronos.executor.handlers.TypeBTaskHandler;
 import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.TaskId;
+import com.cognitree.kronos.model.TaskUpdate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.AfterClass;
@@ -140,7 +141,7 @@ public class TaskExecutorServiceTest {
         final List<String> tasksStatus = TaskExecutionService.getService().getConsumer().poll("taskstatus");
         tasksStatus.forEach(taskStatus -> {
             try {
-                final Task.TaskUpdate taskUpdate = MAPPER.readValue(taskStatus, Task.TaskUpdate.class);
+                final TaskUpdate taskUpdate = MAPPER.readValue(taskStatus, TaskUpdate.class);
                 final MutableTask task = (MutableTask) tasksMap.get(taskUpdate.getTaskId());
                 task.setStatus(taskUpdate.getStatus());
                 task.setStatusMessage(taskUpdate.getStatusMessage());

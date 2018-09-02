@@ -145,7 +145,7 @@ public class SQLiteTaskStore implements TaskStore {
     }
 
     @Override
-    public List<Task> load(String namespace) throws StoreException {
+    public List<Task> loadByStatusIn(String namespace) throws StoreException {
         logger.debug("Received request to get all tasks in namespace {}", namespace);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_ALL_TASKS_BY_NAMESPACE)) {
@@ -226,7 +226,7 @@ public class SQLiteTaskStore implements TaskStore {
     }
 
     @Override
-    public List<Task> load(List<Status> statuses, String namespace) throws StoreException {
+    public List<Task> loadByStatus(List<Status> statuses, String namespace) throws StoreException {
         // TODO handle namespace
         logger.debug("Received request to get all tasks with status in {}, namespace {}", statuses, namespace);
         String placeHolders = String.join(",", Collections.nCopies(statuses.size(), "?"));

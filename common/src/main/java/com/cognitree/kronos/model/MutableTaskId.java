@@ -77,7 +77,6 @@ public class MutableTaskId implements TaskId {
 
     @Override
     public int hashCode() {
-
         return Objects.hash(name, job, namespace);
     }
 

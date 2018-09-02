@@ -17,8 +17,8 @@
 
 package com.cognitree.kronos.executor.handlers;
 
+import com.cognitree.kronos.executor.model.TaskResult;
 import com.cognitree.kronos.model.Task;
-import com.cognitree.kronos.model.Task.TaskResult;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

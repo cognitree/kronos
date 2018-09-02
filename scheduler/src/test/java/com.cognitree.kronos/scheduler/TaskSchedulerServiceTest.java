@@ -20,7 +20,7 @@ package com.cognitree.kronos.scheduler;
 import com.cognitree.kronos.MockTaskBuilder;
 import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
-import com.cognitree.kronos.model.Task.TaskUpdate;
+import com.cognitree.kronos.model.TaskUpdate;
 import com.cognitree.kronos.util.DateTimeUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -46,7 +46,7 @@ public class InMemoryTaskStore implements TaskStore {
     }
 
     @Override
-    public List<Task> load(String namespace) {
+    public List<Task> loadByStatusIn(String namespace) {
         List<Task> tasks = new ArrayList<>();
         this.tasks.values().forEach(task -> {
             if (task.getNamespace().equals(namespace)) {
@@ -78,7 +78,7 @@ public class InMemoryTaskStore implements TaskStore {
     }
 
     @Override
-    public List<Task> load(List<Status> statuses, String namespace) {
+    public List<Task> loadByStatus(List<Status> statuses, String namespace) {
         List<Task> tasks = new ArrayList<>();
         this.tasks.values().forEach(task -> {
             if (task.getNamespace().equals(namespace) && statuses.contains(task.getStatus())) {

@@ -58,7 +58,7 @@ public class TaskService implements Service {
     public List<Task> get(String namespace) throws ServiceException {
         logger.debug("Received request to get all tasks under namespace {}", namespace);
         try {
-            return taskStore.load(namespace);
+            return taskStore.loadByStatusIn(namespace);
         } catch (StoreException e) {
             logger.error("unable to get all tasks under namespace {}", namespace, e);
             throw new ServiceException(e.getMessage());
@@ -91,7 +91,7 @@ public class TaskService implements Service {
         logger.debug("Received request to get all tasks having status in {} under namespace {}",
                 statuses, namespace);
         try {
-            return taskStore.load(statuses, namespace);
+            return taskStore.loadByStatus(statuses, namespace);
         } catch (StoreException e) {
             logger.error("unable to get all tasks having status in {} under namespace {}",
                     statuses, namespace, e);
