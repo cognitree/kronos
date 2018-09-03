@@ -17,21 +17,16 @@
 
 package com.cognitree.kronos.model;
 
-import com.cognitree.kronos.model.definitions.TaskDependencyInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @JsonSerialize(as = Task.class)
 @JsonDeserialize(as = Task.class)
 public interface Task extends TaskId {
-
-    String getName();
 
     String getType();
 
@@ -39,7 +34,7 @@ public interface Task extends TaskId {
 
     String getMaxExecutionTime();
 
-    List<TaskDependencyInfo> getDependsOn();
+    List<String> getDependsOn();
 
     Map<String, Object> getProperties();
 
@@ -49,143 +44,32 @@ public interface Task extends TaskId {
 
     Map<String, Object> getContext();
 
-    long getCreatedAt();
+    Long getCreatedAt();
 
-    long getSubmittedAt();
+    Long getSubmittedAt();
 
-    long getCompletedAt();
+    Long getCompletedAt();
 
     @JsonIgnore
     TaskId getIdentity();
 
     enum Status {
-        CREATED, WAITING, SCHEDULED, SUBMITTED, RUNNING, SUCCESSFUL, FAILED;
-    }
+        CREATED(false),
+        WAITING(false),
+        SCHEDULED(false),
+        SUBMITTED(false),
+        RUNNING(false),
+        SUCCESSFUL(true),
+        FAILED(true);
 
-    class TaskResult {
-        public static final TaskResult SUCCESS = new TaskResult(true);
+        private final boolean isFinal;
 
-        private boolean success;
-        private String message;
-        private Map<String, Object> context;
-
-        public TaskResult(boolean success) {
-            this(success, null, null);
+        Status(boolean isFinal) {
+            this.isFinal = isFinal;
         }
 
-        public TaskResult(boolean success, String message) {
-            this(success, message, null);
-        }
-
-        public TaskResult(boolean success, String message, Map<String, Object> context) {
-            this.success = success;
-            this.message = message;
-            this.context = context;
-        }
-
-        public boolean isSuccess() {
-            return success;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
-        public Map<String, Object> getContext() {
-            return context;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof TaskResult)) return false;
-            TaskResult that = (TaskResult) o;
-            return success == that.success &&
-                    Objects.equals(message, that.message) &&
-                    Objects.equals(context, that.context);
-        }
-
-        @Override
-        public int hashCode() {
-
-            return Objects.hash(success, message, context);
-        }
-
-        @Override
-        public String toString() {
-            return "TaskResult{" +
-                    "success=" + success +
-                    ", message='" + message + '\'' +
-                    ", context=" + context +
-                    '}';
-        }
-    }
-
-    class TaskUpdate {
-        @JsonSerialize(as = TaskId.class)
-        @JsonDeserialize(as = TaskId.class)
-        private TaskId taskId;
-        private Status status;
-        private String statusMessage;
-        private Map<String, Object> context = new HashMap<>();
-
-        public TaskId getTaskId() {
-            return taskId;
-        }
-
-        public void setTaskId(TaskId taskId) {
-            this.taskId = taskId;
-        }
-
-        public Status getStatus() {
-            return status;
-        }
-
-        public void setStatus(Status status) {
-            this.status = status;
-        }
-
-        public String getStatusMessage() {
-            return statusMessage;
-        }
-
-        public void setStatusMessage(String statusMessage) {
-            this.statusMessage = statusMessage;
-        }
-
-        public Map<String, Object> getContext() {
-            return context;
-        }
-
-        public void setContext(Map<String, Object> context) {
-            this.context = context;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof TaskUpdate)) return false;
-            TaskUpdate that = (TaskUpdate) o;
-            return Objects.equals(taskId, that.taskId) &&
-                    status == that.status &&
-                    Objects.equals(statusMessage, that.statusMessage) &&
-                    Objects.equals(context, that.context);
-        }
-
-        @Override
-        public int hashCode() {
-
-            return Objects.hash(taskId, status, statusMessage, context);
-        }
-
-        @Override
-        public String toString() {
-            return "TaskUpdate{" +
-                    "taskId=" + taskId +
-                    ", status=" + status +
-                    ", statusMessage='" + statusMessage + '\'' +
-                    ", context=" + context +
-                    '}';
+        public boolean isFinal() {
+            return this.isFinal;
         }
     }
 }

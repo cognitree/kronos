@@ -26,22 +26,22 @@ import java.util.Objects;
 @JsonDeserialize(as = WorkflowId.class)
 public class WorkflowId {
 
-    private String id;
+    private String name;
     private String namespace;
 
-    public static WorkflowId create(String id, String namespace) {
+    public static WorkflowId build(String name, String namespace) {
         final WorkflowId workflowId = new WorkflowId();
-        workflowId.setId(id);
+        workflowId.setName(name);
         workflowId.setNamespace(namespace);
         return workflowId;
     }
 
-    public String getId() {
-        return id;
+    public String getName() {
+        return name;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getNamespace() {
@@ -57,19 +57,19 @@ public class WorkflowId {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         WorkflowId that = (WorkflowId) o;
-        return Objects.equals(id, that.id) &&
+        return Objects.equals(name, that.name) &&
                 Objects.equals(namespace, that.namespace);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, namespace);
+        return Objects.hash(name, namespace);
     }
 
     @Override
     public String toString() {
         return "WorkflowId{" +
-                "id='" + id + '\'' +
+                "name='" + name + '\'' +
                 ", namespace='" + namespace + '\'' +
                 '}';
     }

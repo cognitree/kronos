@@ -21,12 +21,12 @@ import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.executor.handlers.TaskHandler;
 import com.cognitree.kronos.executor.handlers.TaskHandlerConfig;
+import com.cognitree.kronos.executor.model.TaskResult;
 import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
-import com.cognitree.kronos.model.Task.TaskResult;
-import com.cognitree.kronos.model.Task.TaskUpdate;
 import com.cognitree.kronos.model.TaskId;
+import com.cognitree.kronos.model.TaskUpdate;
 import com.cognitree.kronos.queue.QueueConfig;
 import com.cognitree.kronos.queue.consumer.Consumer;
 import com.cognitree.kronos.queue.consumer.ConsumerConfig;
@@ -56,7 +56,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * A task execution service is responsible for initializing each {@link TaskHandler} and periodically polling new tasks
  * from queue and submitting it to appropriate handler for execution.
  * <p>
- * A task execution service acts as an consumer of tasks from queue and producer of task status to the queue.
+ * A task execution service acts as an consumer of tasks from queue and producer of task result to the queue.
  * </p>
  */
 public final class TaskExecutionService implements Service {

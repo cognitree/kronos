@@ -17,8 +17,8 @@
 
 package com.cognitree.kronos.executor.handlers;
 
+import com.cognitree.kronos.executor.model.TaskResult;
 import com.cognitree.kronos.model.Task;
-import com.cognitree.kronos.model.Task.TaskResult;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Collections;
@@ -39,7 +39,7 @@ public class TypeATaskHandler implements TaskHandler {
 
     @Override
     public TaskResult handle(Task task) {
-        handledTasks.add(task.getId());
+        handledTasks.add(task.getName());
         return TaskResult.SUCCESS;
     }
 }

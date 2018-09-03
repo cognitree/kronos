@@ -1,0 +1,26 @@
+# configure namespace store
+namespaceStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.InMemoryNamespaceStore
+
+# configure task store
+taskStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.InMemoryTaskStore
+
+# configure workflow store
+workflowStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.InMemoryWorkflowStore
+
+# configure workflow trigger store
+workflowTriggerStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.InMemoryWorkflowTriggerStore
+
+# configure job store storing runtime instances of workflows
+jobStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.InMemoryJobStore
+
+timeoutPolicyConfig:
+  mockPolicy:
+    policyClass: com.cognitree.kronos.scheduler.policies.MockTimeoutPolicy
+
+# time to wait before removing executed tasks from memory
+taskPurgeInterval: 1d

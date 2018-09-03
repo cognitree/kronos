@@ -17,8 +17,8 @@
 
 package com.cognitree.kronos.executor.handlers;
 
+import com.cognitree.kronos.executor.model.TaskResult;
 import com.cognitree.kronos.model.Task;
-import com.cognitree.kronos.model.Task.TaskResult;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,14 +44,14 @@ public class TestTaskHandler implements TaskHandler {
     public TaskResult handle(Task task) {
         logger.info("Received request to handle task {}", task);
 
-        while (!tasks.contains(task.getId())) {
+        while (!tasks.contains(task.getName())) {
             try {
                 Thread.sleep(50);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        tasks.remove(task.getId());
+        tasks.remove(task.getName());
         return TaskResult.SUCCESS;
     }
 }

@@ -17,17 +17,16 @@
 
 package com.cognitree.kronos.executor.handlers;
 
+import com.cognitree.kronos.executor.model.TaskResult;
 import com.cognitree.kronos.model.Task;
-import com.cognitree.kronos.model.Task.TaskResult;
-import com.cognitree.kronos.model.definitions.TaskDefinition;
+import com.cognitree.kronos.model.Workflow.WorkflowTask;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * A handler defines how a task of given type is handled/ executed and is to be implemented and configured for each task type
- * ({@link TaskDefinition#type}).
+ * ({@link WorkflowTask#type}).
  */
 public interface TaskHandler {
-
 
     /**
      * for each configured handler during initialization phase a call is made to initialize handler using
@@ -42,7 +41,6 @@ public interface TaskHandler {
      * defines how to handle/ execute the task.
      *
      * @param task task to handle.
-     * @throws HandlerException thrown if handler fails to execute the task successfully.
      */
-    TaskResult handle(Task task) throws HandlerException;
+    TaskResult handle(Task task);
 }

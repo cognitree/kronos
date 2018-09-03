@@ -19,11 +19,6 @@ package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.queue.QueueConfig;
-import com.cognitree.kronos.scheduler.store.StoreServiceProvider;
-import com.cognitree.kronos.scheduler.store.TaskDefinitionStoreService;
-import com.cognitree.kronos.scheduler.store.TaskStoreService;
-import com.cognitree.kronos.scheduler.store.WorkflowDefinitionStoreService;
-import com.cognitree.kronos.scheduler.store.WorkflowStoreService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.slf4j.Logger;
@@ -65,36 +60,42 @@ public class SchedulerApp {
         registerService(schedulerConfig, queueConfig);
 
         // initialize service
-        TaskDefinitionStoreService.getService().init();
-        TaskStoreService.getService().init();
-        WorkflowDefinitionStoreService.getService().init();
-        WorkflowStoreService.getService().init();
+        NamespaceService.getService().init();
+        TaskService.getService().init();
+        WorkflowService.getService().init();
+        JobService.getService().init();
+        WorkflowTriggerService.getService().init();
         TaskSchedulerService.getService().init();
         WorkflowSchedulerService.getService().init();
 
         // start service
-        TaskDefinitionStoreService.getService().start();
-        TaskStoreService.getService().start();
-        WorkflowDefinitionStoreService.getService().start();
-        WorkflowStoreService.getService().start();
+        NamespaceService.getService().start();
+        TaskService.getService().start();
+        WorkflowService.getService().start();
+        JobService.getService().start();
+        WorkflowTriggerService.getService().start();
         TaskSchedulerService.getService().start();
         WorkflowSchedulerService.getService().start();
     }
 
     private void registerService(SchedulerConfig schedulerConfig, QueueConfig queueConfig) {
-        TaskDefinitionStoreService taskDefinitionStoreService =
-                new TaskDefinitionStoreService(schedulerConfig.getTaskDefinitionStoreConfig());
-        StoreServiceProvider.registerStoreService(taskDefinitionStoreService);
+        NamespaceService namespaceService =
+                new NamespaceService(schedulerConfig.getNamespaceStoreConfig());
+        ServiceProvider.registerService(namespaceService);
 
-        TaskStoreService taskStoreService = new TaskStoreService(schedulerConfig.getTaskStoreConfig());
-        StoreServiceProvider.registerStoreService(taskStoreService);
+        TaskService taskService = new TaskService(schedulerConfig.getTaskStoreConfig());
+        ServiceProvider.registerService(taskService);
 
-        WorkflowDefinitionStoreService workflowDefinitionStoreService =
-                new WorkflowDefinitionStoreService(schedulerConfig.getWorkflowDefinitionStoreConfig());
-        StoreServiceProvider.registerStoreService(workflowDefinitionStoreService);
+        WorkflowService workflowService =
+                new WorkflowService(schedulerConfig.getWorkflowStoreConfig());
+        ServiceProvider.registerService(workflowService);
 
-        WorkflowStoreService workflowStoreService = new WorkflowStoreService(schedulerConfig.getWorkflowStoreConfig());
-        StoreServiceProvider.registerStoreService(workflowStoreService);
+        JobService jobService = new JobService(schedulerConfig.getJobStoreConfig());
+        ServiceProvider.registerService(jobService);
+
+        WorkflowTriggerService workflowTriggerService =
+                new WorkflowTriggerService(schedulerConfig.getWorkflowTriggerStoreConfig());
+        ServiceProvider.registerService(workflowTriggerService);
 
         TaskSchedulerService taskSchedulerService = new TaskSchedulerService(schedulerConfig, queueConfig);
         ServiceProvider.registerService(taskSchedulerService);
@@ -105,24 +106,27 @@ public class SchedulerApp {
 
     public void stop() {
         logger.info("Stopping scheduler app");
+        // stop services in the reverse order
         if (WorkflowSchedulerService.getService() != null) {
             WorkflowSchedulerService.getService().stop();
         }
         if (TaskSchedulerService.getService() != null) {
             TaskSchedulerService.getService().stop();
         }
-        // stop store services
-        if (TaskDefinitionStoreService.getService() != null) {
-            TaskDefinitionStoreService.getService().stop();
+        if (WorkflowTriggerService.getService() != null) {
+            WorkflowTriggerService.getService().stop();
         }
-        if (TaskStoreService.getService() != null) {
-            TaskStoreService.getService().stop();
+        if (JobService.getService() != null) {
+            JobService.getService().stop();
         }
-        if (WorkflowDefinitionStoreService.getService() != null) {
-            WorkflowDefinitionStoreService.getService().stop();
+        if (WorkflowService.getService() != null) {
+            WorkflowService.getService().stop();
         }
-        if (WorkflowStoreService.getService() != null) {
-            WorkflowStoreService.getService().stop();
+        if (TaskService.getService() != null) {
+            TaskService.getService().stop();
+        }
+        if (NamespaceService.getService() != null) {
+            NamespaceService.getService().stop();
         }
     }
 }

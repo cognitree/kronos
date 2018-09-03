@@ -26,34 +26,34 @@ import java.util.Objects;
 @JsonDeserialize(as = MutableTaskId.class)
 public class MutableTaskId implements TaskId {
 
-    private String id;
-    private String workflowId;
+    private String name;
+    private String job;
     private String namespace;
 
-    public static TaskId create(String id, String workflowId, String namespace) {
+    public static TaskId build(String name, String jobId, String namespace) {
         final MutableTaskId mutableTaskId = new MutableTaskId();
-        mutableTaskId.setId(id);
-        mutableTaskId.setWorkflowId(workflowId);
+        mutableTaskId.setName(name);
+        mutableTaskId.setJob(jobId);
         mutableTaskId.setNamespace(namespace);
         return mutableTaskId;
     }
 
     @Override
-    public String getId() {
-        return id;
+    public String getName() {
+        return name;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setName(String name) {
+        this.name = name;
     }
 
     @Override
-    public String getWorkflowId() {
-        return workflowId;
+    public String getJob() {
+        return job;
     }
 
-    public void setWorkflowId(String workflowId) {
-        this.workflowId = workflowId;
+    public void setJob(String job) {
+        this.job = job;
     }
 
     @Override
@@ -70,22 +70,21 @@ public class MutableTaskId implements TaskId {
         if (this == o) return true;
         if (!(o instanceof MutableTaskId)) return false;
         MutableTaskId taskId = (MutableTaskId) o;
-        return Objects.equals(id, taskId.id) &&
-                Objects.equals(workflowId, taskId.workflowId) &&
+        return Objects.equals(name, taskId.name) &&
+                Objects.equals(job, taskId.job) &&
                 Objects.equals(namespace, taskId.namespace);
     }
 
     @Override
     public int hashCode() {
-
-        return Objects.hash(id, workflowId, namespace);
+        return Objects.hash(name, job, namespace);
     }
 
     @Override
     public String toString() {
         return "MutableTaskId{" +
-                "id='" + id + '\'' +
-                ", workflowId='" + workflowId + '\'' +
+                "name='" + name + '\'' +
+                ", job='" + job + '\'' +
                 ", namespace='" + namespace + '\'' +
                 '}';
     }

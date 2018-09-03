@@ -17,8 +17,8 @@
 
 package com.cognitree.kronos.executor.handlers;
 
+import com.cognitree.kronos.executor.model.TaskResult;
 import com.cognitree.kronos.model.Task;
-import com.cognitree.kronos.model.Task.TaskResult;
 import com.cognitree.kronos.util.DateTimeUtil;
 import com.cognitree.spark.restclient.SparkRestClient;
 import com.cognitree.spark.restclient.model.JobStatusResponse;

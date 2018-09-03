@@ -38,7 +38,7 @@ public class MockTaskStore implements TaskStore {
     }
 
     @Override
-    public List<Task> load() {
+    public List<Task> loadByStatusIn(String namespace) {
         return Collections.emptyList();
     }
 
@@ -58,17 +58,12 @@ public class MockTaskStore implements TaskStore {
     }
 
     @Override
-    public List<Task> load(List<Status> statuses, String namespace) {
+    public List<Task> loadByStatus(List<Status> statuses, String namespace) {
         return Collections.emptyList();
     }
 
     @Override
-    public List<Task> loadByWorkflowId(String workflowId, String namespace) {
-        return null;
-    }
-
-    @Override
-    public List<Task> loadByNameAndWorkflowId(String taskName, String taskGroup, String namespace) {
+    public List<Task> loadByJobId(String jobId, String namespace) {
         return Collections.emptyList();
     }
 

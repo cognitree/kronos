@@ -27,27 +27,16 @@ import java.util.List;
 public class MockWorkflowStore implements WorkflowStore {
 
     @Override
-    public List<Workflow> load(String namespace, long createdAfter, long createdBefore) {
-        return null;
-    }
-
-    @Override
-    public List<Workflow> loadByName(String name, String namespace, long createdAfter, long createdBefore) {
-        return null;
-    }
-
-    @Override
-    public void init(ObjectNode storeConfig) throws Exception {
+    public void init(ObjectNode storeConfig) {
 
     }
 
     @Override
     public void store(Workflow entity) {
-
     }
 
     @Override
-    public List<Workflow> load() {
+    public List<Workflow> load(String namespace) {
         return Collections.emptyList();
     }
 

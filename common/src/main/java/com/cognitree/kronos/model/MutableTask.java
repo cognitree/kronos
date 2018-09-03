@@ -17,8 +17,8 @@
 
 package com.cognitree.kronos.model;
 
-import com.cognitree.kronos.model.definitions.TaskDependencyInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -31,29 +31,21 @@ import static com.cognitree.kronos.model.Task.Status.CREATED;
 
 @JsonSerialize(as = MutableTask.class)
 @JsonDeserialize(as = MutableTask.class)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class MutableTask extends MutableTaskId implements Task {
 
-    private String name;
     private String type;
     private String timeoutPolicy;
     private String maxExecutionTime;
-    private List<TaskDependencyInfo> dependsOn = new ArrayList<>();
+    private List<String> dependsOn = new ArrayList<>();
     private Map<String, Object> properties = new HashMap<>();
     private Map<String, Object> context = new HashMap<>();
 
     private Status status = CREATED;
     private String statusMessage;
-    private long createdAt;
-    private long submittedAt;
-    private long completedAt;
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
+    private Long createdAt;
+    private Long submittedAt;
+    private Long completedAt;
 
     @Override
     public String getType() {
@@ -83,11 +75,11 @@ public class MutableTask extends MutableTaskId implements Task {
     }
 
     @Override
-    public List<TaskDependencyInfo> getDependsOn() {
+    public List<String> getDependsOn() {
         return dependsOn;
     }
 
-    public void setDependsOn(List<TaskDependencyInfo> dependsOn) {
+    public void setDependsOn(List<String> dependsOn) {
         this.dependsOn = dependsOn;
     }
 
@@ -128,29 +120,29 @@ public class MutableTask extends MutableTaskId implements Task {
     }
 
     @Override
-    public long getCreatedAt() {
+    public Long getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(long createdAt) {
+    public void setCreatedAt(Long createdAt) {
         this.createdAt = createdAt;
     }
 
     @Override
-    public long getSubmittedAt() {
+    public Long getSubmittedAt() {
         return submittedAt;
     }
 
-    public void setSubmittedAt(long submittedAt) {
+    public void setSubmittedAt(Long submittedAt) {
         this.submittedAt = submittedAt;
     }
 
     @Override
-    public long getCompletedAt() {
+    public Long getCompletedAt() {
         return completedAt;
     }
 
-    public void setCompletedAt(long completedAt) {
+    public void setCompletedAt(Long completedAt) {
         this.completedAt = completedAt;
     }
 
@@ -173,8 +165,7 @@ public class MutableTask extends MutableTaskId implements Task {
     @Override
     public String toString() {
         return "MutableTask{" +
-                "name='" + name + '\'' +
-                ", type='" + type + '\'' +
+                "type='" + type + '\'' +
                 ", timeoutPolicy='" + timeoutPolicy + '\'' +
                 ", maxExecutionTime='" + maxExecutionTime + '\'' +
                 ", dependsOn=" + dependsOn +

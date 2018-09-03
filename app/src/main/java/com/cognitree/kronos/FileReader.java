@@ -17,11 +17,14 @@
 
 package com.cognitree.kronos;
 
-import com.cognitree.kronos.model.definitions.TaskDefinition;
-import com.cognitree.kronos.model.definitions.WorkflowDefinition;
-import com.cognitree.kronos.scheduler.WorkflowSchedulerService;
-import com.cognitree.kronos.scheduler.store.TaskDefinitionStoreService;
-import com.cognitree.kronos.scheduler.store.WorkflowDefinitionStoreService;
+import com.cognitree.kronos.model.Namespace;
+import com.cognitree.kronos.model.Workflow;
+import com.cognitree.kronos.model.WorkflowTrigger;
+import com.cognitree.kronos.scheduler.NamespaceService;
+import com.cognitree.kronos.scheduler.ServiceException;
+import com.cognitree.kronos.scheduler.ValidationException;
+import com.cognitree.kronos.scheduler.WorkflowService;
+import com.cognitree.kronos.scheduler.WorkflowTriggerService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -37,48 +40,67 @@ public class FileReader {
     private static final Logger logger = LoggerFactory.getLogger(FileReader.class);
 
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
-    private static final String DEFAULT_NAMESPACE = "default";
-    private static final TypeReference<List<TaskDefinition>> TASK_DEFINITION_LIST_REF =
-            new TypeReference<List<TaskDefinition>>() {
+    private static final TypeReference<List<Namespace>> NAMESPACE_LIST_REF =
+            new TypeReference<List<Namespace>>() {
             };
-    private static final TypeReference<List<WorkflowDefinition>> WORKFLOW_DEFINITION_LIST_REF =
-            new TypeReference<List<WorkflowDefinition>>() {
+    private static final TypeReference<List<Workflow>> WORKFLOW_LIST_REF =
+            new TypeReference<List<Workflow>>() {
+            };
+    private static final TypeReference<List<WorkflowTrigger>> WORKFLOW_TRIGGER_LIST_REF =
+            new TypeReference<List<WorkflowTrigger>>() {
             };
 
-    public void loadTaskDefinitions() throws IOException {
+    public void loadNamespaces() throws IOException, ServiceException {
         final InputStream resourceAsStream =
-                FileReader.class.getClassLoader().getResourceAsStream("task-definitions.yaml");
-        List<TaskDefinition> taskDefinitions = MAPPER.readValue(resourceAsStream, TASK_DEFINITION_LIST_REF);
+                FileReader.class.getClassLoader().getResourceAsStream("namespaces.yaml");
+        List<Namespace> namespaces = MAPPER.readValue(resourceAsStream, NAMESPACE_LIST_REF);
 
-        for (TaskDefinition taskDefinition : taskDefinitions) {
-            if (TaskDefinitionStoreService.getService().load(taskDefinition) == null) {
-                TaskDefinitionStoreService.getService().store(taskDefinition);
-            } else {
-                logger.warn("Task definition with id {} already exists", taskDefinition.getIdentity());
-            }
-        }
-    }
-
-    public void loadWorkflowDefinitions() throws IOException {
-        final InputStream resourceAsStream =
-                FileReader.class.getClassLoader().getResourceAsStream("workflow-definitions.yaml");
-        List<WorkflowDefinition> workflowDefinitions = MAPPER.readValue(resourceAsStream, WORKFLOW_DEFINITION_LIST_REF);
-
-        for (WorkflowDefinition workflowDefinition : workflowDefinitions) {
-            if (workflowDefinition.getNamespace() == null) {
-                workflowDefinition.setNamespace(DEFAULT_NAMESPACE);
-            }
-            if (WorkflowDefinitionStoreService.getService().load(workflowDefinition) == null) {
+        for (Namespace namespace : namespaces) {
+            if (NamespaceService.getService().get(namespace.getIdentity()) == null) {
                 try {
-                    WorkflowSchedulerService.getService().add(workflowDefinition);
-                    WorkflowDefinitionStoreService.getService().store(workflowDefinition);
+                    NamespaceService.getService().add(namespace);
                 } catch (Exception ex) {
-                    logger.error("Unable to add workflow definition {}", workflowDefinition, ex);
+                    logger.error("Unable to add namespace {}", namespace, ex);
                 }
             } else {
-                logger.error("Workflow definition already exists with id {}", workflowDefinition.getIdentity());
+                logger.error("Namespace already exists with name {}", namespace.getIdentity());
             }
         }
     }
 
+    public void loadWorkflows() throws IOException, ServiceException, ValidationException {
+        final InputStream resourceAsStream =
+                FileReader.class.getClassLoader().getResourceAsStream("workflows.yaml");
+        List<Workflow> workflows = MAPPER.readValue(resourceAsStream, WORKFLOW_LIST_REF);
+
+        for (Workflow workflow : workflows) {
+            if (WorkflowService.getService().get(workflow) == null) {
+                try {
+                    WorkflowService.getService().add(workflow);
+                } catch (Exception ex) {
+                    logger.error("Unable to add workflow {}", workflow, ex);
+                }
+            } else {
+                logger.error("Workflow already exists with id {}", workflow.getIdentity());
+            }
+        }
+    }
+
+    public void loadWorkflowTriggers() throws IOException, ServiceException, ValidationException {
+        final InputStream resourceAsStream =
+                FileReader.class.getClassLoader().getResourceAsStream("workflow-triggers.yaml");
+        List<WorkflowTrigger> workflowTriggers = MAPPER.readValue(resourceAsStream, WORKFLOW_TRIGGER_LIST_REF);
+
+        for (WorkflowTrigger workflowTrigger : workflowTriggers) {
+            if (WorkflowTriggerService.getService().get(workflowTrigger) == null) {
+                try {
+                    WorkflowTriggerService.getService().add(workflowTrigger);
+                } catch (Exception ex) {
+                    logger.error("Unable to add workflow trigger {}", workflowTrigger, ex);
+                }
+            } else {
+                logger.error("Workflow trigger already exists with id {}", workflowTrigger.getIdentity());
+            }
+        }
+    }
 }

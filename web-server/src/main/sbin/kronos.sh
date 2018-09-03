@@ -35,7 +35,6 @@ stop(){
   echo "stopping $APP_NAME"
   is_alive
   if [ $? -eq 0 ]; then
-    echo
     echo "$APP_NAME is already stopped"
     return
   fi
@@ -48,7 +47,6 @@ stop(){
   while [ $i -lt $retry ]; do
     is_alive
     if [ $? -eq 0 ]; then
-      echo
       echo "$APP_NAME stopped successfully"
       return
     fi
@@ -107,11 +105,11 @@ init_param(){
 
 # main routine
 source $APP_HOME/sbin/env.sh
-init_dir
 init_param $2
 
 case "$1" in
   start)
+    init_dir
     start
     ;;
   stop)

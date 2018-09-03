@@ -20,25 +20,22 @@ package com.cognitree.kronos;
 import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
-import com.cognitree.kronos.model.definitions.TaskDependencyInfo;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import static com.cognitree.kronos.model.Task.Status.CREATED;
 
 public class MockTaskBuilder {
-    private String id = UUID.randomUUID().toString();
     private String name;
     private String namespace = "default";
-    private String workflowId = "test-workflow";
+    private String job = "test-workflow";
     private String type;
     private String timeoutPolicy;
     private String maxExecutionTime = "1h";
-    private List<TaskDependencyInfo> dependsOn = new ArrayList<>();
+    private List<String> dependsOn = new ArrayList<>();
     private Map<String, Object> properties = new HashMap<>();
     private Status status = CREATED;
     private String statusMessage;
@@ -50,12 +47,6 @@ public class MockTaskBuilder {
         return new MockTaskBuilder();
     }
 
-    public MockTaskBuilder setId(String id) {
-        this.id = id;
-        return this;
-    }
-
-
     public MockTaskBuilder setName(String name) {
         this.name = name;
         return this;
@@ -66,8 +57,8 @@ public class MockTaskBuilder {
         return this;
     }
 
-    public MockTaskBuilder setWorkflowId(String workflowId) {
-        this.workflowId = workflowId;
+    public MockTaskBuilder setJob(String job) {
+        this.job = job;
         return this;
     }
 
@@ -86,7 +77,7 @@ public class MockTaskBuilder {
         return this;
     }
 
-    public MockTaskBuilder setDependsOn(List<TaskDependencyInfo> dependsOn) {
+    public MockTaskBuilder setDependsOn(List<String> dependsOn) {
         this.dependsOn = dependsOn;
         return this;
     }
@@ -118,10 +109,9 @@ public class MockTaskBuilder {
 
     public Task build() {
         MutableTask task = new MutableTask();
-        task.setId(id);
         task.setName(name);
         task.setNamespace(namespace);
-        task.setWorkflowId(workflowId);
+        task.setJob(job);
         task.setType(type);
         task.setStatus(status);
         task.setStatusMessage(statusMessage);

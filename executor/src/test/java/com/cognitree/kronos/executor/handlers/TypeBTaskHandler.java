@@ -17,14 +17,13 @@
 
 package com.cognitree.kronos.executor.handlers;
 
+import com.cognitree.kronos.executor.model.TaskResult;
 import com.cognitree.kronos.model.Task;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-
-import static com.cognitree.kronos.model.Task.TaskResult;
 
 public class TypeBTaskHandler implements TaskHandler {
     private static final Set<String> handledTasks = Collections.synchronizedSet(new HashSet<>());
@@ -40,7 +39,7 @@ public class TypeBTaskHandler implements TaskHandler {
 
     @Override
     public TaskResult handle(Task task) {
-        handledTasks.add(task.getId());
-        return TaskResult.SUCCESS;
+        handledTasks.add(task.getName());
+        return new TaskResult(false, "error handling task");
     }
 }

@@ -24,6 +24,7 @@ import com.cognitree.kronos.executor.handlers.TypeBTaskHandler;
 import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.TaskId;
+import com.cognitree.kronos.model.TaskUpdate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.AfterClass;
@@ -35,6 +36,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
+import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.RUNNING;
 import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
 import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
@@ -67,10 +69,22 @@ public class TaskExecutorServiceTest {
         // depending on the number of available cores task picked for execution
         // will be in one of the two state RUNNING or SUBMITTED
         Assert.assertTrue(taskOne.getStatus().equals(RUNNING) || taskOne.getStatus().equals(SUBMITTED));
-        TestTaskHandler.finishExecution(taskOne.getId());
+        TestTaskHandler.finishExecution(taskOne.getName());
         sleep(100);
         consumeTaskStatus(tasksMap);
         Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
+    }
+
+    @Test
+    public void testTaskExecutionNegative() throws JsonProcessingException, InterruptedException {
+        final HashMap<TaskId, Task> tasksMap = new HashMap<>();
+        Task taskOne = MockTaskBuilder.getTaskBuilder().setName("failTask").setType("typeB").setStatus(SCHEDULED).build();
+        tasksMap.put(taskOne, taskOne);
+        TaskExecutionService.getService().getProducer().send(taskOne.getType(), MAPPER.writeValueAsString(taskOne));
+        sleep(100);
+        consumeTaskStatus(tasksMap);
+        Assert.assertEquals(FAILED, taskOne.getStatus());
+        Assert.assertEquals("error handling task", taskOne.getStatusMessage());
     }
 
     @Test
@@ -106,15 +120,15 @@ public class TaskExecutorServiceTest {
         Assert.assertTrue(taskThree.getStatus().equals(RUNNING) || taskThree.getStatus().equals(SUBMITTED));
         Assert.assertTrue(taskFour.getStatus().equals(RUNNING) || taskFour.getStatus().equals(SUBMITTED));
         Assert.assertEquals(SCHEDULED, taskFive.getStatus());
-        TestTaskHandler.finishExecution(taskOne.getId());
+        TestTaskHandler.finishExecution(taskOne.getName());
         sleep(100);
         consumeTaskStatus(tasksMap);
         Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
         Assert.assertTrue(taskFive.getStatus().equals(RUNNING) || taskFive.getStatus().equals(SUBMITTED));
-        TestTaskHandler.finishExecution(taskTwo.getId());
-        TestTaskHandler.finishExecution(taskThree.getId());
-        TestTaskHandler.finishExecution(taskFour.getId());
-        TestTaskHandler.finishExecution(taskFive.getId());
+        TestTaskHandler.finishExecution(taskTwo.getName());
+        TestTaskHandler.finishExecution(taskThree.getName());
+        TestTaskHandler.finishExecution(taskFour.getName());
+        TestTaskHandler.finishExecution(taskFive.getName());
         sleep(100);
         consumeTaskStatus(tasksMap);
         Assert.assertEquals(SUCCESSFUL, taskTwo.getStatus());
@@ -127,7 +141,7 @@ public class TaskExecutorServiceTest {
         final List<String> tasksStatus = TaskExecutionService.getService().getConsumer().poll("taskstatus");
         tasksStatus.forEach(taskStatus -> {
             try {
-                final Task.TaskUpdate taskUpdate = MAPPER.readValue(taskStatus, Task.TaskUpdate.class);
+                final TaskUpdate taskUpdate = MAPPER.readValue(taskStatus, TaskUpdate.class);
                 final MutableTask task = (MutableTask) tasksMap.get(taskUpdate.getTaskId());
                 task.setStatus(taskUpdate.getStatus());
                 task.setStatusMessage(taskUpdate.getStatusMessage());
@@ -150,16 +164,16 @@ public class TaskExecutorServiceTest {
         Task taskFive = MockTaskBuilder.getTaskBuilder().setName("taskFive").setType("typeB").build();
         TaskExecutionService.getService().getProducer().send(taskFive.getType(), MAPPER.writeValueAsString(taskFive));
         sleep(100);
-        Assert.assertTrue(TypeATaskHandler.isHandled(taskOne.getId()));
-        Assert.assertFalse(TypeBTaskHandler.isHandled(taskOne.getId()));
-        Assert.assertTrue(TypeBTaskHandler.isHandled(taskTwo.getId()));
-        Assert.assertFalse(TypeATaskHandler.isHandled(taskTwo.getId()));
-        Assert.assertTrue(TypeATaskHandler.isHandled(taskThree.getId()));
-        Assert.assertFalse(TypeBTaskHandler.isHandled(taskThree.getId()));
-        Assert.assertTrue(TypeATaskHandler.isHandled(taskFour.getId()));
-        Assert.assertFalse(TypeBTaskHandler.isHandled(taskFour.getId()));
-        Assert.assertTrue(TypeBTaskHandler.isHandled(taskFive.getId()));
-        Assert.assertFalse(TypeATaskHandler.isHandled(taskFive.getId()));
+        Assert.assertTrue(TypeATaskHandler.isHandled(taskOne.getName()));
+        Assert.assertFalse(TypeBTaskHandler.isHandled(taskOne.getName()));
+        Assert.assertTrue(TypeBTaskHandler.isHandled(taskTwo.getName()));
+        Assert.assertFalse(TypeATaskHandler.isHandled(taskTwo.getName()));
+        Assert.assertTrue(TypeATaskHandler.isHandled(taskThree.getName()));
+        Assert.assertFalse(TypeBTaskHandler.isHandled(taskThree.getName()));
+        Assert.assertTrue(TypeATaskHandler.isHandled(taskFour.getName()));
+        Assert.assertFalse(TypeBTaskHandler.isHandled(taskFour.getName()));
+        Assert.assertTrue(TypeBTaskHandler.isHandled(taskFive.getName()));
+        Assert.assertFalse(TypeATaskHandler.isHandled(taskFive.getName()));
     }
 }
 

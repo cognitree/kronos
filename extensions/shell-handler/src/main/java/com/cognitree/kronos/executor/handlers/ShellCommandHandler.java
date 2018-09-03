@@ -17,8 +17,8 @@
 
 package com.cognitree.kronos.executor.handlers;
 
+import com.cognitree.kronos.executor.model.TaskResult;
 import com.cognitree.kronos.model.Task;
-import com.cognitree.kronos.model.Task.TaskResult;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,8 +72,8 @@ public class ShellCommandHandler implements TaskHandler {
             return new TaskResult(false, "unable to create directory to store logs");
         }
 
-        processBuilder.redirectError(new File(logDir, task.getName() + "_" + task.getId() + "_stderr.log"));
-        processBuilder.redirectOutput(new File(logDir, task.getName() + "_" + task.getId() + "_stdout.log"));
+        processBuilder.redirectError(new File(logDir, task.getName() + "_" + task.getJob() + "_stderr.log"));
+        processBuilder.redirectOutput(new File(logDir, task.getName() + "_" + task.getJob() + "_stdout.log"));
         try {
             Process process = processBuilder.start();
             int exitValue = process.waitFor();

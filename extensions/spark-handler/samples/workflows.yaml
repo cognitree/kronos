@@ -1,0 +1,22 @@
+- name: MyWorkflow
+  namespace: default
+  description: sample workflow with tasks of type spark
+  tasks:
+    - name: SparkPi
+      type: spark
+      properties:
+        sparkVersion: 2.3.1
+        masterHost: localhost
+        masterPort: 6066
+        clusterMode: spark
+      properties:
+        submitRequest:
+          appResource: file:/spark-examples_2.11-2.3.1.jar
+          appArgs: []
+          mainClass: org.apache.spark.examples.SparkPi
+          sparkProperties:
+            spark.jars: file:/spark-examples_2.11-2.3.1.jar
+            spark.driver.supervise: false
+            spark.app.name: SparkPi
+            spark.eventLog.enabled: false
+            spark.submit.deployMode : cluster

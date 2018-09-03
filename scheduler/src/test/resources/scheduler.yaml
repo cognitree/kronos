@@ -1,34 +1,22 @@
-# configure task definition store
-taskDefinitionStoreConfig:
-  storeClass: com.cognitree.kronos.scheduler.store.MockTaskDefinitionStore
-  config:
-    connectionURL: jdbc:sqlite:kronos.db
-    username:
-    password:
+# configure namespace store
+namespaceStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.MockNamespaceStore
 
 # configure task store
 taskStoreConfig:
   storeClass: com.cognitree.kronos.scheduler.store.MockTaskStore
-  config:
-    connectionURL: jdbc:sqlite:kronos.db
-    username:
-    password:
-
-# configure workflow definition store
-workflowDefinitionStoreConfig:
-  storeClass: com.cognitree.kronos.scheduler.store.MockWorkflowDefinitionStore
-  config:
-    connectionURL: jdbc:sqlite:kronos.db
-    username:
-    password:
 
 # configure workflow store
 workflowStoreConfig:
   storeClass: com.cognitree.kronos.scheduler.store.MockWorkflowStore
-  config:
-    connectionURL: jdbc:sqlite:kronos.db
-    username:
-    password:
+
+# configure workflow store
+workflowTriggerStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.MockWorkflowTriggerStore
+
+# configure job store storing runtime instances of workflows
+jobStoreConfig:
+  storeClass: com.cognitree.kronos.scheduler.store.MockJobStore
 
 # time to wait before removing executed tasks from memory
 taskPurgeInterval: 1d
