@@ -17,13 +17,13 @@
 
 package com.cognitree.kronos.api;
 
-import com.cognitree.kronos.scheduler.model.Job;
-import com.cognitree.kronos.scheduler.model.JobId;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.response.JobResponse;
 import com.cognitree.kronos.scheduler.JobService;
 import com.cognitree.kronos.scheduler.ServiceException;
 import com.cognitree.kronos.scheduler.ValidationException;
+import com.cognitree.kronos.scheduler.model.Job;
+import com.cognitree.kronos.scheduler.model.JobId;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;

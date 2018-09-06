@@ -17,9 +17,9 @@
 
 package com.cognitree.kronos.scheduler;
 
+import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.scheduler.model.Namespace;
-import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import com.cognitree.kronos.scheduler.policies.TimeoutPolicyConfig;

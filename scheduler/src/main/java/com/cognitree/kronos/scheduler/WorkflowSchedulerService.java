@@ -19,16 +19,16 @@ package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
-import com.cognitree.kronos.scheduler.model.Job;
-import com.cognitree.kronos.scheduler.model.JobId;
 import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
+import com.cognitree.kronos.scheduler.graph.TopologicalSort;
+import com.cognitree.kronos.scheduler.model.Job;
+import com.cognitree.kronos.scheduler.model.JobId;
 import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.Workflow.WorkflowTask;
 import com.cognitree.kronos.scheduler.model.WorkflowId;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import com.cognitree.kronos.scheduler.model.WorkflowTriggerId;
-import com.cognitree.kronos.scheduler.graph.TopologicalSort;
 import com.cognitree.kronos.scheduler.util.TriggerHelper;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
@@ -68,6 +68,7 @@ public final class WorkflowSchedulerService implements Service {
     @Override
     public void init() throws Exception {
         logger.info("Initializing workflow scheduler service");
+        new StdSchedulerFactory();
         scheduler = StdSchedulerFactory.getDefaultScheduler();
         TaskSchedulerService.getService().registerListener(new WorkflowLifecycleHandler());
     }

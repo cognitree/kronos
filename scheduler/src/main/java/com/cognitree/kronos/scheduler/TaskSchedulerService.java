@@ -40,7 +40,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -55,7 +54,6 @@ import java.util.concurrent.ScheduledFuture;
 
 import static com.cognitree.kronos.model.Task.Status.CREATED;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
-import static com.cognitree.kronos.model.Task.Status.RUNNING;
 import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
 import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
 import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
@@ -84,19 +82,26 @@ public final class TaskSchedulerService implements Service {
     // it belongs to in one of the final state are purged from memory to prevent the system from going OOM.
     // task purge interval in hour
     private static final int TASK_PURGE_INTERVAL = 1;
+    private static final List<Status> NON_FINAL_TASK_STATUS_LIST = new ArrayList<>();
+
+    static {
+        for (Status status : Status.values()) {
+            if (!status.isFinal()) {
+                NON_FINAL_TASK_STATUS_LIST.add(status);
+            }
+        }
+    }
 
     private final ProducerConfig producerConfig;
     private final ConsumerConfig consumerConfig;
     private final Map<String, TimeoutPolicyConfig> policyConfigMap;
     private final String statusQueue;
-
     private final Map<String, TimeoutPolicy> timeoutPolicyMap = new HashMap<>();
     private final Map<String, ScheduledFuture<?>> taskTimeoutHandlersMap = new HashMap<>();
     // used by internal tasks for printing the dag/ delete stale tasks/ executing timeout tasks
     private final ScheduledExecutorService scheduledExecutorService =
             Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
     private final Set<TaskStatusChangeListener> statusChangeListeners = new HashSet<>();
-
     private Producer producer;
     private Consumer consumer;
     private TaskProvider taskProvider;
@@ -144,8 +149,7 @@ public final class TaskSchedulerService implements Service {
         final List<Namespace> namespaces = NamespaceService.getService().get();
         final List<Task> tasks = new ArrayList<>();
         for (Namespace namespace : namespaces) {
-            TaskService.getService()
-                    .get(Arrays.asList(CREATED, WAITING, SCHEDULED, SUBMITTED, RUNNING), namespace.getName());
+            TaskService.getService().get(NON_FINAL_TASK_STATUS_LIST, namespace.getName());
         }
         if (!tasks.isEmpty()) {
             tasks.sort(Comparator.comparing(Task::getCreatedAt));
