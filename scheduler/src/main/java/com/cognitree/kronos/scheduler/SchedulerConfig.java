@@ -71,20 +71,6 @@ public class SchedulerConfig {
      */
     private Map<String, TimeoutPolicyConfig> timeoutPolicyConfig = new HashMap<>();
 
-    /**
-     * Periodically, tasks older than the specified interval and status as one of the final state
-     * are purged from memory to prevent the system from going OOM.
-     * <p>
-     * For example:
-     * <ul>
-     * <li>10m - 10 minutes</li>
-     * <li>1h - 1 hour</li>
-     * <li>1d - 1 day</li>
-     * </ul>
-     * <p>
-     */
-    private String taskPurgeInterval = "1d";
-
     public StoreConfig getNamespaceStoreConfig() {
         return namespaceStoreConfig;
     }
@@ -133,14 +119,6 @@ public class SchedulerConfig {
         this.timeoutPolicyConfig = timeoutPolicyConfig;
     }
 
-    public String getTaskPurgeInterval() {
-        return taskPurgeInterval;
-    }
-
-    public void setTaskPurgeInterval(String taskPurgeInterval) {
-        this.taskPurgeInterval = taskPurgeInterval;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -151,14 +129,13 @@ public class SchedulerConfig {
                 Objects.equals(workflowStoreConfig, that.workflowStoreConfig) &&
                 Objects.equals(workflowTriggerStoreConfig, that.workflowTriggerStoreConfig) &&
                 Objects.equals(jobStoreConfig, that.jobStoreConfig) &&
-                Objects.equals(timeoutPolicyConfig, that.timeoutPolicyConfig) &&
-                Objects.equals(taskPurgeInterval, that.taskPurgeInterval);
+                Objects.equals(timeoutPolicyConfig, that.timeoutPolicyConfig);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(namespaceStoreConfig, taskStoreConfig, workflowStoreConfig, workflowTriggerStoreConfig, jobStoreConfig, timeoutPolicyConfig, taskPurgeInterval);
+        return Objects.hash(namespaceStoreConfig, taskStoreConfig, workflowStoreConfig, workflowTriggerStoreConfig, jobStoreConfig, timeoutPolicyConfig);
     }
 
     @Override
@@ -170,7 +147,6 @@ public class SchedulerConfig {
                 ", workflowTriggerStoreConfig=" + workflowTriggerStoreConfig +
                 ", jobStoreConfig=" + jobStoreConfig +
                 ", timeoutPolicyConfig=" + timeoutPolicyConfig +
-                ", taskPurgeInterval='" + taskPurgeInterval + '\'' +
                 '}';
     }
 }

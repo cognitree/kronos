@@ -30,10 +30,9 @@ import com.cognitree.kronos.util.DateTimeUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
@@ -62,8 +61,8 @@ public class TaskSchedulerServiceTest {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final String TASK_TYPE = "test";
 
-    @BeforeClass
-    public static void init() throws Exception {
+    @Before
+    public void init() throws Exception {
         // task scheduler service requires namespace service and task service
         StoreConfig namespaceStoreConfig = new StoreConfig();
         namespaceStoreConfig.setStoreClass(RAMNamespaceStore.class.getName());
@@ -92,21 +91,15 @@ public class TaskSchedulerServiceTest {
         taskSchedulerService.start();
     }
 
-    @AfterClass
-    public static void stop() {
+    @After
+    public void stop() {
         NamespaceService.getService().stop();
         TaskService.getService().stop();
         TaskSchedulerService.getService().stop();
     }
 
-    @Before
-    public void initialize() throws ServiceException {
-        // reinit will clear all the tasks from task provider
-        TaskSchedulerService.getService().reinitTaskProvider();
-    }
-
     @Test
-    public void testAddTask() throws InterruptedException, IOException, ServiceException {
+    public void testAddTask() throws InterruptedException, IOException {
         String namespace = UUID.randomUUID().toString();
         String jobId = UUID.randomUUID().toString();
         final TaskProvider taskProvider = TaskSchedulerService.getService().getTaskProvider();
@@ -155,7 +148,7 @@ public class TaskSchedulerServiceTest {
     }
 
     @Test
-    public void testAddDuplicateTask() throws InterruptedException, IOException, ServiceException {
+    public void testAddDuplicateTask() throws InterruptedException, IOException {
         Task taskOne = MockTaskBuilder.getTaskBuilder()
                 .setJob(UUID.randomUUID().toString())
                 .setNamespace(UUID.randomUUID().toString())
@@ -174,7 +167,7 @@ public class TaskSchedulerServiceTest {
     }
 
     @Test
-    public void testAddTaskWithMissingDependency() throws InterruptedException, IOException, ServiceException {
+    public void testAddTaskWithMissingDependency() throws InterruptedException, IOException {
         String namespace = UUID.randomUUID().toString();
         String jobId = UUID.randomUUID().toString();
         Task taskOne = MockTaskBuilder.getTaskBuilder()
@@ -204,7 +197,7 @@ public class TaskSchedulerServiceTest {
     }
 
     @Test
-    public void testAddTaskInWorkflowSameNamespace() throws InterruptedException, IOException, ServiceException {
+    public void testAddTaskInWorkflowSameNamespace() throws InterruptedException, IOException {
         String namespace = UUID.randomUUID().toString();
         String jobOne = UUID.randomUUID().toString();
         Task taskOneJobOne = MockTaskBuilder.getTaskBuilder()
@@ -300,7 +293,7 @@ public class TaskSchedulerServiceTest {
     }
 
     @Test
-    public void testAddTaskInDifferentNamespace() throws InterruptedException, IOException, ServiceException {
+    public void testAddTaskInDifferentNamespace() throws InterruptedException, IOException {
         String namespaceOne = UUID.randomUUID().toString();
         String job = UUID.randomUUID().toString();
         Task taskOneJobOne = MockTaskBuilder.getTaskBuilder()
@@ -396,7 +389,7 @@ public class TaskSchedulerServiceTest {
     }
 
     @Test
-    public void testTaskTimeout() throws InterruptedException, JsonProcessingException, ServiceException {
+    public void testTaskTimeout() throws InterruptedException, JsonProcessingException {
         String namespace = UUID.randomUUID().toString();
         String job = UUID.randomUUID().toString();
         Task taskOne = MockTaskBuilder.getTaskBuilder()
@@ -434,7 +427,7 @@ public class TaskSchedulerServiceTest {
     }
 
     @Test
-    public void testTaskCleanup() throws InterruptedException, JsonProcessingException, ServiceException {
+    public void testTaskCleanup() throws InterruptedException, JsonProcessingException {
         String namespace = UUID.randomUUID().toString();
         String job = UUID.randomUUID().toString();
         // set task created at time to a lower value than the task purge interval configured in scheduler.yaml
@@ -534,7 +527,7 @@ public class TaskSchedulerServiceTest {
     }
 
     @Test
-    public void testTaskStatusListener() throws ServiceException, IOException, InterruptedException {
+    public void testTaskStatusListener() throws IOException, InterruptedException {
         String namespace = UUID.randomUUID().toString();
         String job = UUID.randomUUID().toString();
         final TestTaskStatusChangeListener taskStatusChangeListener = new TestTaskStatusChangeListener();
