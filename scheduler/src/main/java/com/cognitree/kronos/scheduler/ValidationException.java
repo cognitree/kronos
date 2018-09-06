@@ -17,8 +17,53 @@
 
 package com.cognitree.kronos.scheduler;
 
+import java.text.MessageFormat;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+
 public class ValidationException extends Exception {
-    public ValidationException(String message) {
-        super(message);
+
+    private static final String BUNDLE_NAME = "validation-errors";
+    private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
+
+    private final String errorMessage;
+    private final int errorCode;
+    private final int statusCode;
+
+
+    public ValidationException(ValidationError validationError, Object... args) {
+        errorMessage = getString(validationError.getErrorMsg(), args);
+        errorCode = validationError.getErrorCode();
+        statusCode = validationError.getStatusCode();
+    }
+
+    private String getString(String key, Object... params) {
+        try {
+            return MessageFormat.format(RESOURCE_BUNDLE.getString(key), params);
+        } catch (MissingResourceException e) {
+            return key;
+        }
+    }
+
+    @Override
+    public String getMessage() {
+        return errorMessage;
+    }
+
+    @Override
+    public String getLocalizedMessage() {
+        return errorMessage;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public int getErrorCode() {
+        return errorCode;
+    }
+
+    public int getStatusCode() {
+        return statusCode;
     }
 }

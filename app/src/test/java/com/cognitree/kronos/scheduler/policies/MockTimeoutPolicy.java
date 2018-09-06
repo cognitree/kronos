@@ -25,7 +25,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static com.cognitree.kronos.model.Task.Status.FAILED;
-import static com.cognitree.kronos.util.Messages.TIMED_OUT;
+import static com.cognitree.kronos.scheduler.model.Messages.TIMED_OUT;
 
 public class MockTimeoutPolicy implements TimeoutPolicy {
 

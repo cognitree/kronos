@@ -18,7 +18,7 @@
 package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.model.MutableTaskId;
-import com.cognitree.kronos.model.Namespace;
+import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskId;

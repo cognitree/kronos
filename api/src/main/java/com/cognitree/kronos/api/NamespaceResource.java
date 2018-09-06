@@ -17,10 +17,11 @@
 
 package com.cognitree.kronos.api;
 
-import com.cognitree.kronos.model.Namespace;
-import com.cognitree.kronos.model.NamespaceId;
+import com.cognitree.kronos.scheduler.model.Namespace;
+import com.cognitree.kronos.scheduler.model.NamespaceId;
 import com.cognitree.kronos.scheduler.NamespaceService;
 import com.cognitree.kronos.scheduler.ServiceException;
+import com.cognitree.kronos.scheduler.ValidationException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -40,7 +41,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
-import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
@@ -82,12 +82,8 @@ public class NamespaceResource {
     @ApiResponses(value = {
             @ApiResponse(code = 409, message = "Namespace already exists")})
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addNamespace(Namespace namespace) throws ServiceException {
+    public Response addNamespace(Namespace namespace) throws ServiceException, ValidationException {
         logger.info("Received request to add namespace {}", namespace);
-        if (NamespaceService.getService().get(namespace) != null) {
-            logger.error("Namespace already exists with name {}", namespace.getName());
-            return Response.status(CONFLICT).build();
-        }
         NamespaceService.getService().add(namespace);
         return Response.status(CREATED).entity(namespace).build();
     }
@@ -100,13 +96,9 @@ public class NamespaceResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateNamespace(@ApiParam(value = "namespace name", required = true)
                                     @PathParam("name") String name,
-                                    Namespace namespace) throws ServiceException {
+                                    Namespace namespace) throws ServiceException, ValidationException {
         namespace.setName(name);
         logger.info("Received request to update namespace with name {} to {}", name, namespace);
-        if (NamespaceService.getService().get(namespace) == null) {
-            logger.error("No task definition exists with name {}", name);
-            return Response.status(NOT_FOUND).build();
-        }
         NamespaceService.getService().update(namespace);
         return Response.status(OK).entity(namespace).build();
     }

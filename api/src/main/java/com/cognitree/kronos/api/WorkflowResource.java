@@ -17,8 +17,8 @@
 
 package com.cognitree.kronos.api;
 
-import com.cognitree.kronos.model.Workflow;
-import com.cognitree.kronos.model.WorkflowId;
+import com.cognitree.kronos.scheduler.model.Workflow;
+import com.cognitree.kronos.scheduler.model.WorkflowId;
 import com.cognitree.kronos.scheduler.ServiceException;
 import com.cognitree.kronos.scheduler.ValidationException;
 import com.cognitree.kronos.scheduler.WorkflowService;
@@ -43,7 +43,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
-import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -89,10 +88,6 @@ public class WorkflowResource {
     public Response addWorkflow(@HeaderParam("namespace") String namespace, Workflow workflow) throws ServiceException, ValidationException {
         workflow.setNamespace(namespace);
         logger.info("Received request to add workflow {} under namespace {}", workflow, namespace);
-        if (WorkflowService.getService().get(workflow) != null) {
-            logger.error("Workflow already exists with name {} under namespace {}", workflow.getName(), namespace);
-            return Response.status(CONFLICT).build();
-        }
         WorkflowService.getService().add(workflow);
         return Response.status(CREATED).entity(workflow).build();
     }
@@ -106,15 +101,11 @@ public class WorkflowResource {
     public Response updateWorkflow(@ApiParam(value = "workflow name", required = true)
                                    @PathParam("name") String name,
                                    @HeaderParam("namespace") String namespace,
-                                   Workflow workflow) throws ServiceException, ValidationException, SchedulerException {
+                                   Workflow workflow) throws ServiceException, ValidationException {
         workflow.setName(name);
         workflow.setNamespace(namespace);
         logger.info("Received request to update workflow with name {} under namespace {} to {}",
                 name, namespace, workflow);
-        if (WorkflowService.getService().get(workflow) == null) {
-            logger.error("No workflow exists with name {} under namespace {}", name, namespace);
-            return Response.status(NOT_FOUND).build();
-        }
         WorkflowService.getService().update(workflow);
         return Response.status(OK).entity(workflow).build();
     }
@@ -129,10 +120,6 @@ public class WorkflowResource {
                                    @HeaderParam("namespace") String namespace) throws ServiceException, SchedulerException, ValidationException {
         logger.info("Received request to delete workflow with name {} under namespace {}", name, namespace);
         WorkflowId workflowId = WorkflowId.build(name, namespace);
-        if (WorkflowService.getService().get(workflowId) == null) {
-            logger.error("No workflow exists with name {} under namespace {}", name, namespace);
-            return Response.status(NOT_FOUND).build();
-        }
         WorkflowService.getService().delete(workflowId);
         return Response.status(OK).build();
     }

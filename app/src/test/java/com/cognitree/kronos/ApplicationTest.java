@@ -18,9 +18,10 @@
 package com.cognitree.kronos;
 
 import com.cognitree.kronos.executor.ExecutorApp;
-import com.cognitree.kronos.model.Namespace;
-import com.cognitree.kronos.model.Workflow;
-import com.cognitree.kronos.model.WorkflowTrigger;
+import com.cognitree.kronos.scheduler.model.CronSchedule;
+import com.cognitree.kronos.scheduler.model.Namespace;
+import com.cognitree.kronos.scheduler.model.Workflow;
+import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import com.cognitree.kronos.scheduler.NamespaceService;
 import com.cognitree.kronos.scheduler.SchedulerApp;
 import com.cognitree.kronos.scheduler.WorkflowService;
@@ -45,7 +46,11 @@ public class ApplicationTest {
     // needs to be minimum 2 seconds otherwise the workflow is triggered twice
     // as we setting startAt and endAt based on scheduled and quartz convert this to date and time (HH : MM : SS)
     // due to which the precision is lost if set to run every sec.
-    private static final String SCHEDULE = "0/2 * * * * ?";
+    private static final CronSchedule SCHEDULE = new CronSchedule();
+
+    static {
+        SCHEDULE.setCronExpression("0/2 * * * * ?");
+    }
 
     @BeforeClass
     public static void setup() throws Exception {
@@ -76,7 +81,7 @@ public class ApplicationTest {
     }
 
     protected WorkflowTrigger createWorkflowTrigger(String triggerName, String workflow, String namespace) throws ParseException {
-        final long nextFireTime = new CronExpression(SCHEDULE)
+        final long nextFireTime = new CronExpression(SCHEDULE.getCronExpression())
                 .getNextValidTimeAfter(new Date(System.currentTimeMillis() + 100)).getTime();
         final WorkflowTrigger workflowTrigger = new WorkflowTrigger();
         workflowTrigger.setName(triggerName);

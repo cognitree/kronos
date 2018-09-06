@@ -18,7 +18,7 @@
 package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.ApplicationTest;
-import com.cognitree.kronos.model.Namespace;
+import com.cognitree.kronos.scheduler.model.Namespace;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,7 +28,7 @@ import java.util.UUID;
 public class NamespaceServiceTest extends ApplicationTest {
 
     @Test
-    public void testAddNamespace() throws ServiceException {
+    public void testAddNamespace() throws ServiceException, ValidationException {
         final NamespaceService namespaceService = NamespaceService.getService();
         Namespace namespaceOne = createNamespace(UUID.randomUUID().toString());
         namespaceService.add(namespaceOne);
@@ -49,8 +49,8 @@ public class NamespaceServiceTest extends ApplicationTest {
         Assert.assertTrue(namespaces.contains(namespaceTwoInDB));
     }
 
-    @Test(expected = ServiceException.class)
-    public void testReAddNamespace() throws ServiceException {
+    @Test(expected = ValidationException.class)
+    public void testReAddNamespace() throws ServiceException, ValidationException {
         final NamespaceService namespaceService = NamespaceService.getService();
         Namespace namespace = createNamespace(UUID.randomUUID().toString());
         namespaceService.add(namespace);
@@ -59,7 +59,7 @@ public class NamespaceServiceTest extends ApplicationTest {
     }
 
     @Test
-    public void testUpdateNamespace() throws ServiceException {
+    public void testUpdateNamespace() throws ServiceException, ValidationException {
         final NamespaceService namespaceService = NamespaceService.getService();
         final String name = UUID.randomUUID().toString();
         Namespace namespace = createNamespace(name);

@@ -35,6 +35,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.RUNNING;
@@ -47,6 +48,9 @@ public class TaskExecutorServiceTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final ExecutorApp EXECUTOR_APP = new ExecutorApp();
+    private static final String TASK_TYPE_TEST = "test";
+    private static final String TASK_TYPE_B = "typeB";
+    private static final String TASK_TYPE_A = "typeA";
 
     @BeforeClass
     public static void init() throws Exception {
@@ -61,7 +65,14 @@ public class TaskExecutorServiceTest {
     @Test
     public void testTaskExecution() throws JsonProcessingException, InterruptedException {
         final HashMap<TaskId, Task> tasksMap = new HashMap<>();
-        Task taskOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setType("test").setStatus(SCHEDULED).build();
+        String namespace = UUID.randomUUID().toString();
+        String jobId = UUID.randomUUID().toString();
+        Task taskOne = MockTaskBuilder.getTaskBuilder()
+                .setJob(jobId)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE_TEST)
+                .setStatus(SCHEDULED)
+                .build();
         tasksMap.put(taskOne, taskOne);
         TaskExecutionService.getService().getProducer().send(taskOne.getType(), MAPPER.writeValueAsString(taskOne));
         sleep(100);
@@ -78,7 +89,14 @@ public class TaskExecutorServiceTest {
     @Test
     public void testTaskExecutionNegative() throws JsonProcessingException, InterruptedException {
         final HashMap<TaskId, Task> tasksMap = new HashMap<>();
-        Task taskOne = MockTaskBuilder.getTaskBuilder().setName("failTask").setType("typeB").setStatus(SCHEDULED).build();
+        String namespace = UUID.randomUUID().toString();
+        String jobId = UUID.randomUUID().toString();
+        Task taskOne = MockTaskBuilder.getTaskBuilder()
+                .setJob(jobId)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE_B)
+                .setStatus(SCHEDULED)
+                .build();
         tasksMap.put(taskOne, taskOne);
         TaskExecutionService.getService().getProducer().send(taskOne.getType(), MAPPER.writeValueAsString(taskOne));
         sleep(100);
@@ -90,24 +108,50 @@ public class TaskExecutorServiceTest {
     @Test
     public void testMaxParallelTask() throws InterruptedException, JsonProcessingException {
         final HashMap<TaskId, Task> tasksMap = new HashMap<>();
-
-        Task taskOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setType("test").setStatus(SCHEDULED).build();
+        String namespace = UUID.randomUUID().toString();
+        String jobId = UUID.randomUUID().toString();
+        Task taskOne = MockTaskBuilder.getTaskBuilder()
+                .setJob(jobId)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE_TEST)
+                .setStatus(SCHEDULED)
+                .build();
         tasksMap.put(taskOne, taskOne);
         TaskExecutionService.getService().getProducer().send(taskOne.getType(), MAPPER.writeValueAsString(taskOne));
 
-        Task taskTwo = MockTaskBuilder.getTaskBuilder().setName("taskTwo").setType("test").setStatus(SCHEDULED).build();
+        Task taskTwo = MockTaskBuilder.getTaskBuilder()
+                .setJob(jobId)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE_TEST)
+                .setStatus(SCHEDULED)
+                .build();
         tasksMap.put(taskTwo, taskTwo);
         TaskExecutionService.getService().getProducer().send(taskTwo.getType(), MAPPER.writeValueAsString(taskTwo));
 
-        Task taskThree = MockTaskBuilder.getTaskBuilder().setName("taskThree").setType("test").setStatus(SCHEDULED).build();
+        Task taskThree = MockTaskBuilder.getTaskBuilder()
+                .setJob(jobId)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE_TEST)
+                .setStatus(SCHEDULED)
+                .build();
         tasksMap.put(taskThree, taskThree);
         TaskExecutionService.getService().getProducer().send(taskThree.getType(), MAPPER.writeValueAsString(taskThree));
 
-        Task taskFour = MockTaskBuilder.getTaskBuilder().setName("taskFour").setType("test").setStatus(SCHEDULED).build();
+        Task taskFour = MockTaskBuilder.getTaskBuilder()
+                .setJob(jobId)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE_TEST)
+                .setStatus(SCHEDULED)
+                .build();
         tasksMap.put(taskFour, taskFour);
         TaskExecutionService.getService().getProducer().send(taskFour.getType(), MAPPER.writeValueAsString(taskFour));
 
-        Task taskFive = MockTaskBuilder.getTaskBuilder().setName("taskFive").setType("test").setStatus(SCHEDULED).build();
+        Task taskFive = MockTaskBuilder.getTaskBuilder()
+                .setJob(jobId)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE_TEST)
+                .setStatus(SCHEDULED)
+                .build();
         tasksMap.put(taskFive, taskFive);
         TaskExecutionService.getService().getProducer().send(taskFive.getType(), MAPPER.writeValueAsString(taskFive));
 
@@ -153,15 +197,42 @@ public class TaskExecutorServiceTest {
 
     @Test
     public void testTaskToHandlerMapping() throws InterruptedException, JsonProcessingException {
-        Task taskOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setType("typeA").build();
+        String namespace = UUID.randomUUID().toString();
+        String jobId = UUID.randomUUID().toString();
+        Task taskOne = MockTaskBuilder.getTaskBuilder()
+                .setJob(jobId)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE_A)
+                .setStatus(SCHEDULED)
+                .build();
         TaskExecutionService.getService().getProducer().send(taskOne.getType(), MAPPER.writeValueAsString(taskOne));
-        Task taskTwo = MockTaskBuilder.getTaskBuilder().setName("taskTwo").setType("typeB").build();
+        Task taskTwo = MockTaskBuilder.getTaskBuilder()
+                .setJob(jobId)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE_B)
+                .setStatus(SCHEDULED)
+                .build();
         TaskExecutionService.getService().getProducer().send(taskTwo.getType(), MAPPER.writeValueAsString(taskTwo));
-        Task taskThree = MockTaskBuilder.getTaskBuilder().setName("taskThree").setType("typeA").build();
+        Task taskThree = MockTaskBuilder.getTaskBuilder()
+                .setJob(jobId)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE_A)
+                .setStatus(SCHEDULED)
+                .build();
         TaskExecutionService.getService().getProducer().send(taskThree.getType(), MAPPER.writeValueAsString(taskThree));
-        Task taskFour = MockTaskBuilder.getTaskBuilder().setName("taskFour").setType("typeA").build();
+        Task taskFour = MockTaskBuilder.getTaskBuilder()
+                .setJob(jobId)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE_A)
+                .setStatus(SCHEDULED)
+                .build();
         TaskExecutionService.getService().getProducer().send(taskFour.getType(), MAPPER.writeValueAsString(taskFour));
-        Task taskFive = MockTaskBuilder.getTaskBuilder().setName("taskFive").setType("typeB").build();
+        Task taskFive = MockTaskBuilder.getTaskBuilder()
+                .setJob(jobId)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE_B)
+                .setStatus(SCHEDULED)
+                .build();
         TaskExecutionService.getService().getProducer().send(taskFive.getType(), MAPPER.writeValueAsString(taskFive));
         sleep(100);
         Assert.assertTrue(TypeATaskHandler.isHandled(taskOne.getName()));

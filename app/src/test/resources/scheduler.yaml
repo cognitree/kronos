@@ -1,22 +1,22 @@
 # configure namespace store
 namespaceStoreConfig:
-  storeClass: com.cognitree.kronos.scheduler.store.InMemoryNamespaceStore
+  storeClass: com.cognitree.kronos.scheduler.store.impl.RAMNamespaceStore
 
 # configure task store
 taskStoreConfig:
-  storeClass: com.cognitree.kronos.scheduler.store.InMemoryTaskStore
+  storeClass: com.cognitree.kronos.scheduler.store.impl.RAMTaskStore
 
 # configure workflow store
 workflowStoreConfig:
-  storeClass: com.cognitree.kronos.scheduler.store.InMemoryWorkflowStore
+  storeClass: com.cognitree.kronos.scheduler.store.impl.RAMWorkflowStore
 
 # configure workflow trigger store
 workflowTriggerStoreConfig:
-  storeClass: com.cognitree.kronos.scheduler.store.InMemoryWorkflowTriggerStore
+  storeClass: com.cognitree.kronos.scheduler.store.impl.RAMWorkflowTriggerStore
 
 # configure job store storing runtime instances of workflows
 jobStoreConfig:
-  storeClass: com.cognitree.kronos.scheduler.store.InMemoryJobStore
+  storeClass: com.cognitree.kronos.scheduler.store.impl.RAMJobStore
 
 timeoutPolicyConfig:
   mockPolicy:

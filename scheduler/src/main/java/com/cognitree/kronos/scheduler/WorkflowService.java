@@ -19,11 +19,11 @@ package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
-import com.cognitree.kronos.model.Namespace;
-import com.cognitree.kronos.model.NamespaceId;
-import com.cognitree.kronos.model.Workflow;
-import com.cognitree.kronos.model.WorkflowId;
-import com.cognitree.kronos.model.WorkflowTrigger;
+import com.cognitree.kronos.scheduler.model.Namespace;
+import com.cognitree.kronos.scheduler.model.NamespaceId;
+import com.cognitree.kronos.scheduler.model.Workflow;
+import com.cognitree.kronos.scheduler.model.WorkflowId;
+import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import com.cognitree.kronos.scheduler.graph.TopologicalSort;
 import com.cognitree.kronos.scheduler.store.StoreConfig;
 import com.cognitree.kronos.scheduler.store.StoreException;
@@ -34,6 +34,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
+
+import static com.cognitree.kronos.scheduler.ValidationError.CYCLIC_DEPENDENCY_IN_WORKFLOW;
+import static com.cognitree.kronos.scheduler.ValidationError.MISSING_TASK_IN_WORKFLOW;
+import static com.cognitree.kronos.scheduler.ValidationError.NAMESPACE_NOT_FOUND;
+import static com.cognitree.kronos.scheduler.ValidationError.WORKFLOW_ALREADY_EXISTS;
+import static com.cognitree.kronos.scheduler.ValidationError.WORKFLOW_NOT_FOUND;
 
 public class WorkflowService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(WorkflowService.class);
@@ -68,6 +74,9 @@ public class WorkflowService implements Service {
         validateNamespace(workflow.getNamespace());
         validate(workflow);
         try {
+            if (workflowStore.load(workflow) != null) {
+                throw WORKFLOW_ALREADY_EXISTS.createException(workflow.getName(), workflow.getNamespace());
+            }
             workflowStore.store(workflow);
         } catch (StoreException e) {
             logger.error("unable to store workflow {}", workflow, e);
@@ -97,13 +106,15 @@ public class WorkflowService implements Service {
         }
     }
 
-    public void update(Workflow workflow) throws ValidationException, SchedulerException, ServiceException {
+    public void update(Workflow workflow) throws ValidationException, ServiceException {
         logger.debug("Received request to update workflow {}", workflow);
         validateNamespace(workflow.getNamespace());
         validate(workflow);
         try {
+            if (workflowStore.load(workflow) == null) {
+                throw WORKFLOW_NOT_FOUND.createException(workflow.getName(), workflow.getNamespace());
+            }
             workflowStore.update(workflow);
-            WorkflowSchedulerService.getService().update(workflow);
         } catch (StoreException e) {
             logger.error("unable to update workflow {}", workflow, e);
             throw new ServiceException(e.getMessage());
@@ -114,6 +125,9 @@ public class WorkflowService implements Service {
         logger.debug("Received request to delete workflow {}", workflowId);
         validateNamespace(workflowId.getNamespace());
         try {
+            if (workflowStore.load(workflowId) == null) {
+                throw WORKFLOW_NOT_FOUND.createException(workflowId.getName(), workflowId.getNamespace());
+            }
             // delete all triggers before deleting workflow
             final List<WorkflowTrigger> workflowTriggers =
                     WorkflowTriggerService.getService().get(workflowId.getName(), workflowId.getNamespace());
@@ -131,7 +145,7 @@ public class WorkflowService implements Service {
     private void validateNamespace(String name) throws ValidationException, ServiceException {
         final Namespace namespace = NamespaceService.getService().get(NamespaceId.build(name));
         if (namespace == null) {
-            throw new ValidationException("no namespace exists with name " + name);
+            throw NAMESPACE_NOT_FOUND.createException(name);
         }
     }
 
@@ -158,14 +172,14 @@ public class WorkflowService implements Service {
                 for (String dependentTask : dependsOn) {
                     final Workflow.WorkflowTask dependeeTask = workflowTaskMap.get(dependentTask);
                     if (dependeeTask == null) {
-                        throw new ValidationException("missing task " + dependentTask);
+                        throw MISSING_TASK_IN_WORKFLOW.createException(dependentTask);
                     }
                     topologicalSort.add(dependeeTask, workflowTask);
                 }
             }
         }
         if (!topologicalSort.isDag()) {
-            throw new ValidationException("Invalid workflow contains cyclic dependency)");
+            throw CYCLIC_DEPENDENCY_IN_WORKFLOW.createException();
         }
     }
 

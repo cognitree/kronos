@@ -18,8 +18,8 @@
 package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.ApplicationTest;
-import com.cognitree.kronos.model.Namespace;
-import com.cognitree.kronos.model.Workflow;
+import com.cognitree.kronos.scheduler.model.Namespace;
+import com.cognitree.kronos.scheduler.model.Workflow;
 import org.junit.Assert;
 import org.junit.Test;
 import org.quartz.SchedulerException;
@@ -98,7 +98,7 @@ public class WorkflowServiceTest extends ApplicationTest {
         Assert.assertTrue(namespaceTwoWorkflows.contains(workflowThree));
     }
 
-    @Test(expected = ServiceException.class)
+    @Test(expected = ValidationException.class)
     public void testReAddWorkflow() throws ServiceException, ValidationException, IOException {
         final NamespaceService namespaceService = NamespaceService.getService();
         final Namespace namespace = createNamespace(UUID.randomUUID().toString());

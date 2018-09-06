@@ -18,9 +18,9 @@
 package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.ApplicationTest;
-import com.cognitree.kronos.model.Namespace;
-import com.cognitree.kronos.model.Workflow;
-import com.cognitree.kronos.model.WorkflowTrigger;
+import com.cognitree.kronos.scheduler.model.Namespace;
+import com.cognitree.kronos.scheduler.model.Workflow;
+import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -153,7 +153,7 @@ public class WorkflowTriggerServiceTest extends ApplicationTest {
         Assert.assertEquals(1, workflowTriggerService.get(workflowTwo.getName(), namespaceTwo.getName()).size());
     }
 
-    @Test(expected = ServiceException.class)
+    @Test(expected = ValidationException.class)
     public void testReAddWorkflowTrigger() throws Exception {
         Namespace namespaceOne = createNamespace(UUID.randomUUID().toString());
         NamespaceService.getService().add(namespaceOne);
@@ -167,44 +167,6 @@ public class WorkflowTriggerServiceTest extends ApplicationTest {
                 workflowOne.getName(), namespaceOne.getName());
         workflowTriggerService.add(workflowTriggerOne);
         workflowTriggerService.add(workflowTriggerOne);
-        Assert.fail();
-    }
-
-    @Test
-    public void testUpdateWorkflowTrigger() throws Exception {
-        Namespace namespaceOne = createNamespace(UUID.randomUUID().toString());
-        NamespaceService.getService().add(namespaceOne);
-
-        final Workflow workflowOne = createWorkflow("workflows/workflow-template.yaml",
-                UUID.randomUUID().toString(), namespaceOne.getName());
-        WorkflowService.getService().add(workflowOne);
-
-        final WorkflowTriggerService workflowTriggerService = WorkflowTriggerService.getService();
-        final WorkflowTrigger workflowTriggerOne = createWorkflowTrigger(UUID.randomUUID().toString(),
-                workflowOne.getName(), namespaceOne.getName());
-        workflowTriggerService.add(workflowTriggerOne);
-
-        final WorkflowTrigger updatedWorkflowTriggerOne = createWorkflowTrigger(workflowTriggerOne.getName(),
-                workflowOne.getName(), namespaceOne.getName()
-        );
-        workflowTriggerService.update(updatedWorkflowTriggerOne);
-        final WorkflowTrigger workflowTriggerOneFromDB = workflowTriggerService.get(updatedWorkflowTriggerOne);
-        Assert.assertEquals(updatedWorkflowTriggerOne, workflowTriggerOneFromDB);
-    }
-
-    @Test(expected = ServiceException.class)
-    public void testUpdateWorkflowTriggerInvalid() throws Exception {
-        Namespace namespaceOne = createNamespace(UUID.randomUUID().toString());
-        NamespaceService.getService().add(namespaceOne);
-
-        final Workflow workflowOne = createWorkflow("workflows/workflow-template.yaml",
-                UUID.randomUUID().toString(), namespaceOne.getName());
-        WorkflowService.getService().add(workflowOne);
-
-        final WorkflowTriggerService workflowTriggerService = WorkflowTriggerService.getService();
-        final WorkflowTrigger workflowTriggerOne = createWorkflowTrigger(UUID.randomUUID().toString(),
-                workflowOne.getName(), namespaceOne.getName());
-        workflowTriggerService.update(workflowTriggerOne);
         Assert.fail();
     }
 

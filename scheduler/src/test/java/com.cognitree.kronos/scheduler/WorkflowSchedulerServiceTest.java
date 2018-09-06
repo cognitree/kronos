@@ -17,8 +17,9 @@
 
 package com.cognitree.kronos.scheduler;
 
-import com.cognitree.kronos.model.Workflow;
-import com.cognitree.kronos.model.WorkflowTrigger;
+import com.cognitree.kronos.scheduler.model.CronSchedule;
+import com.cognitree.kronos.scheduler.model.Workflow;
+import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.AfterClass;
@@ -26,7 +27,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.quartz.CronExpression;
-import org.quartz.JobDetail;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
@@ -34,16 +34,19 @@ import org.quartz.SchedulerException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
 public class WorkflowSchedulerServiceTest {
 
-    private static final String schedule = "0/2 * * * * ?";
+    private static final CronSchedule schedule = new CronSchedule();
     private static final ObjectMapper YAML_MAPPER = new ObjectMapper(new YAMLFactory());
     private static final SchedulerApp SCHEDULER_APP = new SchedulerApp();
+
+    static {
+        schedule.setCronExpression("0/2 * * * * ?");
+    }
 
     @BeforeClass
     public static void init() throws Exception {
@@ -65,29 +68,6 @@ public class WorkflowSchedulerServiceTest {
         workflowSchedulerService.schedule(workflow, workflowTrigger);
         final Scheduler scheduler = workflowSchedulerService.getScheduler();
         Assert.assertTrue(scheduler.checkExists(getJobKey(workflowTrigger)));
-    }
-
-    @Test
-    public void testUpdateWorkflow() throws SchedulerException, IOException, ParseException {
-        final WorkflowSchedulerService workflowSchedulerService = WorkflowSchedulerService.getService();
-        final Workflow workflow = createWorkflow(UUID.randomUUID().toString(),
-                UUID.randomUUID().toString());
-        final WorkflowTrigger workflowTrigger = createWorkflowTrigger(UUID.randomUUID().toString(),
-                workflow.getName(), workflow.getNamespace());
-        workflowSchedulerService.schedule(workflow, workflowTrigger);
-        final Scheduler scheduler = workflowSchedulerService.getScheduler();
-        Assert.assertTrue(scheduler.checkExists(getJobKey(workflowTrigger)));
-
-        final Workflow updatedWorkflow = createWorkflow(workflow.getName(),
-                workflow.getNamespace());
-        Workflow.WorkflowTask workflowTaskFour = new Workflow.WorkflowTask();
-        workflowTaskFour.setName("taskFour");
-        workflowTaskFour.setType("typeSuccess");
-        workflowTaskFour.setDependsOn(Collections.singletonList("taskThree"));
-        updatedWorkflow.getTasks().add(workflowTaskFour);
-        workflowSchedulerService.update(updatedWorkflow);
-        final JobDetail jobDetail = scheduler.getJobDetail(getJobKey(workflowTrigger));
-        Assert.assertEquals(updatedWorkflow, jobDetail.getJobDataMap().get("workflow"));
     }
 
     @Test
@@ -125,7 +105,7 @@ public class WorkflowSchedulerServiceTest {
     }
 
     private WorkflowTrigger createWorkflowTrigger(String triggerName, String workflow, String namespace) throws ParseException {
-        final long nextFireTime = new CronExpression(schedule)
+        final long nextFireTime = new CronExpression(schedule.getCronExpression())
                 .getNextValidTimeAfter(new Date(System.currentTimeMillis() + 100)).getTime();
         final WorkflowTrigger workflowTrigger = new WorkflowTrigger();
         workflowTrigger.setName(triggerName);
@@ -134,7 +114,6 @@ public class WorkflowSchedulerServiceTest {
         workflowTrigger.setSchedule(schedule);
         workflowTrigger.setStartAt(nextFireTime - 100);
         workflowTrigger.setEndAt(nextFireTime + 100);
-        System.out.println(workflowTrigger);
         return workflowTrigger;
     }
 

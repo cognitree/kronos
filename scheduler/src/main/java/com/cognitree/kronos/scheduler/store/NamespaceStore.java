@@ -17,8 +17,8 @@
 
 package com.cognitree.kronos.scheduler.store;
 
-import com.cognitree.kronos.model.Namespace;
-import com.cognitree.kronos.model.NamespaceId;
+import com.cognitree.kronos.scheduler.model.Namespace;
+import com.cognitree.kronos.scheduler.model.NamespaceId;
 
 import java.util.List;
 

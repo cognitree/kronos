@@ -17,8 +17,8 @@
 
 package com.cognitree.kronos.scheduler.store;
 
-import com.cognitree.kronos.model.Job;
-import com.cognitree.kronos.model.JobId;
+import com.cognitree.kronos.scheduler.model.Job;
+import com.cognitree.kronos.scheduler.model.JobId;
 
 import java.util.List;
 

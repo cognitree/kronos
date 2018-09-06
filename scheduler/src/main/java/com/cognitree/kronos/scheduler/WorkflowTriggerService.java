@@ -19,12 +19,12 @@ package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
-import com.cognitree.kronos.model.Namespace;
-import com.cognitree.kronos.model.NamespaceId;
-import com.cognitree.kronos.model.Workflow;
-import com.cognitree.kronos.model.WorkflowId;
-import com.cognitree.kronos.model.WorkflowTrigger;
-import com.cognitree.kronos.model.WorkflowTriggerId;
+import com.cognitree.kronos.scheduler.model.Namespace;
+import com.cognitree.kronos.scheduler.model.NamespaceId;
+import com.cognitree.kronos.scheduler.model.Workflow;
+import com.cognitree.kronos.scheduler.model.WorkflowId;
+import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
+import com.cognitree.kronos.scheduler.model.WorkflowTriggerId;
 import com.cognitree.kronos.scheduler.store.StoreConfig;
 import com.cognitree.kronos.scheduler.store.StoreException;
 import com.cognitree.kronos.scheduler.store.WorkflowTriggerStore;
@@ -32,7 +32,13 @@ import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.ParseException;
 import java.util.List;
+
+import static com.cognitree.kronos.scheduler.ValidationError.NAMESPACE_NOT_FOUND;
+import static com.cognitree.kronos.scheduler.ValidationError.WORKFLOW_NOT_FOUND;
+import static com.cognitree.kronos.scheduler.ValidationError.WORKFLOW_TRIGGER_ALREADY_EXISTS;
+import static com.cognitree.kronos.scheduler.ValidationError.WORKFLOW_TRIGGER_NOT_FOUND;
 
 public class WorkflowTriggerService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(WorkflowSchedulerService.class);
@@ -64,13 +70,17 @@ public class WorkflowTriggerService implements Service {
     public void add(WorkflowTrigger workflowTrigger) throws SchedulerException, ServiceException, ValidationException {
         logger.debug("Received request to add workflow trigger {}", workflowTrigger);
         validateNamespace(workflowTrigger.getNamespace());
-        validate(workflowTrigger.getWorkflow(), workflowTrigger.getNamespace());
+        validateWorkflow(workflowTrigger.getWorkflow(), workflowTrigger.getNamespace());
         try {
+            if (workflowTriggerStore.load(workflowTrigger) != null) {
+                throw WORKFLOW_TRIGGER_ALREADY_EXISTS.createException(workflowTrigger.getName(),
+                        workflowTrigger.getWorkflow(), workflowTrigger.getNamespace());
+            }
             workflowTriggerStore.store(workflowTrigger);
             final Workflow workflow = WorkflowService.getService()
                     .get(WorkflowId.build(workflowTrigger.getWorkflow(), workflowTrigger.getNamespace()));
             WorkflowSchedulerService.getService().schedule(workflow, workflowTrigger);
-        } catch (StoreException e) {
+        } catch (StoreException | ParseException e) {
             logger.error("unable to add workflow trigger {}", workflowTrigger, e);
             throw new ServiceException(e.getMessage());
         }
@@ -90,7 +100,7 @@ public class WorkflowTriggerService implements Service {
     public WorkflowTrigger get(WorkflowTriggerId workflowTriggerId) throws ServiceException, ValidationException {
         logger.debug("Received request to get workflow trigger with id {}", workflowTriggerId);
         validateNamespace(workflowTriggerId.getNamespace());
-        validate(workflowTriggerId.getWorkflow(), workflowTriggerId.getNamespace());
+        validateWorkflow(workflowTriggerId.getWorkflow(), workflowTriggerId.getNamespace());
         try {
             return workflowTriggerStore.load(workflowTriggerId);
         } catch (StoreException e) {
@@ -103,7 +113,7 @@ public class WorkflowTriggerService implements Service {
         logger.debug("Received request to get all workflow triggers for workflow {} under namespace {}",
                 workflowName, namespace);
         validateNamespace(namespace);
-        validate(workflowName, namespace);
+        validateWorkflow(workflowName, namespace);
         try {
             return workflowTriggerStore.loadByWorkflowName(workflowName, namespace);
         } catch (StoreException e) {
@@ -113,25 +123,14 @@ public class WorkflowTriggerService implements Service {
         }
     }
 
-    public void update(WorkflowTrigger workflowTrigger) throws SchedulerException, ServiceException, ValidationException {
-        logger.debug("Received request to update workflow trigger to {}", workflowTrigger);
-        validateNamespace(workflowTrigger.getNamespace());
-        try {
-            workflowTriggerStore.update(workflowTrigger);
-            WorkflowSchedulerService.getService().delete(workflowTrigger);
-            final Workflow workflow = WorkflowService.getService()
-                    .get(WorkflowId.build(workflowTrigger.getWorkflow(), workflowTrigger.getNamespace()));
-            WorkflowSchedulerService.getService().schedule(workflow, workflowTrigger);
-        } catch (StoreException e) {
-            logger.error("unable to update workflow trigger to {}", workflowTrigger, e);
-            throw new ServiceException(e.getMessage());
-        }
-    }
-
     public void delete(WorkflowTriggerId workflowTriggerId) throws SchedulerException, ServiceException, ValidationException {
         logger.debug("Received request to delete workflow trigger {}", workflowTriggerId);
         validateNamespace(workflowTriggerId.getNamespace());
         try {
+            if (workflowTriggerStore.load(workflowTriggerId) == null) {
+                throw WORKFLOW_TRIGGER_NOT_FOUND.createException(workflowTriggerId.getName(),
+                        workflowTriggerId.getWorkflow(), workflowTriggerId.getNamespace());
+            }
             workflowTriggerStore.delete(workflowTriggerId);
             WorkflowSchedulerService.getService().delete(workflowTriggerId);
         } catch (StoreException e) {
@@ -140,18 +139,18 @@ public class WorkflowTriggerService implements Service {
         }
     }
 
-    private void validate(String workflowName, String namespace) throws ServiceException, ValidationException {
+    private void validateWorkflow(String workflowName, String namespace) throws ServiceException, ValidationException {
         WorkflowId workflowId = WorkflowId.build(workflowName, namespace);
         if (WorkflowService.getService().get(workflowId) == null) {
             logger.error("No workflow exists with name {} under namespace {}", workflowName, namespace);
-            throw new ValidationException("No workflow exists with name " + workflowName + " under namespace " + namespace);
+            throw WORKFLOW_NOT_FOUND.createException(workflowName, namespace);
         }
     }
 
     private void validateNamespace(String name) throws ValidationException, ServiceException {
         final Namespace namespace = NamespaceService.getService().get(NamespaceId.build(name));
         if (namespace == null) {
-            throw new ValidationException("no namespace exists with name " + name);
+            throw NAMESPACE_NOT_FOUND.createException(name);
         }
     }
 

@@ -18,9 +18,9 @@
 package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.ApplicationTest;
-import com.cognitree.kronos.model.Job;
+import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.model.Task;
-import com.cognitree.kronos.model.WorkflowTrigger;
+import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
