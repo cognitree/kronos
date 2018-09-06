@@ -17,8 +17,8 @@
 
 package com.cognitree.kronos.response;
 
-import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.model.Task;
+import com.cognitree.kronos.scheduler.model.Job;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 

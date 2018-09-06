@@ -18,14 +18,14 @@
 package com.cognitree.kronos;
 
 import com.cognitree.kronos.executor.ExecutorApp;
-import com.cognitree.kronos.scheduler.model.CronSchedule;
-import com.cognitree.kronos.scheduler.model.Namespace;
-import com.cognitree.kronos.scheduler.model.Workflow;
-import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import com.cognitree.kronos.scheduler.NamespaceService;
 import com.cognitree.kronos.scheduler.SchedulerApp;
 import com.cognitree.kronos.scheduler.WorkflowService;
 import com.cognitree.kronos.scheduler.WorkflowTriggerService;
+import com.cognitree.kronos.scheduler.model.CronSchedule;
+import com.cognitree.kronos.scheduler.model.Namespace;
+import com.cognitree.kronos.scheduler.model.Workflow;
+import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.AfterClass;

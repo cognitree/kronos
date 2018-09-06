@@ -17,11 +17,11 @@
 
 package com.cognitree.kronos.api;
 
-import com.cognitree.kronos.scheduler.model.Namespace;
-import com.cognitree.kronos.scheduler.model.NamespaceId;
 import com.cognitree.kronos.scheduler.NamespaceService;
 import com.cognitree.kronos.scheduler.ServiceException;
 import com.cognitree.kronos.scheduler.ValidationException;
+import com.cognitree.kronos.scheduler.model.Namespace;
+import com.cognitree.kronos.scheduler.model.NamespaceId;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
