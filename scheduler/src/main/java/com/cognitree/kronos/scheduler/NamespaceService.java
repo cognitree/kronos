@@ -19,8 +19,8 @@ package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
-import com.cognitree.kronos.model.Namespace;
-import com.cognitree.kronos.model.NamespaceId;
+import com.cognitree.kronos.scheduler.model.Namespace;
+import com.cognitree.kronos.scheduler.model.NamespaceId;
 import com.cognitree.kronos.scheduler.store.NamespaceStore;
 import com.cognitree.kronos.scheduler.store.StoreConfig;
 import com.cognitree.kronos.scheduler.store.StoreException;
@@ -28,6 +28,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+
+import static com.cognitree.kronos.scheduler.ValidationError.NAMESPACE_ALREADY_EXISTS;
+import static com.cognitree.kronos.scheduler.ValidationError.NAMESPACE_NOT_FOUND;
 
 public class NamespaceService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(NamespaceService.class);
@@ -77,9 +80,12 @@ public class NamespaceService implements Service {
         }
     }
 
-    public void add(Namespace namespace) throws ServiceException {
+    public void add(Namespace namespace) throws ServiceException, ValidationException {
         logger.debug("Received request to add namespace {}", namespace);
         try {
+            if (namespaceStore.load(namespace) != null) {
+                throw NAMESPACE_ALREADY_EXISTS.createException(namespace.getName());
+            }
             namespaceStore.store(namespace);
         } catch (StoreException e) {
             logger.error("unable to add namespace {}", namespace, e);
@@ -87,9 +93,12 @@ public class NamespaceService implements Service {
         }
     }
 
-    public void update(Namespace namespace) throws ServiceException {
+    public void update(Namespace namespace) throws ServiceException, ValidationException {
         logger.debug("Received request to update namespace to {}", namespace);
         try {
+            if (namespaceStore.load(namespace) == null) {
+                throw NAMESPACE_NOT_FOUND.createException(namespace.getName());
+            }
             namespaceStore.update(namespace);
         } catch (StoreException e) {
             logger.error("unable to update namespace to {}", namespace, e);

@@ -42,7 +42,7 @@
         </dependency>
         <dependency>
             <groupId>com.cognitree.kronos</groupId>
-            <artifactId>sqlite-store</artifactId>
+            <artifactId>jdbc-store</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

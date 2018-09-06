@@ -1,42 +1,22 @@
 # configure namespace store
 namespaceStoreConfig:
-  storeClass: com.cognitree.kronos.scheduler.store.SQLiteNamespaceStore
-  config:
-    connectionURL: jdbc:sqlite:kronos.db
-    username:
-    password:
+  storeClass: com.cognitree.kronos.scheduler.store.impl.RAMNamespaceStore
 
 # configure task store
 taskStoreConfig:
-  storeClass: com.cognitree.kronos.scheduler.store.SQLiteTaskStore
-  config:
-    connectionURL: jdbc:sqlite:kronos.db
-    username:
-    password:
+  storeClass: com.cognitree.kronos.scheduler.store.impl.RAMTaskStore
 
 # configure workflow store
 workflowStoreConfig:
-  storeClass: com.cognitree.kronos.scheduler.store.SQLiteWorkflowStore
-  config:
-    connectionURL: jdbc:sqlite:kronos.db
-    username:
-    password:
+  storeClass: com.cognitree.kronos.scheduler.store.impl.RAMWorkflowStore
 
 # configure workflow trigger store
 workflowTriggerStoreConfig:
-  storeClass: com.cognitree.kronos.scheduler.store.SQLiteWorkflowTriggerStore
-  config:
-    connectionURL: jdbc:sqlite:kronos.db
-    username:
-    password:
+  storeClass: com.cognitree.kronos.scheduler.store.impl.RAMWorkflowTriggerStore
 
 # configure job store storing runtime instances of workflows
 jobStoreConfig:
-  storeClass: com.cognitree.kronos.scheduler.store.SQLiteJobStore
-  config:
-    connectionURL: jdbc:sqlite:kronos.db
-    username:
-    password:
+  storeClass: com.cognitree.kronos.scheduler.store.impl.RAMJobStore
 
 # time to wait before removing executed tasks from memory
 taskPurgeInterval: 1d

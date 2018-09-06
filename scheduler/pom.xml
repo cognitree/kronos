@@ -29,11 +29,26 @@
     <groupId>com.cognitree.kronos</groupId>
     <artifactId>scheduler</artifactId>
 
+    <properties>
+        <quartz.version>2.2.3</quartz.version>
+        <guava.version>23.5-jre</guava.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.cognitree.kronos</groupId>
             <artifactId>common</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.quartz-scheduler</groupId>
+            <artifactId>quartz</artifactId>
+            <version>${quartz.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
         </dependency>
         <dependency>
             <groupId>com.cognitree.kronos</groupId>

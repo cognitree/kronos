@@ -18,12 +18,18 @@
 package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.MockTaskBuilder;
+import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.TaskUpdate;
+import com.cognitree.kronos.queue.QueueConfig;
+import com.cognitree.kronos.scheduler.store.StoreConfig;
+import com.cognitree.kronos.scheduler.store.impl.RAMNamespaceStore;
+import com.cognitree.kronos.scheduler.store.impl.RAMTaskStore;
 import com.cognitree.kronos.util.DateTimeUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -33,18 +39,20 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.UUID;
 
 import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.RUNNING;
 import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
 import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
 import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
-import static com.cognitree.kronos.util.Messages.FAILED_TO_RESOLVE_DEPENDENCY;
-import static com.cognitree.kronos.util.Messages.TIMED_OUT;
+import static com.cognitree.kronos.scheduler.model.Messages.FAILED_TO_RESOLVE_DEPENDENCY;
+import static com.cognitree.kronos.scheduler.model.Messages.TIMED_OUT;
 import static java.lang.Thread.sleep;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
@@ -52,17 +60,43 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 public class TaskSchedulerServiceTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final SchedulerApp SCHEDULER_APP = new SchedulerApp();
     private static final String TASK_TYPE = "test";
 
     @BeforeClass
     public static void init() throws Exception {
-        SCHEDULER_APP.start();
+        // task scheduler service requires namespace service and task service
+        StoreConfig namespaceStoreConfig = new StoreConfig();
+        namespaceStoreConfig.setStoreClass(RAMNamespaceStore.class.getName());
+        NamespaceService namespaceService = new NamespaceService(namespaceStoreConfig);
+        ServiceProvider.registerService(namespaceService);
+        namespaceService.init();
+        namespaceService.start();
+        StoreConfig taskStoreConfig = new StoreConfig();
+        taskStoreConfig.setStoreClass(RAMTaskStore.class.getName());
+        TaskService taskService = new TaskService(taskStoreConfig);
+        ServiceProvider.registerService(taskService);
+        taskService.init();
+        taskService.start();
+
+        final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
+        final InputStream schedulerConfigAsStream =
+                TaskSchedulerServiceTest.class.getClassLoader().getResourceAsStream("scheduler.yaml");
+        final SchedulerConfig schedulerConfig = MAPPER.readValue(schedulerConfigAsStream, SchedulerConfig.class);
+
+        final InputStream queueConfigAsStream =
+                TaskSchedulerServiceTest.class.getClassLoader().getResourceAsStream("queue.yaml");
+        final QueueConfig queueConfig = MAPPER.readValue(queueConfigAsStream, QueueConfig.class);
+        TaskSchedulerService taskSchedulerService = new TaskSchedulerService(schedulerConfig, queueConfig);
+        ServiceProvider.registerService(taskSchedulerService);
+        taskSchedulerService.init();
+        taskSchedulerService.start();
     }
 
     @AfterClass
     public static void stop() {
-        SCHEDULER_APP.stop();
+        NamespaceService.getService().stop();
+        TaskService.getService().stop();
+        TaskSchedulerService.getService().stop();
     }
 
     @Before
@@ -73,16 +107,31 @@ public class TaskSchedulerServiceTest {
 
     @Test
     public void testAddTask() throws InterruptedException, IOException, ServiceException {
+        String namespace = UUID.randomUUID().toString();
+        String jobId = UUID.randomUUID().toString();
         final TaskProvider taskProvider = TaskSchedulerService.getService().getTaskProvider();
-        Task taskOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setType(TASK_TYPE).build();
+        Task taskOne = MockTaskBuilder.getTaskBuilder()
+                .setJob(jobId)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE)
+                .build();
         TaskSchedulerService.getService().schedule(taskOne);
         Assert.assertEquals(1, taskProvider.size());
 
-        Task taskTwo = MockTaskBuilder.getTaskBuilder().setName("taskTwo").setType(TASK_TYPE).build();
+        Task taskTwo = MockTaskBuilder.getTaskBuilder()
+                .setJob(jobId)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE)
+                .build();
+
         TaskSchedulerService.getService().schedule(taskTwo);
         Assert.assertEquals(2, taskProvider.size());
 
-        Task taskThree = MockTaskBuilder.getTaskBuilder().setName("taskThree").setType(TASK_TYPE).build();
+        Task taskThree = MockTaskBuilder.getTaskBuilder()
+                .setJob(jobId)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE)
+                .build();
         TaskSchedulerService.getService().schedule(taskThree);
         Assert.assertEquals(3, taskProvider.size());
 
@@ -107,7 +156,11 @@ public class TaskSchedulerServiceTest {
 
     @Test
     public void testAddDuplicateTask() throws InterruptedException, IOException, ServiceException {
-        Task taskOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setType(TASK_TYPE).build();
+        Task taskOne = MockTaskBuilder.getTaskBuilder()
+                .setJob(UUID.randomUUID().toString())
+                .setNamespace(UUID.randomUUID().toString())
+                .setType(TASK_TYPE)
+                .build();
         TaskSchedulerService.getService().schedule(taskOne);
         TaskSchedulerService.getService().schedule(taskOne);
         final List<String> tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
@@ -122,13 +175,22 @@ public class TaskSchedulerServiceTest {
 
     @Test
     public void testAddTaskWithMissingDependency() throws InterruptedException, IOException, ServiceException {
-        final long createdAt = System.currentTimeMillis();
-        Task taskOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setType(TASK_TYPE).setCreatedAt(createdAt).build();
+        String namespace = UUID.randomUUID().toString();
+        String jobId = UUID.randomUUID().toString();
+        Task taskOne = MockTaskBuilder.getTaskBuilder()
+                .setJob(jobId)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE)
+                .build();
         List<String> dependsOn = new ArrayList<>();
-        dependsOn.add("taskOne");
+        dependsOn.add(taskOne.getName());
         dependsOn.add("taskTwo");
-        Task taskThree = MockTaskBuilder.getTaskBuilder().setName("taskThree").setType(TASK_TYPE).setDependsOn(dependsOn)
-                .setCreatedAt(createdAt + 5).build();
+        Task taskThree = MockTaskBuilder.getTaskBuilder()
+                .setJob(jobId)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE)
+                .setDependsOn(dependsOn)
+                .build();
         TaskSchedulerService.getService().schedule(taskOne);
         TaskSchedulerService.getService().schedule(taskThree);
         Assert.assertEquals(SCHEDULED, taskOne.getStatus());
@@ -142,58 +204,47 @@ public class TaskSchedulerServiceTest {
     }
 
     @Test
-    public void testAddTaskInWorkflowSameName() throws InterruptedException, IOException, ServiceException {
-        final long createdAt = System.currentTimeMillis();
-        Task taskOneGroupOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setJob("workflowOne")
-                .setType(TASK_TYPE).setCreatedAt(createdAt).build();
-        TaskSchedulerService.getService().schedule(taskOneGroupOne);
-        Assert.assertEquals(SCHEDULED, taskOneGroupOne.getStatus());
+    public void testAddTaskInWorkflowSameNamespace() throws InterruptedException, IOException, ServiceException {
+        String namespace = UUID.randomUUID().toString();
+        String jobOne = UUID.randomUUID().toString();
+        Task taskOneJobOne = MockTaskBuilder.getTaskBuilder()
+                .setJob(jobOne)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE)
+                .build();
+        TaskSchedulerService.getService().schedule(taskOneJobOne);
+        Assert.assertEquals(SCHEDULED, taskOneJobOne.getStatus());
         List<String> tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
         Assert.assertEquals(1, tasks.size());
-        Assert.assertEquals(taskOneGroupOne, MAPPER.readValue(tasks.get(0), MutableTask.class));
-        finishExecution(taskOneGroupOne);
+        Assert.assertEquals(taskOneJobOne, MAPPER.readValue(tasks.get(0), MutableTask.class));
+        finishExecution(taskOneJobOne);
         sleep(100);
-        Assert.assertEquals(SUCCESSFUL, taskOneGroupOne.getStatus());
+        Assert.assertEquals(SUCCESSFUL, taskOneJobOne.getStatus());
 
-        Task taskOneGroupTwo = MockTaskBuilder.getTaskBuilder().setName("taskOne").setJob("workflowTwo")
-                .setType(TASK_TYPE).setCreatedAt(createdAt).build();
-        TaskSchedulerService.getService().schedule(taskOneGroupTwo);
-        Assert.assertEquals(SCHEDULED, taskOneGroupTwo.getStatus());
+        Task taskTwoJobOne = MockTaskBuilder.getTaskBuilder()
+                .setJob(jobOne)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE)
+                .build();
+        TaskSchedulerService.getService().schedule(taskTwoJobOne);
+        Assert.assertEquals(SCHEDULED, taskTwoJobOne.getStatus());
         tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
         Assert.assertEquals(1, tasks.size());
-        Assert.assertEquals(taskOneGroupTwo, MAPPER.readValue(tasks.get(0), MutableTask.class));
-        pushStatusUpdate(taskOneGroupTwo, FAILED);
+        Assert.assertEquals(taskTwoJobOne, MAPPER.readValue(tasks.get(0), MutableTask.class));
+        finishExecution(taskTwoJobOne);
         sleep(100);
-        Assert.assertEquals(FAILED, taskOneGroupTwo.getStatus());
+        Assert.assertEquals(SUCCESSFUL, taskTwoJobOne.getStatus());
 
-        Task taskTwoGroupOne = MockTaskBuilder.getTaskBuilder().setName("taskTwo").setJob("workflowOne")
-                .setType(TASK_TYPE).setCreatedAt(createdAt + 1).build();
-        TaskSchedulerService.getService().schedule(taskTwoGroupOne);
-        Assert.assertEquals(SCHEDULED, taskTwoGroupOne.getStatus());
-        tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
-        Assert.assertEquals(1, tasks.size());
-        Assert.assertEquals(taskTwoGroupOne, MAPPER.readValue(tasks.get(0), MutableTask.class));
-        finishExecution(taskTwoGroupOne);
-        sleep(100);
-        Assert.assertEquals(SUCCESSFUL, taskTwoGroupOne.getStatus());
+        List<String> dependsOnJobOne = new ArrayList<>();
+        dependsOnJobOne.add(taskOneJobOne.getName());
+        dependsOnJobOne.add(taskTwoJobOne.getName());
+        Task taskThreeGroupOne = MockTaskBuilder.getTaskBuilder().setName(UUID.randomUUID().toString())
+                .setJob(jobOne)
+                .setNamespace(namespace)
+                .setDependsOn(dependsOnJobOne)
+                .setType(TASK_TYPE)
+                .build();
 
-        Task taskTwoGroupTwo = MockTaskBuilder.getTaskBuilder().setName("taskTwo").setJob("workflowTwo")
-                .setType(TASK_TYPE).setCreatedAt(createdAt + 1).build();
-        TaskSchedulerService.getService().schedule(taskTwoGroupTwo);
-        Assert.assertEquals(SCHEDULED, taskTwoGroupTwo.getStatus());
-        tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
-        Assert.assertEquals(1, tasks.size());
-        Assert.assertEquals(taskTwoGroupTwo, MAPPER.readValue(tasks.get(0), MutableTask.class));
-        finishExecution(taskTwoGroupTwo);
-        sleep(100);
-        Assert.assertEquals(SUCCESSFUL, taskTwoGroupTwo.getStatus());
-
-        List<String> dependsOn = new ArrayList<>();
-        dependsOn.add("taskOne");
-        dependsOn.add("taskTwo");
-
-        Task taskThreeGroupOne = MockTaskBuilder.getTaskBuilder().setName("taskThree").setJob("workflowOne")
-                .setType(TASK_TYPE).setDependsOn(dependsOn).setCreatedAt(createdAt + 5).build();
         TaskSchedulerService.getService().schedule(taskThreeGroupOne);
         Assert.assertEquals(SCHEDULED, taskThreeGroupOne.getStatus());
         tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
@@ -203,8 +254,44 @@ public class TaskSchedulerServiceTest {
         sleep(100);
         Assert.assertEquals(SUCCESSFUL, taskThreeGroupOne.getStatus());
 
-        Task taskThreeGroupTwo = MockTaskBuilder.getTaskBuilder().setName("taskThree").setJob("workflowTwo")
-                .setType(TASK_TYPE).setDependsOn(dependsOn).setCreatedAt(createdAt + 5).build();
+        String jobTwo = UUID.randomUUID().toString();
+        Task taskOneGroupTwo = MockTaskBuilder.getTaskBuilder()
+                .setJob(jobTwo)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE)
+                .build();
+        TaskSchedulerService.getService().schedule(taskOneGroupTwo);
+        Assert.assertEquals(SCHEDULED, taskOneGroupTwo.getStatus());
+        tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
+        Assert.assertEquals(1, tasks.size());
+        Assert.assertEquals(taskOneGroupTwo, MAPPER.readValue(tasks.get(0), MutableTask.class));
+        pushStatusUpdate(taskOneGroupTwo, FAILED);
+        sleep(100);
+        Assert.assertEquals(FAILED, taskOneGroupTwo.getStatus());
+
+        Task taskTwoGroupTwo = MockTaskBuilder.getTaskBuilder()
+                .setJob(jobTwo)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE)
+                .build();
+        TaskSchedulerService.getService().schedule(taskTwoGroupTwo);
+        Assert.assertEquals(SCHEDULED, taskTwoGroupTwo.getStatus());
+        tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
+        Assert.assertEquals(1, tasks.size());
+        Assert.assertEquals(taskTwoGroupTwo, MAPPER.readValue(tasks.get(0), MutableTask.class));
+        finishExecution(taskTwoGroupTwo);
+        sleep(100);
+        Assert.assertEquals(SUCCESSFUL, taskTwoGroupTwo.getStatus());
+
+        List<String> dependsOnJobTwo = new ArrayList<>();
+        dependsOnJobTwo.add(taskOneJobOne.getName());
+        dependsOnJobTwo.add(taskTwoJobOne.getName());
+        Task taskThreeGroupTwo = MockTaskBuilder.getTaskBuilder()
+                .setJob(jobTwo)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE)
+                .setDependsOn(dependsOnJobTwo)
+                .build();
         TaskSchedulerService.getService().schedule(taskThreeGroupTwo);
         tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
         Assert.assertEquals(0, tasks.size());
@@ -214,57 +301,46 @@ public class TaskSchedulerServiceTest {
 
     @Test
     public void testAddTaskInDifferentNamespace() throws InterruptedException, IOException, ServiceException {
-        final long createdAt = System.currentTimeMillis();
-        Task taskOneGroupOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setNamespace("namespaceOne")
-                .setType(TASK_TYPE).setCreatedAt(createdAt).build();
-        TaskSchedulerService.getService().schedule(taskOneGroupOne);
-        Assert.assertEquals(SCHEDULED, taskOneGroupOne.getStatus());
+        String namespaceOne = UUID.randomUUID().toString();
+        String job = UUID.randomUUID().toString();
+        Task taskOneJobOne = MockTaskBuilder.getTaskBuilder()
+                .setJob(job)
+                .setNamespace(namespaceOne)
+                .setType(TASK_TYPE)
+                .build();
+        TaskSchedulerService.getService().schedule(taskOneJobOne);
+        Assert.assertEquals(SCHEDULED, taskOneJobOne.getStatus());
         List<String> tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
         Assert.assertEquals(1, tasks.size());
-        Assert.assertEquals(taskOneGroupOne, MAPPER.readValue(tasks.get(0), MutableTask.class));
-        finishExecution(taskOneGroupOne);
+        Assert.assertEquals(taskOneJobOne, MAPPER.readValue(tasks.get(0), MutableTask.class));
+        finishExecution(taskOneJobOne);
         sleep(100);
-        Assert.assertEquals(SUCCESSFUL, taskOneGroupOne.getStatus());
+        Assert.assertEquals(SUCCESSFUL, taskOneJobOne.getStatus());
 
-        Task taskOneGroupTwo = MockTaskBuilder.getTaskBuilder().setName("taskOne").setNamespace("namespaceTwo")
-                .setType(TASK_TYPE).setCreatedAt(createdAt).build();
-        TaskSchedulerService.getService().schedule(taskOneGroupTwo);
-        Assert.assertEquals(SCHEDULED, taskOneGroupTwo.getStatus());
+        Task taskTwoJobOne = MockTaskBuilder.getTaskBuilder()
+                .setJob(job)
+                .setNamespace(namespaceOne)
+                .setType(TASK_TYPE)
+                .build();
+        TaskSchedulerService.getService().schedule(taskTwoJobOne);
+        Assert.assertEquals(SCHEDULED, taskTwoJobOne.getStatus());
         tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
         Assert.assertEquals(1, tasks.size());
-        Assert.assertEquals(taskOneGroupTwo, MAPPER.readValue(tasks.get(0), MutableTask.class));
-        pushStatusUpdate(taskOneGroupTwo, FAILED);
+        Assert.assertEquals(taskTwoJobOne, MAPPER.readValue(tasks.get(0), MutableTask.class));
+        finishExecution(taskTwoJobOne);
         sleep(100);
-        Assert.assertEquals(FAILED, taskOneGroupTwo.getStatus());
+        Assert.assertEquals(SUCCESSFUL, taskTwoJobOne.getStatus());
 
-        Task taskTwoGroupOne = MockTaskBuilder.getTaskBuilder().setName("taskTwo").setNamespace("namespaceOne")
-                .setType(TASK_TYPE).setCreatedAt(createdAt + 1).build();
-        TaskSchedulerService.getService().schedule(taskTwoGroupOne);
-        Assert.assertEquals(SCHEDULED, taskTwoGroupOne.getStatus());
-        tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
-        Assert.assertEquals(1, tasks.size());
-        Assert.assertEquals(taskTwoGroupOne, MAPPER.readValue(tasks.get(0), MutableTask.class));
-        finishExecution(taskTwoGroupOne);
-        sleep(100);
-        Assert.assertEquals(SUCCESSFUL, taskTwoGroupOne.getStatus());
+        List<String> dependsOnJobOne = new ArrayList<>();
+        dependsOnJobOne.add(taskOneJobOne.getName());
+        dependsOnJobOne.add(taskTwoJobOne.getName());
+        Task taskThreeGroupOne = MockTaskBuilder.getTaskBuilder().setName(UUID.randomUUID().toString())
+                .setJob(job)
+                .setNamespace(namespaceOne)
+                .setDependsOn(dependsOnJobOne)
+                .setType(TASK_TYPE)
+                .build();
 
-        Task taskTwoGroupTwo = MockTaskBuilder.getTaskBuilder().setName("taskTwo").setNamespace("namespaceTwo")
-                .setType(TASK_TYPE).setCreatedAt(createdAt + 1).build();
-        TaskSchedulerService.getService().schedule(taskTwoGroupTwo);
-        Assert.assertEquals(SCHEDULED, taskTwoGroupTwo.getStatus());
-        tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
-        Assert.assertEquals(1, tasks.size());
-        Assert.assertEquals(taskTwoGroupTwo, MAPPER.readValue(tasks.get(0), MutableTask.class));
-        finishExecution(taskTwoGroupTwo);
-        sleep(100);
-        Assert.assertEquals(SUCCESSFUL, taskTwoGroupTwo.getStatus());
-
-        List<String> dependsOn = new ArrayList<>();
-        dependsOn.add("taskOne");
-        dependsOn.add("taskTwo");
-
-        Task taskThreeGroupOne = MockTaskBuilder.getTaskBuilder().setName("taskThree").setNamespace("namespaceOne")
-                .setType(TASK_TYPE).setDependsOn(dependsOn).setCreatedAt(createdAt + 5).build();
         TaskSchedulerService.getService().schedule(taskThreeGroupOne);
         Assert.assertEquals(SCHEDULED, taskThreeGroupOne.getStatus());
         tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
@@ -274,8 +350,44 @@ public class TaskSchedulerServiceTest {
         sleep(100);
         Assert.assertEquals(SUCCESSFUL, taskThreeGroupOne.getStatus());
 
-        Task taskThreeGroupTwo = MockTaskBuilder.getTaskBuilder().setName("taskThree").setNamespace("namespaceTwo")
-                .setType(TASK_TYPE).setDependsOn(dependsOn).setCreatedAt(createdAt + 5).build();
+        String namespaceTwo = UUID.randomUUID().toString();
+        Task taskOneGroupTwo = MockTaskBuilder.getTaskBuilder()
+                .setJob(job)
+                .setNamespace(namespaceTwo)
+                .setType(TASK_TYPE)
+                .build();
+        TaskSchedulerService.getService().schedule(taskOneGroupTwo);
+        Assert.assertEquals(SCHEDULED, taskOneGroupTwo.getStatus());
+        tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
+        Assert.assertEquals(1, tasks.size());
+        Assert.assertEquals(taskOneGroupTwo, MAPPER.readValue(tasks.get(0), MutableTask.class));
+        pushStatusUpdate(taskOneGroupTwo, FAILED);
+        sleep(100);
+        Assert.assertEquals(FAILED, taskOneGroupTwo.getStatus());
+
+        Task taskTwoGroupTwo = MockTaskBuilder.getTaskBuilder()
+                .setJob(job)
+                .setNamespace(namespaceTwo)
+                .setType(TASK_TYPE)
+                .build();
+        TaskSchedulerService.getService().schedule(taskTwoGroupTwo);
+        Assert.assertEquals(SCHEDULED, taskTwoGroupTwo.getStatus());
+        tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
+        Assert.assertEquals(1, tasks.size());
+        Assert.assertEquals(taskTwoGroupTwo, MAPPER.readValue(tasks.get(0), MutableTask.class));
+        finishExecution(taskTwoGroupTwo);
+        sleep(100);
+        Assert.assertEquals(SUCCESSFUL, taskTwoGroupTwo.getStatus());
+
+        List<String> dependsOnJobTwo = new ArrayList<>();
+        dependsOnJobTwo.add(taskOneJobOne.getName());
+        dependsOnJobTwo.add(taskTwoJobOne.getName());
+        Task taskThreeGroupTwo = MockTaskBuilder.getTaskBuilder()
+                .setJob(job)
+                .setNamespace(namespaceTwo)
+                .setType(TASK_TYPE)
+                .setDependsOn(dependsOnJobTwo)
+                .build();
         TaskSchedulerService.getService().schedule(taskThreeGroupTwo);
         tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
         Assert.assertEquals(0, tasks.size());
@@ -285,15 +397,28 @@ public class TaskSchedulerServiceTest {
 
     @Test
     public void testTaskTimeout() throws InterruptedException, JsonProcessingException, ServiceException {
-        final long createdAt = System.currentTimeMillis();
-        Task taskOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setType(TASK_TYPE).setMaxExecutionTime("500")
-                .setCreatedAt(createdAt).build();
-        Task taskTwo = MockTaskBuilder.getTaskBuilder().setName("taskTwo").setType(TASK_TYPE).setCreatedAt(createdAt).build();
+        String namespace = UUID.randomUUID().toString();
+        String job = UUID.randomUUID().toString();
+        Task taskOne = MockTaskBuilder.getTaskBuilder()
+                .setJob(job)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE)
+                .setMaxExecutionTime("500")
+                .build();
+        Task taskTwo = MockTaskBuilder.getTaskBuilder()
+                .setJob(job)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE)
+                .build();
         List<String> dependsOn = new ArrayList<>();
-        dependsOn.add("taskOne");
-        dependsOn.add("taskTwo");
-        Task taskThree = MockTaskBuilder.getTaskBuilder().setName("taskThree").setType(TASK_TYPE).setDependsOn(dependsOn)
-                .setCreatedAt(createdAt + 5).build();
+        dependsOn.add(taskOne.getName());
+        dependsOn.add(taskTwo.getName());
+        Task taskThree = MockTaskBuilder.getTaskBuilder()
+                .setJob(job)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE)
+                .setDependsOn(dependsOn)
+                .build();
         TaskSchedulerService.getService().schedule(taskOne);
         pushStatusUpdate(taskOne, SUBMITTED);
         TaskSchedulerService.getService().schedule(taskTwo);
@@ -310,27 +435,50 @@ public class TaskSchedulerServiceTest {
 
     @Test
     public void testTaskCleanup() throws InterruptedException, JsonProcessingException, ServiceException {
+        String namespace = UUID.randomUUID().toString();
+        String job = UUID.randomUUID().toString();
         // set task created at time to a lower value than the task purge interval configured in scheduler.yaml
         final long taskPurgeInterval = DateTimeUtil.resolveDuration("1d");
         final long createdAt = System.currentTimeMillis() - taskPurgeInterval - MINUTES.toMillis(1);
-        Task independentTask = MockTaskBuilder.getTaskBuilder().setName("independentTask")
-                .setType(TASK_TYPE).setCreatedAt(createdAt).build();
+        Task independentTask = MockTaskBuilder.getTaskBuilder()
+                .setJob(job)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE)
+                .setCreatedAt(createdAt)
+                .build();
         TaskSchedulerService.getService().schedule(independentTask);
         sleep(100);
-
-        Task taskOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setType(TASK_TYPE)
-                .setCreatedAt(createdAt).build();
-        Task taskTwo = MockTaskBuilder.getTaskBuilder().setName("taskTwo").setType(TASK_TYPE)
-                .setCreatedAt(createdAt).build();
+        Task taskOne = MockTaskBuilder.getTaskBuilder()
+                .setJob(job)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE)
+                .setCreatedAt(createdAt)
+                .build();
+        Task taskTwo = MockTaskBuilder.getTaskBuilder()
+                .setJob(job)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE)
+                .setCreatedAt(createdAt)
+                .build();
 
         List<String> dependsOn = new ArrayList<>();
-        dependsOn.add("taskOne");
-        dependsOn.add("taskTwo");
+        dependsOn.add(taskOne.getName());
+        dependsOn.add(taskTwo.getName());
 
-        Task taskThree = MockTaskBuilder.getTaskBuilder().setName("taskThree").setType(TASK_TYPE).setDependsOn(dependsOn)
-                .setCreatedAt(createdAt + 5).build();
-        Task taskFour = MockTaskBuilder.getTaskBuilder().setName("taskFour").setType(TASK_TYPE).setDependsOn(dependsOn)
-                .setCreatedAt(createdAt + 5).build();
+        Task taskThree = MockTaskBuilder.getTaskBuilder()
+                .setJob(job)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE)
+                .setCreatedAt(createdAt)
+                .setDependsOn(dependsOn)
+                .build();
+        Task taskFour = MockTaskBuilder.getTaskBuilder()
+                .setJob(job)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE)
+                .setCreatedAt(createdAt)
+                .setDependsOn(dependsOn)
+                .build();
         TaskSchedulerService.getService().schedule(taskOne);
         TaskSchedulerService.getService().schedule(taskTwo);
         TaskSchedulerService.getService().schedule(taskThree);
@@ -387,9 +535,15 @@ public class TaskSchedulerServiceTest {
 
     @Test
     public void testTaskStatusListener() throws ServiceException, IOException, InterruptedException {
+        String namespace = UUID.randomUUID().toString();
+        String job = UUID.randomUUID().toString();
         final TestTaskStatusChangeListener taskStatusChangeListener = new TestTaskStatusChangeListener();
         TaskSchedulerService.getService().registerListener(taskStatusChangeListener);
-        Task taskOne = MockTaskBuilder.getTaskBuilder().setName("taskOne").setType(TASK_TYPE).build();
+        Task taskOne = MockTaskBuilder.getTaskBuilder()
+                .setJob(job)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE)
+                .build();
         TaskSchedulerService.getService().schedule(taskOne);
         Assert.assertEquals(SCHEDULED, taskOne.getStatus());
         finishExecution(taskOne);
@@ -398,9 +552,12 @@ public class TaskSchedulerServiceTest {
         Assert.assertTrue(taskStatusChangeListener.isStatusReceived(taskOne));
 
         TaskSchedulerService.getService().deregisterListener(taskStatusChangeListener);
-        Task taskTwo = MockTaskBuilder.getTaskBuilder().setName("taskTwo").setType(TASK_TYPE).build();
+        Task taskTwo = MockTaskBuilder.getTaskBuilder()
+                .setJob(job)
+                .setNamespace(namespace)
+                .setType(TASK_TYPE)
+                .build();
         TaskSchedulerService.getService().schedule(taskTwo);
-
         Assert.assertEquals(SCHEDULED, taskTwo.getStatus());
         finishExecution(taskTwo);
         sleep(100);

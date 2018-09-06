@@ -17,8 +17,8 @@
 
 package com.cognitree.kronos.api;
 
-import com.cognitree.kronos.model.Job;
-import com.cognitree.kronos.model.JobId;
+import com.cognitree.kronos.scheduler.model.Job;
+import com.cognitree.kronos.scheduler.model.JobId;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.response.JobResponse;
 import com.cognitree.kronos.scheduler.JobService;

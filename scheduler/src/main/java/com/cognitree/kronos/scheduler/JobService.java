@@ -19,10 +19,10 @@ package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
-import com.cognitree.kronos.model.Job;
-import com.cognitree.kronos.model.JobId;
-import com.cognitree.kronos.model.Namespace;
-import com.cognitree.kronos.model.NamespaceId;
+import com.cognitree.kronos.scheduler.model.Job;
+import com.cognitree.kronos.scheduler.model.JobId;
+import com.cognitree.kronos.scheduler.model.Namespace;
+import com.cognitree.kronos.scheduler.model.NamespaceId;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.scheduler.store.JobStore;
 import com.cognitree.kronos.scheduler.store.StoreConfig;
@@ -32,6 +32,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import static com.cognitree.kronos.scheduler.ValidationError.NAMESPACE_NOT_FOUND;
 
 public class JobService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(JobService.class);
@@ -97,10 +99,8 @@ public class JobService implements Service {
         logger.debug("Received request to get all jobs under namespace {} submitted in last {} number of days",
                 namespace, numberOfDays);
         validateNamespace(namespace);
-        final long currentTimeMillis = System.currentTimeMillis();
-        long createdAfter = currentTimeMillis - (currentTimeMillis % TimeUnit.DAYS.toMillis(1))
-                - TimeUnit.DAYS.toMillis(numberOfDays - 1);
-        long createdBefore = createdAfter + TimeUnit.DAYS.toMillis(numberOfDays);
+        long createdAfter = timeInMillisBeforeDays(numberOfDays);
+        long createdBefore = System.currentTimeMillis();
         try {
             return jobStore.load(namespace, createdAfter, createdBefore);
         } catch (StoreException e) {
@@ -114,10 +114,8 @@ public class JobService implements Service {
         logger.debug("Received request to get all jobs with workflow name {} under namespace {} submitted " +
                 "in last {} number of days", workflowName, namespace, numberOfDays);
         validateNamespace(namespace);
-        final long currentTimeMillis = System.currentTimeMillis();
-        long createdAfter = currentTimeMillis - (currentTimeMillis % TimeUnit.DAYS.toMillis(1))
-                - TimeUnit.DAYS.toMillis(numberOfDays - 1);
-        long createdBefore = createdAfter + TimeUnit.DAYS.toMillis(numberOfDays);
+        long createdAfter = timeInMillisBeforeDays(numberOfDays);
+        long createdBefore = System.currentTimeMillis();
         try {
             return jobStore.loadByWorkflowName(workflowName, namespace, createdAfter, createdBefore);
         } catch (StoreException e) {
@@ -131,10 +129,8 @@ public class JobService implements Service {
         logger.debug("Received request to get all jobs with workflow name {}, trigger {} under namespace {} submitted " +
                 "in last {} number of days", workflowName, triggerName, namespace, numberOfDays);
         validateNamespace(namespace);
-        final long currentTimeMillis = System.currentTimeMillis();
-        long createdAfter = currentTimeMillis - (currentTimeMillis % TimeUnit.DAYS.toMillis(1))
-                - TimeUnit.DAYS.toMillis(numberOfDays - 1);
-        long createdBefore = createdAfter + TimeUnit.DAYS.toMillis(numberOfDays);
+        long createdAfter = timeInMillisBeforeDays(numberOfDays);
+        long createdBefore = System.currentTimeMillis();
         try {
             return jobStore.loadByWorkflowNameAndTriggerName(workflowName, triggerName, namespace, createdAfter, createdBefore);
         } catch (StoreException e) {
@@ -142,6 +138,12 @@ public class JobService implements Service {
                     "in last {} number of days", workflowName, triggerName, namespace, numberOfDays, e);
             throw new ServiceException(e.getMessage());
         }
+    }
+
+    private long timeInMillisBeforeDays(int numberOfDays) {
+        final long currentTimeMillis = System.currentTimeMillis();
+        return numberOfDays == -1 ? 0 : currentTimeMillis - (currentTimeMillis % TimeUnit.DAYS.toMillis(1))
+                - TimeUnit.DAYS.toMillis(numberOfDays - 1);
     }
 
     public List<Task> getTasks(JobId jobId) throws ServiceException, ValidationException {
@@ -180,7 +182,7 @@ public class JobService implements Service {
     private void validateNamespace(String name) throws ValidationException, ServiceException {
         final Namespace namespace = NamespaceService.getService().get(NamespaceId.build(name));
         if (namespace == null) {
-            throw new ValidationException("no namespace exists with name " + name);
+            throw NAMESPACE_NOT_FOUND.createException(name);
         }
     }
 

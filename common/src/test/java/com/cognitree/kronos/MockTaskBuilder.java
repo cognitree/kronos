@@ -25,13 +25,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static com.cognitree.kronos.model.Task.Status.CREATED;
 
 public class MockTaskBuilder {
-    private String name;
-    private String namespace = "default";
-    private String job = "test-workflow";
+    private String name = UUID.randomUUID().toString();
+    private String namespace;
+    private String job;
     private String type;
     private String timeoutPolicy;
     private String maxExecutionTime = "1h";
