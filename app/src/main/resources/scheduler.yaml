@@ -17,6 +17,3 @@ workflowTriggerStoreConfig:
 # configure job store storing runtime instances of workflows
 jobStoreConfig:
   storeClass: com.cognitree.kronos.scheduler.store.impl.RAMJobStore
-
-# time to wait before removing executed tasks from memory
-taskPurgeInterval: 1d

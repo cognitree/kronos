@@ -43,6 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -115,9 +116,16 @@ public final class WorkflowSchedulerService implements Service {
         final Job job = createWorkflowJob(workflow.getName(), workflow.getNamespace(), triggerName);
         JobService.getService().add(job);
         logger.debug("Executing workflow {}", job);
-        for (WorkflowTask workflowTask : orderWorkflowTasks(workflow.getTasks())) {
-            scheduleWorkflowTask(workflowTask, job.getId(), job.getNamespace());
+        final List<WorkflowTask> workflowTasks = orderWorkflowTasks(workflow.getTasks());
+        final List<Task> tasks = new ArrayList<>();
+        for (WorkflowTask workflowTask : workflowTasks) {
+            if (!workflowTask.isEnabled()) {
+                logger.warn("Workflow task {} is disabled from scheduling", workflowTask);
+                continue;
+            }
+            tasks.add(createTask(job.getId(), workflowTask, job.getNamespace()));
         }
+        tasks.forEach(task -> TaskSchedulerService.getService().schedule(task));
         job.setStatus(RUNNING);
         JobService.getService().update(job);
         return job;
@@ -157,20 +165,7 @@ public final class WorkflowSchedulerService implements Service {
         return topologicalSort.sort();
     }
 
-    private void scheduleWorkflowTask(WorkflowTask workflowTask, String workflowId,
-                                      String namespace) throws ServiceException {
-        logger.debug("scheduling workflow task {} for workflow with id {}, namespace {}",
-                workflowTask, workflowId, namespace);
-        if (!workflowTask.isEnabled()) {
-            logger.warn("Workflow task {} is disabled from scheduling", workflowTask);
-            return;
-        }
-
-        final Task task = createTask(workflowId, workflowTask, namespace);
-        TaskSchedulerService.getService().schedule(task);
-    }
-
-    private Task createTask(String workflowId, WorkflowTask workflowTask, String namespace) {
+    private Task createTask(String workflowId, WorkflowTask workflowTask, String namespace) throws ServiceException {
         MutableTask task = new MutableTask();
         task.setName(UUID.randomUUID().toString());
         task.setJob(workflowId);
@@ -182,6 +177,7 @@ public final class WorkflowSchedulerService implements Service {
         task.setDependsOn(workflowTask.getDependsOn());
         task.setProperties(workflowTask.getProperties());
         task.setCreatedAt(System.currentTimeMillis());
+        TaskService.getService().add(task);
         return task;
     }
 

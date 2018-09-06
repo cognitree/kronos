@@ -21,6 +21,3 @@ jobStoreConfig:
 timeoutPolicyConfig:
   mockPolicy:
     policyClass: com.cognitree.kronos.scheduler.policies.MockTimeoutPolicy
-
-# time to wait before removing executed tasks from memory
-taskPurgeInterval: 1d
