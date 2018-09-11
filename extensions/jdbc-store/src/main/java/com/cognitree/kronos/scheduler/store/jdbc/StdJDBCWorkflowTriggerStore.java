@@ -57,10 +57,10 @@ public class StdJDBCWorkflowTriggerStore implements WorkflowTriggerStore {
             + " WHERE " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
     private static final String UPDATE_WORKFLOW_TRIGGER = "UPDATE " + TABLE_WORKFLOW_TRIGGERS + " set " + COL_START_AT
             + " = ?, " + COL_SCHEDULE + " = ?," + " " + COL_END_AT + " = ?, " + COL_ENABLED
-            + " = ? where " + COL_NAME + " = ? AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
-    private static final String DELETE_WORKFLOW_TRIGGER = "DELETE FROM " + TABLE_WORKFLOW_TRIGGERS + " where "
+            + " = ? WHERE " + COL_NAME + " = ? AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
+    private static final String DELETE_WORKFLOW_TRIGGER = "DELETE FROM " + TABLE_WORKFLOW_TRIGGERS + " WHERE "
             + COL_NAME + " = ? " + "AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
-    private static final String LOAD_WORKFLOW_TRIGGER = "SELECT * FROM " + TABLE_WORKFLOW_TRIGGERS + " where "
+    private static final String LOAD_WORKFLOW_TRIGGER = "SELECT * FROM " + TABLE_WORKFLOW_TRIGGERS + " WHERE "
             + COL_NAME + " = ? " + "AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
 
     private final BasicDataSource dataSource;

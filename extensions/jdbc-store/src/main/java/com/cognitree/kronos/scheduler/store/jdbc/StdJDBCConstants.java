@@ -42,4 +42,5 @@ public interface StdJDBCConstants {
     String COL_SCHEDULE = "SCHEDULE";
     String COL_END_AT = "END_AT";
     String COL_ENABLED = "ENABLED";
+    String COL_TRIGGER_NAME = "trigger_name";
 }

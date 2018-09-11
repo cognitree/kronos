@@ -51,10 +51,10 @@ public class StdJDBCWorkflowStore implements WorkflowStore {
     private static final String LOAD_ALL_WORKFLOW_BY_NAMESPACE = "SELECT * FROM " + TABLE_WORKFLOWS + " " + "WHERE "
             + COL_NAMESPACE + " = ?";
     private static final String UPDATE_WORKFLOW = "UPDATE " + TABLE_WORKFLOWS + " set " + COL_DESCRIPTION + " = ?, " +
-            " " + COL_TASKS + " = ? where " + COL_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
-    private static final String DELETE_WORKFLOW = "DELETE FROM " + TABLE_WORKFLOWS + " where "
+            " " + COL_TASKS + " = ? WHERE " + COL_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
+    private static final String DELETE_WORKFLOW = "DELETE FROM " + TABLE_WORKFLOWS + " WHERE "
             + COL_NAME + " = ? " + "AND " + COL_NAMESPACE + " = ?";
-    private static final String LOAD_WORKFLOW = "SELECT * FROM " + TABLE_WORKFLOWS + " where "
+    private static final String LOAD_WORKFLOW = "SELECT * FROM " + TABLE_WORKFLOWS + " WHERE "
             + COL_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
 
     private static final TypeReference<List<WorkflowTask>> WORKFLOW_TASK_LIST_TYPE_REF =

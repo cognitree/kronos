@@ -31,6 +31,7 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.*;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_COMPLETED_AT;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_CREATED_AT;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_ID;
@@ -56,7 +57,7 @@ public class StdJDBCJobStore implements JobStore {
             + COL_WORKFLOW_NAME + " = ? " +
             "AND " + COL_NAMESPACE + " = ? AND " + COL_CREATED_AT + " > ? AND " + COL_CREATED_AT + " < ?";
     private static final String LOAD_JOB_BY_NAME_TRIGGER_CREATED_BETWEEN = "SELECT * FROM " + TABLE_JOBS + " WHERE "
-            + COL_WORKFLOW_NAME + " = ? " + "AND trigger_name = ? AND " + COL_NAMESPACE + " = ? AND "
+            + COL_WORKFLOW_NAME + " = ? " + "AND " + COL_TRIGGER_NAME + " = ? AND " + COL_NAMESPACE + " = ? AND "
             + COL_CREATED_AT + " > ? AND " + COL_CREATED_AT + " < ?";
     private static final String UPDATE_JOB = "UPDATE " + TABLE_JOBS + " SET " + COL_STATUS + " = ?, " + COL_CREATED_AT
             + " = ?, " + COL_COMPLETED_AT + " = ? " + " WHERE " + COL_ID + " = ? AND " + COL_NAMESPACE + " = ?";
