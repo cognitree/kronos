@@ -23,7 +23,6 @@ import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskId;
 import com.cognitree.kronos.scheduler.store.StoreException;
 import com.cognitree.kronos.scheduler.store.TaskStore;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,10 +35,6 @@ public class RAMTaskStore implements TaskStore {
     private static final Logger logger = LoggerFactory.getLogger(RAMTaskStore.class);
 
     private final Map<TaskId, Task> tasks = new HashMap<>();
-
-    @Override
-    public void init(ObjectNode storeConfig) {
-    }
 
     @Override
     public void store(Task task) throws StoreException {
@@ -110,10 +105,5 @@ public class RAMTaskStore implements TaskStore {
         if (tasks.remove(builtTaskId) == null) {
             throw new StoreException("task with id " + builtTaskId + " does not exists");
         }
-    }
-
-    @Override
-    public void stop() {
-
     }
 }

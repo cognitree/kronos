@@ -47,6 +47,8 @@ public class ApplicationTest {
     // as we setting startAt and endAt based on scheduled and quartz convert this to date and time (HH : MM : SS)
     // due to which the precision is lost if set to run every sec.
     private static final CronSchedule SCHEDULE = new CronSchedule();
+    private static SchedulerApp SCHEDULER_APP;
+    private static ExecutorApp EXECUTOR_APP;
 
     static {
         SCHEDULE.setCronExpression("0/2 * * * * ?");
@@ -54,14 +56,18 @@ public class ApplicationTest {
 
     @BeforeClass
     public static void setup() throws Exception {
-        new SchedulerApp().start();
-        new ExecutorApp().start();
+        SCHEDULER_APP = new SchedulerApp();
+        SCHEDULER_APP.init();
+        SCHEDULER_APP.start();
+        EXECUTOR_APP = new ExecutorApp();
+        EXECUTOR_APP.init();
+        EXECUTOR_APP.start();
     }
 
     @AfterClass
     public static void destroy() {
-        new SchedulerApp().stop();
-        new ExecutorApp().stop();
+        SCHEDULER_APP.stop();
+        EXECUTOR_APP.stop();
     }
 
     protected Namespace createNamespace(String name) {
@@ -90,7 +96,6 @@ public class ApplicationTest {
         workflowTrigger.setSchedule(SCHEDULE);
         workflowTrigger.setStartAt(nextFireTime - 100);
         workflowTrigger.setEndAt(nextFireTime + 100);
-        System.out.println(workflowTrigger);
         return workflowTrigger;
     }
 

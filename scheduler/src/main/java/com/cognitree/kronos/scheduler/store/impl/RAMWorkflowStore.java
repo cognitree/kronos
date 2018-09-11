@@ -21,7 +21,6 @@ import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.WorkflowId;
 import com.cognitree.kronos.scheduler.store.StoreException;
 import com.cognitree.kronos.scheduler.store.WorkflowStore;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,11 +33,6 @@ public class RAMWorkflowStore implements WorkflowStore {
     private static final Logger logger = LoggerFactory.getLogger(RAMWorkflowStore.class);
 
     private final Map<WorkflowId, Workflow> workflows = new HashMap<>();
-
-    @Override
-    public void init(ObjectNode storeConfig) {
-
-    }
 
     @Override
     public void store(Workflow workflow) throws StoreException {
@@ -85,10 +79,5 @@ public class RAMWorkflowStore implements WorkflowStore {
         if (workflows.remove(builtWorkflowId) == null) {
             throw new StoreException("workflow with id " + builtWorkflowId + " does not exists");
         }
-    }
-
-    @Override
-    public void stop() {
-
     }
 }

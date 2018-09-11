@@ -21,7 +21,6 @@ import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.NamespaceId;
 import com.cognitree.kronos.scheduler.store.NamespaceStore;
 import com.cognitree.kronos.scheduler.store.StoreException;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,11 +32,6 @@ import java.util.Map;
 public class RAMNamespaceStore implements NamespaceStore {
     private static final Logger logger = LoggerFactory.getLogger(RAMNamespaceStore.class);
     private final Map<NamespaceId, Namespace> namespaces = new HashMap<>();
-
-    @Override
-    public void init(ObjectNode storeConfig) {
-
-    }
 
     @Override
     public void store(Namespace namespace) throws StoreException {
@@ -78,10 +72,5 @@ public class RAMNamespaceStore implements NamespaceStore {
         if (namespaces.remove(builtNamespaceId) == null) {
             throw new StoreException("namespace with id " + builtNamespaceId + " does not exists");
         }
-    }
-
-    @Override
-    public void stop() {
-
     }
 }

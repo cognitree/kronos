@@ -22,7 +22,6 @@ import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.NamespaceId;
 import com.cognitree.kronos.scheduler.store.NamespaceStore;
-import com.cognitree.kronos.scheduler.store.StoreConfig;
 import com.cognitree.kronos.scheduler.store.StoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,11 +34,10 @@ import static com.cognitree.kronos.scheduler.ValidationError.NAMESPACE_NOT_FOUND
 public class NamespaceService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(NamespaceService.class);
 
-    private final StoreConfig storeConfig;
     private NamespaceStore namespaceStore;
 
-    public NamespaceService(StoreConfig storeConfig) {
-        this.storeConfig = storeConfig;
+    public NamespaceService(NamespaceStore namespaceStore) {
+        this.namespaceStore = namespaceStore;
     }
 
     public static NamespaceService getService() {
@@ -47,17 +45,13 @@ public class NamespaceService implements Service {
     }
 
     @Override
-    public void init() throws Exception {
+    public void init() {
         logger.info("Initializing namespace service");
-        namespaceStore = (NamespaceStore) Class.forName(storeConfig.getStoreClass())
-                .getConstructor().newInstance();
-        namespaceStore.init(storeConfig.getConfig());
     }
 
     @Override
     public void start() {
         logger.info("Starting namespace service");
-
     }
 
     public List<Namespace> get() throws ServiceException {
@@ -109,7 +103,6 @@ public class NamespaceService implements Service {
     @Override
     public void stop() {
         logger.info("Stopping namespace service");
-        namespaceStore.stop();
     }
 
 }

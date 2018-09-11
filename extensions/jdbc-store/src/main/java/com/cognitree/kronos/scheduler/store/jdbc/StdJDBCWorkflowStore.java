@@ -15,14 +15,15 @@
  * limitations under the License.
  */
 
-package com.cognitree.kronos.scheduler.store;
+package com.cognitree.kronos.scheduler.store.jdbc;
 
 import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.Workflow.WorkflowTask;
 import com.cognitree.kronos.scheduler.model.WorkflowId;
+import com.cognitree.kronos.scheduler.store.StoreException;
+import com.cognitree.kronos.scheduler.store.WorkflowStore;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,32 +54,10 @@ public class StdJDBCWorkflowStore implements WorkflowStore {
             new TypeReference<List<WorkflowTask>>() {
             };
 
-    private BasicDataSource dataSource;
+    private final BasicDataSource dataSource;
 
-    @Override
-    public void init(ObjectNode storeConfig) {
-        logger.info("Initializing standard JDBC workflow store");
-        initDataSource(storeConfig);
-    }
-
-    private void initDataSource(ObjectNode storeConfig) {
-        dataSource = new BasicDataSource();
-        dataSource.setUrl(storeConfig.get("connectionURL").asText());
-        if (storeConfig.hasNonNull("username")) {
-            dataSource.setUsername(storeConfig.get("username").asText());
-            if (storeConfig.hasNonNull("password")) {
-                dataSource.setPassword(storeConfig.get("password").asText());
-            }
-        }
-        if (storeConfig.hasNonNull("minIdleConnection")) {
-            dataSource.setMinIdle(storeConfig.get("minIdleConnection").asInt());
-        }
-        if (storeConfig.hasNonNull("maxIdleConnection")) {
-            dataSource.setMaxIdle(storeConfig.get("maxIdleConnection").asInt());
-        }
-        if (storeConfig.hasNonNull("maxOpenPreparedStatements")) {
-            dataSource.setMaxOpenPreparedStatements(storeConfig.get("maxOpenPreparedStatements").asInt());
-        }
+    public StdJDBCWorkflowStore(BasicDataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     @Override
@@ -177,14 +155,5 @@ public class StdJDBCWorkflowStore implements WorkflowStore {
         workflow.setDescription(resultSet.getString(++paramIndex));
         workflow.setTasks(MAPPER.readValue(resultSet.getString(++paramIndex), WORKFLOW_TASK_LIST_TYPE_REF));
         return workflow;
-    }
-
-    @Override
-    public void stop() {
-        try {
-            dataSource.close();
-        } catch (SQLException e) {
-            logger.error("Error closing data source", e);
-        }
     }
 }

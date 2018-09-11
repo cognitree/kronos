@@ -35,10 +35,29 @@ public class ExecutorApp {
 
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
 
+    private final ExecutorConfig executorConfig;
+    private final QueueConfig queueConfig;
+
+    public ExecutorApp() {
+        try {
+            final InputStream executorConfigAsStream =
+                    getClass().getClassLoader().getResourceAsStream("executor.yaml");
+            executorConfig = MAPPER.readValue(executorConfigAsStream, ExecutorConfig.class);
+            final InputStream queueConfigAsStream =
+                    getClass().getClassLoader().getResourceAsStream("queue.yaml");
+            queueConfig = MAPPER.readValue(queueConfigAsStream, QueueConfig.class);
+            registerServices();
+        } catch (Exception e) {
+            logger.info("Error initializing executor app", e);
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void main(String[] args) {
         try {
             final ExecutorApp executorApp = new ExecutorApp();
             Runtime.getRuntime().addShutdownHook(new Thread(executorApp::stop));
+            executorApp.init();
             executorApp.start();
         } catch (Exception e) {
             logger.error("Error starting executor", e);
@@ -46,20 +65,19 @@ public class ExecutorApp {
         }
     }
 
-    public void start() throws Exception {
-        logger.info("Starting executor app");
-        final InputStream executorConfigAsStream =
-                getClass().getClassLoader().getResourceAsStream("executor.yaml");
-        final ExecutorConfig executorConfig = MAPPER.readValue(executorConfigAsStream, ExecutorConfig.class);
-
-        final InputStream queueConfigAsStream =
-                getClass().getClassLoader().getResourceAsStream("queue.yaml");
-        final QueueConfig queueConfig = MAPPER.readValue(queueConfigAsStream, QueueConfig.class);
-
+    private void registerServices() {
         TaskExecutionService taskExecutionService = new TaskExecutionService(executorConfig, queueConfig);
         ServiceProvider.registerService(taskExecutionService);
-        taskExecutionService.init();
-        taskExecutionService.start();
+    }
+
+    public void init() throws Exception {
+        logger.info("Initializing executor app");
+        TaskExecutionService.getService().init();
+    }
+
+    public void start() {
+        logger.info("Starting executor app");
+        TaskExecutionService.getService().start();
     }
 
     public void stop() {

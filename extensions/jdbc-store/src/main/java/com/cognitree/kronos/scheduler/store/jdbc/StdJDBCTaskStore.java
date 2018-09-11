@@ -15,15 +15,16 @@
  * limitations under the License.
  */
 
-package com.cognitree.kronos.scheduler.store;
+package com.cognitree.kronos.scheduler.store.jdbc;
 
 import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskId;
+import com.cognitree.kronos.scheduler.store.StoreException;
+import com.cognitree.kronos.scheduler.store.TaskStore;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +32,6 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -60,32 +60,10 @@ public class StdJDBCTaskStore implements TaskStore {
             new TypeReference<List<String>>() {
             };
 
-    private BasicDataSource dataSource;
+    private final BasicDataSource dataSource;
 
-    @Override
-    public void init(ObjectNode storeConfig) {
-        logger.info("Initializing standard JDBC task store");
-        initDataSource(storeConfig);
-    }
-
-    private void initDataSource(ObjectNode storeConfig) {
-        dataSource = new BasicDataSource();
-        dataSource.setUrl(storeConfig.get("connectionURL").asText());
-        if (storeConfig.hasNonNull("username")) {
-            dataSource.setUsername(storeConfig.get("username").asText());
-            if (storeConfig.hasNonNull("password")) {
-                dataSource.setPassword(storeConfig.get("password").asText());
-            }
-        }
-        if (storeConfig.hasNonNull("minIdleConnection")) {
-            dataSource.setMinIdle(storeConfig.get("minIdleConnection").asInt());
-        }
-        if (storeConfig.hasNonNull("maxIdleConnection")) {
-            dataSource.setMaxIdle(storeConfig.get("maxIdleConnection").asInt());
-        }
-        if (storeConfig.hasNonNull("maxOpenPreparedStatements")) {
-            dataSource.setMaxOpenPreparedStatements(storeConfig.get("maxOpenPreparedStatements").asInt());
-        }
+    public StdJDBCTaskStore(BasicDataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     @Override
@@ -252,14 +230,5 @@ public class StdJDBCTaskStore implements TaskStore {
         task.setSubmittedAt(JDBCUtil.getLong(resultSet, ++paramIndex));
         task.setCompletedAt(JDBCUtil.getLong(resultSet, ++paramIndex));
         return task;
-    }
-
-    @Override
-    public void stop() {
-        try {
-            dataSource.close();
-        } catch (SQLException e) {
-            logger.error("Error closing data source", e);
-        }
     }
 }

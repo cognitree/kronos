@@ -53,7 +53,8 @@ public class TaskExecutorServiceTest {
     private static final String TASK_TYPE_A = "typeA";
 
     @BeforeClass
-    public static void init() throws Exception {
+    public static void start() throws Exception {
+        EXECUTOR_APP.init();
         EXECUTOR_APP.start();
     }
 

@@ -22,15 +22,12 @@ import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import org.junit.Assert;
-import org.junit.FixMethodOrder;
 import org.junit.Test;
-import org.junit.runners.MethodSorters;
 import org.quartz.Scheduler;
 
 import java.util.Collections;
 import java.util.List;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TaskServiceTest extends ApplicationTest {
 
     @Test

@@ -48,6 +48,11 @@
         </dependency>
         <dependency>
             <groupId>com.cognitree.kronos</groupId>
+            <artifactId>embedded-hsql-store</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cognitree.kronos</groupId>
             <artifactId>shell-handler</artifactId>
             <version>${project.version}</version>
         </dependency>

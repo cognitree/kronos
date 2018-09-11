@@ -25,7 +25,6 @@ import com.cognitree.kronos.scheduler.model.NamespaceId;
 import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.WorkflowId;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
-import com.cognitree.kronos.scheduler.store.StoreConfig;
 import com.cognitree.kronos.scheduler.store.StoreException;
 import com.cognitree.kronos.scheduler.store.WorkflowStore;
 import org.quartz.SchedulerException;
@@ -44,11 +43,10 @@ import static com.cognitree.kronos.scheduler.ValidationError.WORKFLOW_NOT_FOUND;
 public class WorkflowService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(WorkflowService.class);
 
-    private final StoreConfig storeConfig;
     private WorkflowStore workflowStore;
 
-    public WorkflowService(StoreConfig storeConfig) {
-        this.storeConfig = storeConfig;
+    public WorkflowService(WorkflowStore workflowStore) {
+        this.workflowStore = workflowStore;
     }
 
     public static WorkflowService getService() {
@@ -56,11 +54,8 @@ public class WorkflowService implements Service {
     }
 
     @Override
-    public void init() throws Exception {
+    public void init() {
         logger.info("Initializing workflow service");
-        workflowStore = (WorkflowStore) Class.forName(storeConfig.getStoreClass())
-                .getConstructor().newInstance();
-        workflowStore.init(storeConfig.getConfig());
     }
 
     @Override
@@ -186,6 +181,5 @@ public class WorkflowService implements Service {
     @Override
     public void stop() {
         logger.info("Stopping workflow service");
-        workflowStore.stop();
     }
 }

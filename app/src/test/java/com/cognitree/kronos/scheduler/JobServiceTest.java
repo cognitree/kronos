@@ -26,14 +26,11 @@ import com.cognitree.kronos.scheduler.model.Messages;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import com.cognitree.kronos.scheduler.policies.MockTimeoutPolicy;
 import org.junit.Assert;
-import org.junit.FixMethodOrder;
 import org.junit.Test;
-import org.junit.runners.MethodSorters;
 import org.quartz.Scheduler;
 
 import java.util.List;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class JobServiceTest extends ApplicationTest {
 
     @Test
