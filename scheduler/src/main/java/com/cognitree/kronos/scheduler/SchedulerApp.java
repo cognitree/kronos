@@ -19,6 +19,8 @@ package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.queue.QueueConfig;
+import com.cognitree.kronos.scheduler.store.StoreProvider;
+import com.cognitree.kronos.scheduler.store.StoreProviderConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.slf4j.Logger;
@@ -35,10 +37,36 @@ public class SchedulerApp {
 
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
 
+    private final QueueConfig queueConfig;
+    private final SchedulerConfig schedulerConfig;
+    private final StoreProvider storeProvider;
+
+    public SchedulerApp() {
+        try {
+            final InputStream schedulerConfigAsStream =
+                    getClass().getClassLoader().getResourceAsStream("scheduler.yaml");
+            schedulerConfig = MAPPER.readValue(schedulerConfigAsStream, SchedulerConfig.class);
+            final InputStream queueConfigAsStream =
+                    getClass().getClassLoader().getResourceAsStream("queue.yaml");
+            queueConfig = MAPPER.readValue(queueConfigAsStream, QueueConfig.class);
+
+            final StoreProviderConfig storeProviderConfig = schedulerConfig.getStoreProviderConfig();
+            storeProvider = (StoreProvider) Class.forName(storeProviderConfig.getProviderClass())
+                    .getConstructor().newInstance();
+            storeProvider.init(storeProviderConfig.getConfig());
+            // register service
+            registerService();
+        } catch (Exception e) {
+            logger.info("Error initializing scheduler app", e);
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void main(String[] args) {
         try {
             final SchedulerApp schedulerApp = new SchedulerApp();
             Runtime.getRuntime().addShutdownHook(new Thread(schedulerApp::stop));
+            schedulerApp.init();
             schedulerApp.start();
         } catch (Exception e) {
             logger.error("Error starting application", e);
@@ -46,19 +74,31 @@ public class SchedulerApp {
         }
     }
 
-    public void start() throws Exception {
-        logger.info("Starting scheduler app");
-        final InputStream schedulerConfigAsStream =
-                getClass().getClassLoader().getResourceAsStream("scheduler.yaml");
-        final SchedulerConfig schedulerConfig = MAPPER.readValue(schedulerConfigAsStream, SchedulerConfig.class);
+    private void registerService() {
+        NamespaceService namespaceService = new NamespaceService(storeProvider.getNamespaceStore());
+        ServiceProvider.registerService(namespaceService);
 
-        final InputStream queueConfigAsStream =
-                getClass().getClassLoader().getResourceAsStream("queue.yaml");
-        final QueueConfig queueConfig = MAPPER.readValue(queueConfigAsStream, QueueConfig.class);
+        TaskService taskService = new TaskService(storeProvider.getTaskStore());
+        ServiceProvider.registerService(taskService);
 
-        // register service
-        registerService(schedulerConfig, queueConfig);
+        WorkflowService workflowService = new WorkflowService(storeProvider.getWorkflowStore());
+        ServiceProvider.registerService(workflowService);
 
+        JobService jobService = new JobService(storeProvider.getJobStore());
+        ServiceProvider.registerService(jobService);
+
+        WorkflowTriggerService workflowTriggerService = new WorkflowTriggerService(storeProvider.getWorkflowTriggerStore());
+        ServiceProvider.registerService(workflowTriggerService);
+
+        TaskSchedulerService taskSchedulerService = new TaskSchedulerService(schedulerConfig, queueConfig);
+        ServiceProvider.registerService(taskSchedulerService);
+
+        WorkflowSchedulerService workflowSchedulerService = new WorkflowSchedulerService(storeProvider.getQuartzJobStore());
+        ServiceProvider.registerService(workflowSchedulerService);
+    }
+
+    public void init() throws Exception {
+        logger.info("Initializing scheduler app");
         // initialize service
         NamespaceService.getService().init();
         TaskService.getService().init();
@@ -67,7 +107,10 @@ public class SchedulerApp {
         WorkflowTriggerService.getService().init();
         TaskSchedulerService.getService().init();
         WorkflowSchedulerService.getService().init();
+    }
 
+    public void start() throws Exception {
+        logger.info("Starting scheduler app");
         // start service
         NamespaceService.getService().start();
         TaskService.getService().start();
@@ -76,32 +119,6 @@ public class SchedulerApp {
         WorkflowTriggerService.getService().start();
         TaskSchedulerService.getService().start();
         WorkflowSchedulerService.getService().start();
-    }
-
-    private void registerService(SchedulerConfig schedulerConfig, QueueConfig queueConfig) {
-        NamespaceService namespaceService =
-                new NamespaceService(schedulerConfig.getNamespaceStoreConfig());
-        ServiceProvider.registerService(namespaceService);
-
-        TaskService taskService = new TaskService(schedulerConfig.getTaskStoreConfig());
-        ServiceProvider.registerService(taskService);
-
-        WorkflowService workflowService =
-                new WorkflowService(schedulerConfig.getWorkflowStoreConfig());
-        ServiceProvider.registerService(workflowService);
-
-        JobService jobService = new JobService(schedulerConfig.getJobStoreConfig());
-        ServiceProvider.registerService(jobService);
-
-        WorkflowTriggerService workflowTriggerService =
-                new WorkflowTriggerService(schedulerConfig.getWorkflowTriggerStoreConfig());
-        ServiceProvider.registerService(workflowTriggerService);
-
-        TaskSchedulerService taskSchedulerService = new TaskSchedulerService(schedulerConfig, queueConfig);
-        ServiceProvider.registerService(taskSchedulerService);
-
-        WorkflowSchedulerService workflowSchedulerService = new WorkflowSchedulerService();
-        ServiceProvider.registerService(workflowSchedulerService);
     }
 
     public void stop() {
@@ -128,6 +145,7 @@ public class SchedulerApp {
         if (NamespaceService.getService() != null) {
             NamespaceService.getService().stop();
         }
+        storeProvider.stop();
     }
 }
 

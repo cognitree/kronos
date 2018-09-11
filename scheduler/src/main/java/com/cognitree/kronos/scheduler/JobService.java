@@ -25,7 +25,6 @@ import com.cognitree.kronos.scheduler.model.JobId;
 import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.NamespaceId;
 import com.cognitree.kronos.scheduler.store.JobStore;
-import com.cognitree.kronos.scheduler.store.StoreConfig;
 import com.cognitree.kronos.scheduler.store.StoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,11 +37,10 @@ import static com.cognitree.kronos.scheduler.ValidationError.NAMESPACE_NOT_FOUND
 public class JobService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(JobService.class);
 
-    private final StoreConfig storeConfig;
     private JobStore jobStore;
 
-    public JobService(StoreConfig storeConfig) {
-        this.storeConfig = storeConfig;
+    public JobService(JobStore jobStore) {
+        this.jobStore = jobStore;
     }
 
     public static JobService getService() {
@@ -50,11 +48,8 @@ public class JobService implements Service {
     }
 
     @Override
-    public void init() throws Exception {
+    public void init() {
         logger.info("Initializing job service");
-        jobStore = (JobStore) Class.forName(storeConfig.getStoreClass())
-                .getConstructor().newInstance();
-        jobStore.init(storeConfig.getConfig());
     }
 
     @Override
@@ -189,6 +184,5 @@ public class JobService implements Service {
     @Override
     public void stop() {
         logger.info("Stopping job service");
-        jobStore.stop();
     }
 }

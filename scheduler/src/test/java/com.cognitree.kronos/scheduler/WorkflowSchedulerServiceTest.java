@@ -50,6 +50,7 @@ public class WorkflowSchedulerServiceTest {
 
     @BeforeClass
     public static void init() throws Exception {
+        SCHEDULER_APP.init();
         SCHEDULER_APP.start();
     }
 

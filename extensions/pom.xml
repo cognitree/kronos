@@ -36,6 +36,7 @@
         <module>shell-handler</module>
         <module>jdbc-store</module>
         <module>spark-handler</module>
+        <module>embedded-hsql-store</module>
     </modules>
 
     <dependencies>

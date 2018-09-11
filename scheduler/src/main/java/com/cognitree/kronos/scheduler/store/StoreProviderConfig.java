@@ -21,13 +21,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Objects;
 
-public class StoreConfig {
+public class StoreProviderConfig {
 
-    private String storeClass;
+    private String providerClass;
 
     /**
-     * Configuration required by the store to instantiate itself.
-     * This will be passed as an arg to the method of {@link Store#init(ObjectNode)} at the time of instantiation
+     * Configuration required by the store provider to instantiate itself.
+     * This will be passed as an arg to the method of {@link StoreProvider#init(ObjectNode)} at the time of instantiation
      */
     private ObjectNode config;
 
@@ -39,33 +39,33 @@ public class StoreConfig {
         this.config = config;
     }
 
-    public String getStoreClass() {
-        return storeClass;
+    public String getProviderClass() {
+        return providerClass;
     }
 
-    public void setStoreClass(String storeClass) {
-        this.storeClass = storeClass;
+    public void setProviderClass(String providerClass) {
+        this.providerClass = providerClass;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof StoreConfig)) return false;
-        StoreConfig that = (StoreConfig) o;
-        return Objects.equals(storeClass, that.storeClass) &&
+        if (!(o instanceof StoreProviderConfig)) return false;
+        StoreProviderConfig that = (StoreProviderConfig) o;
+        return Objects.equals(providerClass, that.providerClass) &&
                 Objects.equals(config, that.config);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(storeClass, config);
+        return Objects.hash(providerClass, config);
     }
 
     @Override
     public String toString() {
-        return "StoreConfig{" +
-                "storeClass='" + storeClass + '\'' +
+        return "StoreProviderConfig{" +
+                "providerClass='" + providerClass + '\'' +
                 ", config=" + config +
                 '}';
     }

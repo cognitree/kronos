@@ -15,11 +15,12 @@
  * limitations under the License.
  */
 
-package com.cognitree.kronos.scheduler.store;
+package com.cognitree.kronos.scheduler.store.jdbc;
 
 import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.scheduler.model.JobId;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.cognitree.kronos.scheduler.store.JobStore;
+import com.cognitree.kronos.scheduler.store.StoreException;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,32 +50,10 @@ public class StdJDBCJobStore implements JobStore {
             " WHERE id = ? AND namespace = ?";
     private static final String DELETE_JOB = "DELETE FROM jobs WHERE id = ? AND namespace = ?";
 
-    private BasicDataSource dataSource;
+    private final BasicDataSource dataSource;
 
-    @Override
-    public void init(ObjectNode storeConfig) {
-        logger.info("Initializing standard JDBC job store");
-        initDataSource(storeConfig);
-    }
-
-    private void initDataSource(ObjectNode storeConfig) {
-        dataSource = new BasicDataSource();
-        dataSource.setUrl(storeConfig.get("connectionURL").asText());
-        if (storeConfig.hasNonNull("username")) {
-            dataSource.setUsername(storeConfig.get("username").asText());
-            if (storeConfig.hasNonNull("password")) {
-                dataSource.setPassword(storeConfig.get("password").asText());
-            }
-        }
-        if (storeConfig.hasNonNull("minIdleConnection")) {
-            dataSource.setMinIdle(storeConfig.get("minIdleConnection").asInt());
-        }
-        if (storeConfig.hasNonNull("maxIdleConnection")) {
-            dataSource.setMaxIdle(storeConfig.get("maxIdleConnection").asInt());
-        }
-        if (storeConfig.hasNonNull("maxOpenPreparedStatements")) {
-            dataSource.setMaxOpenPreparedStatements(storeConfig.get("maxOpenPreparedStatements").asInt());
-        }
+    public StdJDBCJobStore(BasicDataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     @Override
@@ -254,14 +232,5 @@ public class StdJDBCJobStore implements JobStore {
         job.setCreatedAt(JDBCUtil.getLong(resultSet, ++paramIndex));
         job.setCompletedAt(JDBCUtil.getLong(resultSet, ++paramIndex));
         return job;
-    }
-
-    @Override
-    public void stop() {
-        try {
-            dataSource.close();
-        } catch (SQLException e) {
-            logger.error("Error closing data source", e);
-        }
     }
 }

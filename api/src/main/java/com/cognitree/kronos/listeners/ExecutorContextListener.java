@@ -26,7 +26,7 @@ import javax.servlet.ServletContextListener;
 
 public class ExecutorContextListener implements ServletContextListener {
     private static final Logger logger = LoggerFactory.getLogger(ExecutorContextListener.class);
-    private ExecutorApp executorApp;
+    private final ExecutorApp executorApp;
 
     public ExecutorContextListener() {
         executorApp = new ExecutorApp();
@@ -35,6 +35,7 @@ public class ExecutorContextListener implements ServletContextListener {
     @Override
     public void contextInitialized(ServletContextEvent sce) {
         try {
+            executorApp.init();
             executorApp.start();
         } catch (Exception e) {
             logger.error("Error starting executor", e);

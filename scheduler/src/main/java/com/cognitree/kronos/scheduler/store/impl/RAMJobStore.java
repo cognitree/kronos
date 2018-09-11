@@ -21,7 +21,6 @@ import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.scheduler.model.JobId;
 import com.cognitree.kronos.scheduler.store.JobStore;
 import com.cognitree.kronos.scheduler.store.StoreException;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,11 +33,6 @@ public class RAMJobStore implements JobStore {
     private static final Logger logger = LoggerFactory.getLogger(RAMJobStore.class);
 
     private final Map<JobId, Job> jobs = new HashMap<>();
-
-    @Override
-    public void init(ObjectNode storeConfig) {
-
-    }
 
     @Override
     public void store(Job job) throws StoreException {
@@ -130,10 +124,5 @@ public class RAMJobStore implements JobStore {
         if (jobs.remove(buildJobId) == null) {
             throw new StoreException("job with id " + jobId + " does not exists");
         }
-    }
-
-    @Override
-    public void stop() {
-
     }
 }

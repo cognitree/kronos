@@ -15,11 +15,12 @@
  * limitations under the License.
  */
 
-package com.cognitree.kronos.scheduler.store;
+package com.cognitree.kronos.scheduler.store.jdbc;
 
 import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.NamespaceId;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.cognitree.kronos.scheduler.store.NamespaceStore;
+import com.cognitree.kronos.scheduler.store.StoreException;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,32 +43,10 @@ public class StdJDBCNamespaceStore implements NamespaceStore {
     private static final String LOAD_NAMESPACE = "SELECT * FROM namespaces WHERE name = ?";
     private static final String DELETE_NAMESPACE = "DELETE FROM namespaces WHERE name = ?";
 
-    private BasicDataSource dataSource;
+    private final BasicDataSource dataSource;
 
-    @Override
-    public void init(ObjectNode storeConfig) {
-        logger.info("Initializing standard JDBC namespace store");
-        initDataSource(storeConfig);
-    }
-
-    private void initDataSource(ObjectNode storeConfig) {
-        dataSource = new BasicDataSource();
-        dataSource.setUrl(storeConfig.get("connectionURL").asText());
-        if (storeConfig.hasNonNull("username")) {
-            dataSource.setUsername(storeConfig.get("username").asText());
-            if (storeConfig.hasNonNull("password")) {
-                dataSource.setPassword(storeConfig.get("password").asText());
-            }
-        }
-        if (storeConfig.hasNonNull("minIdleConnection")) {
-            dataSource.setMinIdle(storeConfig.get("minIdleConnection").asInt());
-        }
-        if (storeConfig.hasNonNull("maxIdleConnection")) {
-            dataSource.setMaxIdle(storeConfig.get("maxIdleConnection").asInt());
-        }
-        if (storeConfig.hasNonNull("maxOpenPreparedStatements")) {
-            dataSource.setMaxOpenPreparedStatements(storeConfig.get("maxOpenPreparedStatements").asInt());
-        }
+    public StdJDBCNamespaceStore(BasicDataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     @Override
@@ -156,14 +134,5 @@ public class StdJDBCNamespaceStore implements NamespaceStore {
         namespace.setName(resultSet.getString(++paramIndex));
         namespace.setDescription(resultSet.getString(++paramIndex));
         return namespace;
-    }
-
-    @Override
-    public void stop() {
-        try {
-            dataSource.close();
-        } catch (SQLException e) {
-            logger.error("Error closing data source", e);
-        }
     }
 }

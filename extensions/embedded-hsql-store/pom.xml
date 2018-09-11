@@ -26,18 +26,29 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>jdbc-store</artifactId>
+    <artifactId>embedded-hsql-store</artifactId>
+    <version>2.1</version>
 
     <properties>
-        <commons-dbcp2.version>2.3.0</commons-dbcp2.version>
+        <hsqldb.version>2.4.1</hsqldb.version>
+        <ibatis-sqlmap.version>3.0-beta-10</ibatis-sqlmap.version>
     </properties>
 
     <dependencies>
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-dbcp2</artifactId>
-            <version>${commons-dbcp2.version}</version>
+            <groupId>com.cognitree.kronos</groupId>
+            <artifactId>jdbc-store</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hsqldb</groupId>
+            <artifactId>hsqldb</artifactId>
+            <version>${hsqldb.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.ibatis</groupId>
+            <artifactId>ibatis-sqlmap</artifactId>
+            <version>${ibatis-sqlmap.version}</version>
         </dependency>
     </dependencies>
-
 </project>

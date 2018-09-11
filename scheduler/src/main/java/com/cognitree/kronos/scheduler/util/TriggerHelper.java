@@ -35,6 +35,7 @@ import org.quartz.SimpleScheduleBuilder;
 import org.quartz.SimpleTrigger;
 import org.quartz.TimeOfDay;
 import org.quartz.Trigger;
+import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
 
 import java.text.ParseException;
@@ -53,7 +54,7 @@ public class TriggerHelper {
     public static Trigger buildTrigger(WorkflowTrigger workflowTrigger,
                                        TriggerKey triggerKey) throws ParseException {
         final ScheduleBuilder scheduleBuilder = buildSchedulerBuilder(workflowTrigger.getSchedule());
-        org.quartz.TriggerBuilder triggerBuilder = newTrigger();
+        TriggerBuilder triggerBuilder = newTrigger();
         if (scheduleBuilder != null) {
             triggerBuilder.withSchedule(scheduleBuilder);
         }

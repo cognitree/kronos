@@ -21,7 +21,6 @@ import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.TaskId;
-import com.cognitree.kronos.scheduler.store.StoreConfig;
 import com.cognitree.kronos.scheduler.store.StoreException;
 import com.cognitree.kronos.scheduler.store.TaskStore;
 import org.slf4j.Logger;
@@ -32,22 +31,18 @@ import java.util.List;
 public class TaskService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(TaskService.class);
 
-    private StoreConfig storeConfig;
     private TaskStore taskStore;
 
-    public TaskService(StoreConfig storeConfig) {
-        this.storeConfig = storeConfig;
+    public TaskService(TaskStore taskStore) {
+        this.taskStore = taskStore;
     }
 
     public static TaskService getService() {
         return (TaskService) ServiceProvider.getService(TaskService.class.getSimpleName());
     }
 
-    public void init() throws Exception {
+    public void init() {
         logger.info("Initializing task service");
-        taskStore = (TaskStore) Class.forName(storeConfig.getStoreClass())
-                .getConstructor().newInstance();
-        taskStore.init(storeConfig.getConfig());
     }
 
     public void start() {
@@ -131,6 +126,5 @@ public class TaskService implements Service {
 
     public void stop() {
         logger.info("Stopping task service");
-        taskStore.stop();
     }
 }

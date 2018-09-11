@@ -25,7 +25,6 @@ import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.WorkflowId;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import com.cognitree.kronos.scheduler.model.WorkflowTriggerId;
-import com.cognitree.kronos.scheduler.store.StoreConfig;
 import com.cognitree.kronos.scheduler.store.StoreException;
 import com.cognitree.kronos.scheduler.store.WorkflowTriggerStore;
 import org.quartz.SchedulerException;
@@ -43,11 +42,10 @@ import static com.cognitree.kronos.scheduler.ValidationError.WORKFLOW_TRIGGER_NO
 public class WorkflowTriggerService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(WorkflowSchedulerService.class);
 
-    private final StoreConfig storeConfig;
     private WorkflowTriggerStore workflowTriggerStore;
 
-    public WorkflowTriggerService(StoreConfig storeConfig) {
-        this.storeConfig = storeConfig;
+    public WorkflowTriggerService(WorkflowTriggerStore workflowTriggerStore) {
+        this.workflowTriggerStore = workflowTriggerStore;
     }
 
     public static WorkflowTriggerService getService() {
@@ -55,11 +53,8 @@ public class WorkflowTriggerService implements Service {
     }
 
     @Override
-    public void init() throws Exception {
+    public void init() {
         logger.info("Initializing workflow trigger service");
-        workflowTriggerStore = (WorkflowTriggerStore) Class.forName(storeConfig.getStoreClass())
-                .getConstructor().newInstance();
-        workflowTriggerStore.init(storeConfig.getConfig());
     }
 
     @Override
@@ -157,6 +152,5 @@ public class WorkflowTriggerService implements Service {
     @Override
     public void stop() {
         logger.info("Stopping workflow trigger service");
-        workflowTriggerStore.stop();
     }
 }

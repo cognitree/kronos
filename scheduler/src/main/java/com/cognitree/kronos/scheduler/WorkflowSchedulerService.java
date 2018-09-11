@@ -38,7 +38,9 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 import org.quartz.TriggerKey;
-import org.quartz.impl.StdSchedulerFactory;
+import org.quartz.impl.DirectSchedulerFactory;
+import org.quartz.simpl.SimpleThreadPool;
+import org.quartz.spi.JobStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,17 +61,25 @@ import static org.quartz.JobBuilder.newJob;
 public final class WorkflowSchedulerService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(WorkflowSchedulerService.class);
 
+    private final JobStore jobStore;
     private Scheduler scheduler;
+
+    public WorkflowSchedulerService(JobStore jobStore) {
+        this.jobStore = jobStore;
+    }
 
     public static WorkflowSchedulerService getService() {
         return (WorkflowSchedulerService) ServiceProvider.getService(WorkflowSchedulerService.class.getSimpleName());
     }
 
     @Override
-    public void init() throws Exception {
+    public void init() throws SchedulerException {
         logger.info("Initializing workflow scheduler service");
-        new StdSchedulerFactory();
-        scheduler = StdSchedulerFactory.getDefaultScheduler();
+        SimpleThreadPool threadPool = new SimpleThreadPool(Runtime.getRuntime().availableProcessors(),
+                Thread.NORM_PRIORITY);
+        DirectSchedulerFactory.getInstance().createScheduler(threadPool, jobStore);
+        scheduler = DirectSchedulerFactory.getInstance().getScheduler();
+        threadPool.setThreadNamePrefix(scheduler.getSchedulerName());
         TaskSchedulerService.getService().registerListener(new WorkflowLifecycleHandler());
     }
 
@@ -114,9 +124,8 @@ public final class WorkflowSchedulerService implements Service {
 
     private Job execute(Workflow workflow, String triggerName) throws ServiceException, ValidationException {
         logger.info("Received request to execute workflow {} by trigger {}", workflow, triggerName);
-        final Job job = createWorkflowJob(workflow.getName(), workflow.getNamespace(), triggerName);
-        JobService.getService().add(job);
-        logger.debug("Executing workflow {}", job);
+        final Job job = createAndStoreWorkflowJob(workflow.getName(), workflow.getNamespace(), triggerName);
+        logger.debug("Executing workflow job {}", job);
         final List<WorkflowTask> workflowTasks = orderWorkflowTasks(workflow.getTasks());
         final List<Task> tasks = new ArrayList<>();
         for (WorkflowTask workflowTask : workflowTasks) {
@@ -124,7 +133,7 @@ public final class WorkflowSchedulerService implements Service {
                 logger.warn("Workflow task {} is disabled from scheduling", workflowTask);
                 continue;
             }
-            tasks.add(createTask(job.getId(), workflowTask, job.getNamespace()));
+            tasks.add(createAndStoreTask(job.getId(), workflowTask, job.getNamespace()));
         }
         tasks.forEach(task -> TaskSchedulerService.getService().schedule(task));
         job.setStatus(RUNNING);
@@ -132,13 +141,15 @@ public final class WorkflowSchedulerService implements Service {
         return job;
     }
 
-    private Job createWorkflowJob(String workflowName, String workflowNamespace, String trigger) {
+    private Job createAndStoreWorkflowJob(String workflowName, String workflowNamespace,
+                                          String trigger) throws ServiceException, ValidationException {
         final Job job = new Job();
         job.setId(UUID.randomUUID().toString());
         job.setWorkflow(workflowName);
         job.setNamespace(workflowNamespace);
         job.setTrigger(trigger);
         job.setCreatedAt(System.currentTimeMillis());
+        JobService.getService().add(job);
         return job;
     }
 
@@ -166,7 +177,7 @@ public final class WorkflowSchedulerService implements Service {
         return topologicalSort.sort();
     }
 
-    private Task createTask(String workflowId, WorkflowTask workflowTask, String namespace) throws ServiceException {
+    private Task createAndStoreTask(String workflowId, WorkflowTask workflowTask, String namespace) throws ServiceException {
         MutableTask task = new MutableTask();
         task.setName(UUID.randomUUID().toString());
         task.setJob(workflowId);

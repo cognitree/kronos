@@ -17,13 +17,23 @@
 
 package com.cognitree.kronos.scheduler.store;
 
-public interface Store<E, T> {
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
-    void store(E entity) throws StoreException;
+public interface StoreProvider {
 
-    E load(T identity) throws StoreException;
+    void init(ObjectNode config) throws Exception;
 
-    void update(E entity) throws StoreException;
+    NamespaceStore getNamespaceStore();
 
-    void delete(T identity) throws StoreException;
+    WorkflowStore getWorkflowStore();
+
+    WorkflowTriggerStore getWorkflowTriggerStore();
+
+    JobStore getJobStore();
+
+    TaskStore getTaskStore();
+
+    org.quartz.spi.JobStore getQuartzJobStore();
+
+    void stop();
 }

@@ -23,9 +23,9 @@ import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.TaskUpdate;
 import com.cognitree.kronos.queue.QueueConfig;
-import com.cognitree.kronos.scheduler.store.StoreConfig;
-import com.cognitree.kronos.scheduler.store.impl.RAMNamespaceStore;
-import com.cognitree.kronos.scheduler.store.impl.RAMTaskStore;
+import com.cognitree.kronos.queue.RAMQueueFactory;
+import com.cognitree.kronos.scheduler.store.StoreProvider;
+import com.cognitree.kronos.scheduler.store.StoreProviderConfig;
 import com.cognitree.kronos.util.DateTimeUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,9 +33,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.FixMethodOrder;
 import org.junit.Test;
-import org.junit.runners.MethodSorters;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,28 +53,14 @@ import static com.cognitree.kronos.scheduler.model.Messages.TIMED_OUT;
 import static java.lang.Thread.sleep;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TaskSchedulerServiceTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final String TASK_TYPE = "test";
+    private StoreProvider storeProvider;
 
     @Before
     public void init() throws Exception {
-        // task scheduler service requires namespace service and task service
-        StoreConfig namespaceStoreConfig = new StoreConfig();
-        namespaceStoreConfig.setStoreClass(RAMNamespaceStore.class.getName());
-        NamespaceService namespaceService = new NamespaceService(namespaceStoreConfig);
-        ServiceProvider.registerService(namespaceService);
-        namespaceService.init();
-        namespaceService.start();
-        StoreConfig taskStoreConfig = new StoreConfig();
-        taskStoreConfig.setStoreClass(RAMTaskStore.class.getName());
-        TaskService taskService = new TaskService(taskStoreConfig);
-        ServiceProvider.registerService(taskService);
-        taskService.init();
-        taskService.start();
-
         final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
         final InputStream schedulerConfigAsStream =
                 TaskSchedulerServiceTest.class.getClassLoader().getResourceAsStream("scheduler.yaml");
@@ -85,10 +69,28 @@ public class TaskSchedulerServiceTest {
         final InputStream queueConfigAsStream =
                 TaskSchedulerServiceTest.class.getClassLoader().getResourceAsStream("queue.yaml");
         final QueueConfig queueConfig = MAPPER.readValue(queueConfigAsStream, QueueConfig.class);
+
+        final StoreProviderConfig storeProviderConfig = schedulerConfig.getStoreProviderConfig();
+        storeProvider = (StoreProvider) Class.forName(storeProviderConfig.getProviderClass())
+                .getConstructor().newInstance();
+        storeProvider.init(storeProviderConfig.getConfig());
+
+        // task scheduler service requires namespace service and task service
+        NamespaceService namespaceService = new NamespaceService(storeProvider.getNamespaceStore());
+        ServiceProvider.registerService(namespaceService);
+        namespaceService.init();
+        namespaceService.start();
+        TaskService taskService = new TaskService(storeProvider.getTaskStore());
+        ServiceProvider.registerService(taskService);
+        taskService.init();
+        taskService.start();
         TaskSchedulerService taskSchedulerService = new TaskSchedulerService(schedulerConfig, queueConfig);
         ServiceProvider.registerService(taskSchedulerService);
         taskSchedulerService.init();
         taskSchedulerService.start();
+
+        // remove any existing tasks from the queue
+        RAMQueueFactory.getQueue(TASK_TYPE).clear();
     }
 
     @After
@@ -96,6 +98,7 @@ public class TaskSchedulerServiceTest {
         NamespaceService.getService().stop();
         TaskService.getService().stop();
         TaskSchedulerService.getService().stop();
+        storeProvider.stop();
     }
 
     @Test
@@ -416,6 +419,9 @@ public class TaskSchedulerServiceTest {
         pushStatusUpdate(taskOne, SUBMITTED);
         TaskSchedulerService.getService().schedule(taskTwo);
         TaskSchedulerService.getService().schedule(taskThree);
+        List<String> tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
+        Assert.assertEquals(2, tasks.size());
+
         sleep(500);
         finishExecution(taskTwo);
         sleep(100);
@@ -538,6 +544,8 @@ public class TaskSchedulerServiceTest {
                 .setType(TASK_TYPE)
                 .build();
         TaskSchedulerService.getService().schedule(taskOne);
+        List<String> tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
+        Assert.assertEquals(1, tasks.size());
         Assert.assertEquals(SCHEDULED, taskOne.getStatus());
         finishExecution(taskOne);
         sleep(100);
@@ -551,6 +559,8 @@ public class TaskSchedulerServiceTest {
                 .setType(TASK_TYPE)
                 .build();
         TaskSchedulerService.getService().schedule(taskTwo);
+        tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
+        Assert.assertEquals(1, tasks.size());
         Assert.assertEquals(SCHEDULED, taskTwo.getStatus());
         finishExecution(taskTwo);
         sleep(100);

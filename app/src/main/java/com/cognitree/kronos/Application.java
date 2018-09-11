@@ -36,16 +36,24 @@ public class Application {
         schedulerApp = new SchedulerApp();
         executorApp = new ExecutorApp();
         fileReader = new FileReader();
-        Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
     }
 
     public static void main(String[] args) {
+        Application application = new Application();
         try {
-            new Application().start();
+            Runtime.getRuntime().addShutdownHook(new Thread(application::stop));
+            application.init();
+            application.start();
         } catch (Exception e) {
             logger.error("Error starting application", e);
             System.exit(0);
         }
+    }
+
+    public void init() throws Exception {
+        logger.info("Initializing application");
+        schedulerApp.init();
+        executorApp.init();
     }
 
     public void start() throws Exception {

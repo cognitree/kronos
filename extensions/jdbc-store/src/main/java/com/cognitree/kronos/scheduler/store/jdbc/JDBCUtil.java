@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.cognitree.kronos.scheduler.store;
+package com.cognitree.kronos.scheduler.store.jdbc;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

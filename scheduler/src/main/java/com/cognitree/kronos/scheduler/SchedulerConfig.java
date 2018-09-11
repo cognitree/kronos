@@ -17,18 +17,9 @@
 
 package com.cognitree.kronos.scheduler;
 
-import com.cognitree.kronos.model.Task;
-import com.cognitree.kronos.scheduler.model.Job;
-import com.cognitree.kronos.scheduler.model.Namespace;
-import com.cognitree.kronos.scheduler.model.Workflow;
-import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import com.cognitree.kronos.scheduler.policies.TimeoutPolicyConfig;
-import com.cognitree.kronos.scheduler.store.JobStore;
-import com.cognitree.kronos.scheduler.store.NamespaceStore;
-import com.cognitree.kronos.scheduler.store.StoreConfig;
-import com.cognitree.kronos.scheduler.store.TaskStore;
-import com.cognitree.kronos.scheduler.store.WorkflowStore;
-import com.cognitree.kronos.scheduler.store.WorkflowTriggerStore;
+import com.cognitree.kronos.scheduler.store.StoreProvider;
+import com.cognitree.kronos.scheduler.store.StoreProviderConfig;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -40,30 +31,10 @@ import java.util.Objects;
 public class SchedulerConfig {
 
     /**
-     * {@link NamespaceStore} configuration, required by the scheduler to instantiate the namespace store to be
-     * used for storing the {@link Namespace}.
+     * {@link StoreProvider} configuration, required by the scheduler to instantiate the store provider.
      */
-    private StoreConfig namespaceStoreConfig;
-    /**
-     * {@link TaskStore} configuration, required by the scheduler to instantiate the task store to be used for storing
-     * the {@link Task}.
-     */
-    private StoreConfig taskStoreConfig;
-    /**
-     * {@link WorkflowStore} configuration, required by the scheduler to instantiate the workflow definition
-     * store to be used for storing {@link Workflow}.
-     */
-    private StoreConfig workflowStoreConfig;
-    /**
-     * {@link WorkflowTriggerStore} configuration, required by the scheduler to instantiate the workflow trigger store to be
-     * used for storing the {@link WorkflowTrigger}.
-     */
-    private StoreConfig workflowTriggerStoreConfig;
-    /**
-     * {@link JobStore} configuration, required by the scheduler to instantiate the workflow store to be used for storing
-     * the {@link Job}.
-     */
-    private StoreConfig jobStoreConfig;
+    private StoreProviderConfig storeProviderConfig;
+
     /**
      * Map of policy configuration, required by the scheduler to configure timeout policies to apply in case of timeout.
      * <p>
@@ -71,44 +42,12 @@ public class SchedulerConfig {
      */
     private Map<String, TimeoutPolicyConfig> timeoutPolicyConfig = new HashMap<>();
 
-    public StoreConfig getNamespaceStoreConfig() {
-        return namespaceStoreConfig;
+    public StoreProviderConfig getStoreProviderConfig() {
+        return storeProviderConfig;
     }
 
-    public void setNamespaceStoreConfig(StoreConfig namespaceStoreConfig) {
-        this.namespaceStoreConfig = namespaceStoreConfig;
-    }
-
-    public StoreConfig getTaskStoreConfig() {
-        return taskStoreConfig;
-    }
-
-    public void setTaskStoreConfig(StoreConfig taskStoreConfig) {
-        this.taskStoreConfig = taskStoreConfig;
-    }
-
-    public StoreConfig getWorkflowStoreConfig() {
-        return workflowStoreConfig;
-    }
-
-    public void setWorkflowStoreConfig(StoreConfig workflowStoreConfig) {
-        this.workflowStoreConfig = workflowStoreConfig;
-    }
-
-    public StoreConfig getWorkflowTriggerStoreConfig() {
-        return workflowTriggerStoreConfig;
-    }
-
-    public void setWorkflowTriggerStoreConfig(StoreConfig workflowTriggerStoreConfig) {
-        this.workflowTriggerStoreConfig = workflowTriggerStoreConfig;
-    }
-
-    public StoreConfig getJobStoreConfig() {
-        return jobStoreConfig;
-    }
-
-    public void setJobStoreConfig(StoreConfig jobStoreConfig) {
-        this.jobStoreConfig = jobStoreConfig;
+    public void setStoreProviderConfig(StoreProviderConfig storeProviderConfig) {
+        this.storeProviderConfig = storeProviderConfig;
     }
 
     public Map<String, TimeoutPolicyConfig> getTimeoutPolicyConfig() {
@@ -124,28 +63,20 @@ public class SchedulerConfig {
         if (this == o) return true;
         if (!(o instanceof SchedulerConfig)) return false;
         SchedulerConfig that = (SchedulerConfig) o;
-        return Objects.equals(namespaceStoreConfig, that.namespaceStoreConfig) &&
-                Objects.equals(taskStoreConfig, that.taskStoreConfig) &&
-                Objects.equals(workflowStoreConfig, that.workflowStoreConfig) &&
-                Objects.equals(workflowTriggerStoreConfig, that.workflowTriggerStoreConfig) &&
-                Objects.equals(jobStoreConfig, that.jobStoreConfig) &&
+        return Objects.equals(storeProviderConfig, that.storeProviderConfig) &&
                 Objects.equals(timeoutPolicyConfig, that.timeoutPolicyConfig);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(namespaceStoreConfig, taskStoreConfig, workflowStoreConfig, workflowTriggerStoreConfig, jobStoreConfig, timeoutPolicyConfig);
+        return Objects.hash(storeProviderConfig, timeoutPolicyConfig);
     }
 
     @Override
     public String toString() {
         return "SchedulerConfig{" +
-                "namespaceStoreConfig=" + namespaceStoreConfig +
-                ", taskStoreConfig=" + taskStoreConfig +
-                ", workflowStoreConfig=" + workflowStoreConfig +
-                ", workflowTriggerStoreConfig=" + workflowTriggerStoreConfig +
-                ", jobStoreConfig=" + jobStoreConfig +
+                "storeProviderConfig=" + storeProviderConfig +
                 ", timeoutPolicyConfig=" + timeoutPolicyConfig +
                 '}';
     }
