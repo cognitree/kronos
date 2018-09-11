@@ -37,6 +37,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_COMPLETED_AT;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_CONTEXT;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_JOB_ID;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_NAME;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_NAMESPACE;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_STATUS;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_STATUS_MESSAGE;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_SUBMITTED_AT;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.TABLE_TASKS;
+
 /**
  * A standard JDBC based implementation of {@link TaskStore}.
  */
@@ -44,14 +54,20 @@ public class StdJDBCTaskStore implements TaskStore {
     private static final Logger logger = LoggerFactory.getLogger(StdJDBCTaskStore.class);
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final String INSERT_TASK = "INSERT INTO tasks VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-    private static final String UPDATE_TASK = "UPDATE tasks SET status = ?, status_message = ?, submitted_at = ?, " +
-            "completed_at = ?, context = ? WHERE name = ? AND job_id = ? AND namespace = ?";
-    private static final String LOAD_ALL_TASKS_BY_NAMESPACE = "SELECT * FROM tasks WHERE namespace = ?";
-    private static final String LOAD_TASK = "SELECT * FROM tasks WHERE name = ? AND job_id = ? AND namespace = ?";
-    private static final String LOAD_TASK_BY_STATUS = "SELECT * FROM tasks WHERE status IN ($statuses)";
-    private static final String LOAD_TASK_BY_JOB_ID = "SELECT * FROM tasks WHERE job_id = ? AND namespace = ?";
-    private static final String DELETE_TASK = "DELETE FROM tasks WHERE name = ? AND job_id = ? AND namespace = ?";
+    private static final String INSERT_TASK = "INSERT INTO " + TABLE_TASKS + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    private static final String UPDATE_TASK = "UPDATE " + TABLE_TASKS + " SET " + COL_STATUS + " = ?, "
+            + COL_STATUS_MESSAGE + " = ?, " + COL_SUBMITTED_AT + " = ?, " + COL_COMPLETED_AT + " = ?, "
+            + COL_CONTEXT + " = ? WHERE " + COL_NAME + " = ? AND " + COL_JOB_ID + " = ? AND " + COL_NAMESPACE + " = ?";
+    private static final String LOAD_ALL_TASKS_BY_NAMESPACE = "SELECT * FROM " + TABLE_TASKS + " WHERE "
+            + COL_NAMESPACE + " = ?";
+    private static final String LOAD_TASK = "SELECT * FROM " + TABLE_TASKS + " WHERE " + COL_NAME + " = ? AND "
+            + COL_JOB_ID + " = ? AND " + COL_NAMESPACE + " = ?";
+    private static final String LOAD_TASK_BY_STATUS = "SELECT * FROM " + TABLE_TASKS + " WHERE " + COL_STATUS
+            + " IN ($statuses)";
+    private static final String LOAD_TASK_BY_JOB_ID = "SELECT * FROM " + TABLE_TASKS + " WHERE "
+            + COL_JOB_ID + " = ? AND " + COL_NAMESPACE + " = ?";
+    private static final String DELETE_TASK = "DELETE FROM " + TABLE_TASKS + " WHERE "
+            + COL_NAME + " = ? AND " + COL_JOB_ID + " = ? AND " + COL_NAMESPACE + " = ?";
 
     private static final TypeReference<Map<String, Object>> PROPERTIES_TYPE_REF =
             new TypeReference<Map<String, Object>>() {

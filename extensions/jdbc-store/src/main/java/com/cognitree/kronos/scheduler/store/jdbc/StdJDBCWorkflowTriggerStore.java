@@ -33,6 +33,15 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_ENABLED;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_END_AT;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_NAME;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_NAMESPACE;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_SCHEDULE;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_START_AT;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_WORKFLOW_NAME;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.TABLE_WORKFLOW_TRIGGERS;
+
 /**
  * A standard JDBC based implementation of {@link WorkflowTriggerStore}.
  */
@@ -40,17 +49,19 @@ public class StdJDBCWorkflowTriggerStore implements WorkflowTriggerStore {
     private static final Logger logger = LoggerFactory.getLogger(StdJDBCWorkflowTriggerStore.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    private static final String INSERT_WORKFLOW_TRIGGER = "INSERT INTO workflow_triggers VALUES (?,?,?,?,?,?,?)";
-    private static final String LOAD_ALL_WORKFLOW_TRIGGER_BY_NAMESPACE = "SELECT * FROM workflow_triggers " +
-            "WHERE namespace = ?";
-    private static final String LOAD_ALL_WORKFLOW_TRIGGER_BY_WORKFLOW_NAME = "SELECT * FROM workflow_triggers " +
-            "WHERE workflow_name = ? AND namespace = ?";
-    private static final String UPDATE_WORKFLOW_TRIGGER = "UPDATE workflow_triggers set start_at = ?, schedule = ?," +
-            " end_at = ?, enabled = ? where name = ? AND workflow_name = ? AND namespace = ?";
-    private static final String DELETE_WORKFLOW_TRIGGER = "DELETE FROM workflow_triggers where name = ? " +
-            "AND workflow_name = ? AND namespace = ?";
-    private static final String LOAD_WORKFLOW_TRIGGER = "SELECT * FROM workflow_triggers where name = ? " +
-            "AND workflow_name = ? AND namespace = ?";
+    private static final String INSERT_WORKFLOW_TRIGGER = "INSERT INTO " + TABLE_WORKFLOW_TRIGGERS
+            + " VALUES (?,?,?,?,?,?,?)";
+    private static final String LOAD_ALL_WORKFLOW_TRIGGER_BY_NAMESPACE = "SELECT * FROM " + TABLE_WORKFLOW_TRIGGERS
+            + " WHERE " + COL_NAMESPACE + " = ?";
+    private static final String LOAD_ALL_WORKFLOW_TRIGGER_BY_WORKFLOW_NAME = "SELECT * FROM " + TABLE_WORKFLOW_TRIGGERS
+            + " WHERE " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
+    private static final String UPDATE_WORKFLOW_TRIGGER = "UPDATE " + TABLE_WORKFLOW_TRIGGERS + " set " + COL_START_AT
+            + " = ?, " + COL_SCHEDULE + " = ?," + " " + COL_END_AT + " = ?, " + COL_ENABLED
+            + " = ? where " + COL_NAME + " = ? AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
+    private static final String DELETE_WORKFLOW_TRIGGER = "DELETE FROM " + TABLE_WORKFLOW_TRIGGERS + " where "
+            + COL_NAME + " = ? " + "AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
+    private static final String LOAD_WORKFLOW_TRIGGER = "SELECT * FROM " + TABLE_WORKFLOW_TRIGGERS + " where "
+            + COL_NAME + " = ? " + "AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
 
     private final BasicDataSource dataSource;
 

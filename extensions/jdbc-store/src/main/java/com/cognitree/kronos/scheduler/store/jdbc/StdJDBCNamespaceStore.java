@@ -31,17 +31,22 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_DESCRIPTION;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_NAME;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.TABLE_NAMESPACES;
+
 /**
  * A standard JDBC based implementation of {@link NamespaceStore}.
  */
 public class StdJDBCNamespaceStore implements NamespaceStore {
     private static final Logger logger = LoggerFactory.getLogger(StdJDBCNamespaceStore.class);
 
-    private static final String INSERT_NAMESPACE = "INSERT INTO namespaces VALUES (?,?)";
-    private static final String UPDATE_NAMESPACE = "UPDATE namespaces SET description = ? WHERE name = ?";
-    private static final String LOAD_ALL_NAMESPACES = "SELECT * FROM namespaces";
-    private static final String LOAD_NAMESPACE = "SELECT * FROM namespaces WHERE name = ?";
-    private static final String DELETE_NAMESPACE = "DELETE FROM namespaces WHERE name = ?";
+    private static final String INSERT_NAMESPACE = "INSERT INTO " + TABLE_NAMESPACES + " VALUES (?,?)";
+    private static final String UPDATE_NAMESPACE = "UPDATE " + TABLE_NAMESPACES + " SET " + COL_DESCRIPTION
+            + " = ? WHERE " + COL_NAME + " = ?";
+    private static final String LOAD_ALL_NAMESPACES = "SELECT * FROM " + TABLE_NAMESPACES;
+    private static final String LOAD_NAMESPACE = "SELECT * FROM " + TABLE_NAMESPACES + " WHERE " + COL_NAME + " = ?";
+    private static final String DELETE_NAMESPACE = "DELETE FROM " + TABLE_NAMESPACES + " WHERE " + COL_NAME + " = ?";
 
     private final BasicDataSource dataSource;
 

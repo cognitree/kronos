@@ -34,6 +34,12 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_DESCRIPTION;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_NAME;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_NAMESPACE;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_TASKS;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.TABLE_WORKFLOWS;
+
 /**
  * A standard JDBC based implementation of {@link WorkflowStore}.
  */
@@ -41,14 +47,15 @@ public class StdJDBCWorkflowStore implements WorkflowStore {
     private static final Logger logger = LoggerFactory.getLogger(StdJDBCWorkflowStore.class);
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final String INSERT_WORKFLOW = "INSERT INTO workflows VALUES (?,?,?,?)";
-    private static final String LOAD_ALL_WORKFLOW_BY_NAMESPACE = "SELECT * FROM workflows " +
-            "WHERE namespace = ?";
-    private static final String UPDATE_WORKFLOW = "UPDATE workflows set description = ?, " +
-            " tasks = ? where name = ? AND namespace = ?";
-    private static final String DELETE_WORKFLOW = "DELETE FROM workflows where name = ? " +
-            "AND namespace = ?";
-    private static final String LOAD_WORKFLOW = "SELECT * FROM workflows where name = ? AND namespace = ?";
+    private static final String INSERT_WORKFLOW = "INSERT INTO " + TABLE_WORKFLOWS + " VALUES (?,?,?,?)";
+    private static final String LOAD_ALL_WORKFLOW_BY_NAMESPACE = "SELECT * FROM " + TABLE_WORKFLOWS + " " + "WHERE "
+            + COL_NAMESPACE + " = ?";
+    private static final String UPDATE_WORKFLOW = "UPDATE " + TABLE_WORKFLOWS + " set " + COL_DESCRIPTION + " = ?, " +
+            " " + COL_TASKS + " = ? where " + COL_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
+    private static final String DELETE_WORKFLOW = "DELETE FROM " + TABLE_WORKFLOWS + " where "
+            + COL_NAME + " = ? " + "AND " + COL_NAMESPACE + " = ?";
+    private static final String LOAD_WORKFLOW = "SELECT * FROM " + TABLE_WORKFLOWS + " where "
+            + COL_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
 
     private static final TypeReference<List<WorkflowTask>> WORKFLOW_TASK_LIST_TYPE_REF =
             new TypeReference<List<WorkflowTask>>() {

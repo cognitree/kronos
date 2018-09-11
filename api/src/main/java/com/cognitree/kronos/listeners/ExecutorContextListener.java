@@ -26,15 +26,15 @@ import javax.servlet.ServletContextListener;
 
 public class ExecutorContextListener implements ServletContextListener {
     private static final Logger logger = LoggerFactory.getLogger(ExecutorContextListener.class);
-    private final ExecutorApp executorApp;
+    private ExecutorApp executorApp;
 
     public ExecutorContextListener() {
-        executorApp = new ExecutorApp();
     }
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
         try {
+            executorApp = new ExecutorApp();
             executorApp.init();
             executorApp.start();
         } catch (Exception e) {

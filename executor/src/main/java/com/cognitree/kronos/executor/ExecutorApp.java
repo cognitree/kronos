@@ -48,7 +48,7 @@ public class ExecutorApp {
             queueConfig = MAPPER.readValue(queueConfigAsStream, QueueConfig.class);
             registerServices();
         } catch (Exception e) {
-            logger.info("Error initializing executor app", e);
+            logger.error("Error initializing executor app", e);
             throw new RuntimeException(e);
         }
     }

@@ -57,7 +57,7 @@ public class SchedulerApp {
             // register service
             registerService();
         } catch (Exception e) {
-            logger.info("Error initializing scheduler app", e);
+            logger.error("Error initializing scheduler app", e);
             throw new RuntimeException(e);
         }
     }
