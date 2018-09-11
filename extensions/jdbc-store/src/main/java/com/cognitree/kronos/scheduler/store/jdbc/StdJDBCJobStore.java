@@ -31,24 +31,37 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_COMPLETED_AT;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_CREATED_AT;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_ID;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_NAMESPACE;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_STATUS;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_WORKFLOW_NAME;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.TABLE_JOBS;
+
 /**
  * A standard JDBC based implementation of {@link JobStore}.
  */
 public class StdJDBCJobStore implements JobStore {
     private static final Logger logger = LoggerFactory.getLogger(StdJDBCJobStore.class);
 
-    private static final String INSERT_JOB = "INSERT INTO jobs VALUES (?,?,?,?,?,?,?)";
-    private static final String LOAD_JOB_BY_NAMESPACE = "SELECT * FROM jobs WHERE namespace = ?";
-    private static final String LOAD_JOB_BY_ID = "SELECT * FROM jobs WHERE id = ? AND namespace = ?";
-    private static final String LOAD_ALL_JOB_CREATED_BETWEEN = "SELECT * FROM jobs where namespace = ? " +
-            "AND created_at > ? AND created_at < ?";
-    private static final String LOAD_JOB_BY_NAME_CREATED_BETWEEN = "SELECT * FROM jobs WHERE workflow_name = ? " +
-            "AND namespace = ? AND created_at > ? AND created_at < ?";
-    private static final String LOAD_JOB_BY_NAME_TRIGGER_CREATED_BETWEEN = "SELECT * FROM jobs WHERE workflow_name = ? " +
-            "AND trigger_name = ? AND namespace = ? AND created_at > ? AND created_at < ?";
-    private static final String UPDATE_JOB = "UPDATE jobs SET status = ?, created_at = ?, completed_at = ? " +
-            " WHERE id = ? AND namespace = ?";
-    private static final String DELETE_JOB = "DELETE FROM jobs WHERE id = ? AND namespace = ?";
+    private static final String INSERT_JOB = "INSERT INTO " + TABLE_JOBS + " VALUES (?,?,?,?,?,?,?)";
+    private static final String LOAD_JOB_BY_NAMESPACE = "SELECT * FROM " + TABLE_JOBS + " WHERE "
+            + COL_NAMESPACE + " = ?";
+    private static final String LOAD_JOB_BY_ID = "SELECT * FROM " + TABLE_JOBS + " WHERE " + COL_ID + " = ? AND "
+            + COL_NAMESPACE + " = ?";
+    private static final String LOAD_ALL_JOB_CREATED_BETWEEN = "SELECT * FROM " + TABLE_JOBS + " WHERE "
+            + COL_NAMESPACE + " = ? " + "AND " + COL_CREATED_AT + " > ? AND " + COL_CREATED_AT + " < ?";
+    private static final String LOAD_JOB_BY_NAME_CREATED_BETWEEN = "SELECT * FROM " + TABLE_JOBS + " WHERE "
+            + COL_WORKFLOW_NAME + " = ? " +
+            "AND " + COL_NAMESPACE + " = ? AND " + COL_CREATED_AT + " > ? AND " + COL_CREATED_AT + " < ?";
+    private static final String LOAD_JOB_BY_NAME_TRIGGER_CREATED_BETWEEN = "SELECT * FROM " + TABLE_JOBS + " WHERE "
+            + COL_WORKFLOW_NAME + " = ? " + "AND trigger_name = ? AND " + COL_NAMESPACE + " = ? AND "
+            + COL_CREATED_AT + " > ? AND " + COL_CREATED_AT + " < ?";
+    private static final String UPDATE_JOB = "UPDATE " + TABLE_JOBS + " SET " + COL_STATUS + " = ?, " + COL_CREATED_AT
+            + " = ?, " + COL_COMPLETED_AT + " = ? " + " WHERE " + COL_ID + " = ? AND " + COL_NAMESPACE + " = ?";
+    private static final String DELETE_JOB = "DELETE FROM " + TABLE_JOBS + " WHERE " + COL_ID + " = ? AND "
+            + COL_NAMESPACE + " = ?";
 
     private final BasicDataSource dataSource;
 

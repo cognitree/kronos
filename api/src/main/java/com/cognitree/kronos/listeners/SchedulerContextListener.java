@@ -26,15 +26,15 @@ import javax.servlet.ServletContextListener;
 
 public class SchedulerContextListener implements ServletContextListener {
     private static final Logger logger = LoggerFactory.getLogger(SchedulerContextListener.class);
-    private final SchedulerApp schedulerApp;
+    private SchedulerApp schedulerApp;
 
     public SchedulerContextListener() {
-        schedulerApp = new SchedulerApp();
     }
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
         try {
+            schedulerApp = new SchedulerApp();
             schedulerApp.init();
             schedulerApp.start();
         } catch (Exception e) {

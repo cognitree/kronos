@@ -1,9 +1,8 @@
-# configure namespace store
 storeProviderConfig:
   providerClass: com.cognitree.kronos.scheduler.store.jdbc.EmbeddedHSQLStoreProvider
   config:
     dbPath: /tmp
-    username:
-    password:
-    minIdleConnection:
-    maxIdleConnection:
+    #username:
+    #password:
+    #minIdleConnection:
+    #maxIdleConnection:

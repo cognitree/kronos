@@ -30,6 +30,7 @@
 
     <properties>
         <commons-dbcp2.version>2.3.0</commons-dbcp2.version>
+        <ibatis-sqlmap.version>3.0-beta-10</ibatis-sqlmap.version>
     </properties>
 
     <dependencies>
@@ -37,6 +38,11 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-dbcp2</artifactId>
             <version>${commons-dbcp2.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.ibatis</groupId>
+            <artifactId>ibatis-sqlmap</artifactId>
+            <version>${ibatis-sqlmap.version}</version>
         </dependency>
     </dependencies>
 

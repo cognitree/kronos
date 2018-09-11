@@ -17,12 +17,21 @@
 
 package com.cognitree.kronos.scheduler.store.jdbc;
 
+import org.quartz.impl.jdbcjobstore.HSQLDBDelegate;
+import org.quartz.impl.jdbcjobstore.MSSQLDelegate;
+import org.quartz.impl.jdbcjobstore.PostgreSQLDelegate;
+import org.quartz.impl.jdbcjobstore.StdJDBCDelegate;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
 public class JDBCUtil {
+    public static final String HSQLDB_DRIVER_CLASS = "org.hsqldb.jdbcDriver";
+    public static final String POSTGRESQL_DRIVER_CLASS = "org.postgresql.Driver";
+    public static final String MYSQL_DRIVER_CLASS = "com.mysql.jdbc.Driver";
+    public static final String MSSQL_DRIVER_CLASS = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
 
     public static void setLong(PreparedStatement preparedStatement, int paramIndex, Long value) throws SQLException {
         if (value != null) {
@@ -38,6 +47,21 @@ public class JDBCUtil {
             return null;
         } else {
             return value;
+        }
+    }
+
+    public static String getQuartzJDBCDelegate(String driverClassName) throws Exception {
+        switch (driverClassName) {
+            case HSQLDB_DRIVER_CLASS:
+                return HSQLDBDelegate.class.getName();
+            case POSTGRESQL_DRIVER_CLASS:
+                return PostgreSQLDelegate.class.getName();
+            case MSSQL_DRIVER_CLASS:
+                return MSSQLDelegate.class.getName();
+            case MYSQL_DRIVER_CLASS:
+                return StdJDBCDelegate.class.getName();
+            default:
+                throw new Exception("unable to get the quartz driver delegate for driver class " + driverClassName);
         }
     }
 }
