@@ -207,12 +207,11 @@ public final class WorkflowSchedulerService implements Service {
     public void stop() {
         logger.info("Stopping workflow scheduler service");
         try {
-            logger.info("Stopping task reader service...");
             if (scheduler != null && !scheduler.isShutdown()) {
                 scheduler.shutdown();
             }
         } catch (Exception e) {
-            logger.error("Error stopping task reader service...", e);
+            logger.error("Error stopping quartz scheduler...", e);
         }
     }
 
