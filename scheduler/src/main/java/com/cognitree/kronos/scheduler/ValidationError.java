@@ -27,7 +27,8 @@ public enum ValidationError {
     CYCLIC_DEPENDENCY_IN_WORKFLOW(2003, "cyclic_dependency_in_workflow", 400),
 
     WORKFLOW_TRIGGER_NOT_FOUND(3001, "workflow_trigger_not_found", 404),
-    WORKFLOW_TRIGGER_ALREADY_EXISTS(3001, "workflow_trigger_already_exists", 404);
+    INVALID_WORKFLOW_TRIGGER(3002, "invalid_workflow_trigger", 400),
+    WORKFLOW_TRIGGER_ALREADY_EXISTS(3003, "workflow_trigger_already_exists", 404);
 
     private int errorCode;
     private String errorMsg;
@@ -39,7 +40,7 @@ public enum ValidationError {
         this.statusCode = statusCode;
     }
 
-    ValidationException createException(Object... args) {
+    public ValidationException createException(Object... args) {
         return new ValidationException(this, args);
     }
 

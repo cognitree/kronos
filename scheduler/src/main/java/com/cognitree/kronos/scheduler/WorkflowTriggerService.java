@@ -27,6 +27,7 @@ import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import com.cognitree.kronos.scheduler.model.WorkflowTriggerId;
 import com.cognitree.kronos.scheduler.store.StoreException;
 import com.cognitree.kronos.scheduler.store.WorkflowTriggerStore;
+import com.cognitree.kronos.scheduler.util.TriggerHelper;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +65,7 @@ public class WorkflowTriggerService implements Service {
 
     public void add(WorkflowTrigger workflowTrigger) throws SchedulerException, ServiceException, ValidationException {
         logger.debug("Received request to add workflow trigger {}", workflowTrigger);
+        validateTrigger(workflowTrigger);
         validateNamespace(workflowTrigger.getNamespace());
         validateWorkflow(workflowTrigger.getWorkflow(), workflowTrigger.getNamespace());
         try {
@@ -131,6 +133,15 @@ public class WorkflowTriggerService implements Service {
         } catch (StoreException e) {
             logger.error("unable to delete workflow trigger {}", workflowTriggerId, e);
             throw new ServiceException(e.getMessage());
+        }
+    }
+
+    private void validateTrigger(WorkflowTrigger workflowTrigger) throws ValidationException {
+        try {
+            TriggerHelper.buildTrigger(workflowTrigger);
+        } catch (Exception e) {
+            logger.error("Error validating workflow trigger {}", workflowTrigger, e);
+            throw ValidationError.INVALID_WORKFLOW_TRIGGER.createException(e.getMessage());
         }
     }
 

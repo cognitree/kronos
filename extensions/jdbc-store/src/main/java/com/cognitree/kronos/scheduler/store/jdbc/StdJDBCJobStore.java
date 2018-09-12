@@ -31,12 +31,12 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.*;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_COMPLETED_AT;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_CREATED_AT;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_ID;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_NAMESPACE;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_STATUS;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_TRIGGER_NAME;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_WORKFLOW_NAME;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.TABLE_JOBS;
 

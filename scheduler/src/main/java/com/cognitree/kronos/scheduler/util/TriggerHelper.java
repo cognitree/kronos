@@ -51,14 +51,16 @@ import static org.quartz.TriggerBuilder.newTrigger;
 
 public class TriggerHelper {
 
+    public static Trigger buildTrigger(WorkflowTrigger workflowTrigger) throws ParseException {
+        return buildTrigger(workflowTrigger, null);
+    }
+
     public static Trigger buildTrigger(WorkflowTrigger workflowTrigger,
                                        TriggerKey triggerKey) throws ParseException {
         final ScheduleBuilder scheduleBuilder = buildSchedulerBuilder(workflowTrigger.getSchedule());
-        TriggerBuilder triggerBuilder = newTrigger();
-        if (scheduleBuilder != null) {
-            triggerBuilder.withSchedule(scheduleBuilder);
-        }
-        triggerBuilder.startNow()
+        TriggerBuilder triggerBuilder = newTrigger()
+                .withSchedule(scheduleBuilder)
+                .startNow()
                 .withIdentity(triggerKey);
 
         // Set Start Date
