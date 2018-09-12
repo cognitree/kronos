@@ -10,8 +10,11 @@ Update the `storeProviderConfig` section in `scheduler.yaml` to configure namesp
 storeProviderConfig:
   providerClass: com.cognitree.kronos.scheduler.store.jdbc.EmbeddedHSQLStoreProvider
   config:
+    # directory to keep the Kronos data
     dbPath: /tmp
+    # database username (used while creating and accessing the database)
     username:
+    # database password (used while creating and accessing the database)
     password:
 ```
 

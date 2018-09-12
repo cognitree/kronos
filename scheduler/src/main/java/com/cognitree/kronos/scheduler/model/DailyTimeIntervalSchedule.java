@@ -17,22 +17,28 @@
 
 package com.cognitree.kronos.scheduler.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.quartz.DailyTimeIntervalTrigger;
 import org.quartz.DateBuilder.IntervalUnit;
 
 import java.util.Objects;
 import java.util.Set;
 
+import static com.cognitree.kronos.scheduler.model.DailyTimeIntervalSchedule.TimeOfDay.END_OF_DAY;
+import static com.cognitree.kronos.scheduler.model.DailyTimeIntervalSchedule.TimeOfDay.START_OF_DAY;
 import static com.cognitree.kronos.scheduler.model.Schedule.Type.daily_time;
 import static org.quartz.DailyTimeIntervalScheduleBuilder.ALL_DAYS_OF_THE_WEEK;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class DailyTimeIntervalSchedule extends Schedule {
     private Type type = daily_time;
     private int repeatInterval = 1;
     private IntervalUnit repeatIntervalUnit = IntervalUnit.MINUTE;
     private int repeatCount = DailyTimeIntervalTrigger.REPEAT_INDEFINITELY;
-    private TimeOfDay startTimeOfDay;
-    private TimeOfDay endTimeOfDay;
+    private TimeOfDay startTimeOfDay = START_OF_DAY;
+    private TimeOfDay endTimeOfDay = END_OF_DAY;
     private Set<Integer> daysOfWeek = ALL_DAYS_OF_THE_WEEK;
 
     @Override
@@ -128,9 +134,22 @@ public class DailyTimeIntervalSchedule extends Schedule {
     }
 
     public static class TimeOfDay {
+
+        public static final TimeOfDay START_OF_DAY = new TimeOfDay(0, 0, 0);
+        public static final TimeOfDay END_OF_DAY = new TimeOfDay(23, 59, 59);
+
         private int hour;
         private int minute;
         private int second;
+
+        @JsonCreator
+        public TimeOfDay(@JsonProperty("hour") int hour,
+                         @JsonProperty("minute") int minute,
+                         @JsonProperty("second") int second) {
+            this.hour = hour;
+            this.minute = minute;
+            this.second = second;
+        }
 
         public int getHour() {
             return hour;

@@ -17,10 +17,13 @@
 
 package com.cognitree.kronos.scheduler.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.util.Objects;
 
 import static com.cognitree.kronos.scheduler.model.Schedule.Type.simple;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class SimpleSchedule extends Schedule {
     private Type type = simple;
     private boolean repeatForever;

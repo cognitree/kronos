@@ -17,6 +17,7 @@
 
 package com.cognitree.kronos.scheduler.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.quartz.Trigger;
@@ -30,6 +31,7 @@ import java.util.Objects;
         @JsonSubTypes.Type(value = DailyTimeIntervalSchedule.class, name = "daily_time"),
         @JsonSubTypes.Type(value = CalendarIntervalSchedule.class, name = "calendar")
 })
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public abstract class Schedule {
     private Type type;
     private int misfireInstruction = Trigger.MISFIRE_INSTRUCTION_SMART_POLICY;

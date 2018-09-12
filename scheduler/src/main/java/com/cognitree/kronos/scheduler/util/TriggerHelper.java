@@ -165,23 +165,14 @@ public class TriggerHelper {
         }
         scheduleBuilder.withInterval(dailyTimeIntervalSchedule.getRepeatInterval(),
                 dailyTimeIntervalSchedule.getRepeatIntervalUnit());
-        if (dailyTimeIntervalSchedule.getStartTimeOfDay() != null) {
-            final TimeOfDay startTimeOfDay = new TimeOfDay(dailyTimeIntervalSchedule.getStartTimeOfDay().getHour(),
-                    dailyTimeIntervalSchedule.getStartTimeOfDay().getMinute(),
-                    dailyTimeIntervalSchedule.getStartTimeOfDay().getSecond());
-            scheduleBuilder.startingDailyAt(startTimeOfDay);
-        } else {
-            scheduleBuilder.startingDailyAt(TimeOfDay.hourAndMinuteOfDay(0, 0));
-        }
-        if (dailyTimeIntervalSchedule.getEndTimeOfDay() != null) {
-            final TimeOfDay endTimeOfDay = new TimeOfDay(dailyTimeIntervalSchedule.getEndTimeOfDay().getHour(),
-                    dailyTimeIntervalSchedule.getEndTimeOfDay().getMinute(),
-                    dailyTimeIntervalSchedule.getEndTimeOfDay().getSecond());
-            scheduleBuilder.endingDailyAt(endTimeOfDay);
-        } else {
-            scheduleBuilder.endingDailyAt(TimeOfDay.hourMinuteAndSecondOfDay(23, 59, 59));
-        }
-
+        final TimeOfDay startTimeOfDay = new TimeOfDay(dailyTimeIntervalSchedule.getStartTimeOfDay().getHour(),
+                dailyTimeIntervalSchedule.getStartTimeOfDay().getMinute(),
+                dailyTimeIntervalSchedule.getStartTimeOfDay().getSecond());
+        scheduleBuilder.startingDailyAt(startTimeOfDay);
+        final TimeOfDay endTimeOfDay = new TimeOfDay(dailyTimeIntervalSchedule.getEndTimeOfDay().getHour(),
+                dailyTimeIntervalSchedule.getEndTimeOfDay().getMinute(),
+                dailyTimeIntervalSchedule.getEndTimeOfDay().getSecond());
+        scheduleBuilder.endingDailyAt(endTimeOfDay);
         return scheduleBuilder;
     }
 
@@ -201,7 +192,9 @@ public class TriggerHelper {
         scheduleBuilder.withInterval(calendarIntervalSchedule.getRepeatInterval(),
                 calendarIntervalSchedule.getRepeatIntervalUnit());
 
-        scheduleBuilder.inTimeZone(TimeZone.getTimeZone(calendarIntervalSchedule.getTimezone()));
+        if (calendarIntervalSchedule.getTimezone() != null) {
+            scheduleBuilder.inTimeZone(TimeZone.getTimeZone(calendarIntervalSchedule.getTimezone()));
+        }
         scheduleBuilder.preserveHourOfDayAcrossDaylightSavings(calendarIntervalSchedule.isPreserveHourOfDayAcrossDaylightSavings());
         scheduleBuilder.skipDayIfHourDoesNotExist(calendarIntervalSchedule.isSkipDayIfHourDoesNotExist());
         return scheduleBuilder;

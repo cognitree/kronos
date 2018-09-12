@@ -17,12 +17,14 @@
 
 package com.cognitree.kronos.scheduler.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.quartz.DateBuilder.IntervalUnit;
 
 import java.util.Objects;
 
 import static com.cognitree.kronos.scheduler.model.Schedule.Type.calendar;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class CalendarIntervalSchedule extends Schedule {
 
     private Type type = calendar;
