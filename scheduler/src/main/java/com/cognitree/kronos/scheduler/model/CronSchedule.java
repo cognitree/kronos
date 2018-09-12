@@ -17,10 +17,13 @@
 
 package com.cognitree.kronos.scheduler.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.util.Objects;
 
 import static com.cognitree.kronos.scheduler.model.Schedule.Type.cron;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class CronSchedule extends Schedule {
     private Type type = cron;
     private String cronExpression;
