@@ -17,9 +17,7 @@
 
 package com.cognitree.kronos;
 
-import com.cognitree.kronos.executor.ExecutorApp;
 import com.cognitree.kronos.scheduler.NamespaceService;
-import com.cognitree.kronos.scheduler.SchedulerApp;
 import com.cognitree.kronos.scheduler.WorkflowService;
 import com.cognitree.kronos.scheduler.WorkflowTriggerService;
 import com.cognitree.kronos.scheduler.model.CronSchedule;
@@ -28,9 +26,7 @@ import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.quartz.CronExpression;
 import org.quartz.Scheduler;
 import org.quartz.TriggerKey;
@@ -41,52 +37,34 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.UUID;
 
-public class ApplicationTest {
+public class TestUtil {
     private static final ObjectMapper YAML_MAPPER = new ObjectMapper(new YAMLFactory());
     // needs to be minimum 2 seconds otherwise the workflow is triggered twice
     // as we setting startAt and endAt based on scheduled and quartz convert this to date and time (HH : MM : SS)
     // due to which the precision is lost if set to run every sec.
     private static final CronSchedule SCHEDULE = new CronSchedule();
-    private static SchedulerApp SCHEDULER_APP;
-    private static ExecutorApp EXECUTOR_APP;
 
     static {
         SCHEDULE.setCronExpression("0/2 * * * * ?");
     }
 
-    @BeforeClass
-    public static void setup() throws Exception {
-        SCHEDULER_APP = new SchedulerApp();
-        SCHEDULER_APP.init();
-        SCHEDULER_APP.start();
-        EXECUTOR_APP = new ExecutorApp();
-        EXECUTOR_APP.init();
-        EXECUTOR_APP.start();
-    }
-
-    @AfterClass
-    public static void destroy() {
-        SCHEDULER_APP.stop();
-        EXECUTOR_APP.stop();
-    }
-
-    protected Namespace createNamespace(String name) {
+    public static Namespace createNamespace(String name) {
         Namespace namespace = new Namespace();
         namespace.setName(name);
         return namespace;
     }
 
-    protected Workflow createWorkflow(String workflowTemplate, String workflowName,
-                                      String namespace) throws IOException {
+    public static Workflow createWorkflow(String workflowTemplate, String workflowName,
+                                          String namespace) throws IOException {
         final InputStream resourceAsStream =
-                getClass().getClassLoader().getResourceAsStream(workflowTemplate);
+                TestUtil.class.getClassLoader().getResourceAsStream(workflowTemplate);
         final Workflow workflow = YAML_MAPPER.readValue(resourceAsStream, Workflow.class);
         workflow.setName(workflowName);
         workflow.setNamespace(namespace);
         return workflow;
     }
 
-    protected WorkflowTrigger createWorkflowTrigger(String triggerName, String workflow, String namespace) throws ParseException {
+    public static WorkflowTrigger createWorkflowTrigger(String triggerName, String workflow, String namespace) throws ParseException {
         final long nextFireTime = new CronExpression(SCHEDULE.getCronExpression())
                 .getNextValidTimeAfter(new Date(System.currentTimeMillis() + 100)).getTime();
         final WorkflowTrigger workflowTrigger = new WorkflowTrigger();
@@ -99,7 +77,7 @@ public class ApplicationTest {
         return workflowTrigger;
     }
 
-    protected WorkflowTrigger scheduleWorkflow(String workflowTemplate) throws Exception {
+    public static WorkflowTrigger scheduleWorkflow(String workflowTemplate) throws Exception {
         Namespace namespace = createNamespace(UUID.randomUUID().toString());
         NamespaceService.getService().add(namespace);
         final Workflow workflow = createWorkflow(workflowTemplate,
@@ -111,7 +89,7 @@ public class ApplicationTest {
         return workflowTrigger;
     }
 
-    protected void waitForTriggerToComplete(WorkflowTrigger workflowTriggerOne, Scheduler scheduler) throws Exception {
+    public static void waitForTriggerToComplete(WorkflowTrigger workflowTriggerOne, Scheduler scheduler) throws Exception {
         // wait for both the job to be triggered
         TriggerKey workflowOneTriggerKey = new TriggerKey(workflowTriggerOne.getName(),
                 workflowTriggerOne.getWorkflow() + ":" + workflowTriggerOne.getNamespace());

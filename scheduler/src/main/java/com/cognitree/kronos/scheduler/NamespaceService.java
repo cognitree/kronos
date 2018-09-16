@@ -26,6 +26,7 @@ import com.cognitree.kronos.scheduler.store.StoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.List;
 
 import static com.cognitree.kronos.scheduler.ValidationError.NAMESPACE_ALREADY_EXISTS;
@@ -52,12 +53,14 @@ public class NamespaceService implements Service {
     @Override
     public void start() {
         logger.info("Starting namespace service");
+        ServiceProvider.registerService(this);
     }
 
     public List<Namespace> get() throws ServiceException {
         logger.debug("Received request to get all namespaces");
         try {
-            return namespaceStore.load();
+            final List<Namespace> namespaces = namespaceStore.load();
+            return namespaces == null ? Collections.emptyList() : namespaces;
         } catch (StoreException e) {
             logger.error("unable to get all namespaces", e);
             throw new ServiceException(e.getMessage());

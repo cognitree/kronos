@@ -35,6 +35,8 @@ public class Workflow extends WorkflowId {
 
     private String description;
     private List<WorkflowTask> tasks = new ArrayList<>();
+    private List<String> emailOnFailure = new ArrayList<>();
+    private List<String> emailOnSuccess = new ArrayList<>();
 
     public String getDescription() {
         return description;
@@ -50,6 +52,22 @@ public class Workflow extends WorkflowId {
 
     public void setTasks(List<WorkflowTask> tasks) {
         this.tasks = tasks;
+    }
+
+    public List<String> getEmailOnFailure() {
+        return emailOnFailure;
+    }
+
+    public void setEmailOnFailure(List<String> emailOnFailure) {
+        this.emailOnFailure = emailOnFailure;
+    }
+
+    public List<String> getEmailOnSuccess() {
+        return emailOnSuccess;
+    }
+
+    public void setEmailOnSuccess(List<String> emailOnSuccess) {
+        this.emailOnSuccess = emailOnSuccess;
     }
 
     @JsonIgnore
@@ -72,6 +90,8 @@ public class Workflow extends WorkflowId {
         return "Workflow{" +
                 "description='" + description + '\'' +
                 ", tasks=" + tasks +
+                ", emailOnFailure=" + emailOnFailure +
+                ", emailOnSuccess=" + emailOnSuccess +
                 "} " + super.toString();
     }
 

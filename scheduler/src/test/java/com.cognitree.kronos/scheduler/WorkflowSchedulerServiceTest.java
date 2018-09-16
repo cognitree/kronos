@@ -49,8 +49,7 @@ public class WorkflowSchedulerServiceTest {
     }
 
     @BeforeClass
-    public static void init() throws Exception {
-        SCHEDULER_APP.init();
+    public static void start() throws Exception {
         SCHEDULER_APP.start();
     }
 

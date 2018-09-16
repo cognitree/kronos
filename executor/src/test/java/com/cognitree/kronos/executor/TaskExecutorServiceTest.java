@@ -54,7 +54,6 @@ public class TaskExecutorServiceTest {
 
     @BeforeClass
     public static void start() throws Exception {
-        EXECUTOR_APP.init();
         EXECUTOR_APP.start();
     }
 

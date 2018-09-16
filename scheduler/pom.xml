@@ -32,6 +32,8 @@
     <properties>
         <quartz.version>2.2.3</quartz.version>
         <guava.version>23.5-jre</guava.version>
+        <simple-java-mail.version>5.0.3</simple-java-mail.version>
+        <velocity.version>1.7</velocity.version>
     </properties>
 
     <dependencies>
@@ -49,6 +51,16 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.simplejavamail</groupId>
+            <artifactId>simple-java-mail</artifactId>
+            <version>${simple-java-mail.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.velocity</groupId>
+            <artifactId>velocity</artifactId>
+            <version>${velocity.version}</version>
         </dependency>
         <dependency>
             <groupId>com.cognitree.kronos</groupId>

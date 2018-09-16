@@ -15,34 +15,41 @@
  * limitations under the License.
  */
 
-package com.cognitree.kronos.listeners;
+package com.cognitree.kronos.scheduler.store;
 
-import com.cognitree.kronos.executor.ExecutorApp;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
+import com.cognitree.kronos.scheduler.model.WorkflowTriggerId;
 
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+import java.util.List;
 
-public class ExecutorContextListener implements ServletContextListener {
-    private static final Logger logger = LoggerFactory.getLogger(ExecutorContextListener.class);
-    private final ExecutorApp executorApp = new ExecutorApp();
-
-    public ExecutorContextListener() {
+public class MockWorkflowTriggerStore implements WorkflowTriggerStore {
+    @Override
+    public List<WorkflowTrigger> load(String namespace) {
+        return null;
     }
 
     @Override
-    public void contextInitialized(ServletContextEvent sce) {
-        try {
-            executorApp.start();
-        } catch (Exception e) {
-            logger.error("Error starting executor", e);
-            System.exit(0);
-        }
+    public List<WorkflowTrigger> loadByWorkflowName(String workflowName, String namespace) {
+        return null;
     }
 
     @Override
-    public void contextDestroyed(ServletContextEvent sce) {
-        executorApp.stop();
+    public void store(WorkflowTrigger entity) {
+
+    }
+
+    @Override
+    public WorkflowTrigger load(WorkflowTriggerId identity) {
+        return null;
+    }
+
+    @Override
+    public void update(WorkflowTrigger entity) {
+
+    }
+
+    @Override
+    public void delete(WorkflowTriggerId identity) {
+
     }
 }

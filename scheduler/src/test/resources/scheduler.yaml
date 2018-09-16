@@ -1,2 +1,2 @@
 storeProviderConfig:
-  providerClass: com.cognitree.kronos.scheduler.store.impl.RAMStoreProvider
+  providerClass: com.cognitree.kronos.scheduler.store.MockStoreProvider

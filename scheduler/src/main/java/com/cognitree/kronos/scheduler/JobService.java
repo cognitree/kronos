@@ -21,6 +21,7 @@ import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.scheduler.model.Job;
+import com.cognitree.kronos.scheduler.model.Job.Status;
 import com.cognitree.kronos.scheduler.model.JobId;
 import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.NamespaceId;
@@ -29,7 +30,11 @@ import com.cognitree.kronos.scheduler.store.StoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static com.cognitree.kronos.scheduler.ValidationError.NAMESPACE_NOT_FOUND;
@@ -37,6 +42,7 @@ import static com.cognitree.kronos.scheduler.ValidationError.NAMESPACE_NOT_FOUND
 public class JobService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(JobService.class);
 
+    private final Set<JobStatusChangeListener> statusChangeListeners = new HashSet<>();
     private JobStore jobStore;
 
     public JobService(JobStore jobStore) {
@@ -55,24 +61,53 @@ public class JobService implements Service {
     @Override
     public void start() {
         logger.info("Starting job service");
+        ServiceProvider.registerService(this);
     }
 
-    public void add(Job job) throws ServiceException, ValidationException {
-        logger.debug("Received request to add job {}", job);
-        validateNamespace(job.getNamespace());
+    public Job create(String workflowName, String triggerName, String namespace) throws ServiceException, ValidationException {
+        logger.debug("Received request to create job from workflow {}, trigger {} under namespace {}",
+                workflowName, triggerName, namespace);
+        validateNamespace(namespace);
+        final Job job = new Job();
+        job.setId(UUID.randomUUID().toString());
+        job.setWorkflow(workflowName);
+        job.setNamespace(namespace);
+        job.setTrigger(triggerName);
+        job.setCreatedAt(System.currentTimeMillis());
         try {
             jobStore.store(job);
         } catch (StoreException e) {
-            logger.error("unable to add job {}", job, e);
+            logger.error("unable to create job from workflow {}, trigger {} under namespace {}",
+                    workflowName, triggerName, namespace, e);
             throw new ServiceException(e.getMessage());
         }
+        return job;
+    }
+
+    /**
+     * register a listener to receive job status change notifications
+     *
+     * @param statusChangeListener
+     */
+    public void registerListener(JobStatusChangeListener statusChangeListener) {
+        statusChangeListeners.add(statusChangeListener);
+    }
+
+    /**
+     * deregister a job status change listener
+     *
+     * @param statusChangeListener
+     */
+    public void deregisterListener(JobStatusChangeListener statusChangeListener) {
+        statusChangeListeners.remove(statusChangeListener);
     }
 
     public List<Job> get(String namespace) throws ServiceException, ValidationException {
         logger.debug("Received request to get all jobs under namespace {}", namespace);
         validateNamespace(namespace);
         try {
-            return jobStore.load(namespace);
+            final List<Job> jobs = jobStore.load(namespace);
+            return jobs == null ? Collections.emptyList() : jobs;
         } catch (StoreException e) {
             logger.error("unable to get all jobs under namespace {}", namespace, e);
             throw new ServiceException(e.getMessage());
@@ -97,7 +132,8 @@ public class JobService implements Service {
         long createdAfter = timeInMillisBeforeDays(numberOfDays);
         long createdBefore = System.currentTimeMillis();
         try {
-            return jobStore.load(namespace, createdAfter, createdBefore);
+            final List<Job> jobs = jobStore.load(namespace, createdAfter, createdBefore);
+            return jobs == null ? Collections.emptyList() : jobs;
         } catch (StoreException e) {
             logger.error("unable to get all jobs under namespace {} submitted in last {} number of days",
                     namespace, numberOfDays, e);
@@ -112,7 +148,8 @@ public class JobService implements Service {
         long createdAfter = timeInMillisBeforeDays(numberOfDays);
         long createdBefore = System.currentTimeMillis();
         try {
-            return jobStore.loadByWorkflowName(workflowName, namespace, createdAfter, createdBefore);
+            final List<Job> jobs = jobStore.loadByWorkflowName(workflowName, namespace, createdAfter, createdBefore);
+            return jobs == null ? Collections.emptyList() : jobs;
         } catch (StoreException e) {
             logger.error("unable to get all jobs with workflow name {} under namespace {} submitted " +
                     "in last {} number of days", workflowName, namespace, numberOfDays, e);
@@ -127,7 +164,9 @@ public class JobService implements Service {
         long createdAfter = timeInMillisBeforeDays(numberOfDays);
         long createdBefore = System.currentTimeMillis();
         try {
-            return jobStore.loadByWorkflowNameAndTriggerName(workflowName, triggerName, namespace, createdAfter, createdBefore);
+            final List<Job> jobs = jobStore.loadByWorkflowNameAndTriggerName(workflowName, triggerName, namespace,
+                    createdAfter, createdBefore);
+            return jobs == null ? Collections.emptyList() : jobs;
         } catch (StoreException e) {
             logger.error("unable to get all jobs with workflow name {}, trigger {} under namespace {} submitted " +
                     "in last {} number of days", workflowName, triggerName, namespace, numberOfDays, e);
@@ -161,6 +200,41 @@ public class JobService implements Service {
             logger.error("unable to update job to {}", job, e);
             throw new ServiceException(e.getMessage());
         }
+    }
+
+    public void updateStatus(JobId jobId, Status status) throws ServiceException, ValidationException {
+        logger.debug("Received request to update job {} status to {}", jobId, status);
+        try {
+            final Job job = get(jobId);
+            Status currentStatus = job.getStatus();
+            job.setStatus(status);
+            switch (status) {
+                case CREATED:
+                    job.setCreatedAt(System.currentTimeMillis());
+                    break;
+                case RUNNING:
+                    break;
+                case FAILED:
+                case SUCCESSFUL:
+                    job.setCompletedAt(System.currentTimeMillis());
+                    break;
+            }
+            jobStore.update(job);
+            notifyListeners(job, currentStatus, status);
+        } catch (StoreException e) {
+            logger.error("unable to update job {} status to {}", jobId, status, e);
+            throw new ServiceException(e.getMessage());
+        }
+    }
+
+    private void notifyListeners(Job job, Job.Status from, Job.Status to) {
+        statusChangeListeners.forEach(listener -> {
+            try {
+                listener.statusChanged(job, from, to);
+            } catch (Exception e) {
+                logger.error("error notifying job status change from {}, to {} for job {}", from, to, job, e);
+            }
+        });
     }
 
     public void delete(JobId jobId) throws ServiceException, ValidationException {

@@ -15,35 +15,36 @@
  * limitations under the License.
  */
 
-package com.cognitree.kronos.scheduler.policies;
+package com.cognitree.kronos.scheduler.store;
 
-import com.cognitree.kronos.model.Task;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.junit.Assert;
+import com.cognitree.kronos.scheduler.model.Namespace;
+import com.cognitree.kronos.scheduler.model.NamespaceId;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
-import static com.cognitree.kronos.model.Task.Status.FAILED;
-import static com.cognitree.kronos.scheduler.model.Messages.TIMED_OUT;
-
-public class MockTimeoutPolicy implements TimeoutPolicy {
-
-    private static final Set<Task> timeoutTasks = new HashSet<>();
-
-    public static Set<Task> getTimeoutTasks() {
-        return timeoutTasks;
+public class MockNamespaceStore implements NamespaceStore {
+    @Override
+    public List<Namespace> load() {
+        return null;
     }
 
     @Override
-    public void init(ObjectNode policyConfig) {
+    public void store(Namespace entity) {
 
     }
 
     @Override
-    public void handle(Task task) {
-        Assert.assertEquals(FAILED, task.getStatus());
-        Assert.assertEquals(TIMED_OUT, task.getStatusMessage());
-        timeoutTasks.add(task);
+    public Namespace load(NamespaceId identity) {
+        return null;
+    }
+
+    @Override
+    public void update(Namespace entity) {
+
+    }
+
+    @Override
+    public void delete(NamespaceId identity) {
+
     }
 }
