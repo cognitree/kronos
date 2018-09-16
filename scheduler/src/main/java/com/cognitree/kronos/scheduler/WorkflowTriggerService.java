@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
+import java.util.Collections;
 import java.util.List;
 
 import static com.cognitree.kronos.scheduler.ValidationError.NAMESPACE_NOT_FOUND;
@@ -61,6 +62,7 @@ public class WorkflowTriggerService implements Service {
     @Override
     public void start() {
         logger.info("Starting workflow trigger service");
+        ServiceProvider.registerService(this);
     }
 
     public void add(WorkflowTrigger workflowTrigger) throws SchedulerException, ServiceException, ValidationException {
@@ -87,7 +89,8 @@ public class WorkflowTriggerService implements Service {
         logger.debug("Received request to get all workflow triggers under namespace {}", namespace);
         validateNamespace(namespace);
         try {
-            return workflowTriggerStore.load(namespace);
+            final List<WorkflowTrigger> workflowTriggers = workflowTriggerStore.load(namespace);
+            return workflowTriggers == null ? Collections.emptyList() : workflowTriggers;
         } catch (StoreException e) {
             logger.error("unable to get all workflow triggers under namespace {}", namespace, e);
             throw new ServiceException(e.getMessage());
@@ -112,7 +115,8 @@ public class WorkflowTriggerService implements Service {
         validateNamespace(namespace);
         validateWorkflow(workflowName, namespace);
         try {
-            return workflowTriggerStore.loadByWorkflowName(workflowName, namespace);
+            final List<WorkflowTrigger> workflowTriggers = workflowTriggerStore.loadByWorkflowName(workflowName, namespace);
+            return workflowTriggers == null ? Collections.emptyList() : workflowTriggers;
         } catch (StoreException e) {
             logger.error("unable to get all workflow triggers for workflow {} under namespace {}",
                     workflowName, namespace, e);

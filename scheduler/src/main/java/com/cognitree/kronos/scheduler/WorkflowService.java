@@ -31,6 +31,7 @@ import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -61,7 +62,7 @@ public class WorkflowService implements Service {
     @Override
     public void start() {
         logger.info("Starting workflow service");
-
+        ServiceProvider.registerService(this);
     }
 
     public void add(Workflow workflow) throws ValidationException, ServiceException {
@@ -83,7 +84,8 @@ public class WorkflowService implements Service {
         logger.debug("Received request to get all workflow under namespace {}", namespace);
         validateNamespace(namespace);
         try {
-            return workflowStore.load(namespace);
+            final List<Workflow> workflows = workflowStore.load(namespace);
+            return workflows == null ? Collections.emptyList() : workflows;
         } catch (StoreException e) {
             logger.error("unable to get all workflow under namespace {}", namespace, e);
             throw new ServiceException(e.getMessage());

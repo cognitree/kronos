@@ -56,8 +56,8 @@ final class TaskProvider {
 
     private final MutableGraph<Task> graph = GraphBuilder.directed().build();
 
-    synchronized void add(Task task) {
-        graph.addNode(task);
+    synchronized boolean add(Task task) {
+        return graph.addNode(task);
     }
 
     /**

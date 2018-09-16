@@ -1,7 +1,3 @@
 # configure namespace store
 storeProviderConfig:
   providerClass: com.cognitree.kronos.scheduler.store.impl.RAMStoreProvider
-
-timeoutPolicyConfig:
-  mockPolicy:
-    policyClass: com.cognitree.kronos.scheduler.policies.MockTimeoutPolicy

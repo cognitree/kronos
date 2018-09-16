@@ -17,14 +17,16 @@
 
 package com.cognitree.kronos.scheduler;
 
-import com.cognitree.kronos.model.Task;
-import com.cognitree.kronos.model.Task.Status;
+import com.cognitree.kronos.scheduler.model.Job;
+
+import static com.cognitree.kronos.scheduler.model.Job.Status;
 
 /**
- * An interface implemented by services interested in task status change. To receive notification on task status change
- * register the listener with {@link TaskService#registerListener(TaskStatusChangeListener)}
+ * An interface implemented by services interested in {@link Job} status change.
+ * To receive notification on {@link Job} status change register the listener with
+ * {@link JobService#registerListener(JobStatusChangeListener)}
  */
-public interface TaskStatusChangeListener {
+public interface JobStatusChangeListener {
 
-    void statusChanged(Task task, Status from, Status to);
+    void statusChanged(Job job, Status from, Status to);
 }

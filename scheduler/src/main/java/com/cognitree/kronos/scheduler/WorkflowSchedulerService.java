@@ -19,7 +19,6 @@ package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
-import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.scheduler.graph.TopologicalSort;
 import com.cognitree.kronos.scheduler.model.Job;
@@ -48,7 +47,6 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
 
 import static com.cognitree.kronos.scheduler.model.Job.Status.FAILED;
 import static com.cognitree.kronos.scheduler.model.Job.Status.RUNNING;
@@ -80,13 +78,14 @@ public final class WorkflowSchedulerService implements Service {
         DirectSchedulerFactory.getInstance().createScheduler(threadPool, jobStore);
         scheduler = DirectSchedulerFactory.getInstance().getScheduler();
         threadPool.setThreadNamePrefix(scheduler.getSchedulerName());
-        TaskSchedulerService.getService().registerListener(new WorkflowLifecycleHandler());
     }
 
     @Override
     public void start() throws Exception {
         logger.info("Starting workflow scheduler service");
         scheduler.start();
+        TaskService.getService().registerListener(new WorkflowLifecycleHandler());
+        ServiceProvider.registerService(this);
     }
 
     void schedule(Workflow workflow, WorkflowTrigger workflowTrigger) throws SchedulerException, ParseException {
@@ -124,7 +123,7 @@ public final class WorkflowSchedulerService implements Service {
 
     private Job execute(Workflow workflow, String triggerName) throws ServiceException, ValidationException {
         logger.info("Received request to execute workflow {} by trigger {}", workflow, triggerName);
-        final Job job = createAndStoreWorkflowJob(workflow.getName(), workflow.getNamespace(), triggerName);
+        final Job job = JobService.getService().create(workflow.getName(), triggerName, workflow.getNamespace());
         logger.debug("Executing workflow job {}", job);
         final List<WorkflowTask> workflowTasks = orderWorkflowTasks(workflow.getTasks());
         final List<Task> tasks = new ArrayList<>();
@@ -133,23 +132,10 @@ public final class WorkflowSchedulerService implements Service {
                 logger.warn("Workflow task {} is disabled from scheduling", workflowTask);
                 continue;
             }
-            tasks.add(createAndStoreTask(job.getId(), workflowTask, job.getNamespace()));
+            tasks.add(TaskService.getService().create(job.getId(), workflowTask, job.getNamespace()));
         }
         tasks.forEach(task -> TaskSchedulerService.getService().schedule(task));
-        job.setStatus(RUNNING);
-        JobService.getService().update(job);
-        return job;
-    }
-
-    private Job createAndStoreWorkflowJob(String workflowName, String workflowNamespace,
-                                          String trigger) throws ServiceException, ValidationException {
-        final Job job = new Job();
-        job.setId(UUID.randomUUID().toString());
-        job.setWorkflow(workflowName);
-        job.setNamespace(workflowNamespace);
-        job.setTrigger(trigger);
-        job.setCreatedAt(System.currentTimeMillis());
-        JobService.getService().add(job);
+        JobService.getService().updateStatus(job.getIdentity(), RUNNING);
         return job;
     }
 
@@ -175,22 +161,6 @@ public final class WorkflowSchedulerService implements Service {
             }
         }
         return topologicalSort.sort();
-    }
-
-    private Task createAndStoreTask(String workflowId, WorkflowTask workflowTask, String namespace) throws ServiceException {
-        MutableTask task = new MutableTask();
-        task.setName(UUID.randomUUID().toString());
-        task.setJob(workflowId);
-        task.setName(workflowTask.getName());
-        task.setNamespace(namespace);
-        task.setType(workflowTask.getType());
-        task.setMaxExecutionTime(workflowTask.getMaxExecutionTime());
-        task.setTimeoutPolicy(workflowTask.getTimeoutPolicy());
-        task.setDependsOn(workflowTask.getDependsOn());
-        task.setProperties(workflowTask.getProperties());
-        task.setCreatedAt(System.currentTimeMillis());
-        TaskService.getService().add(task);
-        return task;
     }
 
     void delete(WorkflowTriggerId workflowTriggerId) throws SchedulerException {
@@ -235,10 +205,8 @@ public final class WorkflowSchedulerService implements Service {
                 if (isWorkflowComplete) {
                     final boolean isSuccessful = tasks.stream()
                             .allMatch(workflowTask -> workflowTask.getStatus() == Task.Status.SUCCESSFUL);
-                    final Job job = JobService.getService().get(JobId.build(jobId, namespace));
-                    job.setStatus(isSuccessful ? SUCCESSFUL : FAILED);
-                    job.setCompletedAt(System.currentTimeMillis());
-                    JobService.getService().update(job);
+                    final Job.Status status = isSuccessful ? SUCCESSFUL : FAILED;
+                    JobService.getService().updateStatus(JobId.build(jobId, namespace), status);
                 }
             } catch (ServiceException | ValidationException e) {
                 logger.error("Error handling status change for task {}, from {} to {}", task, from, to, e);

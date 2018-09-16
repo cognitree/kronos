@@ -105,6 +105,19 @@ public class Job extends JobId {
     }
 
     public enum Status {
-        CREATED, RUNNING, FAILED, SUCCESSFUL
+        CREATED(false),
+        RUNNING(false),
+        SUCCESSFUL(true),
+        FAILED(true);
+
+        private final boolean isFinal;
+
+        Status(boolean isFinal) {
+            this.isFinal = isFinal;
+        }
+
+        public boolean isFinal() {
+            return this.isFinal;
+        }
     }
 }

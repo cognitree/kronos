@@ -17,12 +17,9 @@
 
 package com.cognitree.kronos.scheduler;
 
-import com.cognitree.kronos.scheduler.policies.TimeoutPolicyConfig;
 import com.cognitree.kronos.scheduler.store.StoreProvider;
 import com.cognitree.kronos.scheduler.store.StoreProviderConfig;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -35,12 +32,11 @@ public class SchedulerConfig {
      */
     private StoreProviderConfig storeProviderConfig;
 
+
     /**
-     * Map of policy configuration, required by the scheduler to configure timeout policies to apply in case of timeout.
-     * <p>
-     * Here key is the policy id which is to be used while defining policy to apply on timeout.
+     * configuration required by {@link MailService} to configure itself
      */
-    private Map<String, TimeoutPolicyConfig> timeoutPolicyConfig = new HashMap<>();
+    private MailConfig mailConfig;
 
     public StoreProviderConfig getStoreProviderConfig() {
         return storeProviderConfig;
@@ -50,12 +46,12 @@ public class SchedulerConfig {
         this.storeProviderConfig = storeProviderConfig;
     }
 
-    public Map<String, TimeoutPolicyConfig> getTimeoutPolicyConfig() {
-        return timeoutPolicyConfig;
+    public MailConfig getMailConfig() {
+        return mailConfig;
     }
 
-    public void setTimeoutPolicyConfig(Map<String, TimeoutPolicyConfig> timeoutPolicyConfig) {
-        this.timeoutPolicyConfig = timeoutPolicyConfig;
+    public void setMailConfig(MailConfig mailConfig) {
+        this.mailConfig = mailConfig;
     }
 
     @Override
@@ -64,20 +60,20 @@ public class SchedulerConfig {
         if (!(o instanceof SchedulerConfig)) return false;
         SchedulerConfig that = (SchedulerConfig) o;
         return Objects.equals(storeProviderConfig, that.storeProviderConfig) &&
-                Objects.equals(timeoutPolicyConfig, that.timeoutPolicyConfig);
+                Objects.equals(mailConfig, that.mailConfig);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(storeProviderConfig, timeoutPolicyConfig);
+        return Objects.hash(storeProviderConfig, mailConfig);
     }
 
     @Override
     public String toString() {
         return "SchedulerConfig{" +
                 "storeProviderConfig=" + storeProviderConfig +
-                ", timeoutPolicyConfig=" + timeoutPolicyConfig +
+                ", mailConfig=" + mailConfig +
                 '}';
     }
 }

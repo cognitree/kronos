@@ -135,6 +135,7 @@ public final class TaskExecutionService implements Service {
     public void start() {
         final long pollInterval = DateTimeUtil.resolveDuration(consumerConfig.getPollInterval());
         internalExecutorService.scheduleAtFixedRate(this::consumeTasks, 0, pollInterval, MILLISECONDS);
+        ServiceProvider.registerService(this);
     }
 
     private void consumeTasks() {

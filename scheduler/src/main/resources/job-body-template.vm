@@ -1,0 +1,76 @@
+<html>
+<head>
+    <style>
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+
+tr:nth-child(even) {
+    background-color: #dddddd;
+}
+
+    </style>
+</head>
+<body>
+<h3>Job</h3
+
+
+$date.setTime($job.createdAt)
+#set ( $createdAtDate = $dateFormat.format($date) )
+$date.setTime($job.completedAt)
+#set ( $completedAtDate = $dateFormat.format($date) )
+
+<table>
+    <tr>
+        <td>id</td>
+        <td>$job.id</td>
+    </tr>
+    <tr>
+        <td>namespace</td>
+        <td>$job.namespace</td>
+    </tr>
+    <tr>
+        <td>workflow</td>
+        <td>$job.workflow</td>
+    </tr>
+    <tr>
+        <td>status</td>
+        <td>$job.status</td>
+    </tr>
+    <tr>
+        <td>created_at</td>
+        <td>$createdAtDate</td>
+    </tr>
+    <tr>
+        <td>completed_at</td>
+        <td>$completedAtDate</td>
+    </tr>
+</table>
+
+#if( $job.status == 'FAILED' )
+    <h3> Failed Tasks </h3>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Failure Reason</th>
+        </tr>
+         #foreach( $task in $tasks )
+            #if( $task.status == 'FAILED' )
+                <tr>
+                    <td>$task.name</td>
+                    <td>$task.statusMessage</td>
+                </tr>
+            #end
+         #end
+    </table>
+#end
+</body>
+</html>

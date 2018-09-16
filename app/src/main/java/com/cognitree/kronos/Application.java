@@ -42,18 +42,11 @@ public class Application {
         Application application = new Application();
         try {
             Runtime.getRuntime().addShutdownHook(new Thread(application::stop));
-            application.init();
             application.start();
         } catch (Exception e) {
             logger.error("Error starting application", e);
             System.exit(0);
         }
-    }
-
-    public void init() throws Exception {
-        logger.info("Initializing application");
-        schedulerApp.init();
-        executorApp.init();
     }
 
     public void start() throws Exception {

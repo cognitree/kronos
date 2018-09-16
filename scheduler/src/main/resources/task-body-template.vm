@@ -1,0 +1,72 @@
+<html>
+<head>
+    <style>
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+
+tr:nth-child(even) {
+    background-color: #dddddd;
+}
+
+    </style>
+</head>
+<body>
+<h3>Task</h3
+
+
+$date.setTime($task.createdAt)
+#set ( $createdAtDate = $dateFormat.format($date) )
+$date.setTime($task.submittedAt)
+#set ( $submittedAtDate = $dateFormat.format($date) )
+$date.setTime($task.completedAt)
+#set ( $completedAtDate = $dateFormat.format($date) )
+
+<table>
+    <tr>
+        <td>name</td>
+        <td>$task.name</td>
+    </tr>
+    <tr>
+        <td>namespace</td>
+        <td>$task.namespace</td>
+    </tr>
+    <tr>
+        <td>job</td>
+        <td>$task.job</td>
+    </tr>
+    <tr>
+        <td>workflow</td>
+        <td>$workflow.name</td>
+    </tr>
+    <tr>
+        <td>status</td>
+        <td>$task.status</td>
+    </tr>
+    <tr>
+        <td>status</td>
+        <td>$task.statusMessage</td>
+    </tr>
+    <tr>
+        <td>created_at</td>
+        <td>$createdAtDate</td>
+    </tr>
+    <tr>
+        <td>submitted_at</td>
+        <td>$submittedAtDate</td>
+    </tr>
+    <tr>
+        <td>completed_at</td>
+        <td>$completedAtDate</td>
+    </tr>
+</table>
+</body>
+</html>

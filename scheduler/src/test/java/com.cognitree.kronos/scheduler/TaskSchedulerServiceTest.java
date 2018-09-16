@@ -18,25 +18,18 @@
 package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.MockTaskBuilder;
-import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.TaskUpdate;
-import com.cognitree.kronos.queue.QueueConfig;
-import com.cognitree.kronos.queue.RAMQueueFactory;
-import com.cognitree.kronos.scheduler.store.StoreProvider;
-import com.cognitree.kronos.scheduler.store.StoreProviderConfig;
 import com.cognitree.kronos.util.DateTimeUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -57,48 +50,17 @@ public class TaskSchedulerServiceTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final String TASK_TYPE = "test";
-    private StoreProvider storeProvider;
+    private SchedulerApp schedulerApp;
 
     @Before
-    public void init() throws Exception {
-        final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
-        final InputStream schedulerConfigAsStream =
-                TaskSchedulerServiceTest.class.getClassLoader().getResourceAsStream("scheduler.yaml");
-        final SchedulerConfig schedulerConfig = MAPPER.readValue(schedulerConfigAsStream, SchedulerConfig.class);
-
-        final InputStream queueConfigAsStream =
-                TaskSchedulerServiceTest.class.getClassLoader().getResourceAsStream("queue.yaml");
-        final QueueConfig queueConfig = MAPPER.readValue(queueConfigAsStream, QueueConfig.class);
-
-        final StoreProviderConfig storeProviderConfig = schedulerConfig.getStoreProviderConfig();
-        storeProvider = (StoreProvider) Class.forName(storeProviderConfig.getProviderClass())
-                .getConstructor().newInstance();
-        storeProvider.init(storeProviderConfig.getConfig());
-
-        // task scheduler service requires namespace service and task service
-        NamespaceService namespaceService = new NamespaceService(storeProvider.getNamespaceStore());
-        ServiceProvider.registerService(namespaceService);
-        namespaceService.init();
-        namespaceService.start();
-        TaskService taskService = new TaskService(storeProvider.getTaskStore());
-        ServiceProvider.registerService(taskService);
-        taskService.init();
-        taskService.start();
-        TaskSchedulerService taskSchedulerService = new TaskSchedulerService(schedulerConfig, queueConfig);
-        ServiceProvider.registerService(taskSchedulerService);
-        taskSchedulerService.init();
-        taskSchedulerService.start();
-
-        // remove any existing tasks from the queue
-        RAMQueueFactory.getQueue(TASK_TYPE).clear();
+    public void start() throws Exception {
+        schedulerApp = new SchedulerApp();
+        schedulerApp.start();
     }
 
     @After
     public void stop() {
-        NamespaceService.getService().stop();
-        TaskService.getService().stop();
-        TaskSchedulerService.getService().stop();
-        storeProvider.stop();
+        schedulerApp.stop();
     }
 
     @Test
@@ -537,7 +499,7 @@ public class TaskSchedulerServiceTest {
         String namespace = UUID.randomUUID().toString();
         String job = UUID.randomUUID().toString();
         final TestTaskStatusChangeListener taskStatusChangeListener = new TestTaskStatusChangeListener();
-        TaskSchedulerService.getService().registerListener(taskStatusChangeListener);
+        TaskService.getService().registerListener(taskStatusChangeListener);
         Task taskOne = MockTaskBuilder.getTaskBuilder()
                 .setJob(job)
                 .setNamespace(namespace)
@@ -552,7 +514,7 @@ public class TaskSchedulerServiceTest {
         Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
         Assert.assertTrue(taskStatusChangeListener.isStatusReceived(taskOne));
 
-        TaskSchedulerService.getService().deregisterListener(taskStatusChangeListener);
+        TaskService.getService().deregisterListener(taskStatusChangeListener);
         Task taskTwo = MockTaskBuilder.getTaskBuilder()
                 .setJob(job)
                 .setNamespace(namespace)
