@@ -17,7 +17,6 @@
 
 package com.cognitree.kronos.scheduler.store.impl;
 
-import com.cognitree.kronos.model.MutableTaskId;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskId;
@@ -39,7 +38,7 @@ public class RAMTaskStore implements TaskStore {
     @Override
     public void store(Task task) throws StoreException {
         logger.debug("Received request to store task {}", task);
-        final TaskId taskId = MutableTaskId.build(task.getName(), task.getJob(), task.getNamespace());
+        final TaskId taskId = TaskId.build(task.getName(), task.getJob(), task.getNamespace());
         if (tasks.containsKey(taskId)) {
             throw new StoreException("task with id " + taskId + " already exists");
         }
@@ -61,7 +60,7 @@ public class RAMTaskStore implements TaskStore {
     @Override
     public Task load(TaskId taskId) {
         logger.debug("Received request to load task with id {}", taskId);
-        return tasks.get(MutableTaskId.build(taskId.getName(), taskId.getJob(), taskId.getNamespace()));
+        return tasks.get(TaskId.build(taskId.getName(), taskId.getJob(), taskId.getNamespace()));
     }
 
     @Override
@@ -91,7 +90,7 @@ public class RAMTaskStore implements TaskStore {
     @Override
     public void update(Task task) throws StoreException {
         logger.debug("Received request to update task to {}", task);
-        final TaskId taskId = MutableTaskId.build(task.getName(), task.getJob(), task.getNamespace());
+        final TaskId taskId = TaskId.build(task.getName(), task.getJob(), task.getNamespace());
         if (!tasks.containsKey(taskId)) {
             throw new StoreException("task with id " + taskId + " does not exists");
         }
@@ -101,7 +100,7 @@ public class RAMTaskStore implements TaskStore {
     @Override
     public void delete(TaskId taskId) throws StoreException {
         logger.debug("Received request to delete task with id {}", taskId);
-        final TaskId builtTaskId = MutableTaskId.build(taskId.getName(), taskId.getJob(), taskId.getNamespace());
+        final TaskId builtTaskId = TaskId.build(taskId.getName(), taskId.getJob(), taskId.getNamespace());
         if (tasks.remove(builtTaskId) == null) {
             throw new StoreException("task with id " + builtTaskId + " does not exists");
         }

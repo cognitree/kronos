@@ -20,6 +20,7 @@ package com.cognitree.kronos.scheduler;
 import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.Task;
+import com.cognitree.kronos.model.TaskId;
 import com.cognitree.kronos.scheduler.model.CalendarIntervalSchedule;
 import com.cognitree.kronos.scheduler.model.CronSchedule;
 import com.cognitree.kronos.scheduler.model.Job;
@@ -130,9 +131,18 @@ public class MailService implements Service {
         }
 
         @Override
-        public void statusChanged(Job job, Job.Status from, Job.Status to) {
+        public void statusChanged(JobId jobId, Job.Status from, Job.Status to) {
             if (to.isFinal()) {
-                notifyJobCompletion(job, to);
+                try {
+                    Job job = JobService.getService().get(jobId);
+                    if (job == null) {
+                        logger.error("Received status change notification for job {}, which does not exists", jobId);
+                        return;
+                    }
+                    notifyJobCompletion(job, to);
+                } catch (ServiceException | ValidationException e) {
+                    logger.error("Error handling job {} status change from {}, to {}", jobId, from, to);
+                }
             }
         }
 
@@ -206,10 +216,18 @@ public class MailService implements Service {
         }
 
         @Override
-        public void statusChanged(Task task, Task.Status from, Task.Status to) {
-            if (to == Task.Status.FAILED &&
-                    !task.getStatusMessage().equals(Messages.FAILED_TO_RESOLVE_DEPENDENCY)) {
-                notifyTaskFailure(task);
+        public void statusChanged(TaskId taskId, Task.Status from, Task.Status to) {
+            if (to == Task.Status.FAILED) {
+                try {
+                    Task task = TaskService.getService().get(taskId);
+                    // ignore if failure is due to task dependency resolution
+                    if (!task.getStatusMessage().equals(Messages.FAILED_TO_RESOLVE_DEPENDENCY)) {
+                        notifyTaskFailure(task);
+                    }
+                } catch (ServiceException e) {
+                    logger.error("Error handling task {} status change from {}, to {}", taskId, from, to);
+                }
+
             }
         }
 

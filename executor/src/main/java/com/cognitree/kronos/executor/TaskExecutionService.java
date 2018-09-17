@@ -22,7 +22,6 @@ import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.executor.handlers.TaskHandler;
 import com.cognitree.kronos.executor.handlers.TaskHandlerConfig;
 import com.cognitree.kronos.executor.model.TaskResult;
-import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskId;
@@ -146,7 +145,7 @@ public final class TaskExecutionService implements Service {
                     final List<String> tasks = consumer.poll(taskType, tasksToPoll);
                     for (String taskAsString : tasks) {
                         try {
-                            submit(MAPPER.readValue(taskAsString, MutableTask.class));
+                            submit(MAPPER.readValue(taskAsString, Task.class));
                         } catch (IOException e) {
                             logger.error("Error parsing task message {}", taskAsString, e);
                         }

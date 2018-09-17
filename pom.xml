@@ -99,7 +99,7 @@
         <module>executor</module>
         <module>api</module>
         <module>web-server</module>
-        <module>app</module>
+        <module>test</module>
         <module>extensions</module>
         <module>dist</module>
     </modules>

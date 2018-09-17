@@ -18,7 +18,6 @@
 package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.MockTaskBuilder;
-import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.TaskUpdate;
 import com.cognitree.kronos.util.DateTimeUtil;
@@ -99,9 +98,9 @@ public class TaskSchedulerServiceTest {
 
         final List<String> tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
         Assert.assertEquals(3, tasks.size());
-        Assert.assertEquals(taskOne, MAPPER.readValue(tasks.get(0), MutableTask.class));
-        Assert.assertEquals(taskTwo, MAPPER.readValue(tasks.get(1), MutableTask.class));
-        Assert.assertEquals(taskThree, MAPPER.readValue(tasks.get(2), MutableTask.class));
+        Assert.assertEquals(taskOne, MAPPER.readValue(tasks.get(0), Task.class));
+        Assert.assertEquals(taskTwo, MAPPER.readValue(tasks.get(1), Task.class));
+        Assert.assertEquals(taskThree, MAPPER.readValue(tasks.get(2), Task.class));
 
         finishExecution(taskOne);
         finishExecution(taskTwo);
@@ -123,7 +122,7 @@ public class TaskSchedulerServiceTest {
         TaskSchedulerService.getService().schedule(taskOne);
         final List<String> tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
         Assert.assertEquals(1, tasks.size());
-        Assert.assertEquals(taskOne, MAPPER.readValue(tasks.get(0), MutableTask.class));
+        Assert.assertEquals(taskOne, MAPPER.readValue(tasks.get(0), Task.class));
         Assert.assertEquals(1, TaskSchedulerService.getService().getTaskProvider().size());
         Assert.assertEquals(SCHEDULED, taskOne.getStatus());
         finishExecution(taskOne);
@@ -154,7 +153,7 @@ public class TaskSchedulerServiceTest {
         Assert.assertEquals(SCHEDULED, taskOne.getStatus());
         final List<String> tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
         Assert.assertEquals(1, tasks.size());
-        Assert.assertEquals(taskOne, MAPPER.readValue(tasks.get(0), MutableTask.class));
+        Assert.assertEquals(taskOne, MAPPER.readValue(tasks.get(0), Task.class));
         finishExecution(taskOne);
         sleep(100);
         Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
@@ -174,7 +173,7 @@ public class TaskSchedulerServiceTest {
         Assert.assertEquals(SCHEDULED, taskOneJobOne.getStatus());
         List<String> tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
         Assert.assertEquals(1, tasks.size());
-        Assert.assertEquals(taskOneJobOne, MAPPER.readValue(tasks.get(0), MutableTask.class));
+        Assert.assertEquals(taskOneJobOne, MAPPER.readValue(tasks.get(0), Task.class));
         finishExecution(taskOneJobOne);
         sleep(100);
         Assert.assertEquals(SUCCESSFUL, taskOneJobOne.getStatus());
@@ -188,7 +187,7 @@ public class TaskSchedulerServiceTest {
         Assert.assertEquals(SCHEDULED, taskTwoJobOne.getStatus());
         tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
         Assert.assertEquals(1, tasks.size());
-        Assert.assertEquals(taskTwoJobOne, MAPPER.readValue(tasks.get(0), MutableTask.class));
+        Assert.assertEquals(taskTwoJobOne, MAPPER.readValue(tasks.get(0), Task.class));
         finishExecution(taskTwoJobOne);
         sleep(100);
         Assert.assertEquals(SUCCESSFUL, taskTwoJobOne.getStatus());
@@ -207,7 +206,7 @@ public class TaskSchedulerServiceTest {
         Assert.assertEquals(SCHEDULED, taskThreeGroupOne.getStatus());
         tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
         Assert.assertEquals(1, tasks.size());
-        Assert.assertEquals(taskThreeGroupOne, MAPPER.readValue(tasks.get(0), MutableTask.class));
+        Assert.assertEquals(taskThreeGroupOne, MAPPER.readValue(tasks.get(0), Task.class));
         finishExecution(taskThreeGroupOne);
         sleep(100);
         Assert.assertEquals(SUCCESSFUL, taskThreeGroupOne.getStatus());
@@ -222,7 +221,7 @@ public class TaskSchedulerServiceTest {
         Assert.assertEquals(SCHEDULED, taskOneGroupTwo.getStatus());
         tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
         Assert.assertEquals(1, tasks.size());
-        Assert.assertEquals(taskOneGroupTwo, MAPPER.readValue(tasks.get(0), MutableTask.class));
+        Assert.assertEquals(taskOneGroupTwo, MAPPER.readValue(tasks.get(0), Task.class));
         pushStatusUpdate(taskOneGroupTwo, FAILED);
         sleep(100);
         Assert.assertEquals(FAILED, taskOneGroupTwo.getStatus());
@@ -236,7 +235,7 @@ public class TaskSchedulerServiceTest {
         Assert.assertEquals(SCHEDULED, taskTwoGroupTwo.getStatus());
         tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
         Assert.assertEquals(1, tasks.size());
-        Assert.assertEquals(taskTwoGroupTwo, MAPPER.readValue(tasks.get(0), MutableTask.class));
+        Assert.assertEquals(taskTwoGroupTwo, MAPPER.readValue(tasks.get(0), Task.class));
         finishExecution(taskTwoGroupTwo);
         sleep(100);
         Assert.assertEquals(SUCCESSFUL, taskTwoGroupTwo.getStatus());
@@ -270,7 +269,7 @@ public class TaskSchedulerServiceTest {
         Assert.assertEquals(SCHEDULED, taskOneJobOne.getStatus());
         List<String> tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
         Assert.assertEquals(1, tasks.size());
-        Assert.assertEquals(taskOneJobOne, MAPPER.readValue(tasks.get(0), MutableTask.class));
+        Assert.assertEquals(taskOneJobOne, MAPPER.readValue(tasks.get(0), Task.class));
         finishExecution(taskOneJobOne);
         sleep(100);
         Assert.assertEquals(SUCCESSFUL, taskOneJobOne.getStatus());
@@ -284,7 +283,7 @@ public class TaskSchedulerServiceTest {
         Assert.assertEquals(SCHEDULED, taskTwoJobOne.getStatus());
         tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
         Assert.assertEquals(1, tasks.size());
-        Assert.assertEquals(taskTwoJobOne, MAPPER.readValue(tasks.get(0), MutableTask.class));
+        Assert.assertEquals(taskTwoJobOne, MAPPER.readValue(tasks.get(0), Task.class));
         finishExecution(taskTwoJobOne);
         sleep(100);
         Assert.assertEquals(SUCCESSFUL, taskTwoJobOne.getStatus());
@@ -303,7 +302,7 @@ public class TaskSchedulerServiceTest {
         Assert.assertEquals(SCHEDULED, taskThreeGroupOne.getStatus());
         tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
         Assert.assertEquals(1, tasks.size());
-        Assert.assertEquals(taskThreeGroupOne, MAPPER.readValue(tasks.get(0), MutableTask.class));
+        Assert.assertEquals(taskThreeGroupOne, MAPPER.readValue(tasks.get(0), Task.class));
         finishExecution(taskThreeGroupOne);
         sleep(100);
         Assert.assertEquals(SUCCESSFUL, taskThreeGroupOne.getStatus());
@@ -318,7 +317,7 @@ public class TaskSchedulerServiceTest {
         Assert.assertEquals(SCHEDULED, taskOneGroupTwo.getStatus());
         tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
         Assert.assertEquals(1, tasks.size());
-        Assert.assertEquals(taskOneGroupTwo, MAPPER.readValue(tasks.get(0), MutableTask.class));
+        Assert.assertEquals(taskOneGroupTwo, MAPPER.readValue(tasks.get(0), Task.class));
         pushStatusUpdate(taskOneGroupTwo, FAILED);
         sleep(100);
         Assert.assertEquals(FAILED, taskOneGroupTwo.getStatus());
@@ -332,7 +331,7 @@ public class TaskSchedulerServiceTest {
         Assert.assertEquals(SCHEDULED, taskTwoGroupTwo.getStatus());
         tasks = TaskSchedulerService.getService().getConsumer().poll(TASK_TYPE);
         Assert.assertEquals(1, tasks.size());
-        Assert.assertEquals(taskTwoGroupTwo, MAPPER.readValue(tasks.get(0), MutableTask.class));
+        Assert.assertEquals(taskTwoGroupTwo, MAPPER.readValue(tasks.get(0), Task.class));
         finishExecution(taskTwoGroupTwo);
         sleep(100);
         Assert.assertEquals(SUCCESSFUL, taskTwoGroupTwo.getStatus());
@@ -470,7 +469,7 @@ public class TaskSchedulerServiceTest {
 
     @Test
     public void testUpdateTaskContext() {
-        MutableTask task = new MutableTask();
+        Task task = new Task();
         final HashMap<String, Object> taskProperties = new HashMap<>();
         taskProperties.put("keyOne", "valueOne");
         taskProperties.put("keyTwo", "${taskOne.keyTwo}");
@@ -514,7 +513,7 @@ public class TaskSchedulerServiceTest {
         Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
         Assert.assertTrue(taskStatusChangeListener.isStatusReceived(taskOne));
 
-        TaskService.getService().deregisterListener(taskStatusChangeListener);
+        TaskService.getService().deRegisterListener(taskStatusChangeListener);
         Task taskTwo = MockTaskBuilder.getTaskBuilder()
                 .setJob(job)
                 .setNamespace(namespace)

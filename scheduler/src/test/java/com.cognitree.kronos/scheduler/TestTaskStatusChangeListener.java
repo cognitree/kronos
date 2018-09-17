@@ -17,8 +17,8 @@
 
 package com.cognitree.kronos.scheduler;
 
-import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
+import com.cognitree.kronos.model.TaskId;
 import org.junit.Assert;
 
 import java.util.Collections;
@@ -32,20 +32,20 @@ import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
 import static com.cognitree.kronos.model.Task.Status.WAITING;
 
 public class TestTaskStatusChangeListener implements TaskStatusChangeListener {
-    private Map<Task, Status> TASK_STATUS_MAP = Collections.synchronizedMap(new HashMap<>());
+    private Map<TaskId, Status> TASK_STATUS_MAP = Collections.synchronizedMap(new HashMap<>());
 
-    public boolean isStatusReceived(Task task) {
-        return TASK_STATUS_MAP.containsKey(task);
+    public boolean isStatusReceived(TaskId taskId) {
+        return TASK_STATUS_MAP.containsKey(taskId);
     }
 
     @Override
-    public void statusChanged(Task task, Status from, Status to) {
+    public void statusChanged(TaskId taskId, Status from, Status to) {
         // initially all tasks will be in created state
         // update the task status map with created state if task status change notification is received for the first time
-        if (!TASK_STATUS_MAP.containsKey(task)) {
-            TASK_STATUS_MAP.put(task, CREATED);
+        if (!TASK_STATUS_MAP.containsKey(taskId)) {
+            TASK_STATUS_MAP.put(taskId, CREATED);
         }
-        final Status lastKnownStatus = TASK_STATUS_MAP.get(task);
+        final Status lastKnownStatus = TASK_STATUS_MAP.get(taskId);
         switch (to) {
             case WAITING:
                 if (lastKnownStatus != CREATED) {
@@ -75,6 +75,6 @@ public class TestTaskStatusChangeListener implements TaskStatusChangeListener {
             case FAILED:
                 break;
         }
-        TASK_STATUS_MAP.put(task, task.getStatus());
+        TASK_STATUS_MAP.put(taskId, to);
     }
 }

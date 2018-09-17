@@ -17,23 +17,32 @@
 
 package com.cognitree.kronos.scheduler.store;
 
+import com.cognitree.kronos.Service;
+import com.cognitree.kronos.ServiceProvider;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public interface StoreProvider {
+/**
+ *
+ * There must be only one implementation of this service registered with the {@link ServiceProvider} by calling
+ * {@link ServiceProvider#registerService(Service)}.
+ */
+public abstract class StoreService implements Service {
 
-    void init(ObjectNode config) throws Exception;
+    protected ObjectNode config;
 
-    NamespaceStore getNamespaceStore();
+    public StoreService(ObjectNode config) {
+        this.config = config;
+    }
 
-    WorkflowStore getWorkflowStore();
+    @Override
+    public final String getName() {
+        return StoreService.class.getSimpleName();
+    }
 
-    WorkflowTriggerStore getWorkflowTriggerStore();
-
-    JobStore getJobStore();
-
-    TaskStore getTaskStore();
-
-    org.quartz.spi.JobStore getQuartzJobStore();
-
-    void stop();
+    public abstract NamespaceStore getNamespaceStore();
+    public abstract WorkflowStore getWorkflowStore();
+    public abstract WorkflowTriggerStore getWorkflowTriggerStore();
+    public abstract JobStore getJobStore();
+    public abstract TaskStore getTaskStore();
+    public abstract org.quartz.spi.JobStore getQuartzJobStore();
 }

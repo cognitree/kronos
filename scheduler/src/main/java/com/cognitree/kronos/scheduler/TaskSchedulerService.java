@@ -19,8 +19,6 @@ package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
-import com.cognitree.kronos.model.MutableTask;
-import com.cognitree.kronos.model.MutableTaskId;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskId;
@@ -327,7 +325,7 @@ public final class TaskSchedulerService implements Service {
         final Map<String, Object> dependentTaskContext = new LinkedHashMap<>();
         for (String dependentTaskName : dependsOn) {
             // sort the tasks based on creation time and update the context from the latest task
-            TaskId dependentTaskId = MutableTaskId.build(dependentTaskName, task.getJob(), task.getNamespace());
+            TaskId dependentTaskId = TaskId.build(dependentTaskName, task.getJob(), task.getNamespace());
             Task dependentTask = taskProvider.getTask(dependentTaskId);
             if (dependentTask != null) {
                 if (dependentTask.getContext() != null && !dependentTask.getContext().isEmpty()) {
@@ -385,7 +383,7 @@ public final class TaskSchedulerService implements Service {
                 modifiedTaskProperties.put(key.substring(key.indexOf(".") + 1), value);
             }
         });
-        ((MutableTask) task).setProperties(modifiedTaskProperties);
+        task.setProperties(modifiedTaskProperties);
     }
 
     // used in junit

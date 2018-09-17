@@ -26,6 +26,7 @@ import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.WorkflowId;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import com.cognitree.kronos.scheduler.store.StoreException;
+import com.cognitree.kronos.scheduler.store.StoreService;
 import com.cognitree.kronos.scheduler.store.WorkflowStore;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
@@ -46,10 +47,6 @@ public class WorkflowService implements Service {
 
     private WorkflowStore workflowStore;
 
-    public WorkflowService(WorkflowStore workflowStore) {
-        this.workflowStore = workflowStore;
-    }
-
     public static WorkflowService getService() {
         return (WorkflowService) ServiceProvider.getService(WorkflowService.class.getSimpleName());
     }
@@ -62,6 +59,8 @@ public class WorkflowService implements Service {
     @Override
     public void start() {
         logger.info("Starting workflow service");
+        StoreService storeService = (StoreService) ServiceProvider.getService(StoreService.class.getSimpleName());
+        workflowStore = storeService.getWorkflowStore();
         ServiceProvider.registerService(this);
     }
 

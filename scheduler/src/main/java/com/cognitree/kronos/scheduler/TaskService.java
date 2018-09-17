@@ -19,12 +19,12 @@ package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
-import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskId;
 import com.cognitree.kronos.scheduler.model.Workflow.WorkflowTask;
 import com.cognitree.kronos.scheduler.store.StoreException;
+import com.cognitree.kronos.scheduler.store.StoreService;
 import com.cognitree.kronos.scheduler.store.TaskStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,10 +49,6 @@ public class TaskService implements Service {
     private final Set<TaskStatusChangeListener> statusChangeListeners = new HashSet<>();
     private TaskStore taskStore;
 
-    public TaskService(TaskStore taskStore) {
-        this.taskStore = taskStore;
-    }
-
     public static TaskService getService() {
         return (TaskService) ServiceProvider.getService(TaskService.class.getSimpleName());
     }
@@ -63,6 +59,8 @@ public class TaskService implements Service {
 
     public void start() {
         logger.info("Starting task service");
+        StoreService storeService = (StoreService) ServiceProvider.getService(StoreService.class.getSimpleName());
+        taskStore = storeService.getTaskStore();
         ServiceProvider.registerService(this);
     }
 
@@ -80,14 +78,14 @@ public class TaskService implements Service {
      *
      * @param statusChangeListener
      */
-    public void deregisterListener(TaskStatusChangeListener statusChangeListener) {
+    public void deRegisterListener(TaskStatusChangeListener statusChangeListener) {
         statusChangeListeners.remove(statusChangeListener);
     }
 
     public Task create(String jobId, WorkflowTask workflowTask, String namespace) throws ServiceException {
         logger.debug("Received request to create task for job {} from workflow task {} under namespace {}",
                 jobId, workflowTask, namespace);
-        MutableTask task = new MutableTask();
+        Task task = new Task();
         task.setName(UUID.randomUUID().toString());
         task.setJob(jobId);
         task.setName(workflowTask.getName());
@@ -171,7 +169,7 @@ public class TaskService implements Service {
             logger.error("Invalid state transition for task {} from status {}, to {}", task, currentStatus, status);
             throw new ServiceException("Invalid state transition from " + currentStatus + " to " + status);
         }
-        MutableTask mutableTask = (MutableTask) task;
+        Task mutableTask = (Task) task;
         mutableTask.setStatus(status);
         mutableTask.setStatusMessage(statusMessage);
         mutableTask.setContext(context);

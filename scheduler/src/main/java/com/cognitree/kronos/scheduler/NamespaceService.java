@@ -23,6 +23,7 @@ import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.NamespaceId;
 import com.cognitree.kronos.scheduler.store.NamespaceStore;
 import com.cognitree.kronos.scheduler.store.StoreException;
+import com.cognitree.kronos.scheduler.store.StoreService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,10 +38,6 @@ public class NamespaceService implements Service {
 
     private NamespaceStore namespaceStore;
 
-    public NamespaceService(NamespaceStore namespaceStore) {
-        this.namespaceStore = namespaceStore;
-    }
-
     public static NamespaceService getService() {
         return (NamespaceService) ServiceProvider.getService(NamespaceService.class.getSimpleName());
     }
@@ -53,6 +50,8 @@ public class NamespaceService implements Service {
     @Override
     public void start() {
         logger.info("Starting namespace service");
+        StoreService storeService = (StoreService) ServiceProvider.getService(StoreService.class.getSimpleName());
+        namespaceStore = storeService.getNamespaceStore();
         ServiceProvider.registerService(this);
     }
 

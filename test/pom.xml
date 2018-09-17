@@ -27,7 +27,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.cognitree.kronos</groupId>
-    <artifactId>app</artifactId>
+    <artifactId>test</artifactId>
 
     <dependencies>
         <dependency>

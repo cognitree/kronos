@@ -17,9 +17,10 @@
 
 package com.cognitree.kronos.scheduler.store.jdbc;
 
+import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.scheduler.store.JobStore;
 import com.cognitree.kronos.scheduler.store.NamespaceStore;
-import com.cognitree.kronos.scheduler.store.StoreProvider;
+import com.cognitree.kronos.scheduler.store.StoreService;
 import com.cognitree.kronos.scheduler.store.TaskStore;
 import com.cognitree.kronos.scheduler.store.WorkflowStore;
 import com.cognitree.kronos.scheduler.store.WorkflowTriggerStore;
@@ -40,7 +41,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.SQLException;
 
-public class StdJDBCStoreProvider implements StoreProvider {
+public class StdJDBCStoreService extends StoreService {
     private static final Logger logger = LoggerFactory.getLogger(HSQLDBDelegate.class);
 
     protected static final String CONNECTION_URL = "connectionUrl";
@@ -74,15 +75,24 @@ public class StdJDBCStoreProvider implements StoreProvider {
     private org.quartz.spi.JobStore quartzJobStore;
     private BasicDataSource dataSource;
 
-    @Override
-    public void init(ObjectNode config) throws Exception {
-        parseConfig(config);
-        buildDataSource();
-        createStore();
-        initDatabase();
+    public StdJDBCStoreService(ObjectNode config) {
+        super(config);
     }
 
-    private void parseConfig(ObjectNode config) throws Exception {
+    @Override
+    public void init() throws Exception {
+        parseConfig();
+        buildDataSource();
+        createStore();
+    }
+
+    @Override
+    public void start() throws Exception {
+        initDatabase();
+        ServiceProvider.registerService(this);
+    }
+
+    private void parseConfig() throws Exception {
         if (!config.hasNonNull(CONNECTION_URL) || !config.hasNonNull(DRIVER_CLASS)) {
             throw new IllegalArgumentException("missing mandatory param: connectionUrl/ driverClass");
         }

@@ -18,42 +18,156 @@
 package com.cognitree.kronos.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.cognitree.kronos.model.Task.Status.CREATED;
+
 @JsonSerialize(as = Task.class)
 @JsonDeserialize(as = Task.class)
-public interface Task extends TaskId {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class Task extends TaskId {
 
-    String getType();
+    private String type;
+    private String timeoutPolicy;
+    private String maxExecutionTime;
+    private List<String> dependsOn = new ArrayList<>();
+    private Map<String, Object> properties = new HashMap<>();
+    private Map<String, Object> context = new HashMap<>();
 
-    String getTimeoutPolicy();
+    private Status status = CREATED;
+    private String statusMessage;
+    private Long createdAt;
+    private Long submittedAt;
+    private Long completedAt;
 
-    String getMaxExecutionTime();
+    public String getType() {
+        return type;
+    }
 
-    List<String> getDependsOn();
+    public void setType(String type) {
+        this.type = type;
+    }
 
-    Map<String, Object> getProperties();
+    public String getTimeoutPolicy() {
+        return timeoutPolicy;
+    }
 
-    Status getStatus();
+    public void setTimeoutPolicy(String timeoutPolicy) {
+        this.timeoutPolicy = timeoutPolicy;
+    }
 
-    String getStatusMessage();
+    public String getMaxExecutionTime() {
+        return maxExecutionTime;
+    }
 
-    Map<String, Object> getContext();
+    public void setMaxExecutionTime(String maxExecutionTime) {
+        this.maxExecutionTime = maxExecutionTime;
+    }
 
-    Long getCreatedAt();
+    public List<String> getDependsOn() {
+        return dependsOn;
+    }
 
-    Long getSubmittedAt();
+    public void setDependsOn(List<String> dependsOn) {
+        this.dependsOn = dependsOn;
+    }
 
-    Long getCompletedAt();
+    public Map<String, Object> getProperties() {
+        return properties;
+    }
+
+    public void setProperties(Map<String, Object> properties) {
+        this.properties = properties;
+    }
+
+    public Map<String, Object> getContext() {
+        return context;
+    }
+
+    public void setContext(Map<String, Object> context) {
+        this.context = context;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    public String getStatusMessage() {
+        return statusMessage;
+    }
+
+    public void setStatusMessage(String statusMessage) {
+        this.statusMessage = statusMessage;
+    }
+
+    public Long getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Long createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Long getSubmittedAt() {
+        return submittedAt;
+    }
+
+    public void setSubmittedAt(Long submittedAt) {
+        this.submittedAt = submittedAt;
+    }
+
+    public Long getCompletedAt() {
+        return completedAt;
+    }
+
+    public void setCompletedAt(Long completedAt) {
+        this.completedAt = completedAt;
+    }
 
     @JsonIgnore
-    TaskId getIdentity();
+    public TaskId getIdentity() {
+        return this;
+    }
 
-    enum Status {
+    @Override
+    public boolean equals(Object o) {
+        return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "Task{" +
+                "type='" + type + '\'' +
+                ", timeoutPolicy='" + timeoutPolicy + '\'' +
+                ", maxExecutionTime='" + maxExecutionTime + '\'' +
+                ", dependsOn=" + dependsOn +
+                ", properties=" + properties +
+                ", context=" + context +
+                ", status=" + status +
+                ", statusMessage='" + statusMessage + '\'' +
+                ", createdAt=" + createdAt +
+                ", submittedAt=" + submittedAt +
+                ", completedAt=" + completedAt +
+                "} " + super.toString();
+    }
+
+    public enum Status {
         CREATED(false),
         WAITING(false),
         SCHEDULED(false),
