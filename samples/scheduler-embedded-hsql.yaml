@@ -1,5 +1,5 @@
-storeProviderConfig:
-  providerClass: com.cognitree.kronos.scheduler.store.jdbc.EmbeddedHSQLStoreProvider
+storeServiceConfig:
+  storeServiceClass: com.cognitree.kronos.scheduler.store.jdbc.EmbeddedHSQLStoreService
   config:
     dbPath: /tmp
     #username:

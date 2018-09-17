@@ -18,6 +18,7 @@
 package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.scheduler.model.Job;
+import com.cognitree.kronos.scheduler.model.JobId;
 
 import static com.cognitree.kronos.scheduler.model.Job.Status;
 
@@ -28,5 +29,5 @@ import static com.cognitree.kronos.scheduler.model.Job.Status;
  */
 public interface JobStatusChangeListener {
 
-    void statusChanged(Job job, Status from, Status to);
+    void statusChanged(JobId jobId, Status from, Status to);
 }

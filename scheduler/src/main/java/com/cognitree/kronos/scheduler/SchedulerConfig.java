@@ -17,8 +17,8 @@
 
 package com.cognitree.kronos.scheduler;
 
-import com.cognitree.kronos.scheduler.store.StoreProvider;
-import com.cognitree.kronos.scheduler.store.StoreProviderConfig;
+import com.cognitree.kronos.scheduler.store.StoreService;
+import com.cognitree.kronos.scheduler.store.StoreServiceConfig;
 
 import java.util.Objects;
 
@@ -28,9 +28,9 @@ import java.util.Objects;
 public class SchedulerConfig {
 
     /**
-     * {@link StoreProvider} configuration, required by the scheduler to instantiate the store provider.
+     * {@link StoreService} configuration, required by the scheduler to instantiate the store provider.
      */
-    private StoreProviderConfig storeProviderConfig;
+    private StoreServiceConfig storeServiceConfig;
 
 
     /**
@@ -38,12 +38,12 @@ public class SchedulerConfig {
      */
     private MailConfig mailConfig;
 
-    public StoreProviderConfig getStoreProviderConfig() {
-        return storeProviderConfig;
+    public StoreServiceConfig getStoreServiceConfig() {
+        return storeServiceConfig;
     }
 
-    public void setStoreProviderConfig(StoreProviderConfig storeProviderConfig) {
-        this.storeProviderConfig = storeProviderConfig;
+    public void setStoreServiceConfig(StoreServiceConfig storeServiceConfig) {
+        this.storeServiceConfig = storeServiceConfig;
     }
 
     public MailConfig getMailConfig() {
@@ -59,20 +59,20 @@ public class SchedulerConfig {
         if (this == o) return true;
         if (!(o instanceof SchedulerConfig)) return false;
         SchedulerConfig that = (SchedulerConfig) o;
-        return Objects.equals(storeProviderConfig, that.storeProviderConfig) &&
+        return Objects.equals(storeServiceConfig, that.storeServiceConfig) &&
                 Objects.equals(mailConfig, that.mailConfig);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(storeProviderConfig, mailConfig);
+        return Objects.hash(storeServiceConfig, mailConfig);
     }
 
     @Override
     public String toString() {
         return "SchedulerConfig{" +
-                "storeProviderConfig=" + storeProviderConfig +
+                "storeServiceConfig=" + storeServiceConfig +
                 ", mailConfig=" + mailConfig +
                 '}';
     }

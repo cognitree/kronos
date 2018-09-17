@@ -17,15 +17,16 @@
 
 package com.cognitree.kronos.scheduler.store.impl;
 
+import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.scheduler.store.JobStore;
 import com.cognitree.kronos.scheduler.store.NamespaceStore;
-import com.cognitree.kronos.scheduler.store.StoreProvider;
+import com.cognitree.kronos.scheduler.store.StoreService;
 import com.cognitree.kronos.scheduler.store.TaskStore;
 import com.cognitree.kronos.scheduler.store.WorkflowStore;
 import com.cognitree.kronos.scheduler.store.WorkflowTriggerStore;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public class RAMStoreProvider implements StoreProvider {
+public class RAMStoreService extends StoreService {
 
     private NamespaceStore namespaceStore;
     private WorkflowStore workflowStore;
@@ -34,14 +35,23 @@ public class RAMStoreProvider implements StoreProvider {
     private TaskStore taskStore;
     private org.quartz.spi.JobStore quartzJobStore;
 
+    public RAMStoreService(ObjectNode config) {
+        super(config);
+    }
+
     @Override
-    public void init(ObjectNode config) {
+    public void init() {
         namespaceStore = new RAMNamespaceStore();
         workflowStore = new RAMWorkflowStore();
         workflowTriggerStore = new RAMWorkflowTriggerStore();
         jobStore = new RAMJobStore();
         taskStore = new RAMTaskStore();
         quartzJobStore = new org.quartz.simpl.RAMJobStore();
+    }
+
+    @Override
+    public void start() {
+        ServiceProvider.registerService(this);
     }
 
     @Override

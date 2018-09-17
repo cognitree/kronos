@@ -21,13 +21,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Objects;
 
-public class StoreProviderConfig {
+public class StoreServiceConfig {
 
-    private String providerClass;
+    private String storeServiceClass;
 
     /**
      * Configuration required by the store provider to instantiate itself.
-     * This will be passed as an arg to the method of {@link StoreProvider#init(ObjectNode)} at the time of instantiation
+     * This will be passed as an arg to the constructor of {@link StoreService} at the time of instantiation
      */
     private ObjectNode config;
 
@@ -39,33 +39,33 @@ public class StoreProviderConfig {
         this.config = config;
     }
 
-    public String getProviderClass() {
-        return providerClass;
+    public String getStoreServiceClass() {
+        return storeServiceClass;
     }
 
-    public void setProviderClass(String providerClass) {
-        this.providerClass = providerClass;
+    public void setStoreServiceClass(String storeServiceClass) {
+        this.storeServiceClass = storeServiceClass;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof StoreProviderConfig)) return false;
-        StoreProviderConfig that = (StoreProviderConfig) o;
-        return Objects.equals(providerClass, that.providerClass) &&
+        if (!(o instanceof StoreServiceConfig)) return false;
+        StoreServiceConfig that = (StoreServiceConfig) o;
+        return Objects.equals(storeServiceClass, that.storeServiceClass) &&
                 Objects.equals(config, that.config);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(providerClass, config);
+        return Objects.hash(storeServiceClass, config);
     }
 
     @Override
     public String toString() {
-        return "StoreProviderConfig{" +
-                "providerClass='" + providerClass + '\'' +
+        return "StoreServiceConfig{" +
+                "storeServiceClass='" + storeServiceClass + '\'' +
                 ", config=" + config +
                 '}';
     }

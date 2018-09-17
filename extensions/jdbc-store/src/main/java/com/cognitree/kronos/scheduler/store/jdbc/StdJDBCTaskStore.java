@@ -17,7 +17,6 @@
 
 package com.cognitree.kronos.scheduler.store.jdbc;
 
-import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskId;
@@ -230,7 +229,7 @@ public class StdJDBCTaskStore implements TaskStore {
 
     private Task getTask(ResultSet resultSet) throws Exception {
         int paramIndex = 0;
-        MutableTask task = new MutableTask();
+        Task task = new Task();
         task.setName(resultSet.getString(++paramIndex));
         task.setJob(resultSet.getString(++paramIndex));
         task.setNamespace(resultSet.getString(++paramIndex));

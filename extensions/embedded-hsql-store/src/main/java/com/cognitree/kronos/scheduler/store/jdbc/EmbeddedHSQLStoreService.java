@@ -30,7 +30,7 @@ import java.io.IOException;
 
 import static com.cognitree.kronos.scheduler.store.jdbc.JDBCUtil.HSQLDB_DRIVER_CLASS;
 
-public class EmbeddedHSQLStoreProvider extends StdJDBCStoreProvider {
+public class EmbeddedHSQLStoreService extends StdJDBCStoreService {
     private static final Logger logger = LoggerFactory.getLogger(HSQLDBDelegate.class);
 
     private static final String HSQL_HOST = "127.0.0.1";
@@ -42,8 +42,12 @@ public class EmbeddedHSQLStoreProvider extends StdJDBCStoreProvider {
 
     private String dbPath = "/tmp";
 
+    public EmbeddedHSQLStoreService(ObjectNode config) {
+        super(config);
+    }
+
     @Override
-    public void init(ObjectNode config) throws Exception {
+    public void init() throws Exception {
         config.put(DRIVER_CLASS, HSQLDB_DRIVER_CLASS);
         if (config.hasNonNull(DB_PATH)) {
             dbPath = config.get(DB_PATH).asText();
@@ -51,8 +55,13 @@ public class EmbeddedHSQLStoreProvider extends StdJDBCStoreProvider {
         String connectionUrl = HSQL_CONNECTION_URL_PREFIX + HSQL_HOST + "/" + dbPath + "/kronos";
         config.put(CONNECTION_URL, connectionUrl);
         config.put(SQL_SCRIPT, KRONOS_SQL_SCRIPT);
+        super.init();
+    }
+
+    @Override
+    public void start() throws Exception {
         startEmbeddedHSQLDB();
-        super.init(config);
+        super.start();
     }
 
     private void startEmbeddedHSQLDB() throws IOException, ServerAcl.AclFormatException {

@@ -21,7 +21,6 @@ import com.cognitree.kronos.MockTaskBuilder;
 import com.cognitree.kronos.executor.handlers.TestTaskHandler;
 import com.cognitree.kronos.executor.handlers.TypeATaskHandler;
 import com.cognitree.kronos.executor.handlers.TypeBTaskHandler;
-import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.TaskId;
 import com.cognitree.kronos.model.TaskUpdate;
@@ -186,7 +185,7 @@ public class TaskExecutorServiceTest {
         tasksStatus.forEach(taskStatus -> {
             try {
                 final TaskUpdate taskUpdate = MAPPER.readValue(taskStatus, TaskUpdate.class);
-                final MutableTask task = (MutableTask) tasksMap.get(taskUpdate.getTaskId());
+                final Task task = (Task) tasksMap.get(taskUpdate.getTaskId());
                 task.setStatus(taskUpdate.getStatus());
                 task.setStatusMessage(taskUpdate.getStatusMessage());
             } catch (IOException e) {

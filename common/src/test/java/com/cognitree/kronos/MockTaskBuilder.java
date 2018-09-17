@@ -17,7 +17,6 @@
 
 package com.cognitree.kronos;
 
-import com.cognitree.kronos.model.MutableTask;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 
@@ -109,7 +108,7 @@ public class MockTaskBuilder {
     }
 
     public Task build() {
-        MutableTask task = new MutableTask();
+        Task task = new Task();
         task.setName(name);
         task.setNamespace(namespace);
         task.setJob(job);

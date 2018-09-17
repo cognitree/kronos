@@ -1,2 +1,0 @@
-storeProviderConfig:
-  providerClass: com.cognitree.kronos.scheduler.store.impl.RAMStoreProvider

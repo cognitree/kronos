@@ -17,10 +17,13 @@
 
 package com.cognitree.kronos.scheduler;
 
+import com.cognitree.kronos.Service;
+import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.queue.QueueConfig;
-import com.cognitree.kronos.scheduler.store.StoreProvider;
-import com.cognitree.kronos.scheduler.store.StoreProviderConfig;
+import com.cognitree.kronos.scheduler.store.StoreService;
+import com.cognitree.kronos.scheduler.store.StoreServiceConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +38,6 @@ public class SchedulerApp {
     private static final Logger logger = LoggerFactory.getLogger(SchedulerApp.class);
 
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
-    private StoreProvider storeProvider;
 
     public static void main(String[] args) {
         try {
@@ -56,24 +58,21 @@ public class SchedulerApp {
                 getClass().getClassLoader().getResourceAsStream("queue.yaml");
         QueueConfig queueConfig = MAPPER.readValue(queueConfigAsStream, QueueConfig.class);
 
-        final StoreProviderConfig storeProviderConfig = schedulerConfig.getStoreProviderConfig();
-        storeProvider = (StoreProvider) Class.forName(storeProviderConfig.getProviderClass())
-                .getConstructor().newInstance();
-        storeProvider.init(storeProviderConfig.getConfig());
-
-        NamespaceService namespaceService = new NamespaceService(storeProvider.getNamespaceStore());
-        TaskService taskService = new TaskService(storeProvider.getTaskStore());
-        WorkflowService workflowService = new WorkflowService(storeProvider.getWorkflowStore());
-        JobService jobService = new JobService(storeProvider.getJobStore());
-        WorkflowTriggerService workflowTriggerService =
-                new WorkflowTriggerService(storeProvider.getWorkflowTriggerStore());
+        final StoreServiceConfig storeServiceConfig = schedulerConfig.getStoreServiceConfig();
+        StoreService storeService = (StoreService) Class.forName(storeServiceConfig.getStoreServiceClass())
+                .getConstructor(ObjectNode.class).newInstance(storeServiceConfig.getConfig());
+        NamespaceService namespaceService = new NamespaceService();
+        TaskService taskService = new TaskService();
+        WorkflowService workflowService = new WorkflowService();
+        JobService jobService = new JobService();
+        WorkflowTriggerService workflowTriggerService = new WorkflowTriggerService();
         MailService mailService = new MailService(schedulerConfig.getMailConfig());
-        WorkflowSchedulerService workflowSchedulerService =
-                new WorkflowSchedulerService(storeProvider.getQuartzJobStore());
+        WorkflowSchedulerService workflowSchedulerService = new WorkflowSchedulerService();
         TaskSchedulerService taskSchedulerService = new TaskSchedulerService(queueConfig);
 
         logger.info("Initializing scheduler app");
         // initialize all service
+        storeService.init();
         namespaceService.init();
         taskService.init();
         workflowService.init();
@@ -85,6 +84,7 @@ public class SchedulerApp {
 
         logger.info("Starting scheduler app");
         // start all service
+        storeService.start();
         namespaceService.start();
         taskService.start();
         workflowService.start();
@@ -119,8 +119,9 @@ public class SchedulerApp {
         if (NamespaceService.getService() != null) {
             NamespaceService.getService().stop();
         }
-        if (storeProvider != null) {
-            storeProvider.stop();
+        Service storeProviderService = ServiceProvider.getService(StoreService.class.getSimpleName());
+        if (storeProviderService != null) {
+            storeProviderService.stop();
         }
     }
 }

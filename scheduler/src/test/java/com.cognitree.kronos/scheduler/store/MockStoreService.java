@@ -17,10 +17,11 @@
 
 package com.cognitree.kronos.scheduler.store;
 
+import com.cognitree.kronos.ServiceProvider;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.quartz.simpl.RAMJobStore;
 
-public class MockStoreProvider implements StoreProvider {
+public class MockStoreService extends StoreService {
     private static final MockWorkflowStore WORKFLOW_STORE = new MockWorkflowStore();
     private static final MockNamespaceStore NAMESPACE_STORE = new MockNamespaceStore();
     private static final MockWorkflowTriggerStore WORKFLOW_TRIGGER_STORE = new MockWorkflowTriggerStore();
@@ -28,9 +29,18 @@ public class MockStoreProvider implements StoreProvider {
     private static final MockTaskStore TASK_STORE = new MockTaskStore();
     private static final RAMJobStore RAM_JOB_STORE = new RAMJobStore();
 
-    @Override
-    public void init(ObjectNode config) {
+    public MockStoreService(ObjectNode config) {
+        super(config);
+    }
 
+    @Override
+    public void init() {
+
+    }
+
+    @Override
+    public void start() {
+        ServiceProvider.registerService(this);
     }
 
     @Override

@@ -27,6 +27,7 @@ import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.NamespaceId;
 import com.cognitree.kronos.scheduler.store.JobStore;
 import com.cognitree.kronos.scheduler.store.StoreException;
+import com.cognitree.kronos.scheduler.store.StoreService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,10 +46,6 @@ public class JobService implements Service {
     private final Set<JobStatusChangeListener> statusChangeListeners = new HashSet<>();
     private JobStore jobStore;
 
-    public JobService(JobStore jobStore) {
-        this.jobStore = jobStore;
-    }
-
     public static JobService getService() {
         return (JobService) ServiceProvider.getService(JobService.class.getSimpleName());
     }
@@ -61,6 +58,8 @@ public class JobService implements Service {
     @Override
     public void start() {
         logger.info("Starting job service");
+        StoreService storeService = (StoreService) ServiceProvider.getService(StoreService.class.getSimpleName());
+        jobStore = storeService.getJobStore();
         ServiceProvider.registerService(this);
     }
 

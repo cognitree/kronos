@@ -17,7 +17,6 @@
 
 package com.cognitree.kronos.scheduler;
 
-import com.cognitree.kronos.model.MutableTaskId;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskId;
@@ -71,7 +70,7 @@ final class TaskProvider {
         if (dependsOn != null) {
             List<Task> dependentTasks = new ArrayList<>();
             for (String dependentTaskName : dependsOn) {
-                TaskId dependentTaskId = MutableTaskId.build(dependentTaskName, task.getJob(), task.getNamespace());
+                TaskId dependentTaskId = TaskId.build(dependentTaskName, task.getJob(), task.getNamespace());
                 Task dependentTask = getTask(dependentTaskId);
                 if (dependentTask == null) {
                     logger.error("No dependent task with id {} not found", dependentTaskId);

@@ -20,6 +20,7 @@ package com.cognitree.kronos.scheduler;
 import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.Task;
+import com.cognitree.kronos.model.TaskId;
 import com.cognitree.kronos.scheduler.graph.TopologicalSort;
 import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.scheduler.model.JobId;
@@ -28,6 +29,7 @@ import com.cognitree.kronos.scheduler.model.Workflow.WorkflowTask;
 import com.cognitree.kronos.scheduler.model.WorkflowId;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import com.cognitree.kronos.scheduler.model.WorkflowTriggerId;
+import com.cognitree.kronos.scheduler.store.StoreService;
 import com.cognitree.kronos.scheduler.util.TriggerHelper;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
@@ -59,32 +61,31 @@ import static org.quartz.JobBuilder.newJob;
 public final class WorkflowSchedulerService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(WorkflowSchedulerService.class);
 
-    private final JobStore jobStore;
     private Scheduler scheduler;
-
-    public WorkflowSchedulerService(JobStore jobStore) {
-        this.jobStore = jobStore;
-    }
 
     public static WorkflowSchedulerService getService() {
         return (WorkflowSchedulerService) ServiceProvider.getService(WorkflowSchedulerService.class.getSimpleName());
     }
 
     @Override
-    public void init() throws SchedulerException {
+    public void init() {
         logger.info("Initializing workflow scheduler service");
-        SimpleThreadPool threadPool = new SimpleThreadPool(Runtime.getRuntime().availableProcessors(),
-                Thread.NORM_PRIORITY);
-        DirectSchedulerFactory.getInstance().createScheduler(threadPool, jobStore);
-        scheduler = DirectSchedulerFactory.getInstance().getScheduler();
-        threadPool.setThreadNamePrefix(scheduler.getSchedulerName());
     }
 
     @Override
     public void start() throws Exception {
         logger.info("Starting workflow scheduler service");
+        StoreService storeService = (StoreService) ServiceProvider.getService(StoreService.class.getSimpleName());
+        JobStore jobStore = storeService.getQuartzJobStore();
+        SimpleThreadPool threadPool = new SimpleThreadPool(Runtime.getRuntime().availableProcessors(),
+                Thread.NORM_PRIORITY);
+        DirectSchedulerFactory.getInstance().createScheduler(threadPool, jobStore);
+
+        scheduler = DirectSchedulerFactory.getInstance().getScheduler();
         scheduler.start();
+        threadPool.setThreadNamePrefix(scheduler.getSchedulerName());
         TaskService.getService().registerListener(new WorkflowLifecycleHandler());
+
         ServiceProvider.registerService(this);
     }
 
@@ -187,13 +188,13 @@ public final class WorkflowSchedulerService implements Service {
 
     public static final class WorkflowLifecycleHandler implements TaskStatusChangeListener {
         @Override
-        public void statusChanged(Task task, Task.Status from, Task.Status to) {
-            logger.debug("Received status change notification for task {}, from {} to {}", task, from, to);
+        public void statusChanged(TaskId taskId, Task.Status from, Task.Status to) {
+            logger.debug("Received status change notification for task {}, from {} to {}", taskId, from, to);
             if (!to.isFinal()) {
                 return;
             }
-            final String jobId = task.getJob();
-            final String namespace = task.getNamespace();
+            final String jobId = taskId.getJob();
+            final String namespace = taskId.getNamespace();
             try {
                 final List<Task> tasks = TaskService.getService().get(jobId, namespace);
                 if (tasks.isEmpty()) {
@@ -209,7 +210,7 @@ public final class WorkflowSchedulerService implements Service {
                     JobService.getService().updateStatus(JobId.build(jobId, namespace), status);
                 }
             } catch (ServiceException | ValidationException e) {
-                logger.error("Error handling status change for task {}, from {} to {}", task, from, to, e);
+                logger.error("Error handling status change for task {}, from {} to {}", taskId, from, to, e);
             }
         }
     }
