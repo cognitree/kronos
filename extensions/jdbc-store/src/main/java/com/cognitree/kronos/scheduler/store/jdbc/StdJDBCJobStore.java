@@ -18,6 +18,7 @@
 package com.cognitree.kronos.scheduler.store.jdbc;
 
 import com.cognitree.kronos.scheduler.model.Job;
+import com.cognitree.kronos.scheduler.model.Job.Status;
 import com.cognitree.kronos.scheduler.model.JobId;
 import com.cognitree.kronos.scheduler.store.JobStore;
 import com.cognitree.kronos.scheduler.store.StoreException;
@@ -29,7 +30,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_COMPLETED_AT;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_CREATED_AT;
@@ -47,22 +50,31 @@ public class StdJDBCJobStore implements JobStore {
     private static final Logger logger = LoggerFactory.getLogger(StdJDBCJobStore.class);
 
     private static final String INSERT_JOB = "INSERT INTO " + TABLE_JOBS + " VALUES (?,?,?,?,?,?,?)";
-    private static final String LOAD_JOB_BY_NAMESPACE = "SELECT * FROM " + TABLE_JOBS + " WHERE "
+    private static final String LOAD_JOB = "SELECT * FROM " + TABLE_JOBS + " WHERE " + COL_ID + " = ? AND "
+            + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
+    private static final String UPDATE_JOB = "UPDATE " + TABLE_JOBS + " SET " + COL_STATUS + " = ?, " + COL_CREATED_AT
+            + " = ?, " + COL_COMPLETED_AT + " = ? WHERE " + COL_ID + " = ? AND " + COL_NAMESPACE + " = ?";
+    private static final String DELETE_JOB = "DELETE FROM " + TABLE_JOBS + " WHERE " + COL_ID + " = ? AND "
             + COL_NAMESPACE + " = ?";
+
     private static final String LOAD_JOB_BY_ID = "SELECT * FROM " + TABLE_JOBS + " WHERE " + COL_ID + " = ? AND "
+            + COL_NAMESPACE + " = ?";
+    private static final String LOAD_JOB_BY_NAMESPACE = "SELECT * FROM " + TABLE_JOBS + " WHERE "
             + COL_NAMESPACE + " = ?";
     private static final String LOAD_ALL_JOB_CREATED_BETWEEN = "SELECT * FROM " + TABLE_JOBS + " WHERE "
             + COL_NAMESPACE + " = ? " + "AND " + COL_CREATED_AT + " > ? AND " + COL_CREATED_AT + " < ?";
     private static final String LOAD_JOB_BY_NAME_CREATED_BETWEEN = "SELECT * FROM " + TABLE_JOBS + " WHERE "
-            + COL_WORKFLOW_NAME + " = ? " +
-            "AND " + COL_NAMESPACE + " = ? AND " + COL_CREATED_AT + " > ? AND " + COL_CREATED_AT + " < ?";
+            + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ? AND " + COL_CREATED_AT + " > ? AND "
+            + COL_CREATED_AT + " < ?";
     private static final String LOAD_JOB_BY_NAME_TRIGGER_CREATED_BETWEEN = "SELECT * FROM " + TABLE_JOBS + " WHERE "
-            + COL_WORKFLOW_NAME + " = ? " + "AND " + COL_TRIGGER_NAME + " = ? AND " + COL_NAMESPACE + " = ? AND "
+            + COL_WORKFLOW_NAME + " = ? AND " + COL_TRIGGER_NAME + " = ? AND " + COL_NAMESPACE + " = ? AND "
             + COL_CREATED_AT + " > ? AND " + COL_CREATED_AT + " < ?";
-    private static final String UPDATE_JOB = "UPDATE " + TABLE_JOBS + " SET " + COL_STATUS + " = ?, " + COL_CREATED_AT
-            + " = ?, " + COL_COMPLETED_AT + " = ? " + " WHERE " + COL_ID + " = ? AND " + COL_NAMESPACE + " = ?";
-    private static final String DELETE_JOB = "DELETE FROM " + TABLE_JOBS + " WHERE " + COL_ID + " = ? AND "
-            + COL_NAMESPACE + " = ?";
+    private static final String GROUP_BY_STATUS_JOB_CREATED_BETWEEN = "SELECT STATUS, COUNT(*) FROM "
+            + TABLE_JOBS + " WHERE " + COL_NAMESPACE + " = ? AND " + COL_CREATED_AT + " > ? " +
+            "AND " + COL_CREATED_AT + " < ? GROUP BY " + COL_STATUS;
+    private static final String GROUP_BY_STATUS_JOB_WITH_NAME_CREATED_BETWEEN = "SELECT STATUS, COUNT(*) FROM "
+            + TABLE_JOBS + " WHERE " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ? AND "
+            + COL_CREATED_AT + " > ? AND " + COL_CREATED_AT + " < ? GROUP BY " + COL_STATUS;
 
     private final BasicDataSource dataSource;
 
@@ -113,10 +125,30 @@ public class StdJDBCJobStore implements JobStore {
     public Job load(JobId jobId) throws StoreException {
         logger.debug("Received request to get job with id {}", jobId);
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_JOB_BY_ID)) {
+             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_JOB)) {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, jobId.getId());
+            preparedStatement.setString(++paramIndex, jobId.getWorkflow());
             preparedStatement.setString(++paramIndex, jobId.getNamespace());
+            final ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                return getJob(resultSet);
+            }
+        } catch (Exception e) {
+            logger.error("Error fetching job from database with id {}", jobId, e);
+            throw new StoreException(e.getMessage(), e.getCause());
+        }
+        return null;
+    }
+
+    @Override
+    public Job load(String jobId, String namespace) throws StoreException {
+        logger.debug("Received request to get job with id {} under namespace {}", jobId, namespace);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_JOB_BY_ID)) {
+            int paramIndex = 0;
+            preparedStatement.setString(++paramIndex, jobId);
+            preparedStatement.setString(++paramIndex, namespace);
             final ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 return getJob(resultSet);
@@ -202,6 +234,51 @@ public class StdJDBCJobStore implements JobStore {
     }
 
     @Override
+    public Map<Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore) throws StoreException {
+        logger.debug("Received request to group jobs by status under namespace {}, created after {}", namespace, createdAfter);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(GROUP_BY_STATUS_JOB_CREATED_BETWEEN)) {
+            int paramIndex = 0;
+            preparedStatement.setString(++paramIndex, namespace);
+            preparedStatement.setLong(++paramIndex, createdAfter);
+            preparedStatement.setLong(++paramIndex, createdBefore);
+            final ResultSet resultSet = preparedStatement.executeQuery();
+            Map<Status, Integer> statusMap = new HashMap<>();
+            while (resultSet.next()) {
+                statusMap.put(Status.valueOf(resultSet.getString(1)), resultSet.getInt(2));
+            }
+            return statusMap;
+        } catch (Exception e) {
+            logger.error("Error grouping jobs by status from database namespace {}", namespace, e);
+            throw new StoreException(e.getMessage(), e.getCause());
+        }
+    }
+
+    @Override
+    public Map<Status, Integer> groupByStatusForWorkflowName(String workflowName, String namespace, long createdAfter, long createdBefore) throws StoreException {
+        logger.debug("Received request to group by status having workflow name {}, namespace {}, created after {}",
+                workflowName, namespace, createdAfter);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(GROUP_BY_STATUS_JOB_WITH_NAME_CREATED_BETWEEN)) {
+            int paramIndex = 0;
+            preparedStatement.setString(++paramIndex, workflowName);
+            preparedStatement.setString(++paramIndex, namespace);
+            preparedStatement.setLong(++paramIndex, createdAfter);
+            preparedStatement.setLong(++paramIndex, createdBefore);
+            final ResultSet resultSet = preparedStatement.executeQuery();
+            Map<Status, Integer> statusMap = new HashMap<>();
+            while (resultSet.next()) {
+                statusMap.put(Status.valueOf(resultSet.getString(1)), resultSet.getInt(2));
+            }
+            return statusMap;
+        } catch (Exception e) {
+            logger.error("Error grouping jobs by status having workflow name {} under namespace {} from database",
+                    workflowName, namespace, e);
+            throw new StoreException(e.getMessage(), e.getCause());
+        }
+    }
+
+    @Override
     public void update(Job job) throws StoreException {
         final JobId jobId = job.getIdentity();
         logger.info("Received request to update job to {}", job);
@@ -242,7 +319,7 @@ public class StdJDBCJobStore implements JobStore {
         job.setWorkflow(resultSet.getString(++paramIndex));
         job.setTrigger(resultSet.getString(++paramIndex));
         job.setNamespace(resultSet.getString(++paramIndex));
-        job.setStatus(Job.Status.valueOf(resultSet.getString(++paramIndex)));
+        job.setStatus(Status.valueOf(resultSet.getString(++paramIndex)));
         job.setCreatedAt(JDBCUtil.getLong(resultSet, ++paramIndex));
         job.setCompletedAt(JDBCUtil.getLong(resultSet, ++paramIndex));
         return job;

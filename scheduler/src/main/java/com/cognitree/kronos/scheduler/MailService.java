@@ -162,7 +162,7 @@ public class MailService implements Service {
                     recipients = workflow.getEmailOnFailure();
                 }
                 if (recipients != null && !recipients.isEmpty()) {
-                    final List<Task> tasks = TaskService.getService().get(job.getId(), job.getNamespace());
+                    final List<Task> tasks = TaskService.getService().get(job.getId(), job.getWorkflow(), job.getNamespace());
                     VelocityContext velocityContext = buildVelocityContext(job, workflow, tasks);
                     StringWriter subjectWriter = new StringWriter();
                     subjectTemplate.merge(velocityContext, subjectWriter);
@@ -238,7 +238,7 @@ public class MailService implements Service {
                 return;
             }
             try {
-                final Job job = JobService.getService().get(JobId.build(task.getJob(), task.getNamespace()));
+                final Job job = JobService.getService().get(JobId.build(task.getJob(), task.getWorkflow(), task.getNamespace()));
                 final Workflow workflow = WorkflowService.getService().get(WorkflowId.build(job.getWorkflow(), job.getNamespace()));
                 List<String> recipients = workflow.getEmailOnFailure();
                 if (recipients != null && !recipients.isEmpty()) {

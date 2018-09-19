@@ -82,12 +82,13 @@ public class TaskService implements Service {
         statusChangeListeners.remove(statusChangeListener);
     }
 
-    public Task create(String jobId, WorkflowTask workflowTask, String namespace) throws ServiceException {
-        logger.debug("Received request to create task for job {} from workflow task {} under namespace {}",
-                jobId, workflowTask, namespace);
+    public Task create(WorkflowTask workflowTask, String jobId, String workflowName, String namespace) throws ServiceException {
+        logger.debug("Received request to create task from workflow task {} for job {}, workflow {} under namespace {}",
+                workflowTask, jobId, workflowName, namespace);
         Task task = new Task();
         task.setName(UUID.randomUUID().toString());
         task.setJob(jobId);
+        task.setWorkflow(workflowName);
         task.setName(workflowTask.getName());
         task.setNamespace(namespace);
         task.setType(workflowTask.getType());
@@ -127,15 +128,15 @@ public class TaskService implements Service {
         }
     }
 
-    public List<Task> get(String jobId, String namespace) throws ServiceException {
-        logger.debug("Received request to get all tasks with job id {} under namespace {}",
-                jobId, namespace);
+    public List<Task> get(String jobId, String workflowName, String namespace) throws ServiceException {
+        logger.debug("Received request to get all tasks with job id {} for workflow {} under namespace {}",
+                jobId, workflowName, namespace);
         try {
-            final List<Task> tasks = taskStore.loadByJobId(jobId, namespace);
+            final List<Task> tasks = taskStore.loadByJobIdAndWorkflowName(jobId, workflowName, namespace);
             return tasks == null ? Collections.emptyList() : tasks;
         } catch (StoreException e) {
-            logger.error("unable to get all tasks with job id {} under namespace {}",
-                    jobId, namespace, e);
+            logger.error("unable to get all tasks with job id {} for workflow {} under namespace {}",
+                    jobId, workflowName, namespace, e);
             throw new ServiceException(e.getMessage());
         }
     }
@@ -153,6 +154,33 @@ public class TaskService implements Service {
         }
     }
 
+    public Map<Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore)
+            throws ServiceException {
+        logger.debug("Received request to group tasks by status under namespace {} created between {} to {}",
+                namespace, createdAfter, createdBefore);
+        try {
+            return taskStore.groupByStatus(namespace, createdAfter, createdBefore);
+        } catch (StoreException e) {
+            logger.error("unable to group tasks by status under namespace {} created between {} to {}",
+                    namespace, createdAfter, createdBefore, e);
+            throw new ServiceException(e.getMessage());
+        }
+    }
+
+    public Map<Status, Integer> groupByStatus(String workflowName, String namespace, long createdAfter, long createdBefore)
+            throws ServiceException {
+        logger.debug("Received request  to group tasks by status having workflow name {} under namespace {} created " +
+                "between {} to {}", workflowName, namespace, createdAfter, createdBefore);
+        try {
+            return taskStore.groupByStatusForWorkflowName(workflowName, namespace, createdAfter, createdBefore);
+        } catch (StoreException e) {
+            logger.error("unable  to group tasks by status having workflow name {} under namespace {} created " +
+                    "between {} to {}", workflowName, namespace, createdAfter, createdBefore, e);
+            throw new ServiceException(e.getMessage());
+        }
+    }
+
+
     public void update(Task task) throws ServiceException {
         logger.debug("Received request to update task {}", task);
         try {
@@ -169,26 +197,25 @@ public class TaskService implements Service {
             logger.error("Invalid state transition for task {} from status {}, to {}", task, currentStatus, status);
             throw new ServiceException("Invalid state transition from " + currentStatus + " to " + status);
         }
-        Task mutableTask = (Task) task;
-        mutableTask.setStatus(status);
-        mutableTask.setStatusMessage(statusMessage);
-        mutableTask.setContext(context);
+        task.setStatus(status);
+        task.setStatusMessage(statusMessage);
+        task.setContext(context);
         switch (status) {
             case SUBMITTED:
-                mutableTask.setSubmittedAt(System.currentTimeMillis());
+                task.setSubmittedAt(System.currentTimeMillis());
                 break;
             case SUCCESSFUL:
             case FAILED:
-                mutableTask.setCompletedAt(System.currentTimeMillis());
+                task.setCompletedAt(System.currentTimeMillis());
                 break;
         }
         try {
-            taskStore.update(mutableTask);
+            taskStore.update(task);
         } catch (StoreException e) {
             logger.error("unable to update task {}", task, e);
             throw new ServiceException(e.getMessage());
         }
-        notifyListeners(mutableTask, currentStatus, status);
+        notifyListeners(task, currentStatus, status);
     }
 
     private boolean isValidTransition(Status currentStatus, Status desiredStatus) {

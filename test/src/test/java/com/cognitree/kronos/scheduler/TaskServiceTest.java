@@ -80,17 +80,17 @@ public class TaskServiceTest {
 
         JobService jobService = JobService.getService();
         TaskService taskService = TaskService.getService();
-        final List<Job> workflowOneJobs = jobService.get(workflowTriggerOne.getNamespace(), 10);
+        final List<Job> workflowOneJobs = jobService.get(workflowTriggerOne.getNamespace(), 0, System.currentTimeMillis());
         Assert.assertEquals(1, workflowOneJobs.size());
         Assert.assertNotNull(jobService.get(workflowOneJobs.get(0)));
-        final List<Task> workflowOneTasks = taskService.get(workflowOneJobs.get(0).getId(),
+        final List<Task> workflowOneTasks = taskService.get(workflowOneJobs.get(0).getId(), workflowOneJobs.get(0).getWorkflow(),
                 workflowTriggerOne.getNamespace());
         Assert.assertEquals(3, workflowOneTasks.size());
 
-        final List<Job> workflowTwoJobs = jobService.get(workflowTriggerTwo.getNamespace(), 10);
+        final List<Job> workflowTwoJobs = jobService.get(workflowTriggerTwo.getNamespace(), 0, System.currentTimeMillis());
         Assert.assertEquals(1, workflowTwoJobs.size());
         Assert.assertNotNull(jobService.get(workflowTwoJobs.get(0)));
-        final List<Task> workflowTwoTasks = taskService.get(workflowTwoJobs.get(0).getId(),
+        final List<Task> workflowTwoTasks = taskService.get(workflowTwoJobs.get(0).getId(), workflowTwoJobs.get(0).getWorkflow(),
                 workflowTriggerTwo.getNamespace());
         Assert.assertEquals(3, workflowTwoTasks.size());
     }

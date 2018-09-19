@@ -32,19 +32,10 @@ import static com.cognitree.kronos.scheduler.model.Job.Status.CREATED;
 @JsonDeserialize(as = Job.class)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Job extends JobId {
-    private String workflow;
     private String trigger;
     private Status status = CREATED;
     private Long createdAt;
     private Long completedAt;
-
-    public String getWorkflow() {
-        return workflow;
-    }
-
-    public void setWorkflow(String workflow) {
-        this.workflow = workflow;
-    }
 
     public String getTrigger() {
         return trigger;
@@ -96,8 +87,7 @@ public class Job extends JobId {
     @Override
     public String toString() {
         return "Job{" +
-                "workflow='" + workflow + '\'' +
-                ", trigger='" + trigger + '\'' +
+                "trigger='" + trigger + '\'' +
                 ", status=" + status +
                 ", createdAt=" + createdAt +
                 ", completedAt=" + completedAt +

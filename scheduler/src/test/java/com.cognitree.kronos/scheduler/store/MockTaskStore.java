@@ -21,6 +21,7 @@ import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.TaskId;
 
 import java.util.List;
+import java.util.Map;
 
 public class MockTaskStore implements TaskStore {
     @Override
@@ -29,12 +30,22 @@ public class MockTaskStore implements TaskStore {
     }
 
     @Override
-    public List<Task> loadByJobId(String jobId, String namespace) {
+    public List<Task> loadByJobIdAndWorkflowName(String jobId, String workflowName, String namespace) {
         return null;
     }
 
     @Override
     public List<Task> loadByStatus(List<Task.Status> statuses, String namespace) {
+        return null;
+    }
+
+    @Override
+    public Map<Task.Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore) {
+        return null;
+    }
+
+    @Override
+    public Map<Task.Status, Integer> groupByStatusForWorkflowName(String workflowName, String namespace, long createdAfter, long createdBefore) {
         return null;
     }
 
