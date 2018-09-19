@@ -46,13 +46,12 @@ import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 
-@Path("workflows")
+@Path("workflows/{workflow}/triggers")
 @Api(value = "workflow triggers", description = "manage workflow triggers")
 public class WorkflowTriggerResource {
     private static final Logger logger = LoggerFactory.getLogger(WorkflowTriggerResource.class);
 
     @GET
-    @Path("{workflow}/triggers")
     @ApiOperation(value = "Get all workflow triggers", response = WorkflowTrigger.class, responseContainer = "List")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllWorkflowTriggers(@PathParam("workflow") String workflowName,
@@ -64,7 +63,7 @@ public class WorkflowTriggerResource {
     }
 
     @GET
-    @Path("{workflow}/triggers/{name}")
+    @Path("/{name}")
     @ApiOperation(value = "Get workflow trigger with triggerName", response = WorkflowTrigger.class)
     @ApiResponses(value = {
             @ApiResponse(code = 404, message = "Workflow trigger not found")})
@@ -86,7 +85,6 @@ public class WorkflowTriggerResource {
     }
 
     @POST
-    @Path("{workflow}/triggers")
     @ApiOperation(value = "Create workflow trigger", response = WorkflowTrigger.class)
     @ApiResponses(value = {
             @ApiResponse(code = 404, message = "Workflow trigger not found")})
@@ -105,7 +103,7 @@ public class WorkflowTriggerResource {
     }
 
     @DELETE
-    @Path("{workflow}/triggers/{name}")
+    @Path("/{name}")
     @ApiOperation(value = "Delete workflow trigger with name")
     @ApiResponses(value = {
             @ApiResponse(code = 404, message = "Workflow trigger not found")})

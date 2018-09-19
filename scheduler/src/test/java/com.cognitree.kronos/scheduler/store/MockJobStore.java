@@ -51,6 +51,21 @@ public class MockJobStore implements JobStore {
     }
 
     @Override
+    public List<Job> loadByStatusIn(List<Job.Status> statuses, String namespace, long createdAfter, long createdBefore) throws StoreException {
+        return null;
+    }
+
+    @Override
+    public List<Job> loadByWorkflowNameAndStatusIn(String workflowName, List<Job.Status> statuses, String namespace, long createdAfter, long createdBefore) throws StoreException {
+        return null;
+    }
+
+    @Override
+    public List<Job> loadByWorkflowNameAndTriggerNameAndStatusIn(String workflowName, String triggerName, List<Job.Status> statuses, String namespace, long createdAfter, long createdBefore) throws StoreException {
+        return null;
+    }
+
+    @Override
     public Map<Job.Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore) {
         return null;
     }

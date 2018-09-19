@@ -121,6 +121,49 @@ public class RAMJobStore implements JobStore {
     }
 
     @Override
+    public List<Job> loadByStatusIn(List<Status> statuses, String namespace, long createdAfter, long createdBefore) throws StoreException {
+        logger.debug("Received request to get all jobs having status in {} under namespace {}" +
+                " created after {}, created before {}", statuses, namespace, createdAfter, createdBefore);
+        final ArrayList<Job> jobs = new ArrayList<>();
+        this.jobs.values().forEach(job -> {
+            if (statuses.contains(job.getStatus()) && job.getNamespace().equals(namespace)
+                    && job.getCreatedAt() > createdAfter && job.getCreatedAt() < createdBefore) {
+                jobs.add(job);
+            }
+        });
+        return jobs;
+    }
+
+    @Override
+    public List<Job> loadByWorkflowNameAndStatusIn(String workflowName, List<Status> statuses, String namespace, long createdAfter, long createdBefore) throws StoreException {
+        logger.debug("Received request to get all jobs with workflow name {} having status in {} under namespace {}" +
+                " created after {}, created before {}", workflowName, statuses, namespace, createdAfter, createdBefore);
+        final ArrayList<Job> jobs = new ArrayList<>();
+        this.jobs.values().forEach(job -> {
+            if (job.getWorkflow().equals(workflowName) && statuses.contains(job.getStatus()) && job.getNamespace().equals(namespace)
+                    && job.getCreatedAt() > createdAfter && job.getCreatedAt() < createdBefore) {
+                jobs.add(job);
+            }
+        });
+        return jobs;
+    }
+
+    @Override
+    public List<Job> loadByWorkflowNameAndTriggerNameAndStatusIn(String workflowName, String triggerName, List<Status> statuses, String namespace, long createdAfter, long createdBefore) throws StoreException {
+        logger.debug("Received request to get all jobs with workflow name {}, trigger name {} having status in {} under namespace {}" +
+                " created after {}, created before {}", workflowName, triggerName, statuses, namespace, createdAfter, createdBefore);
+        final ArrayList<Job> jobs = new ArrayList<>();
+        this.jobs.values().forEach(job -> {
+            if (job.getWorkflow().equals(workflowName) && job.getTrigger().equals(triggerName)
+                    && job.getNamespace().equals(namespace) && statuses.contains(job.getStatus())
+                    && job.getCreatedAt() > createdAfter && job.getCreatedAt() < createdBefore) {
+                jobs.add(job);
+            }
+        });
+        return jobs;
+    }
+
+    @Override
     public Map<Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore) {
         logger.debug("Received request to group by jobs status under namespace {}, created after {}", namespace, createdAfter);
         Map<Status, Integer> statusMap = new HashMap<>();
