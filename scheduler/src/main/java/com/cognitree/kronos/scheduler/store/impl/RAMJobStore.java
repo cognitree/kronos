@@ -29,6 +29,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.cognitree.kronos.scheduler.model.Job.Status;
+
 public class RAMJobStore implements JobStore {
     private static final Logger logger = LoggerFactory.getLogger(RAMJobStore.class);
 
@@ -37,7 +39,7 @@ public class RAMJobStore implements JobStore {
     @Override
     public void store(Job job) throws StoreException {
         logger.debug("Received request to store job {}", job);
-        final JobId jobId = JobId.build(job.getId(), job.getNamespace());
+        final JobId jobId = JobId.build(job.getId(), job.getWorkflow(), job.getNamespace());
         if (jobs.containsKey(jobId)) {
             throw new StoreException("job with id " + jobId + " already exists");
         } else {
@@ -60,7 +62,18 @@ public class RAMJobStore implements JobStore {
     @Override
     public Job load(JobId jobId) {
         logger.debug("Received request to get job with id {}", jobId);
-        return jobs.get(JobId.build(jobId.getId(), jobId.getNamespace()));
+        return jobs.get(JobId.build(jobId.getId(), jobId.getWorkflow(), jobId.getNamespace()));
+    }
+
+    @Override
+    public Job load(String jobId, String namespace) {
+        logger.debug("Received request to get job with id {} under namespace {}", jobId, namespace);
+        for (Job job : jobs.values()) {
+            if (job.getId().equals(jobId) && job.getNamespace().equals(namespace)) {
+                return job;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -108,9 +121,42 @@ public class RAMJobStore implements JobStore {
     }
 
     @Override
+    public Map<Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore) {
+        logger.debug("Received request to group by jobs status under namespace {}, created after {}", namespace, createdAfter);
+        Map<Status, Integer> statusMap = new HashMap<>();
+        for (Status status : Status.values()) {
+            statusMap.put(status, 0);
+        }
+        for (Job job : this.jobs.values()) {
+            if (job.getNamespace().equals(namespace) && job.getCreatedAt() > createdAfter
+                    && job.getCreatedAt() < createdBefore) {
+                statusMap.put(job.getStatus(), statusMap.get(job.getStatus()) + 1);
+            }
+        }
+        return statusMap;
+    }
+
+    @Override
+    public Map<Status, Integer> groupByStatusForWorkflowName(String workflowName, String namespace, long createdAfter, long createdBefore) {
+        logger.debug("Received request to group by status, jobs with workflow name {}, namespace {}, created after {}",
+                workflowName, namespace, createdAfter);
+        Map<Status, Integer> statusMap = new HashMap<>();
+        for (Status status : Status.values()) {
+            statusMap.put(status, 0);
+        }
+        for (Job job : this.jobs.values()) {
+            if (job.getWorkflow().equals(workflowName) && job.getNamespace().equals(namespace)
+                    && job.getCreatedAt() > createdAfter && job.getCreatedAt() < createdBefore) {
+                statusMap.put(job.getStatus(), statusMap.get(job.getStatus()) + 1);
+            }
+        }
+        return statusMap;
+    }
+
+    @Override
     public void update(Job job) throws StoreException {
         logger.info("Received request to update job to {}", job);
-        final JobId jobId = JobId.build(job.getId(), job.getNamespace());
+        final JobId jobId = JobId.build(job.getId(), job.getWorkflow(), job.getNamespace());
         if (!jobs.containsKey(jobId)) {
             throw new StoreException("job with id " + jobId + " does not exists");
         }
@@ -120,7 +166,7 @@ public class RAMJobStore implements JobStore {
     @Override
     public void delete(JobId jobId) throws StoreException {
         logger.debug("Received request to delete job with id {}", jobId);
-        final JobId buildJobId = JobId.build(jobId.getId(), jobId.getNamespace());
+        final JobId buildJobId = JobId.build(jobId.getId(), jobId.getWorkflow(), jobId.getNamespace());
         if (jobs.remove(buildJobId) == null) {
             throw new StoreException("job with id " + jobId + " does not exists");
         }

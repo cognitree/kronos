@@ -33,17 +33,20 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_COMPLETED_AT;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_CONTEXT;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_CREATED_AT;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_JOB_ID;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_NAME;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_NAMESPACE;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_STATUS;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_STATUS_MESSAGE;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_SUBMITTED_AT;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_WORKFLOW_NAME;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.TABLE_TASKS;
 
 /**
@@ -53,20 +56,27 @@ public class StdJDBCTaskStore implements TaskStore {
     private static final Logger logger = LoggerFactory.getLogger(StdJDBCTaskStore.class);
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final String INSERT_TASK = "INSERT INTO " + TABLE_TASKS + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    private static final String INSERT_TASK = "INSERT INTO " + TABLE_TASKS + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_TASK = "UPDATE " + TABLE_TASKS + " SET " + COL_STATUS + " = ?, "
             + COL_STATUS_MESSAGE + " = ?, " + COL_SUBMITTED_AT + " = ?, " + COL_COMPLETED_AT + " = ?, "
-            + COL_CONTEXT + " = ? WHERE " + COL_NAME + " = ? AND " + COL_JOB_ID + " = ? AND " + COL_NAMESPACE + " = ?";
+            + COL_CONTEXT + " = ? WHERE " + COL_NAME + " = ? AND " + COL_JOB_ID + " = ? " +
+            "AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
     private static final String LOAD_ALL_TASKS_BY_NAMESPACE = "SELECT * FROM " + TABLE_TASKS + " WHERE "
             + COL_NAMESPACE + " = ?";
     private static final String LOAD_TASK = "SELECT * FROM " + TABLE_TASKS + " WHERE " + COL_NAME + " = ? AND "
-            + COL_JOB_ID + " = ? AND " + COL_NAMESPACE + " = ?";
+            + COL_JOB_ID + " = ? AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
     private static final String LOAD_TASK_BY_STATUS = "SELECT * FROM " + TABLE_TASKS + " WHERE " + COL_STATUS
             + " IN ($statuses)";
     private static final String LOAD_TASK_BY_JOB_ID = "SELECT * FROM " + TABLE_TASKS + " WHERE "
-            + COL_JOB_ID + " = ? AND " + COL_NAMESPACE + " = ?";
+            + COL_JOB_ID + " = ? AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
+    private static final String GROUP_BY_STATUS_TASK_CREATED_BETWEEN = "SELECT STATUS, COUNT(*) FROM " + TABLE_TASKS
+            + " WHERE " + COL_NAMESPACE + " = ? AND " + COL_CREATED_AT + " > ? AND " + COL_CREATED_AT + " < ? " +
+            "GROUP BY " + COL_STATUS;
+    private static final String GROUP_BY_STATUS_TASK_CREATED_BETWEEN_FOR_WORKFLOW = "SELECT STATUS, COUNT(*) FROM " + TABLE_TASKS
+            + " WHERE " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ? AND "
+            + COL_CREATED_AT + " > ? AND " + COL_CREATED_AT + " < ? " + "GROUP BY " + COL_STATUS;
     private static final String DELETE_TASK = "DELETE FROM " + TABLE_TASKS + " WHERE "
-            + COL_NAME + " = ? AND " + COL_JOB_ID + " = ? AND " + COL_NAMESPACE + " = ?";
+            + COL_NAME + " = ? AND " + COL_JOB_ID + " = ? AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
 
     private static final TypeReference<Map<String, Object>> PROPERTIES_TYPE_REF =
             new TypeReference<Map<String, Object>>() {
@@ -89,6 +99,7 @@ public class StdJDBCTaskStore implements TaskStore {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, task.getName());
             preparedStatement.setString(++paramIndex, task.getJob());
+            preparedStatement.setString(++paramIndex, task.getWorkflow());
             preparedStatement.setString(++paramIndex, task.getNamespace());
             preparedStatement.setString(++paramIndex, task.getType());
             preparedStatement.setString(++paramIndex, task.getTimeoutPolicy());
@@ -135,6 +146,7 @@ public class StdJDBCTaskStore implements TaskStore {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, taskId.getName());
             preparedStatement.setString(++paramIndex, taskId.getJob());
+            preparedStatement.setString(++paramIndex, taskId.getWorkflow());
             preparedStatement.setString(++paramIndex, taskId.getNamespace());
             final ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -148,12 +160,13 @@ public class StdJDBCTaskStore implements TaskStore {
     }
 
     @Override
-    public List<Task> loadByJobId(String jobId, String namespace) throws StoreException {
+    public List<Task> loadByJobIdAndWorkflowName(String jobId, String workflowName, String namespace) throws StoreException {
         logger.debug("Received request to get all tasks with job id {}, namespace {}", jobId, namespace);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_TASK_BY_JOB_ID)) {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, jobId);
+            preparedStatement.setString(++paramIndex, workflowName);
             preparedStatement.setString(++paramIndex, namespace);
             final ResultSet resultSet = preparedStatement.executeQuery();
             List<Task> tasks = new ArrayList<>();
@@ -174,8 +187,9 @@ public class StdJDBCTaskStore implements TaskStore {
         final String sqlQuery = LOAD_TASK_BY_STATUS.replace("$statuses", placeHolders);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
-            for (int i = 0; i < statuses.size(); i++) {
-                preparedStatement.setString(i + 1, statuses.get(i).name());
+            int paramIndex = 0;
+            for (Status status : statuses) {
+                preparedStatement.setString(++paramIndex, status.name());
             }
             final ResultSet resultSet = preparedStatement.executeQuery();
             List<Task> tasks = new ArrayList<>();
@@ -185,6 +199,50 @@ public class StdJDBCTaskStore implements TaskStore {
             return tasks;
         } catch (Exception e) {
             logger.error("Error fetching task with status in {} from database", statuses, e);
+            throw new StoreException(e.getMessage(), e.getCause());
+        }
+    }
+
+    @Override
+    public Map<Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore) throws StoreException {
+        logger.debug("Received request to get all tasks in namespace {}", namespace);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(GROUP_BY_STATUS_TASK_CREATED_BETWEEN)) {
+            int paramIndex = 0;
+            preparedStatement.setString(++paramIndex, namespace);
+            preparedStatement.setLong(++paramIndex, createdAfter);
+            preparedStatement.setLong(++paramIndex, createdBefore);
+            final ResultSet resultSet = preparedStatement.executeQuery();
+            Map<Status, Integer> statusMap = new HashMap<>();
+            while (resultSet.next()) {
+                statusMap.put(Status.valueOf(resultSet.getString(1)), resultSet.getInt(2));
+            }
+            return statusMap;
+        } catch (Exception e) {
+            logger.error("Error loading all tasks from database in namespace {}", namespace, e);
+            throw new StoreException(e.getMessage(), e.getCause());
+        }
+    }
+
+    @Override
+    public Map<Status, Integer> groupByStatusForWorkflowName(String workflowName, String namespace,
+                                                             long createdAfter, long createdBefore) throws StoreException {
+        logger.debug("Received request to get all tasks in namespace {}", namespace);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(GROUP_BY_STATUS_TASK_CREATED_BETWEEN_FOR_WORKFLOW)) {
+            int paramIndex = 0;
+            preparedStatement.setString(++paramIndex, workflowName);
+            preparedStatement.setString(++paramIndex, namespace);
+            preparedStatement.setLong(++paramIndex, createdAfter);
+            preparedStatement.setLong(++paramIndex, createdBefore);
+            final ResultSet resultSet = preparedStatement.executeQuery();
+            Map<Status, Integer> statusMap = new HashMap<>();
+            while (resultSet.next()) {
+                statusMap.put(Status.valueOf(resultSet.getString(1)), resultSet.getInt(2));
+            }
+            return statusMap;
+        } catch (Exception e) {
+            logger.error("Error loading all tasks from database in namespace {}", namespace, e);
             throw new StoreException(e.getMessage(), e.getCause());
         }
     }
@@ -203,6 +261,7 @@ public class StdJDBCTaskStore implements TaskStore {
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(task.getContext()));
             preparedStatement.setString(++paramIndex, taskId.getName());
             preparedStatement.setString(++paramIndex, taskId.getJob());
+            preparedStatement.setString(++paramIndex, taskId.getWorkflow());
             preparedStatement.setString(++paramIndex, taskId.getNamespace());
             preparedStatement.execute();
         } catch (Exception e) {
@@ -219,6 +278,7 @@ public class StdJDBCTaskStore implements TaskStore {
             int paramIndex = 0;
             preparedStatement.setString(++paramIndex, taskId.getName());
             preparedStatement.setString(++paramIndex, taskId.getJob());
+            preparedStatement.setString(++paramIndex, taskId.getWorkflow());
             preparedStatement.setString(++paramIndex, taskId.getNamespace());
             preparedStatement.executeUpdate();
         } catch (Exception e) {
@@ -232,6 +292,7 @@ public class StdJDBCTaskStore implements TaskStore {
         Task task = new Task();
         task.setName(resultSet.getString(++paramIndex));
         task.setJob(resultSet.getString(++paramIndex));
+        task.setWorkflow(resultSet.getString(++paramIndex));
         task.setNamespace(resultSet.getString(++paramIndex));
         task.setType(resultSet.getString(++paramIndex));
         task.setTimeoutPolicy(resultSet.getString(++paramIndex));

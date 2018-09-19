@@ -27,11 +27,13 @@ import java.util.Objects;
 public class JobId {
 
     private String id;
+    private String workflow;
     private String namespace;
 
-    public static JobId build(String id, String namespace) {
+    public static JobId build(String id, String workflowName, String namespace) {
         final JobId jobId = new JobId();
         jobId.setId(id);
+        jobId.setWorkflow(workflowName);
         jobId.setNamespace(namespace);
         return jobId;
     }
@@ -42,6 +44,14 @@ public class JobId {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getWorkflow() {
+        return workflow;
+    }
+
+    public void setWorkflow(String workflow) {
+        this.workflow = workflow;
     }
 
     public String getNamespace() {
@@ -55,21 +65,24 @@ public class JobId {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        JobId that = (JobId) o;
-        return Objects.equals(id, that.id) &&
-                Objects.equals(namespace, that.namespace);
+        if (!(o instanceof JobId)) return false;
+        JobId jobId = (JobId) o;
+        return Objects.equals(id, jobId.id) &&
+                Objects.equals(workflow, jobId.workflow) &&
+                Objects.equals(namespace, jobId.namespace);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, namespace);
+
+        return Objects.hash(id, workflow, namespace);
     }
 
     @Override
     public String toString() {
         return "JobId{" +
                 "id='" + id + '\'' +
+                ", workflow='" + workflow + '\'' +
                 ", namespace='" + namespace + '\'' +
                 '}';
     }

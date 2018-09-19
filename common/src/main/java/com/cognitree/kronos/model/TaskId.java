@@ -28,12 +28,14 @@ public class TaskId {
 
     private String name;
     private String job;
+    private String workflow;
     private String namespace;
 
-    public static TaskId build(String name, String jobId, String namespace) {
+    public static TaskId build(String name, String jobId, String workflowName, String namespace) {
         final TaskId taskId = new TaskId();
         taskId.setName(name);
         taskId.setJob(jobId);
+        taskId.setWorkflow(workflowName);
         taskId.setNamespace(namespace);
         return taskId;
     }
@@ -54,6 +56,14 @@ public class TaskId {
         this.job = job;
     }
 
+    public String getWorkflow() {
+        return workflow;
+    }
+
+    public void setWorkflow(String workflow) {
+        this.workflow = workflow;
+    }
+
     public String getNamespace() {
         return namespace;
     }
@@ -69,12 +79,14 @@ public class TaskId {
         TaskId taskId = (TaskId) o;
         return Objects.equals(name, taskId.name) &&
                 Objects.equals(job, taskId.job) &&
+                Objects.equals(workflow, taskId.workflow) &&
                 Objects.equals(namespace, taskId.namespace);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, job, namespace);
+
+        return Objects.hash(name, job, workflow, namespace);
     }
 
     @Override
@@ -82,6 +94,7 @@ public class TaskId {
         return "TaskId{" +
                 "name='" + name + '\'' +
                 ", job='" + job + '\'' +
+                ", workflow='" + workflow + '\'' +
                 ", namespace='" + namespace + '\'' +
                 '}';
     }

@@ -22,6 +22,7 @@ import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskId;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * An interface exposing API's to provide {@link Task} persistence.
@@ -30,7 +31,12 @@ public interface TaskStore extends Store<Task, TaskId> {
 
     List<Task> loadByStatusIn(String namespace) throws StoreException;
 
-    List<Task> loadByJobId(String jobId, String namespace) throws StoreException;
+    List<Task> loadByJobIdAndWorkflowName(String jobId, String workflowName, String namespace) throws StoreException;
 
     List<Task> loadByStatus(List<Status> statuses, String namespace) throws StoreException;
+
+    Map<Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore) throws StoreException;
+
+    Map<Status, Integer> groupByStatusForWorkflowName(String workflowName, String namespace,
+                                                      long createdAfter, long createdBefore) throws StoreException;
 }

@@ -19,11 +19,15 @@ package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
+import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.scheduler.graph.TopologicalSort;
+import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.NamespaceId;
+import com.cognitree.kronos.scheduler.model.Statistics;
 import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.WorkflowId;
+import com.cognitree.kronos.scheduler.model.WorkflowStatistics;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import com.cognitree.kronos.scheduler.store.StoreException;
 import com.cognitree.kronos.scheduler.store.StoreService;
@@ -32,9 +36,11 @@ import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.cognitree.kronos.scheduler.ValidationError.CYCLIC_DEPENDENCY_IN_WORKFLOW;
 import static com.cognitree.kronos.scheduler.ValidationError.MISSING_TASK_IN_WORKFLOW;
@@ -101,6 +107,80 @@ public class WorkflowService implements Service {
             throw new ServiceException(e.getMessage());
         }
     }
+
+    private static final List<Job.Status> ACTIVE_JOB_STATUS = new ArrayList<>();
+    private static final List<Task.Status> ACTIVE_TASK_STATUS = new ArrayList<>();
+
+    static {
+        for (Job.Status status : Job.Status.values()) {
+            if (!status.isFinal()) {
+                ACTIVE_JOB_STATUS.add(status);
+            }
+        }
+        for (Task.Status status : Task.Status.values()) {
+            if (!status.isFinal()) {
+                ACTIVE_TASK_STATUS.add(status);
+            }
+        }
+    }
+
+    public WorkflowStatistics getStatistics(String namespace, long createdAfter, long createdBefore)
+            throws ValidationException, ServiceException {
+        logger.debug("Received request to get all jobs statistics under namespace {} created " +
+                "between {} to {}", namespace, createdAfter, createdBefore);
+        validateNamespace(namespace);
+        final Map<Job.Status, Integer> jobStatusMap =
+                JobService.getService().groupByStatus(namespace, createdAfter, createdBefore);
+        final Map<Task.Status, Integer> taskStatusMap = TaskService.getService().groupByStatus(namespace, createdAfter, createdBefore);
+        return getWorkflowStatistics(jobStatusMap, taskStatusMap, createdAfter, createdBefore);
+    }
+
+    public WorkflowStatistics getStatistics(String workflowName, String namespace, long createdAfter, long createdBefore)
+            throws ValidationException, ServiceException {
+        logger.debug("Received request to get statistics for jobs with name {} under namespace {} created " +
+                "between {} to {}", workflowName, namespace, createdAfter, createdBefore);
+        validateNamespace(namespace);
+        final Map<Job.Status, Integer> jobStatusMap =
+                JobService.getService().groupByStatus(workflowName, namespace, createdAfter, createdBefore);
+        final Map<Task.Status, Integer> taskStatusMap =
+                TaskService.getService().groupByStatus(workflowName, namespace, createdAfter, createdBefore);
+        return getWorkflowStatistics(jobStatusMap, taskStatusMap, createdAfter, createdBefore);
+    }
+
+    private WorkflowStatistics getWorkflowStatistics(Map<Job.Status, Integer> jobStatusMap, Map<Task.Status, Integer> taskStatusMap,
+                                                     long createdAfter, long createdBefore) {
+        WorkflowStatistics workflowStatistics = new WorkflowStatistics();
+        Statistics jobStatistics = new Statistics();
+        jobStatistics.setTotal(jobStatusMap.values().stream().mapToInt(Integer::intValue).sum());
+        int activeJobs = 0;
+        for (Job.Status status : ACTIVE_JOB_STATUS) {
+            if (jobStatusMap.containsKey(status)) {
+                activeJobs += jobStatusMap.get(status);
+            }
+        }
+        jobStatistics.setActive(activeJobs);
+        jobStatistics.setSuccessful(jobStatusMap.getOrDefault(Job.Status.SUCCESSFUL, 0));
+        jobStatistics.setFailed(jobStatusMap.getOrDefault(Job.Status.FAILED, 0));
+        workflowStatistics.setJobs(jobStatistics);
+
+        Statistics taskStatistics = new Statistics();
+        taskStatistics.setTotal(taskStatusMap.values().stream().mapToInt(Integer::intValue).sum());
+        int activeTasks = 0;
+        for (Task.Status status : ACTIVE_TASK_STATUS) {
+            if (taskStatusMap.containsKey(status)) {
+                activeTasks += taskStatusMap.get(status);
+            }
+        }
+        taskStatistics.setActive(activeTasks);
+        taskStatistics.setSuccessful(taskStatusMap.getOrDefault(Task.Status.SUCCESSFUL, 0));
+        taskStatistics.setFailed(taskStatusMap.getOrDefault(Task.Status.FAILED, 0));
+        workflowStatistics.setTasks(taskStatistics);
+
+        workflowStatistics.setFrom(createdAfter);
+        workflowStatistics.setTo(createdBefore);
+        return workflowStatistics;
+    }
+
 
     public void update(Workflow workflow) throws ValidationException, ServiceException {
         logger.debug("Received request to update workflow {}", workflow);

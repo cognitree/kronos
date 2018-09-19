@@ -31,12 +31,13 @@ import com.cognitree.kronos.scheduler.store.StoreService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import static com.cognitree.kronos.scheduler.ValidationError.NAMESPACE_NOT_FOUND;
 
@@ -124,68 +125,106 @@ public class JobService implements Service {
         }
     }
 
-    public List<Job> get(String namespace, int numberOfDays) throws ServiceException, ValidationException {
-        logger.debug("Received request to get all jobs under namespace {} submitted in last {} number of days",
-                namespace, numberOfDays);
+    public Job get(String jobId, String namespace) throws ServiceException, ValidationException {
+        logger.debug("Received request to get job {} under namespace {}", jobId, namespace);
         validateNamespace(namespace);
-        long createdAfter = timeInMillisBeforeDays(numberOfDays);
-        long createdBefore = System.currentTimeMillis();
+        try {
+            return jobStore.load(jobId, namespace);
+        } catch (StoreException e) {
+            logger.error("unable to get job {}", jobId, e);
+            throw new ServiceException(e.getMessage());
+        }
+    }
+
+    public List<Job> get(String namespace, long createdAfter, long createdBefore) throws ServiceException, ValidationException {
+        logger.debug("Received request to get all jobs under namespace {} created between {} to {}",
+                namespace, createdAfter, createdBefore);
+        validateNamespace(namespace);
         try {
             final List<Job> jobs = jobStore.load(namespace, createdAfter, createdBefore);
             return jobs == null ? Collections.emptyList() : jobs;
         } catch (StoreException e) {
-            logger.error("unable to get all jobs under namespace {} submitted in last {} number of days",
-                    namespace, numberOfDays, e);
+            logger.error("unable to get all jobs under namespace {} created between {} to {}",
+                    namespace, createdAfter, createdBefore, e);
             throw new ServiceException(e.getMessage());
         }
     }
 
-    public List<Job> get(String workflowName, String namespace, int numberOfDays) throws ServiceException, ValidationException {
-        logger.debug("Received request to get all jobs with workflow name {} under namespace {} submitted " +
-                "in last {} number of days", workflowName, namespace, numberOfDays);
+    public List<Job> get(String workflowName, String namespace, long createdAfter, long createdBefore) throws ServiceException, ValidationException {
+        logger.debug("Received request to get all jobs with workflow name {} under namespace {} created between {} to {}",
+                workflowName, namespace, createdAfter, createdBefore);
         validateNamespace(namespace);
-        long createdAfter = timeInMillisBeforeDays(numberOfDays);
-        long createdBefore = System.currentTimeMillis();
         try {
             final List<Job> jobs = jobStore.loadByWorkflowName(workflowName, namespace, createdAfter, createdBefore);
             return jobs == null ? Collections.emptyList() : jobs;
         } catch (StoreException e) {
-            logger.error("unable to get all jobs with workflow name {} under namespace {} submitted " +
-                    "in last {} number of days", workflowName, namespace, numberOfDays, e);
+            logger.error("unable to get all jobs with workflow name {} under namespace {} created between {} to {}",
+                    workflowName, namespace, createdAfter, createdBefore, e);
             throw new ServiceException(e.getMessage());
         }
     }
 
-    public List<Job> get(String workflowName, String triggerName, String namespace, int numberOfDays) throws ServiceException, ValidationException {
-        logger.debug("Received request to get all jobs with workflow name {}, trigger {} under namespace {} submitted " +
-                "in last {} number of days", workflowName, triggerName, namespace, numberOfDays);
+    public List<Job> get(String workflowName, String triggerName, String namespace,
+                         long createdAfter, long createdBefore) throws ServiceException, ValidationException {
+        logger.debug("Received request to get all jobs with workflow name {}, trigger {} under namespace {} " +
+                "created between {} to {}", workflowName, triggerName, namespace, createdAfter, createdBefore);
         validateNamespace(namespace);
-        long createdAfter = timeInMillisBeforeDays(numberOfDays);
-        long createdBefore = System.currentTimeMillis();
         try {
             final List<Job> jobs = jobStore.loadByWorkflowNameAndTriggerName(workflowName, triggerName, namespace,
                     createdAfter, createdBefore);
             return jobs == null ? Collections.emptyList() : jobs;
         } catch (StoreException e) {
-            logger.error("unable to get all jobs with workflow name {}, trigger {} under namespace {} submitted " +
-                    "in last {} number of days", workflowName, triggerName, namespace, numberOfDays, e);
+            logger.error("unable to get all jobs with workflow name {}, trigger {} under namespace {} " +
+                    "created between {} to {}", workflowName, triggerName, namespace, createdAfter, createdBefore, e);
             throw new ServiceException(e.getMessage());
         }
-    }
-
-    private long timeInMillisBeforeDays(int numberOfDays) {
-        final long currentTimeMillis = System.currentTimeMillis();
-        return numberOfDays == -1 ? 0 : currentTimeMillis - (currentTimeMillis % TimeUnit.DAYS.toMillis(1))
-                - TimeUnit.DAYS.toMillis(numberOfDays - 1);
     }
 
     public List<Task> getTasks(JobId jobId) throws ServiceException, ValidationException {
         logger.debug("Received request to get all tasks executed for job {}", jobId);
         validateNamespace(jobId.getNamespace());
         try {
-            return TaskService.getService().get(jobId.getId(), jobId.getNamespace());
+            return TaskService.getService().get(jobId.getId(), jobId.getWorkflow(), jobId.getNamespace());
         } catch (ServiceException e) {
             logger.error("unable to get all tasks executed for job {}", jobId, e);
+            throw new ServiceException(e.getMessage());
+        }
+    }
+
+    private static final List<Status> ACTIVE_JOB_STATUS = new ArrayList<>();
+
+    static {
+        for (Status status : Status.values()) {
+            if (!status.isFinal()) {
+                ACTIVE_JOB_STATUS.add(status);
+            }
+        }
+    }
+
+    public Map<Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore)
+            throws ValidationException, ServiceException {
+        logger.debug("Received request to group jobs by status under namespace {} created " +
+                "between {} to {}", namespace, createdAfter, createdBefore);
+        validateNamespace(namespace);
+        try {
+            return jobStore.groupByStatus(namespace, createdAfter, createdBefore);
+        } catch (StoreException e) {
+            logger.error("unable  to group jobs by status under namespace {} created between {} to {}",
+                    namespace, createdAfter, createdBefore, e);
+            throw new ServiceException(e.getMessage());
+        }
+    }
+
+    public Map<Status, Integer> groupByStatus(String workflowName, String namespace, long createdAfter, long createdBefore)
+            throws ValidationException, ServiceException {
+        logger.debug("Received request  to group jobs by status for workflow {} under namespace {} created " +
+                "between {} to {}", workflowName, namespace, createdAfter, createdBefore);
+        validateNamespace(namespace);
+        try {
+            return jobStore.groupByStatusForWorkflowName(workflowName, namespace, createdAfter, createdBefore);
+        } catch (StoreException e) {
+            logger.error("unable  to group jobs by status for workflow {} under namespace {} created " +
+                    "between {} to {}", workflowName, namespace, createdAfter, createdBefore, e);
             throw new ServiceException(e.getMessage());
         }
     }

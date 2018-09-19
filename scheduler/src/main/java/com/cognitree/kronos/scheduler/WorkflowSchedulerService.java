@@ -133,7 +133,7 @@ public final class WorkflowSchedulerService implements Service {
                 logger.warn("Workflow task {} is disabled from scheduling", workflowTask);
                 continue;
             }
-            tasks.add(TaskService.getService().create(job.getId(), workflowTask, job.getNamespace()));
+            tasks.add(TaskService.getService().create(workflowTask, job.getId(), job.getWorkflow(), job.getNamespace()));
         }
         tasks.forEach(task -> TaskSchedulerService.getService().schedule(task));
         JobService.getService().updateStatus(job.getIdentity(), RUNNING);
@@ -194,9 +194,10 @@ public final class WorkflowSchedulerService implements Service {
                 return;
             }
             final String jobId = taskId.getJob();
+            final String workflow = taskId.getWorkflow();
             final String namespace = taskId.getNamespace();
             try {
-                final List<Task> tasks = TaskService.getService().get(jobId, namespace);
+                final List<Task> tasks = TaskService.getService().get(jobId, workflow, namespace);
                 if (tasks.isEmpty()) {
                     return;
                 }
@@ -207,7 +208,7 @@ public final class WorkflowSchedulerService implements Service {
                     final boolean isSuccessful = tasks.stream()
                             .allMatch(workflowTask -> workflowTask.getStatus() == Task.Status.SUCCESSFUL);
                     final Job.Status status = isSuccessful ? SUCCESSFUL : FAILED;
-                    JobService.getService().updateStatus(JobId.build(jobId, namespace), status);
+                    JobService.getService().updateStatus(JobId.build(jobId, workflow, namespace), status);
                 }
             } catch (ServiceException | ValidationException e) {
                 logger.error("Error handling status change for task {}, from {} to {}", taskId, from, to, e);

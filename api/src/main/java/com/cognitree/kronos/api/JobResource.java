@@ -42,6 +42,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparing;
@@ -62,6 +63,10 @@ public class JobResource {
                                @QueryParam("workflow") String workflowName,
                                @ApiParam(value = "workflow trigger name")
                                @QueryParam("trigger") String triggerName,
+                               @ApiParam(value = "Start time of the range")
+                               @DefaultValue("-1") @QueryParam("from") long createdAfter,
+                               @ApiParam(value = "End time of the range")
+                               @DefaultValue("-1") @QueryParam("to") long createdBefore,
                                @ApiParam(value = "Number of days to fetch jobs from today", defaultValue = "10")
                                @DefaultValue(DEFAULT_DAYS) @QueryParam("date_range") int numberOfDays,
                                @HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
@@ -70,20 +75,29 @@ public class JobResource {
                     .entity("workflow name is mandatory if trigger name is specified").build();
         }
 
+        if (createdAfter < 0 && createdBefore < 0) {
+            createdAfter = timeInMillisBeforeDays(numberOfDays);
+            createdBefore = System.currentTimeMillis();
+        } else if (createdBefore > 0 && createdAfter < 0) {
+            createdAfter = 0;
+        } else if (createdBefore < 0) {
+            createdBefore = System.currentTimeMillis();
+        }
+
         final List<Job> jobs;
         if (triggerName != null) {
             logger.info("Received request to get all jobs for workflow {} submitted by trigger {}" +
                             " in date range {} under namespace {}",
                     workflowName, triggerName, numberOfDays, namespace);
-            jobs = JobService.getService().get(workflowName, triggerName, namespace, numberOfDays);
+            jobs = JobService.getService().get(workflowName, triggerName, namespace, createdAfter, createdBefore);
         } else if (workflowName != null) {
             logger.info("Received request to get all jobs for workflow {} in date range {} under namespace {}",
                     workflowName, numberOfDays, namespace);
-            jobs = JobService.getService().get(workflowName, namespace, numberOfDays);
+            jobs = JobService.getService().get(workflowName, createdAfter, createdBefore);
         } else {
             logger.info("Received request to get all jobs in date range {} under namespace {}",
                     numberOfDays, namespace);
-            jobs = JobService.getService().get(namespace, numberOfDays);
+            jobs = JobService.getService().get(namespace, createdAfter, createdBefore);
         }
         return Response.status(OK).entity(jobs.stream().sorted(comparing(Job::getCreatedAt).reversed())
                 .collect(Collectors.toList())).build();
@@ -99,13 +113,18 @@ public class JobResource {
                            @PathParam("id") String id,
                            @HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
         logger.info("Received request to get job with id {} under namespace {}", id, namespace);
-        JobId jobId = JobId.build(id, namespace);
-        final Job job = JobService.getService().get(jobId);
+        final Job job = JobService.getService().get(id, namespace);
         if (job == null) {
             logger.error("No job exists with id {} under namespace {}", id, namespace);
             return Response.status(NOT_FOUND).build();
         }
         final List<Task> tasks = JobService.getService().getTasks(job);
         return Response.status(OK).entity(JobResponse.create(job, tasks)).build();
+    }
+
+    private long timeInMillisBeforeDays(int numberOfDays) {
+        final long currentTimeMillis = System.currentTimeMillis();
+        return numberOfDays == -1 ? 0 : currentTimeMillis - (currentTimeMillis % TimeUnit.DAYS.toMillis(1))
+                - TimeUnit.DAYS.toMillis(numberOfDays - 1);
     }
 }

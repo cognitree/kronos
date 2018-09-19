@@ -21,10 +21,17 @@ import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.scheduler.model.JobId;
 
 import java.util.List;
+import java.util.Map;
 
 public class MockJobStore implements JobStore {
+
     @Override
     public List<Job> load(String namespace) {
+        return null;
+    }
+
+    @Override
+    public Job load(String jobId, String namespace) {
         return null;
     }
 
@@ -40,6 +47,16 @@ public class MockJobStore implements JobStore {
 
     @Override
     public List<Job> loadByWorkflowName(String workflowName, String namespace, long createdAfter, long createdBefore) {
+        return null;
+    }
+
+    @Override
+    public Map<Job.Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore) {
+        return null;
+    }
+
+    @Override
+    public Map<Job.Status, Integer> groupByStatusForWorkflowName(String workflowName, String namespace, long createdAfter, long createdBefore) {
         return null;
     }
 

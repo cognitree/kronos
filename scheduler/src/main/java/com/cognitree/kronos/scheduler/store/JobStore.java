@@ -18,9 +18,11 @@
 package com.cognitree.kronos.scheduler.store;
 
 import com.cognitree.kronos.scheduler.model.Job;
+import com.cognitree.kronos.scheduler.model.Job.Status;
 import com.cognitree.kronos.scheduler.model.JobId;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * An interface exposing API's to provide {@link Job} persistence.
@@ -31,9 +33,16 @@ public interface JobStore extends Store<Job, JobId> {
 
     List<Job> load(String namespace, long createdAfter, long createdBefore) throws StoreException;
 
-    List<Job> loadByWorkflowNameAndTriggerName(String workflowName, String triggerName, String namespace,
-                                               long createdAfter, long createdBefore) throws StoreException;
+    Job load(String jobId, String namespace) throws StoreException;
 
     List<Job> loadByWorkflowName(String workflowName, String namespace,
                                  long createdAfter, long createdBefore) throws StoreException;
+
+    List<Job> loadByWorkflowNameAndTriggerName(String workflowName, String triggerName, String namespace,
+                                               long createdAfter, long createdBefore) throws StoreException;
+
+    Map<Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore) throws StoreException;
+
+    Map<Status, Integer> groupByStatusForWorkflowName(String workflowName, String namespace,
+                                                      long createdAfter, long createdBefore) throws StoreException;
 }
