@@ -30,6 +30,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,6 +70,14 @@ public class StdJDBCJobStore implements JobStore {
     private static final String LOAD_JOB_BY_NAME_TRIGGER_CREATED_BETWEEN = "SELECT * FROM " + TABLE_JOBS + " WHERE "
             + COL_WORKFLOW_NAME + " = ? AND " + COL_TRIGGER_NAME + " = ? AND " + COL_NAMESPACE + " = ? AND "
             + COL_CREATED_AT + " > ? AND " + COL_CREATED_AT + " < ?";
+    private static final String LOAD_JOB_BY_STATUS_IN_CREATED_BETWEEN = "SELECT * FROM " + TABLE_JOBS + " WHERE "
+            + COL_STATUS + " IN ($statuses) AND" + COL_NAMESPACE + " = ? AND " + COL_CREATED_AT + " > ? AND " + COL_CREATED_AT + " < ?";
+    private static final String LOAD_JOB_BY_NAME_STATUS_IN_CREATED_BETWEEN = "SELECT * FROM " + TABLE_JOBS + " WHERE "
+            + COL_WORKFLOW_NAME + " = ? AND " + COL_STATUS + " IN ($statuses) AND" + COL_NAMESPACE + " = ? AND " +
+            COL_CREATED_AT + " > ? AND " + COL_CREATED_AT + " < ?";
+    private static final String LOAD_JOB_BY_NAME_TRIGGER_STATUS_IN_CREATED_BETWEEN = "SELECT * FROM " + TABLE_JOBS +
+            " WHERE " + COL_WORKFLOW_NAME + " = ? AND " + COL_TRIGGER_NAME + " = ? AND " + COL_STATUS +
+            " IN ($statuses) AND" + COL_NAMESPACE + " = ? AND " + COL_CREATED_AT + " > ? AND " + COL_CREATED_AT + " < ?";
     private static final String GROUP_BY_STATUS_JOB_CREATED_BETWEEN = "SELECT STATUS, COUNT(*) FROM "
             + TABLE_JOBS + " WHERE " + COL_NAMESPACE + " = ? AND " + COL_CREATED_AT + " > ? " +
             "AND " + COL_CREATED_AT + " < ? GROUP BY " + COL_STATUS;
@@ -232,6 +241,97 @@ public class StdJDBCJobStore implements JobStore {
             throw new StoreException(e.getMessage(), e.getCause());
         }
     }
+
+    @Override
+    public List<Job> loadByStatusIn(List<Status> statuses, String namespace, long createdAfter, long createdBefore) throws StoreException {
+        logger.debug("Received request to get jobs with status in {} under namespace {}, created after {}",
+                statuses, namespace, createdAfter);
+        String placeHolders = String.join(",", Collections.nCopies(statuses.size(), "?"));
+        final String sqlQuery = LOAD_JOB_BY_STATUS_IN_CREATED_BETWEEN.replace("$statuses", placeHolders);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+            int paramIndex = 0;
+            for (Job.Status status : statuses) {
+                preparedStatement.setString(++paramIndex, status.name());
+            }
+            preparedStatement.setString(++paramIndex, namespace);
+            preparedStatement.setLong(++paramIndex, createdAfter);
+            preparedStatement.setLong(++paramIndex, createdBefore);
+            final ResultSet resultSet = preparedStatement.executeQuery();
+            final ArrayList<Job> jobs = new ArrayList<>();
+            while (resultSet.next()) {
+                jobs.add(getJob(resultSet));
+            }
+            return jobs;
+        } catch (Exception e) {
+            logger.error("Error fetching jobs with status in {} under namespace {}, created after {}",
+                    statuses, namespace, createdAfter, e);
+            throw new StoreException(e.getMessage(), e.getCause());
+        }
+    }
+
+    @Override
+    public List<Job> loadByWorkflowNameAndStatusIn(String workflowName, List<Job.Status> statuses, String namespace,
+                                                   long createdAfter, long createdBefore) throws StoreException {
+        logger.debug("Received request to get jobs having workflow name {} with status in {} under namespace {}, created after {}",
+                workflowName, statuses, namespace, createdAfter);
+        String placeHolders = String.join(",", Collections.nCopies(statuses.size(), "?"));
+        final String sqlQuery = LOAD_JOB_BY_NAME_STATUS_IN_CREATED_BETWEEN.replace("$statuses", placeHolders);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+            int paramIndex = 0;
+            preparedStatement.setString(++paramIndex, workflowName);
+            for (Job.Status status : statuses) {
+                preparedStatement.setString(++paramIndex, status.name());
+            }
+            preparedStatement.setString(++paramIndex, namespace);
+            preparedStatement.setLong(++paramIndex, createdAfter);
+            preparedStatement.setLong(++paramIndex, createdBefore);
+            final ResultSet resultSet = preparedStatement.executeQuery();
+            final ArrayList<Job> jobs = new ArrayList<>();
+            while (resultSet.next()) {
+                jobs.add(getJob(resultSet));
+            }
+            return jobs;
+        } catch (Exception e) {
+            logger.error("Error fetching jobs having workflow name {} with status in {} under namespace {}, created after {}",
+                    workflowName, statuses, namespace, createdAfter, e);
+            throw new StoreException(e.getMessage(), e.getCause());
+        }
+    }
+
+    @Override
+    public List<Job> loadByWorkflowNameAndTriggerNameAndStatusIn(String workflowName, String triggerName,
+                                                                 List<Job.Status> statuses, String namespace,
+                                                                 long createdAfter, long createdBefore) throws StoreException {
+        logger.debug("Received request to get jobs having workflow name {}, trigger name {} with status in {} " +
+                "under namespace {}, created after {}", workflowName, triggerName, statuses, namespace, createdAfter);
+        String placeHolders = String.join(",", Collections.nCopies(statuses.size(), "?"));
+        final String sqlQuery = LOAD_JOB_BY_NAME_TRIGGER_STATUS_IN_CREATED_BETWEEN.replace("$statuses", placeHolders);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
+            int paramIndex = 0;
+            preparedStatement.setString(++paramIndex, workflowName);
+            preparedStatement.setString(++paramIndex, triggerName);
+            for (Job.Status status : statuses) {
+                preparedStatement.setString(++paramIndex, status.name());
+            }
+            preparedStatement.setString(++paramIndex, namespace);
+            preparedStatement.setLong(++paramIndex, createdAfter);
+            preparedStatement.setLong(++paramIndex, createdBefore);
+            final ResultSet resultSet = preparedStatement.executeQuery();
+            final ArrayList<Job> jobs = new ArrayList<>();
+            while (resultSet.next()) {
+                jobs.add(getJob(resultSet));
+            }
+            return jobs;
+        } catch (Exception e) {
+            logger.error("Error fetching jobs having workflow name {}, trigger name {} with status in {} under " +
+                    "namespace {}, created after {}", workflowName, triggerName, statuses, namespace, createdAfter, e);
+            throw new StoreException(e.getMessage(), e.getCause());
+        }
+    }
+
 
     @Override
     public Map<Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore) throws StoreException {

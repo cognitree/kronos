@@ -125,6 +125,7 @@ public class MailService implements Service {
         public JobNotificationHandler() {
             VelocityEngine velocityEngine = new VelocityEngine();
             velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
+            velocityEngine.setProperty("runtime.log.logsystem.class", "org.apache.velocity.runtime.log.NullLogChute");
             velocityEngine.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
             subjectTemplate = velocityEngine.getTemplate(JOB_SUBJECT_TEMPLATE_VM);
             bodyTemplate = velocityEngine.getTemplate(JOB_BODY_TEMPLATE_VM);
@@ -210,6 +211,7 @@ public class MailService implements Service {
         public TaskNotificationHandler() {
             VelocityEngine velocityEngine = new VelocityEngine();
             velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
+            velocityEngine.setProperty("runtime.log.logsystem.class", "org.apache.velocity.runtime.log.NullLogChute");
             velocityEngine.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
             subjectTemplate = velocityEngine.getTemplate(TASK_SUBJECT_TEMPLATE_VM);
             bodyTemplate = velocityEngine.getTemplate(TASK_BODY_TEMPLATE_VM);
