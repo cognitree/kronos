@@ -54,6 +54,8 @@ import static com.cognitree.kronos.scheduler.model.Job.Status.FAILED;
 import static com.cognitree.kronos.scheduler.model.Job.Status.RUNNING;
 import static com.cognitree.kronos.scheduler.model.Job.Status.SUCCESSFUL;
 import static org.quartz.JobBuilder.newJob;
+import static org.quartz.impl.DirectSchedulerFactory.DEFAULT_INSTANCE_ID;
+import static org.quartz.impl.DirectSchedulerFactory.DEFAULT_SCHEDULER_NAME;
 
 /**
  * A workflow scheduler service is responsible for scheduling quartz job to execute the workflow.
@@ -79,11 +81,11 @@ public final class WorkflowSchedulerService implements Service {
         JobStore jobStore = storeService.getQuartzJobStore();
         SimpleThreadPool threadPool = new SimpleThreadPool(Runtime.getRuntime().availableProcessors(),
                 Thread.NORM_PRIORITY);
-        DirectSchedulerFactory.getInstance().createScheduler(threadPool, jobStore);
-
-        scheduler = DirectSchedulerFactory.getInstance().getScheduler();
+        threadPool.setInstanceName(DEFAULT_SCHEDULER_NAME);
+        threadPool.setInstanceId(DEFAULT_INSTANCE_ID);
+        DirectSchedulerFactory.getInstance().createScheduler(DEFAULT_SCHEDULER_NAME, DEFAULT_INSTANCE_ID, threadPool, jobStore);
+        scheduler = DirectSchedulerFactory.getInstance().getScheduler(DEFAULT_SCHEDULER_NAME);
         scheduler.start();
-        threadPool.setThreadNamePrefix(scheduler.getSchedulerName());
         TaskService.getService().registerListener(new WorkflowLifecycleHandler());
 
         ServiceProvider.registerService(this);

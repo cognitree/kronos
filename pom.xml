@@ -98,9 +98,9 @@
         <module>scheduler</module>
         <module>executor</module>
         <module>api</module>
-        <module>web-server</module>
-        <module>test</module>
         <module>extensions</module>
-        <module>dist</module>
+        <module>test</module>
+        <module>assembly</module>
+        <module>web-server</module>
     </modules>
 </project>
