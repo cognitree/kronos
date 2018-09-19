@@ -56,7 +56,7 @@ public class StdJDBCTaskStore implements TaskStore {
     private static final Logger logger = LoggerFactory.getLogger(StdJDBCTaskStore.class);
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final String INSERT_TASK = "INSERT INTO " + TABLE_TASKS + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    private static final String INSERT_TASK = "INSERT INTO " + TABLE_TASKS + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_TASK = "UPDATE " + TABLE_TASKS + " SET " + COL_STATUS + " = ?, "
             + COL_STATUS_MESSAGE + " = ?, " + COL_SUBMITTED_AT + " = ?, " + COL_COMPLETED_AT + " = ?, "
             + COL_CONTEXT + " = ? WHERE " + COL_NAME + " = ? AND " + COL_JOB_ID + " = ? " +
@@ -102,7 +102,6 @@ public class StdJDBCTaskStore implements TaskStore {
             preparedStatement.setString(++paramIndex, task.getWorkflow());
             preparedStatement.setString(++paramIndex, task.getNamespace());
             preparedStatement.setString(++paramIndex, task.getType());
-            preparedStatement.setString(++paramIndex, task.getTimeoutPolicy());
             preparedStatement.setString(++paramIndex, task.getMaxExecutionTime());
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(task.getDependsOn()));
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(task.getProperties()));
@@ -295,7 +294,6 @@ public class StdJDBCTaskStore implements TaskStore {
         task.setWorkflow(resultSet.getString(++paramIndex));
         task.setNamespace(resultSet.getString(++paramIndex));
         task.setType(resultSet.getString(++paramIndex));
-        task.setTimeoutPolicy(resultSet.getString(++paramIndex));
         task.setMaxExecutionTime(resultSet.getString(++paramIndex));
         task.setDependsOn(MAPPER.readValue(resultSet.getString(++paramIndex), DEPENDS_ON_TYPE_REF));
         task.setProperties(MAPPER.readValue(resultSet.getString(++paramIndex), PROPERTIES_TYPE_REF));

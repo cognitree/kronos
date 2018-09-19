@@ -93,7 +93,6 @@ public class TaskService implements Service {
         task.setNamespace(namespace);
         task.setType(workflowTask.getType());
         task.setMaxExecutionTime(workflowTask.getMaxExecutionTime());
-        task.setTimeoutPolicy(workflowTask.getTimeoutPolicy());
         task.setDependsOn(workflowTask.getDependsOn());
         task.setProperties(workflowTask.getProperties());
         task.setCreatedAt(System.currentTimeMillis());

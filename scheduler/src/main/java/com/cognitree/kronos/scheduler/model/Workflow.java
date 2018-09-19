@@ -104,8 +104,6 @@ public class Workflow extends WorkflowId {
         private List<String> dependsOn = new ArrayList<>();
 
         private String maxExecutionTime = "1d";
-        private String timeoutPolicy;
-
         private boolean isEnabled = true;
 
         public String getName() {
@@ -148,14 +146,6 @@ public class Workflow extends WorkflowId {
             this.maxExecutionTime = maxExecutionTime;
         }
 
-        public String getTimeoutPolicy() {
-            return timeoutPolicy;
-        }
-
-        public void setTimeoutPolicy(String timeoutPolicy) {
-            this.timeoutPolicy = timeoutPolicy;
-        }
-
         public boolean isEnabled() {
             return isEnabled;
         }
@@ -174,14 +164,13 @@ public class Workflow extends WorkflowId {
                     Objects.equals(type, that.type) &&
                     Objects.equals(properties, that.properties) &&
                     Objects.equals(dependsOn, that.dependsOn) &&
-                    Objects.equals(maxExecutionTime, that.maxExecutionTime) &&
-                    Objects.equals(timeoutPolicy, that.timeoutPolicy);
+                    Objects.equals(maxExecutionTime, that.maxExecutionTime);
         }
 
         @Override
         public int hashCode() {
 
-            return Objects.hash(name, type, properties, dependsOn, maxExecutionTime, timeoutPolicy, isEnabled);
+            return Objects.hash(name, type, properties, dependsOn, maxExecutionTime, isEnabled);
         }
 
         @Override
@@ -192,7 +181,6 @@ public class Workflow extends WorkflowId {
                     ", properties=" + properties +
                     ", dependsOn=" + dependsOn +
                     ", maxExecutionTime='" + maxExecutionTime + '\'' +
-                    ", timeoutPolicy='" + timeoutPolicy + '\'' +
                     ", isEnabled=" + isEnabled +
                     '}';
         }

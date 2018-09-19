@@ -35,7 +35,6 @@ import static com.cognitree.kronos.model.Task.Status.CREATED;
 public class Task extends TaskId {
 
     private String type;
-    private String timeoutPolicy;
     private String maxExecutionTime;
     private List<String> dependsOn = new ArrayList<>();
     private Map<String, Object> properties = new HashMap<>();
@@ -53,14 +52,6 @@ public class Task extends TaskId {
 
     public void setType(String type) {
         this.type = type;
-    }
-
-    public String getTimeoutPolicy() {
-        return timeoutPolicy;
-    }
-
-    public void setTimeoutPolicy(String timeoutPolicy) {
-        this.timeoutPolicy = timeoutPolicy;
     }
 
     public String getMaxExecutionTime() {
@@ -154,7 +145,6 @@ public class Task extends TaskId {
     public String toString() {
         return "Task{" +
                 "type='" + type + '\'' +
-                ", timeoutPolicy='" + timeoutPolicy + '\'' +
                 ", maxExecutionTime='" + maxExecutionTime + '\'' +
                 ", dependsOn=" + dependsOn +
                 ", properties=" + properties +

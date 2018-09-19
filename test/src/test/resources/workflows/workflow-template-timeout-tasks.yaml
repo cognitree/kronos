@@ -17,4 +17,3 @@ tasks:
       keyA: valA
       keyB: valB
     maxExecutionTime: 100
-    timeoutPolicy: mockPolicy

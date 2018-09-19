@@ -33,7 +33,6 @@ public class MockTaskBuilder {
     private String namespace;
     private String job;
     private String type;
-    private String timeoutPolicy;
     private String maxExecutionTime = "1h";
     private List<String> dependsOn = new ArrayList<>();
     private Map<String, Object> properties = new HashMap<>();
@@ -64,11 +63,6 @@ public class MockTaskBuilder {
 
     public MockTaskBuilder setType(String type) {
         this.type = type;
-        return this;
-    }
-
-    public MockTaskBuilder setTimeoutPolicy(String timeoutPolicy) {
-        this.timeoutPolicy = timeoutPolicy;
         return this;
     }
 
@@ -115,7 +109,6 @@ public class MockTaskBuilder {
         task.setType(type);
         task.setStatus(status);
         task.setStatusMessage(statusMessage);
-        task.setTimeoutPolicy(timeoutPolicy);
         task.setMaxExecutionTime(maxExecutionTime);
         task.setProperties(properties);
         task.setDependsOn(dependsOn);
