@@ -47,6 +47,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparing;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 
@@ -57,7 +58,10 @@ public class WorkflowJobResource {
     private static final String DEFAULT_DAYS = "10";
 
     @GET
-    @ApiOperation(value = "Get all running or executed jobs for a workflow", response = Job.class, responseContainer = "List")
+    @ApiOperation(value = "Get all running or executed jobs for a workflow", response = Job.class, responseContainer = "List",
+            notes = "query param 'from' and 'to' takes precedence over 'date_range'. " +
+                    "If 'from' is specified without 'to' it means get all jobs from 'from' timestamp till now." +
+                    "If 'to' is specified without 'from' it means get all jobs from beginning till 'from' timestamp")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllJobs(@ApiParam(value = "workflow name", required = true)
                                @PathParam("workflow") String workflowName,
@@ -66,21 +70,24 @@ public class WorkflowJobResource {
                                @ApiParam(value = "job status", allowMultiple = true)
                                @QueryParam("status") List<Status> statuses,
                                @ApiParam(value = "Start time of the range")
-                               @DefaultValue("-1") @QueryParam("from") long createdAfter,
+                               @QueryParam("from") long createdAfter,
                                @ApiParam(value = "End time of the range")
-                               @DefaultValue("-1") @QueryParam("to") long createdBefore,
+                               @QueryParam("to") long createdBefore,
                                @ApiParam(value = "Number of days to fetch jobs from today", defaultValue = "10")
                                @DefaultValue(DEFAULT_DAYS) @QueryParam("date_range") int numberOfDays,
                                @HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
         logger.info("Received request to get all jobs for workflow {} with param trigger name {}, status in {}" +
                         ", date range {}, from {}, to {}, namespace {}",
                 workflowName, triggerName, statuses, numberOfDays, createdAfter, createdBefore, namespace);
-        if (createdAfter < 0 && createdBefore < 0) {
+        if (namespace == null || namespace.isEmpty()) {
+            return Response.status(BAD_REQUEST).entity("missing namespace header").build();
+        }
+        if (createdAfter <= 0 && createdBefore <= 0) {
             createdAfter = timeInMillisBeforeDays(numberOfDays);
             createdBefore = System.currentTimeMillis();
-        } else if (createdBefore > 0 && createdAfter < 0) {
+        } else if (createdBefore > 0 && createdAfter <= 0) {
             createdAfter = 0;
-        } else if (createdBefore < 0) {
+        } else if (createdBefore <= 0) {
             createdBefore = System.currentTimeMillis();
         }
 
@@ -105,7 +112,7 @@ public class WorkflowJobResource {
 
     @GET
     @Path("{id}")
-    @ApiOperation(value = "Get job with id for a workflow", response = JobResponse.class)
+    @ApiOperation(value = "Get job by id for a workflow", response = JobResponse.class)
     @ApiResponses(value = {
             @ApiResponse(code = 404, message = "Job not found")})
     @Produces(MediaType.APPLICATION_JSON)
@@ -115,6 +122,9 @@ public class WorkflowJobResource {
                            @PathParam("id") String id,
                            @HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
         logger.info("Received request to get job with id {} under namespace {}", id, namespace);
+        if (namespace == null || namespace.isEmpty()) {
+            return Response.status(BAD_REQUEST).entity("missing namespace header").build();
+        }
         final JobId jobId = JobId.build(id, workflowName, namespace);
         final Job job = JobService.getService().get(jobId);
         if (job == null) {

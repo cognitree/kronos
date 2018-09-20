@@ -45,17 +45,20 @@ import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.TABLE_W
  */
 public class StdJDBCWorkflowStore implements WorkflowStore {
     private static final Logger logger = LoggerFactory.getLogger(StdJDBCWorkflowStore.class);
-
     private static final ObjectMapper MAPPER = new ObjectMapper();
+
     private static final String INSERT_WORKFLOW = "INSERT INTO " + TABLE_WORKFLOWS + " VALUES (?,?,?,?)";
-    private static final String LOAD_ALL_WORKFLOW_BY_NAMESPACE = "SELECT * FROM " + TABLE_WORKFLOWS + " " + "WHERE "
-            + COL_NAMESPACE + " = ?";
-    private static final String UPDATE_WORKFLOW = "UPDATE " + TABLE_WORKFLOWS + " set " + COL_DESCRIPTION + " = ?, " +
-            " " + COL_TASKS + " = ? WHERE " + COL_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
-    private static final String DELETE_WORKFLOW = "DELETE FROM " + TABLE_WORKFLOWS + " WHERE "
-            + COL_NAME + " = ? " + "AND " + COL_NAMESPACE + " = ?";
+
     private static final String LOAD_WORKFLOW = "SELECT * FROM " + TABLE_WORKFLOWS + " WHERE "
             + COL_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
+    private static final String LOAD_ALL_WORKFLOW_BY_NAMESPACE = "SELECT * FROM " + TABLE_WORKFLOWS + " " + "WHERE "
+            + COL_NAMESPACE + " = ?";
+
+    private static final String UPDATE_WORKFLOW = "UPDATE " + TABLE_WORKFLOWS + " set " + COL_DESCRIPTION + " = ?, " +
+            " " + COL_TASKS + " = ? WHERE " + COL_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
+
+    private static final String DELETE_WORKFLOW = "DELETE FROM " + TABLE_WORKFLOWS + " WHERE "
+            + COL_NAME + " = ? " + "AND " + COL_NAMESPACE + " = ?";
 
     private static final TypeReference<List<WorkflowTask>> WORKFLOW_TASK_LIST_TYPE_REF =
             new TypeReference<List<WorkflowTask>>() {
@@ -79,14 +82,14 @@ public class StdJDBCWorkflowStore implements WorkflowStore {
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(workflow.getTasks()));
             preparedStatement.execute();
         } catch (Exception e) {
-            logger.error("Error storing workflow {} into database", workflow, e);
+            logger.error("Error storing workflow {}", workflow, e);
             throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
     @Override
     public List<Workflow> load(String namespace) throws StoreException {
-        logger.debug("Received request to get all workflows in namespace {}", namespace);
+        logger.debug("Received request to get all workflow under namespace {}", namespace);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_ALL_WORKFLOW_BY_NAMESPACE)) {
             int paramIndex = 0;
@@ -98,7 +101,7 @@ public class StdJDBCWorkflowStore implements WorkflowStore {
             }
             return workflows;
         } catch (Exception e) {
-            logger.error("Error fetching all workflows from database in namespace {}", namespace, e);
+            logger.error("Error fetching all workflow under namespace {}", namespace, e);
             throw new StoreException(e.getMessage(), e.getCause());
         }
     }
@@ -116,7 +119,7 @@ public class StdJDBCWorkflowStore implements WorkflowStore {
                 return getWorkflow(resultSet);
             }
         } catch (Exception e) {
-            logger.error("Error fetching workflow with id {} from database", workflowId, e);
+            logger.error("Error fetching workflow with id {}", workflowId, e);
             throw new StoreException(e.getMessage(), e.getCause());
         }
         return null;
@@ -134,7 +137,7 @@ public class StdJDBCWorkflowStore implements WorkflowStore {
             preparedStatement.setString(++paramIndex, workflow.getNamespace());
             preparedStatement.execute();
         } catch (Exception e) {
-            logger.error("Error updating workflow {} into database", workflow, e);
+            logger.error("Error updating workflow to {}", workflow, e);
             throw new StoreException(e.getMessage(), e.getCause());
         }
     }
@@ -149,7 +152,7 @@ public class StdJDBCWorkflowStore implements WorkflowStore {
             preparedStatement.setString(++paramIndex, workflowId.getNamespace());
             preparedStatement.executeUpdate();
         } catch (Exception e) {
-            logger.error("Error deleting workflow with id {} from database", workflowId, e);
+            logger.error("Error deleting workflow with id {}", workflowId, e);
             throw new StoreException(e.getMessage(), e.getCause());
         }
     }

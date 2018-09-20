@@ -25,6 +25,7 @@ import com.cognitree.kronos.scheduler.model.Job.Status;
 import com.cognitree.kronos.scheduler.model.JobId;
 import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.NamespaceId;
+import com.cognitree.kronos.scheduler.model.WorkflowId;
 import com.cognitree.kronos.scheduler.store.JobStore;
 import com.cognitree.kronos.scheduler.store.StoreException;
 import com.cognitree.kronos.scheduler.store.StoreService;
@@ -39,7 +40,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import static com.cognitree.kronos.scheduler.ValidationError.JOB_NOT_FOUND;
 import static com.cognitree.kronos.scheduler.ValidationError.NAMESPACE_NOT_FOUND;
+import static com.cognitree.kronos.scheduler.ValidationError.WORKFLOW_NOT_FOUND;
 
 public class JobService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(JobService.class);
@@ -64,10 +67,10 @@ public class JobService implements Service {
         ServiceProvider.registerService(this);
     }
 
-    public Job create(String workflowName, String triggerName, String namespace) throws ServiceException, ValidationException {
+    Job create(String workflowName, String triggerName, String namespace) throws ServiceException, ValidationException {
         logger.debug("Received request to create job from workflow {}, trigger {} under namespace {}",
                 workflowName, triggerName, namespace);
-        validateNamespace(namespace);
+        validateWorkflow(workflowName, namespace);
         final Job job = new Job();
         job.setId(UUID.randomUUID().toString());
         job.setWorkflow(workflowName);
@@ -116,20 +119,9 @@ public class JobService implements Service {
 
     public Job get(JobId jobId) throws ServiceException, ValidationException {
         logger.debug("Received request to get job {}", jobId);
-        validateNamespace(jobId.getNamespace());
+        validateWorkflow(jobId.getWorkflow(), jobId.getNamespace());
         try {
             return jobStore.load(jobId);
-        } catch (StoreException e) {
-            logger.error("unable to get job {}", jobId, e);
-            throw new ServiceException(e.getMessage());
-        }
-    }
-
-    public Job get(String jobId, String namespace) throws ServiceException, ValidationException {
-        logger.debug("Received request to get job {} under namespace {}", jobId, namespace);
-        validateNamespace(namespace);
-        try {
-            return jobStore.load(jobId, namespace);
         } catch (StoreException e) {
             logger.error("unable to get job {}", jobId, e);
             throw new ServiceException(e.getMessage());
@@ -153,7 +145,7 @@ public class JobService implements Service {
     public List<Job> get(String workflowName, String namespace, long createdAfter, long createdBefore) throws ServiceException, ValidationException {
         logger.debug("Received request to get all jobs with workflow name {} under namespace {} created between {} to {}",
                 workflowName, namespace, createdAfter, createdBefore);
-        validateNamespace(namespace);
+        validateWorkflow(workflowName, namespace);
         try {
             final List<Job> jobs = jobStore.loadByWorkflowName(workflowName, namespace, createdAfter, createdBefore);
             return jobs == null ? Collections.emptyList() : jobs;
@@ -168,7 +160,7 @@ public class JobService implements Service {
                          long createdAfter, long createdBefore) throws ServiceException, ValidationException {
         logger.debug("Received request to get all jobs with workflow name {}, trigger {} under namespace {} " +
                 "created between {} to {}", workflowName, triggerName, namespace, createdAfter, createdBefore);
-        validateNamespace(namespace);
+        validateWorkflow(workflowName, namespace);
         try {
             final List<Job> jobs = jobStore.loadByWorkflowNameAndTriggerName(workflowName, triggerName, namespace,
                     createdAfter, createdBefore);
@@ -200,7 +192,7 @@ public class JobService implements Service {
                          long createdAfter, long createdBefore) throws ServiceException, ValidationException {
         logger.debug("Received request to get all jobs with workflow name {} with status in {} under namespace {} " +
                 "created between {} to {}", workflowName, statusIn, namespace, createdAfter, createdBefore);
-        validateNamespace(namespace);
+        validateWorkflow(workflowName, namespace);
         try {
             final List<Job> jobs =
                     jobStore.loadByWorkflowNameAndStatusIn(workflowName, statusIn, namespace, createdAfter, createdBefore);
@@ -217,7 +209,7 @@ public class JobService implements Service {
         logger.debug("Received request to get all jobs with workflow name {}, trigger {} with status in {} " +
                         "under namespace {} created between {} to {}",
                 workflowName, triggerName, statusIn, namespace, createdAfter, createdBefore);
-        validateNamespace(namespace);
+        validateWorkflow(workflowName, namespace);
         try {
             final List<Job> jobs =
                     jobStore.loadByWorkflowNameAndTriggerNameAndStatusIn(workflowName, triggerName, statusIn,
@@ -233,7 +225,7 @@ public class JobService implements Service {
 
     public List<Task> getTasks(JobId jobId) throws ServiceException, ValidationException {
         logger.debug("Received request to get all tasks executed for job {}", jobId);
-        validateNamespace(jobId.getNamespace());
+        validateWorkflow(jobId.getWorkflow(), jobId.getNamespace());
         try {
             return TaskService.getService().get(jobId.getId(), jobId.getWorkflow(), jobId.getNamespace());
         } catch (ServiceException e) {
@@ -270,7 +262,7 @@ public class JobService implements Service {
             throws ValidationException, ServiceException {
         logger.debug("Received request  to group jobs by status for workflow {} under namespace {} created " +
                 "between {} to {}", workflowName, namespace, createdAfter, createdBefore);
-        validateNamespace(namespace);
+        validateWorkflow(workflowName, namespace);
         try {
             return jobStore.groupByStatusForWorkflowName(workflowName, namespace, createdAfter, createdBefore);
         } catch (StoreException e) {
@@ -280,21 +272,14 @@ public class JobService implements Service {
         }
     }
 
-    public void update(Job job) throws ServiceException, ValidationException {
-        logger.debug("Received request to update job to {}", job);
-        validateNamespace(job.getNamespace());
-        try {
-            jobStore.update(job);
-        } catch (StoreException e) {
-            logger.error("unable to update job to {}", job, e);
-            throw new ServiceException(e.getMessage());
-        }
-    }
-
-    public void updateStatus(JobId jobId, Status status) throws ServiceException, ValidationException {
+    void updateStatus(JobId jobId, Status status) throws ServiceException, ValidationException {
         logger.debug("Received request to update job {} status to {}", jobId, status);
+        validateWorkflow(jobId.getWorkflow(), jobId.getNamespace());
         try {
             final Job job = get(jobId);
+            if (job == null) {
+                throw JOB_NOT_FOUND.createException(jobId.getId(), jobId.getWorkflow(), jobId.getNamespace());
+            }
             Status currentStatus = job.getStatus();
             job.setStatus(status);
             switch (status) {
@@ -328,7 +313,7 @@ public class JobService implements Service {
 
     public void delete(JobId jobId) throws ServiceException, ValidationException {
         logger.debug("Received request to delete job {}", jobId);
-        validateNamespace(jobId.getNamespace());
+        validateWorkflow(jobId.getWorkflow(), jobId.getNamespace());
         try {
             jobStore.delete(jobId);
         } catch (StoreException e) {
@@ -337,10 +322,29 @@ public class JobService implements Service {
         }
     }
 
+    public void delete(String workflowName, String namespace) throws ServiceException, ValidationException {
+        logger.debug("Received request to delete all jobs with workflow name {} under namespace", workflowName, namespace);
+        validateWorkflow(workflowName, namespace);
+        try {
+            jobStore.deleteByWorkflowName(workflowName, namespace);
+        } catch (StoreException e) {
+            logger.error("unable to delete all jobs with workflow name {} under namespace", workflowName, namespace, e);
+            throw new ServiceException(e.getMessage());
+        }
+    }
+
     private void validateNamespace(String name) throws ValidationException, ServiceException {
         final Namespace namespace = NamespaceService.getService().get(NamespaceId.build(name));
         if (namespace == null) {
             throw NAMESPACE_NOT_FOUND.createException(name);
+        }
+    }
+
+    private void validateWorkflow(String workflowName, String namespace) throws ServiceException, ValidationException {
+        WorkflowId workflowId = WorkflowId.build(workflowName, namespace);
+        if (WorkflowService.getService().get(workflowId) == null) {
+            logger.error("No workflow exists with name {} under namespace {}", workflowName, namespace);
+            throw WORKFLOW_NOT_FOUND.createException(workflowName, namespace);
         }
     }
 

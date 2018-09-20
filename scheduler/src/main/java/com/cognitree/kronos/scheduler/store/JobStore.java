@@ -33,8 +33,6 @@ public interface JobStore extends Store<Job, JobId> {
 
     List<Job> load(String namespace, long createdAfter, long createdBefore) throws StoreException;
 
-    Job load(String jobId, String namespace) throws StoreException;
-
     List<Job> loadByWorkflowName(String workflowName, String namespace,
                                  long createdAfter, long createdBefore) throws StoreException;
 
@@ -55,4 +53,6 @@ public interface JobStore extends Store<Job, JobId> {
 
     Map<Status, Integer> groupByStatusForWorkflowName(String workflowName, String namespace,
                                                       long createdAfter, long createdBefore) throws StoreException;
+
+    void deleteByWorkflowName(String workflowName, String namespace) throws StoreException;
 }

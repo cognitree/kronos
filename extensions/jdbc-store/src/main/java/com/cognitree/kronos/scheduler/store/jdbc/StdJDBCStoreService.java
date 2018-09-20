@@ -32,6 +32,7 @@ import org.quartz.SchedulerException;
 import org.quartz.impl.jdbcjobstore.HSQLDBDelegate;
 import org.quartz.impl.jdbcjobstore.InvalidConfigurationException;
 import org.quartz.impl.jdbcjobstore.JobStoreTX;
+import org.quartz.utils.C3p0PoolingConnectionProvider;
 import org.quartz.utils.DBConnectionManager;
 import org.quartz.utils.PoolingConnectionProvider;
 import org.slf4j.Logger;
@@ -81,6 +82,7 @@ public class StdJDBCStoreService extends StoreService {
 
     @Override
     public void init() throws Exception {
+        logger.info("Initializing JDBC store service");
         parseConfig();
         buildDataSource();
         createStore();
@@ -88,6 +90,7 @@ public class StdJDBCStoreService extends StoreService {
 
     @Override
     public void start() throws Exception {
+        logger.info("Starting JDBC store service");
         initDatabase();
         ServiceProvider.registerService(this);
     }
@@ -145,7 +148,7 @@ public class StdJDBCStoreService extends StoreService {
     }
 
     private JobStoreTX getQuartJobStore() throws SQLException, SchedulerException, InvalidConfigurationException {
-        PoolingConnectionProvider connectionProvider = new PoolingConnectionProvider(driverClass, connectionUrl,
+        PoolingConnectionProvider connectionProvider = new C3p0PoolingConnectionProvider(driverClass, connectionUrl,
                 username, password, maxIdleConnection, DB_VALIDATION_QUERY);
         DBConnectionManager.getInstance().addConnectionProvider("kronos", connectionProvider);
         JobStoreTX jdbcJobStore = new JobStoreTX();
@@ -195,6 +198,7 @@ public class StdJDBCStoreService extends StoreService {
 
     @Override
     public void stop() {
+        logger.info("Stopping JDBC store service");
         try {
             dataSource.close();
         } catch (SQLException e) {

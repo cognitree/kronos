@@ -60,9 +60,14 @@ public class MailService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(MailService.class);
     private final MailConfig mailConfig;
     private Mailer mailer;
+    private VelocityEngine velocityEngine;
 
     public MailService(MailConfig mailConfig) {
         this.mailConfig = mailConfig;
+        velocityEngine = new VelocityEngine();
+        velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
+        velocityEngine.setProperty("runtime.log.logsystem.class", "org.apache.velocity.runtime.log.NullLogChute");
+        velocityEngine.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
     }
 
     public static MailService getService() {
@@ -115,7 +120,7 @@ public class MailService implements Service {
     public void stop() {
     }
 
-    private static class JobNotificationHandler implements JobStatusChangeListener {
+    private class JobNotificationHandler implements JobStatusChangeListener {
 
         private static final String JOB_SUBJECT_TEMPLATE_VM = "job-subject-template.vm";
         private static final String JOB_BODY_TEMPLATE_VM = "job-body-template.vm";
@@ -123,10 +128,6 @@ public class MailService implements Service {
         private Template bodyTemplate;
 
         public JobNotificationHandler() {
-            VelocityEngine velocityEngine = new VelocityEngine();
-            velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
-            velocityEngine.setProperty("runtime.log.logsystem.class", "org.apache.velocity.runtime.log.NullLogChute");
-            velocityEngine.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
             subjectTemplate = velocityEngine.getTemplate(JOB_SUBJECT_TEMPLATE_VM);
             bodyTemplate = velocityEngine.getTemplate(JOB_BODY_TEMPLATE_VM);
         }
@@ -142,7 +143,7 @@ public class MailService implements Service {
                     }
                     notifyJobCompletion(job, to);
                 } catch (ServiceException | ValidationException e) {
-                    logger.error("Error handling job {} status change from {}, to {}", jobId, from, to);
+                    logger.error("Error handling job {} status change from {}, to {}", jobId, from, to, e);
                 }
             }
         }
@@ -201,7 +202,7 @@ public class MailService implements Service {
         }
     }
 
-    private static class TaskNotificationHandler implements TaskStatusChangeListener {
+    private class TaskNotificationHandler implements TaskStatusChangeListener {
 
         private static final String TASK_SUBJECT_TEMPLATE_VM = "task-subject-template.vm";
         private static final String TASK_BODY_TEMPLATE_VM = "task-body-template.vm";
@@ -209,10 +210,6 @@ public class MailService implements Service {
         private Template bodyTemplate;
 
         public TaskNotificationHandler() {
-            VelocityEngine velocityEngine = new VelocityEngine();
-            velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
-            velocityEngine.setProperty("runtime.log.logsystem.class", "org.apache.velocity.runtime.log.NullLogChute");
-            velocityEngine.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
             subjectTemplate = velocityEngine.getTemplate(TASK_SUBJECT_TEMPLATE_VM);
             bodyTemplate = velocityEngine.getTemplate(TASK_BODY_TEMPLATE_VM);
         }
@@ -226,8 +223,8 @@ public class MailService implements Service {
                     if (!task.getStatusMessage().equals(Messages.FAILED_TO_RESOLVE_DEPENDENCY)) {
                         notifyTaskFailure(task);
                     }
-                } catch (ServiceException e) {
-                    logger.error("Error handling task {} status change from {}, to {}", taskId, from, to);
+                } catch (ServiceException | ValidationException e) {
+                    logger.error("Error handling task {} status change from {}, to {}", taskId, from, to, e);
                 }
 
             }

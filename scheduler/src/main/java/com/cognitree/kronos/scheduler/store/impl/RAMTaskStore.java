@@ -51,7 +51,7 @@ public class RAMTaskStore implements TaskStore {
 
     @Override
     public List<Task> loadByStatusIn(String namespace) {
-        logger.debug("Received request to get all tasks in namespace {}", namespace);
+        logger.debug("Received request to get all tasks under namespace {}", namespace);
         List<Task> tasks = new ArrayList<>();
         this.tasks.values().forEach(task -> {
             if (task.getNamespace().equals(namespace)) {
@@ -72,8 +72,8 @@ public class RAMTaskStore implements TaskStore {
         logger.debug("Received request to get all tasks with job id {}, namespace {}", jobId, namespace);
         List<Task> tasks = new ArrayList<>();
         this.tasks.values().forEach(task -> {
-            if (task.getJob().equals(jobId) &&task.getWorkflow().equals(workflowName)
-                    && task.getNamespace().equals(namespace) ) {
+            if (task.getJob().equals(jobId) && task.getWorkflow().equals(workflowName)
+                    && task.getNamespace().equals(namespace)) {
                 tasks.add(task);
             }
         });
@@ -94,6 +94,8 @@ public class RAMTaskStore implements TaskStore {
 
     @Override
     public Map<Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore) {
+        logger.debug("Received request to group by status tasks under namespace {}, created after {}, created before {}",
+                namespace, createdAfter, createdBefore);
         Map<Status, Integer> statusMap = new HashMap<>();
         for (Status status : Status.values()) {
             statusMap.put(status, 0);
@@ -110,6 +112,8 @@ public class RAMTaskStore implements TaskStore {
     @Override
     public Map<Status, Integer> groupByStatusForWorkflowName(String workflowName, String namespace,
                                                              long createdAfter, long createdBefore) throws StoreException {
+        logger.debug("Received request to group by status tasks having workflow name {} under namespace {}, " +
+                "created after {}, created before {}", workflowName, namespace, createdAfter, createdBefore);
         Map<Status, Integer> statusMap = new HashMap<>();
         for (Status status : Status.values()) {
             statusMap.put(status, 0);

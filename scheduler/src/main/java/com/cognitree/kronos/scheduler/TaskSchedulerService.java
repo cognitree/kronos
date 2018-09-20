@@ -150,7 +150,7 @@ public final class TaskSchedulerService implements Service {
         ServiceProvider.registerService(this);
     }
 
-    private void reInitTaskProvider() throws ServiceException {
+    private void reInitTaskProvider() throws ServiceException, ValidationException {
         logger.info("Initializing task provider from task store");
         final List<Namespace> namespaces = NamespaceService.getService().get();
         final List<Task> tasks = new ArrayList<>();
@@ -259,7 +259,7 @@ public final class TaskSchedulerService implements Service {
         try {
             TaskService.getService().updateStatus(task, status, statusMessage, context);
             handleTaskStatusChange(task, status);
-        } catch (ServiceException e) {
+        } catch (ServiceException | ValidationException e) {
             logger.error("Error updating status of task {} to {} with status message {}",
                     task, status, statusMessage, e);
         }

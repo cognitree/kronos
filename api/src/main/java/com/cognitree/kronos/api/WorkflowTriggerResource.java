@@ -42,6 +42,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -58,13 +59,16 @@ public class WorkflowTriggerResource {
                                            @HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
         logger.info("Received request to get all workflow triggers for workflow {} under namespace {}",
                 workflowName, namespace);
+        if (namespace == null || namespace.isEmpty()) {
+            return Response.status(BAD_REQUEST).entity("missing namespace header").build();
+        }
         final List<WorkflowTrigger> triggers = WorkflowTriggerService.getService().get(workflowName, namespace);
         return Response.status(OK).entity(triggers).build();
     }
 
     @GET
     @Path("/{name}")
-    @ApiOperation(value = "Get workflow trigger with triggerName", response = WorkflowTrigger.class)
+    @ApiOperation(value = "Get workflow trigger by name", response = WorkflowTrigger.class)
     @ApiResponses(value = {
             @ApiResponse(code = 404, message = "Workflow trigger not found")})
     @Produces(MediaType.APPLICATION_JSON)
@@ -75,6 +79,9 @@ public class WorkflowTriggerResource {
                                        @HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
         logger.info("Received request to get workflow trigger with name {} for workflow {} under namespace {}",
                 triggerName, workflowName, namespace);
+        if (namespace == null || namespace.isEmpty()) {
+            return Response.status(BAD_REQUEST).entity("missing namespace header").build();
+        }
         WorkflowTriggerId triggerId = WorkflowTriggerId.build(triggerName, workflowName, namespace);
         final WorkflowTrigger workflowTrigger = WorkflowTriggerService.getService().get(triggerId);
         if (workflowTrigger == null) {
@@ -98,13 +105,16 @@ public class WorkflowTriggerResource {
         workflowTrigger.setNamespace(namespace);
         logger.info("Received request to create workflow trigger {} for workflow {} under namespace {}",
                 workflowTrigger, workflowName, namespace);
+        if (namespace == null || namespace.isEmpty()) {
+            return Response.status(BAD_REQUEST).entity("missing namespace header").build();
+        }
         WorkflowTriggerService.getService().add(workflowTrigger);
         return Response.status(CREATED).entity(workflowTrigger).build();
     }
 
     @DELETE
     @Path("/{name}")
-    @ApiOperation(value = "Delete workflow trigger with name")
+    @ApiOperation(value = "Delete workflow trigger by name")
     @ApiResponses(value = {
             @ApiResponse(code = 404, message = "Workflow trigger not found")})
     @Produces(MediaType.APPLICATION_JSON)
@@ -115,6 +125,9 @@ public class WorkflowTriggerResource {
                                           @HeaderParam("namespace") String namespace) throws ServiceException, SchedulerException, ValidationException {
         logger.info("Received request to delete workflow trigger with name {} for workflow {} under namespace {}",
                 triggerName, workflowName, namespace);
+        if (namespace == null || namespace.isEmpty()) {
+            return Response.status(BAD_REQUEST).entity("missing namespace header").build();
+        }
         WorkflowTriggerId triggerId = WorkflowTriggerId.build(triggerName, workflowName, namespace);
         WorkflowTriggerService.getService().delete(triggerId);
         return Response.status(OK).build();

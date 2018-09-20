@@ -62,7 +62,7 @@ public class NamespaceResource {
 
     @GET
     @Path("{name}")
-    @ApiOperation(value = "Get namespace with name", response = Namespace.class)
+    @ApiOperation(value = "Get namespace by name", response = Namespace.class)
     @ApiResponses(value = {
             @ApiResponse(code = 404, message = "Namespace not found")})
     @Produces(MediaType.APPLICATION_JSON)
@@ -108,6 +108,7 @@ public class NamespaceResource {
     @ApiOperation(value = "Delete namespace (not implemented)")
     @ApiResponses(value = {
             @ApiResponse(code = 501, message = "not implemented")})
+    @Produces(MediaType.APPLICATION_JSON)
     public Response deleteNamespace(@ApiParam(value = "namespace name", required = true)
                                     @PathParam("name") String name) {
         logger.info("Received request to delete namespace with name {}", name);

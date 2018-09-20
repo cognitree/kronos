@@ -49,7 +49,7 @@ public class RAMJobStore implements JobStore {
 
     @Override
     public List<Job> load(String namespace) {
-        logger.debug("Received request to get all jobs in namespace {}", namespace);
+        logger.debug("Received request to get all jobs under namespace {}", namespace);
         final ArrayList<Job> jobs = new ArrayList<>();
         this.jobs.values().forEach(job -> {
             if (job.getNamespace().equals(namespace)) {
@@ -63,17 +63,6 @@ public class RAMJobStore implements JobStore {
     public Job load(JobId jobId) {
         logger.debug("Received request to get job with id {}", jobId);
         return jobs.get(JobId.build(jobId.getId(), jobId.getWorkflow(), jobId.getNamespace()));
-    }
-
-    @Override
-    public Job load(String jobId, String namespace) {
-        logger.debug("Received request to get job with id {} under namespace {}", jobId, namespace);
-        for (Job job : jobs.values()) {
-            if (job.getId().equals(jobId) && job.getNamespace().equals(namespace)) {
-                return job;
-            }
-        }
-        return null;
     }
 
     @Override
@@ -92,8 +81,8 @@ public class RAMJobStore implements JobStore {
 
     @Override
     public List<Job> loadByWorkflowName(String workflowName, String namespace, long createdAfter, long createdBefore) {
-        logger.debug("Received request to get jobs with workflow name {}, namespace {}, created after {}",
-                workflowName, namespace, createdAfter);
+        logger.debug("Received request to get jobs with workflow name {}, namespace {}, created after {}, created before {}",
+                workflowName, namespace, createdAfter, createdBefore);
         final ArrayList<Job> jobs = new ArrayList<>();
         this.jobs.values().forEach(job -> {
             if (job.getWorkflow().equals(workflowName) && job.getNamespace().equals(namespace)
@@ -121,7 +110,7 @@ public class RAMJobStore implements JobStore {
     }
 
     @Override
-    public List<Job> loadByStatusIn(List<Status> statuses, String namespace, long createdAfter, long createdBefore) throws StoreException {
+    public List<Job> loadByStatusIn(List<Status> statuses, String namespace, long createdAfter, long createdBefore) {
         logger.debug("Received request to get all jobs having status in {} under namespace {}" +
                 " created after {}, created before {}", statuses, namespace, createdAfter, createdBefore);
         final ArrayList<Job> jobs = new ArrayList<>();
@@ -135,7 +124,8 @@ public class RAMJobStore implements JobStore {
     }
 
     @Override
-    public List<Job> loadByWorkflowNameAndStatusIn(String workflowName, List<Status> statuses, String namespace, long createdAfter, long createdBefore) throws StoreException {
+    public List<Job> loadByWorkflowNameAndStatusIn(String workflowName, List<Status> statuses, String namespace,
+                                                   long createdAfter, long createdBefore) {
         logger.debug("Received request to get all jobs with workflow name {} having status in {} under namespace {}" +
                 " created after {}, created before {}", workflowName, statuses, namespace, createdAfter, createdBefore);
         final ArrayList<Job> jobs = new ArrayList<>();
@@ -149,9 +139,11 @@ public class RAMJobStore implements JobStore {
     }
 
     @Override
-    public List<Job> loadByWorkflowNameAndTriggerNameAndStatusIn(String workflowName, String triggerName, List<Status> statuses, String namespace, long createdAfter, long createdBefore) throws StoreException {
-        logger.debug("Received request to get all jobs with workflow name {}, trigger name {} having status in {} under namespace {}" +
-                " created after {}, created before {}", workflowName, triggerName, statuses, namespace, createdAfter, createdBefore);
+    public List<Job> loadByWorkflowNameAndTriggerNameAndStatusIn(String workflowName, String triggerName,
+                                                                 List<Status> statuses, String namespace, long createdAfter, long createdBefore) throws StoreException {
+        logger.debug("Received request to get all jobs with workflow name {}, trigger name {} having status in {}" +
+                        " under namespace {} created after {}, created before {}",
+                workflowName, triggerName, statuses, namespace, createdAfter, createdBefore);
         final ArrayList<Job> jobs = new ArrayList<>();
         this.jobs.values().forEach(job -> {
             if (job.getWorkflow().equals(workflowName) && job.getTrigger().equals(triggerName)
@@ -165,7 +157,8 @@ public class RAMJobStore implements JobStore {
 
     @Override
     public Map<Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore) {
-        logger.debug("Received request to group by jobs status under namespace {}, created after {}", namespace, createdAfter);
+        logger.debug("Received request to group by status jobs under namespace {}, created after {}, created before {}",
+                namespace, createdAfter, createdBefore);
         Map<Status, Integer> statusMap = new HashMap<>();
         for (Status status : Status.values()) {
             statusMap.put(status, 0);
@@ -181,8 +174,8 @@ public class RAMJobStore implements JobStore {
 
     @Override
     public Map<Status, Integer> groupByStatusForWorkflowName(String workflowName, String namespace, long createdAfter, long createdBefore) {
-        logger.debug("Received request to group by status, jobs with workflow name {}, namespace {}, created after {}",
-                workflowName, namespace, createdAfter);
+        logger.debug("Received request to group by status jobs with workflow name {}, namespace {}, created after {}, " +
+                "created before {}", workflowName, namespace, createdAfter, createdBefore);
         Map<Status, Integer> statusMap = new HashMap<>();
         for (Status status : Status.values()) {
             statusMap.put(status, 0);
@@ -213,5 +206,12 @@ public class RAMJobStore implements JobStore {
         if (jobs.remove(buildJobId) == null) {
             throw new StoreException("job with id " + jobId + " does not exists");
         }
+    }
+
+    @Override
+    public void deleteByWorkflowName(String workflowName, String namespace) {
+        logger.debug("Received request to delete job with workflow name {} under namespace {}", workflowName, namespace);
+        final List<Job> jobs = loadByWorkflowName(workflowName, namespace, 0, System.currentTimeMillis());
+        jobs.forEach(this.jobs::remove);
     }
 }

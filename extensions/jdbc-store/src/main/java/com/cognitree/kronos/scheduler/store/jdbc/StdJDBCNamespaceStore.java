@@ -42,10 +42,13 @@ public class StdJDBCNamespaceStore implements NamespaceStore {
     private static final Logger logger = LoggerFactory.getLogger(StdJDBCNamespaceStore.class);
 
     private static final String INSERT_NAMESPACE = "INSERT INTO " + TABLE_NAMESPACES + " VALUES (?,?)";
-    private static final String UPDATE_NAMESPACE = "UPDATE " + TABLE_NAMESPACES + " SET " + COL_DESCRIPTION
-            + " = ? WHERE " + COL_NAME + " = ?";
+
     private static final String LOAD_ALL_NAMESPACES = "SELECT * FROM " + TABLE_NAMESPACES;
     private static final String LOAD_NAMESPACE = "SELECT * FROM " + TABLE_NAMESPACES + " WHERE " + COL_NAME + " = ?";
+
+    private static final String UPDATE_NAMESPACE = "UPDATE " + TABLE_NAMESPACES + " SET " + COL_DESCRIPTION
+            + " = ? WHERE " + COL_NAME + " = ?";
+
     private static final String DELETE_NAMESPACE = "DELETE FROM " + TABLE_NAMESPACES + " WHERE " + COL_NAME + " = ?";
 
     private final BasicDataSource dataSource;
@@ -64,7 +67,7 @@ public class StdJDBCNamespaceStore implements NamespaceStore {
             preparedStatement.setString(++paramIndex, namespace.getDescription());
             preparedStatement.execute();
         } catch (Exception e) {
-            logger.error("Error storing namespace {} into database", namespace, e);
+            logger.error("Error storing namespace {}", namespace, e);
             throw new StoreException(e.getMessage(), e.getCause());
         }
     }
@@ -81,7 +84,7 @@ public class StdJDBCNamespaceStore implements NamespaceStore {
             }
             return namespaces;
         } catch (Exception e) {
-            logger.error("Error fetching all namespaces from database", e);
+            logger.error("Error fetching all namespaces", e);
             throw new StoreException(e.getMessage(), e.getCause());
         }
     }
@@ -98,7 +101,7 @@ public class StdJDBCNamespaceStore implements NamespaceStore {
                 return getNamespace(resultSet);
             }
         } catch (Exception e) {
-            logger.error("Error fetching namespace with id {} from database", namespaceId, e);
+            logger.error("Error fetching namespace with id {}", namespaceId, e);
             throw new StoreException(e.getMessage(), e.getCause());
         }
         return null;
@@ -128,7 +131,7 @@ public class StdJDBCNamespaceStore implements NamespaceStore {
             preparedStatement.setString(++paramIndex, namespaceId.getName());
             preparedStatement.executeUpdate();
         } catch (Exception e) {
-            logger.error("Error deleting namespace with id {} from database", namespaceId, e);
+            logger.error("Error deleting namespace with id {}", namespaceId, e);
             throw new StoreException(e.getMessage(), e.getCause());
         }
     }

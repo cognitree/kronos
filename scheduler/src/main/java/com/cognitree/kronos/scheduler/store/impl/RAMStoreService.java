@@ -25,8 +25,11 @@ import com.cognitree.kronos.scheduler.store.TaskStore;
 import com.cognitree.kronos.scheduler.store.WorkflowStore;
 import com.cognitree.kronos.scheduler.store.WorkflowTriggerStore;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RAMStoreService extends StoreService {
+    private static final Logger logger = LoggerFactory.getLogger(RAMStoreService.class);
 
     private NamespaceStore namespaceStore;
     private WorkflowStore workflowStore;
@@ -41,6 +44,7 @@ public class RAMStoreService extends StoreService {
 
     @Override
     public void init() {
+        logger.info("Initializing RAM store service");
         namespaceStore = new RAMNamespaceStore();
         workflowStore = new RAMWorkflowStore();
         workflowTriggerStore = new RAMWorkflowTriggerStore();
@@ -51,6 +55,7 @@ public class RAMStoreService extends StoreService {
 
     @Override
     public void start() {
+        logger.info("Starting RAM store service");
         ServiceProvider.registerService(this);
     }
 
@@ -86,6 +91,6 @@ public class RAMStoreService extends StoreService {
 
     @Override
     public void stop() {
-
+        logger.info("Stopping RAM store service");
     }
 }

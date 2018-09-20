@@ -167,8 +167,11 @@ public final class WorkflowSchedulerService implements Service {
     }
 
     void delete(WorkflowTriggerId workflowTriggerId) throws SchedulerException {
-        logger.info("Received request to delete workflow trigger {}", workflowTriggerId);
-        scheduler.deleteJob(getJobKey(workflowTriggerId));
+        logger.info("Received request to delete quartz job for workflow trigger {}", workflowTriggerId);
+        final TriggerKey jobKey = getTriggerKey(workflowTriggerId);
+        if (scheduler.checkExists(jobKey)) {
+            scheduler.unscheduleJob(jobKey);
+        }
     }
 
     // used in junit

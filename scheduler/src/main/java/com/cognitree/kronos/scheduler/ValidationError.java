@@ -28,7 +28,11 @@ public enum ValidationError {
 
     WORKFLOW_TRIGGER_NOT_FOUND(3001, "workflow_trigger_not_found", 404),
     INVALID_WORKFLOW_TRIGGER(3002, "invalid_workflow_trigger", 400),
-    WORKFLOW_TRIGGER_ALREADY_EXISTS(3003, "workflow_trigger_already_exists", 404);
+    WORKFLOW_TRIGGER_ALREADY_EXISTS(3003, "workflow_trigger_already_exists", 404),
+
+    JOB_NOT_FOUND(4001, "job_not_found", 404),
+
+    TASK_NOT_FOUND(5001, "task_not_found", 404);
 
     private int errorCode;
     private String errorMsg;

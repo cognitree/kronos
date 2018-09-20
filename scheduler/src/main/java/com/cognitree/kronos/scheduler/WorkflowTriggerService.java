@@ -37,6 +37,7 @@ import java.text.ParseException;
 import java.util.Collections;
 import java.util.List;
 
+import static com.cognitree.kronos.scheduler.ValidationError.*;
 import static com.cognitree.kronos.scheduler.ValidationError.NAMESPACE_NOT_FOUND;
 import static com.cognitree.kronos.scheduler.ValidationError.WORKFLOW_NOT_FOUND;
 import static com.cognitree.kronos.scheduler.ValidationError.WORKFLOW_TRIGGER_ALREADY_EXISTS;
@@ -67,7 +68,6 @@ public class WorkflowTriggerService implements Service {
     public void add(WorkflowTrigger workflowTrigger) throws SchedulerException, ServiceException, ValidationException {
         logger.debug("Received request to add workflow trigger {}", workflowTrigger);
         validateTrigger(workflowTrigger);
-        validateNamespace(workflowTrigger.getNamespace());
         validateWorkflow(workflowTrigger.getWorkflow(), workflowTrigger.getNamespace());
         try {
             if (workflowTriggerStore.load(workflowTrigger) != null) {
@@ -98,7 +98,6 @@ public class WorkflowTriggerService implements Service {
 
     public WorkflowTrigger get(WorkflowTriggerId workflowTriggerId) throws ServiceException, ValidationException {
         logger.debug("Received request to get workflow trigger with id {}", workflowTriggerId);
-        validateNamespace(workflowTriggerId.getNamespace());
         validateWorkflow(workflowTriggerId.getWorkflow(), workflowTriggerId.getNamespace());
         try {
             return workflowTriggerStore.load(workflowTriggerId);
@@ -111,7 +110,6 @@ public class WorkflowTriggerService implements Service {
     public List<WorkflowTrigger> get(String workflowName, String namespace) throws ServiceException, ValidationException {
         logger.debug("Received request to get all workflow triggers for workflow {} under namespace {}",
                 workflowName, namespace);
-        validateNamespace(namespace);
         validateWorkflow(workflowName, namespace);
         try {
             final List<WorkflowTrigger> workflowTriggers = workflowTriggerStore.loadByWorkflowName(workflowName, namespace);
@@ -144,7 +142,7 @@ public class WorkflowTriggerService implements Service {
             TriggerHelper.buildTrigger(workflowTrigger);
         } catch (Exception e) {
             logger.error("Error validating workflow trigger {}", workflowTrigger, e);
-            throw ValidationError.INVALID_WORKFLOW_TRIGGER.createException(e.getMessage());
+            throw INVALID_WORKFLOW_TRIGGER.createException(e.getMessage());
         }
     }
 

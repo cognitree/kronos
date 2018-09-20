@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 
 import static com.cognitree.kronos.scheduler.model.Job.Status;
 import static java.util.Comparator.comparing;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.OK;
 
 @Path("/jobs")
@@ -50,26 +51,31 @@ public class JobResource {
     private static final String DEFAULT_DAYS = "10";
 
     @GET
-    @ApiOperation(value = "Get all running or executed jobs", response = Job.class, responseContainer = "List")
+    @ApiOperation(value = "Get all running or executed jobs", response = Job.class, responseContainer = "List",
+            notes = "query param 'from' and 'to' takes precedence over 'date_range'. " +
+                    "If 'from' is specified without 'to' it means get all jobs from 'from' timestamp till now." +
+                    "If 'to' is specified without 'from' it means get all jobs from beginning till 'from' timestamp")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllJobs(@ApiParam(value = "job status", allowMultiple = true)
                                @QueryParam("status") List<Status> statuses,
                                @ApiParam(value = "Start time of the range")
-                               @DefaultValue("-1") @QueryParam("from") long createdAfter,
+                               @QueryParam("from") long createdAfter,
                                @ApiParam(value = "End time of the range")
-                               @DefaultValue("-1") @QueryParam("to") long createdBefore,
+                               @QueryParam("to") long createdBefore,
                                @ApiParam(value = "Number of days to fetch jobs from today", defaultValue = "10")
                                @DefaultValue(DEFAULT_DAYS) @QueryParam("date_range") int numberOfDays,
                                @HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
         logger.info("Received request to get all jobs under namespace {} with param status in {}, date range {}, " +
                 "from {}, to {}", namespace, statuses, numberOfDays, createdAfter, createdBefore, namespace);
-
-        if (createdAfter < 0 && createdBefore < 0) {
+        if (namespace == null || namespace.isEmpty()) {
+            return Response.status(BAD_REQUEST).entity("missing namespace header").build();
+        }
+        if (createdAfter <= 0 && createdBefore <= 0) {
             createdAfter = timeInMillisBeforeDays(numberOfDays);
             createdBefore = System.currentTimeMillis();
-        } else if (createdBefore > 0 && createdAfter < 0) {
+        } else if (createdBefore > 0 && createdAfter <= 0) {
             createdAfter = 0;
-        } else if (createdBefore < 0) {
+        } else if (createdBefore <= 0) {
             createdBefore = System.currentTimeMillis();
         }
 
