@@ -99,8 +99,6 @@
         <module>executor</module>
         <module>api</module>
         <module>extensions</module>
-        <module>test</module>
-        <module>assembly</module>
-        <module>web-server</module>
+        <module>app</module>
     </modules>
 </project>

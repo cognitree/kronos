@@ -46,7 +46,7 @@
             <outputDirectory>sbin</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>${project.parent.basedir}/web-server/src/main/webapp</directory>
+            <directory>src/main/webapp</directory>
             <outputDirectory>webapp</outputDirectory>
         </fileSet>
     </fileSets>
