@@ -79,7 +79,7 @@ public class Application {
         final Integer port = Integer.parseInt(cmd.getOptionValue("port", "8080"));
         final String resourceBase = cmd.getOptionValue("resourceBase", "src/main/webapp");
         final String contextPath = cmd.getOptionValue("contextPath", "/");
-        final String descriptorFile = cmd.getOptionValue("descriptor", "web-server/src/main/webapp/WEB-INF/web.xml");
+        final String descriptorFile = cmd.getOptionValue("descriptor", "src/main/webapp/WEB-INF/web.xml");
 
         logger.info("Starting Kronos application with params mode {}, host {}, port {}, resource base {}, " +
                 "context path {}, descriptor {}", mode, host, port, resourceBase, contextPath, descriptorFile);

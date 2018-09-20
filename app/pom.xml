@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <!--
   ~ Licensed to the Apache Software Foundation (ASF) under one or more
   ~ contributor license agreements. See the NOTICE file distributed with
@@ -16,8 +17,7 @@
   ~ limitations under the License.
   -->
 
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xmlns="http://maven.apache.org/POM/4.0.0"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>kronos</artifactId>
@@ -27,8 +27,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.cognitree.kronos</groupId>
-    <artifactId>assembly</artifactId>
-    <version>2.1</version>
+    <artifactId>app</artifactId>
+
+    <properties>
+        <jetty.version>9.4.11.v20180605</jetty.version>
+        <commons-cli.version>1.4</commons-cli.version>
+    </properties>
 
     <dependencies>
         <dependency>
@@ -43,12 +47,43 @@
         </dependency>
         <dependency>
             <groupId>com.cognitree.kronos</groupId>
-            <artifactId>jdbc-store</artifactId>
+            <artifactId>api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-server</artifactId>
+            <version>${jetty.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-webapp</artifactId>
+            <version>${jetty.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-util</artifactId>
+            <version>${jetty.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-cli</groupId>
+            <artifactId>commons-cli</artifactId>
+            <version>${commons-cli.version}</version>
+        </dependency>
+        <!-- extensions start -->
+        <dependency>
+            <groupId>com.cognitree.kronos</groupId>
+            <artifactId>kafka-queue</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.cognitree.kronos</groupId>
             <artifactId>embedded-hsql-store</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cognitree.kronos</groupId>
+            <artifactId>jdbc-store</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -61,21 +96,7 @@
             <artifactId>spark-handler</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.cognitree.kronos</groupId>
-            <artifactId>kafka-queue</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.cognitree.kronos</groupId>
-            <artifactId>api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.cognitree.kronos</groupId>
-            <artifactId>web-server</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+        <!-- extensions end -->
     </dependencies>
 
     <build>
@@ -91,7 +112,7 @@
                 </configuration>
                 <executions>
                     <execution>
-                        <id>create-archive</id>
+                        <id>Kronos</id>
                         <phase>package</phase>
                         <goals>
                             <goal>single</goal>
