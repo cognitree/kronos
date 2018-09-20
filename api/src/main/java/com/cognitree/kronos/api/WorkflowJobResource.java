@@ -115,10 +115,10 @@ public class WorkflowJobResource {
                            @PathParam("id") String id,
                            @HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
         logger.info("Received request to get job with id {} under namespace {}", id, namespace);
-        final JobId jobId = JobId.build(workflowName, id, namespace);
+        final JobId jobId = JobId.build(id, workflowName, namespace);
         final Job job = JobService.getService().get(jobId);
         if (job == null) {
-            logger.error("No job exists with id {} for workflow {} under namespace {}", id, workflowName, namespace);
+            logger.error("No job exists with id {}", jobId);
             return Response.status(NOT_FOUND).build();
         }
         final List<Task> tasks = JobService.getService().getTasks(job);
