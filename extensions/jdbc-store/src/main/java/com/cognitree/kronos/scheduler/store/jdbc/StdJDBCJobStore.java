@@ -71,13 +71,13 @@ public class StdJDBCJobStore implements JobStore {
             + COL_WORKFLOW_NAME + " = ? AND " + COL_TRIGGER_NAME + " = ? AND " + COL_NAMESPACE + " = ? AND "
             + COL_CREATED_AT + " > ? AND " + COL_CREATED_AT + " < ?";
     private static final String LOAD_JOB_BY_STATUS_IN_CREATED_BETWEEN = "SELECT * FROM " + TABLE_JOBS + " WHERE "
-            + COL_STATUS + " IN ($statuses) AND" + COL_NAMESPACE + " = ? AND " + COL_CREATED_AT + " > ? AND " + COL_CREATED_AT + " < ?";
+            + COL_STATUS + " IN ($statuses) AND " + COL_NAMESPACE + " = ? AND " + COL_CREATED_AT + " > ? AND " + COL_CREATED_AT + " < ?";
     private static final String LOAD_JOB_BY_NAME_STATUS_IN_CREATED_BETWEEN = "SELECT * FROM " + TABLE_JOBS + " WHERE "
-            + COL_WORKFLOW_NAME + " = ? AND " + COL_STATUS + " IN ($statuses) AND" + COL_NAMESPACE + " = ? AND " +
+            + COL_WORKFLOW_NAME + " = ? AND " + COL_STATUS + " IN ($statuses) AND " + COL_NAMESPACE + " = ? AND " +
             COL_CREATED_AT + " > ? AND " + COL_CREATED_AT + " < ?";
     private static final String LOAD_JOB_BY_NAME_TRIGGER_STATUS_IN_CREATED_BETWEEN = "SELECT * FROM " + TABLE_JOBS +
             " WHERE " + COL_WORKFLOW_NAME + " = ? AND " + COL_TRIGGER_NAME + " = ? AND " + COL_STATUS +
-            " IN ($statuses) AND" + COL_NAMESPACE + " = ? AND " + COL_CREATED_AT + " > ? AND " + COL_CREATED_AT + " < ?";
+            " IN ($statuses) AND " + COL_NAMESPACE + " = ? AND " + COL_CREATED_AT + " > ? AND " + COL_CREATED_AT + " < ?";
     private static final String GROUP_BY_STATUS_JOB_CREATED_BETWEEN = "SELECT STATUS, COUNT(*) FROM "
             + TABLE_JOBS + " WHERE " + COL_NAMESPACE + " = ? AND " + COL_CREATED_AT + " > ? " +
             "AND " + COL_CREATED_AT + " < ? GROUP BY " + COL_STATUS;

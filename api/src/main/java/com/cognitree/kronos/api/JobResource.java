@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.cognitree.kronos.scheduler.model.Job.Status;
 import static java.util.Comparator.comparing;
 import static javax.ws.rs.core.Response.Status.OK;
 
@@ -52,7 +53,7 @@ public class JobResource {
     @ApiOperation(value = "Get all running or executed jobs", response = Job.class, responseContainer = "List")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllJobs(@ApiParam(value = "job status", allowMultiple = true)
-                               @QueryParam("status") List<Job.Status> statuses,
+                               @QueryParam("status") List<Status> statuses,
                                @ApiParam(value = "Start time of the range")
                                @DefaultValue("-1") @QueryParam("from") long createdAfter,
                                @ApiParam(value = "End time of the range")
