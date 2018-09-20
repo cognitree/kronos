@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MAIN_CLASS=""
+MAIN_CLASS="com.cognitree.kronos.Application"
 APP_NAME=""
 MODE=""
 APP_HOME="$(cd "`dirname "$0"`"/..; pwd)"
@@ -20,7 +20,7 @@ start(){
   ARGS=""
   case "$MODE" in
     executor)
-      ARGS=""
+      ARGS="--mode $MODE"
       ;;
     scheduler | all)
       ARGS="--mode $MODE --host $HOST --port $PORT --resourceBase $APP_HOME/webapp --contextPath / --descriptor $APP_HOME/webapp/WEB-INF/web.xml"
@@ -89,17 +89,14 @@ init_param(){
     scheduler)
       APP_NAME="scheduler"
       MODE="scheduler"
-      MAIN_CLASS="com.cognitree.kronos.Application"
       ;;
     executor)
       APP_NAME="executor"
       MODE="executor"
-      MAIN_CLASS="com.cognitree.kronos.executor.ExecutorApp"
       ;;
     *)
       APP_NAME="kronos"
       MODE="all"
-      MAIN_CLASS="com.cognitree.kronos.Application"
   esac
 }
 
@@ -123,6 +120,6 @@ case "$1" in
     start
     ;;
   *)
-    echo $"Usage: $0 {start|stop|status|restart} optional:{scheduler|executor}"
+    echo $"Usage: $0 {start|stop|status|restart} optional:{scheduler|executor|all}"
     exit 1
 esac

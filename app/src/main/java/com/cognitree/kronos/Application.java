@@ -17,6 +17,7 @@
 
 package com.cognitree.kronos;
 
+import com.cognitree.kronos.executor.ExecutorApp;
 import com.cognitree.kronos.listeners.ExecutorContextListener;
 import com.cognitree.kronos.listeners.SchedulerContextListener;
 import org.apache.commons.cli.CommandLine;
@@ -39,9 +40,35 @@ public class Application {
     public static void main(String[] args) throws Exception {
         Options options = new Options();
         Option modeOpt = new Option("mode", "mode", true,
-                "Kronos deployment mode (scheduler/ all)");
-        modeOpt.setRequired(true);
+                "Kronos deployment mode (scheduler/ executor/ all)");
+        modeOpt.setRequired(false);
         options.addOption(modeOpt);
+
+        CommandLineParser parser = new DefaultParser();
+        HelpFormatter formatter = new HelpFormatter();
+        CommandLine cmd;
+
+        try {
+            cmd = parser.parse(options, args, true);
+            final String mode = cmd.getOptionValue("mode", "all");
+            switch (mode) {
+                case "executor":
+                    ExecutorApp.main(new String[]{});
+                    break;
+                case "scheduler":
+                default:
+                    cmd = parseSchedulerOptions(args, options, parser);
+                    new Application().start(mode, cmd);
+            }
+        } catch (ParseException e) {
+            System.out.println(e.getMessage());
+            formatter.printHelp("Kronos application", options);
+            System.exit(1);
+        }
+    }
+
+    private static CommandLine parseSchedulerOptions(String[] args, Options options, CommandLineParser parser)
+            throws ParseException {
         Option hostOpt = new Option("host", "host", true, "Kronos server address");
         hostOpt.setRequired(false);
         options.addOption(hostOpt);
@@ -50,7 +77,7 @@ public class Application {
         options.addOption(portOpt);
         Option resourceBaseOpt = new Option("resourceBase", "resourceBase", true,
                 "Kronos resource base");
-        resourceBaseOpt.setRequired(false);
+        resourceBaseOpt.setRequired(true);
         options.addOption(resourceBaseOpt);
         Option contextPathOpt = new Option("contextPath", "contextPath", true,
                 "Kronos context path");
@@ -60,39 +87,20 @@ public class Application {
                 "Kronos descriptor path");
         descriptorPathOpt.setRequired(true);
         options.addOption(descriptorPathOpt);
+        return parser.parse(options, args);
+    }
 
-        CommandLineParser parser = new DefaultParser();
-        HelpFormatter formatter = new HelpFormatter();
-        CommandLine cmd;
-
-        try {
-            cmd = parser.parse(options, args);
-        } catch (ParseException e) {
-            System.out.println(e.getMessage());
-            formatter.printHelp("Kronos web app", options);
-            System.exit(1);
-            return;
-        }
-
-        final String mode = cmd.getOptionValue("mode", "all");
-        final String host = cmd.getOptionValue("host", "localhost");
-        final Integer port = Integer.parseInt(cmd.getOptionValue("port", "8080"));
-        final String resourceBase = cmd.getOptionValue("resourceBase", "src/main/webapp");
-        final String contextPath = cmd.getOptionValue("contextPath", "/");
-        final String descriptorFile = cmd.getOptionValue("descriptor", "src/main/webapp/WEB-INF/web.xml");
+    private void start(String mode, CommandLine schedulerOptions) throws Exception {
+        final String host = schedulerOptions.getOptionValue("host", "localhost");
+        final Integer port = Integer.parseInt(schedulerOptions.getOptionValue("port", "8080"));
+        final String resourceBase = schedulerOptions.getOptionValue("resourceBase");
+        final String contextPath = schedulerOptions.getOptionValue("contextPath", "/");
+        final String descriptorFile = schedulerOptions.getOptionValue("descriptor");
 
         logger.info("Starting Kronos application with params mode {}, host {}, port {}, resource base {}, " +
                 "context path {}, descriptor {}", mode, host, port, resourceBase, contextPath, descriptorFile);
-
         final InetSocketAddress socketAddress = new InetSocketAddress(host, port);
         Server server = new Server(socketAddress);
-        WebAppContext webapp = buildWebApp(resourceBase, contextPath, descriptorFile, mode);
-        server.setHandler(webapp);
-        server.start();
-        server.join();
-    }
-
-    private static WebAppContext buildWebApp(String resourceBase, String contextPath, String descriptorFile, String mode) {
         WebAppContext webapp = new WebAppContext();
         webapp.setResourceBase(resourceBase);
         webapp.setContextPath(contextPath);
@@ -106,6 +114,8 @@ public class Application {
                 webapp.addEventListener(new ExecutorContextListener());
                 break;
         }
-        return webapp;
+        server.setHandler(webapp);
+        server.start();
+        server.join();
     }
 }

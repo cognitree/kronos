@@ -234,16 +234,6 @@ public class JobService implements Service {
         }
     }
 
-    private static final List<Status> ACTIVE_JOB_STATUS = new ArrayList<>();
-
-    static {
-        for (Status status : Status.values()) {
-            if (!status.isFinal()) {
-                ACTIVE_JOB_STATUS.add(status);
-            }
-        }
-    }
-
     public Map<Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore)
             throws ValidationException, ServiceException {
         logger.debug("Received request to group jobs by status under namespace {} created " +

@@ -17,7 +17,6 @@
 
 package com.cognitree.kronos.executor;
 
-import com.cognitree.kronos.MockTaskBuilder;
 import com.cognitree.kronos.executor.handlers.TestTaskHandler;
 import com.cognitree.kronos.executor.handlers.TypeATaskHandler;
 import com.cognitree.kronos.executor.handlers.TypeBTaskHandler;

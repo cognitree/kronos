@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.cognitree.kronos;
+package com.cognitree.kronos.executor;
 
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;

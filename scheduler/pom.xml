@@ -62,12 +62,5 @@
             <artifactId>velocity</artifactId>
             <version>${velocity.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.cognitree.kronos</groupId>
-            <artifactId>common</artifactId>
-            <version>${project.version}</version>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 </project>
