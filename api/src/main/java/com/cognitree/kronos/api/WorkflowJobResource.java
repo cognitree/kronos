@@ -51,13 +51,13 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 
 @Path("/workflows/{workflow}/jobs")
-@Api(value = "workflow jobs", description = "manage runtime instance for a workflow - jobs")
+@Api(value = "jobs", description = "manage runtime instance for a workflow - jobs")
 public class WorkflowJobResource {
     private static final Logger logger = LoggerFactory.getLogger(WorkflowJobResource.class);
     private static final String DEFAULT_DAYS = "10";
 
     @GET
-    @ApiOperation(value = "Get all running or executed jobs", response = Job.class, responseContainer = "List")
+    @ApiOperation(value = "Get all running or executed jobs for a workflow", response = Job.class, responseContainer = "List")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllJobs(@ApiParam(value = "workflow name", required = true)
                                @PathParam("workflow") String workflowName,
@@ -105,7 +105,7 @@ public class WorkflowJobResource {
 
     @GET
     @Path("{id}")
-    @ApiOperation(value = "Get job with id", response = JobResponse.class)
+    @ApiOperation(value = "Get job with id for a workflow", response = JobResponse.class)
     @ApiResponses(value = {
             @ApiResponse(code = 404, message = "Job not found")})
     @Produces(MediaType.APPLICATION_JSON)
