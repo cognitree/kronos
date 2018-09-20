@@ -1,8 +1,0 @@
-storeServiceConfig:
-  storeServiceClass: com.cognitree.kronos.scheduler.store.jdbc.EmbeddedHSQLStoreService
-  config:
-    dbPath: /tmp
-    #username:
-    #password:
-    #minIdleConnection:
-    #maxIdleConnection:
