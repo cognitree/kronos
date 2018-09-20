@@ -46,7 +46,7 @@ public class RAMWorkflowTriggerStore implements WorkflowTriggerStore {
 
     @Override
     public List<WorkflowTrigger> load(String namespace) {
-        logger.debug("Received request to get all workflow triggers in namespace {}", namespace);
+        logger.debug("Received request to get all workflow triggers under namespace {}", namespace);
         final ArrayList<WorkflowTrigger> workflowTriggers = new ArrayList<>();
         this.workflowTriggers.values().forEach(workflowTrigger -> {
             if (workflowTrigger.getNamespace().equals(namespace)) {
@@ -58,7 +58,7 @@ public class RAMWorkflowTriggerStore implements WorkflowTriggerStore {
 
     @Override
     public List<WorkflowTrigger> loadByWorkflowName(String workflowName, String namespace) {
-        logger.debug("Received request to get all workflow triggers with workflow name {} in namespace {}",
+        logger.debug("Received request to get all workflow triggers with workflow name {} under namespace {}",
                 workflowName, namespace);
         final ArrayList<WorkflowTrigger> workflowTriggers = new ArrayList<>();
         this.workflowTriggers.values().forEach(workflowTrigger -> {

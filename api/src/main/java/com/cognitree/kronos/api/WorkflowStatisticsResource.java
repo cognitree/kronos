@@ -40,31 +40,39 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.concurrent.TimeUnit;
 
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.OK;
 
 @Path("statistics/workflows")
-@Api(value = "workflow_statistics", description = "apis to query workflow statistics")
+@Api(value = "workflow statistics", description = "apis to query workflow statistics")
 public class WorkflowStatisticsResource {
     private static final Logger logger = LoggerFactory.getLogger(WorkflowStatisticsResource.class);
+    private static final String DEFAULT_DAYS = "10";
 
     @GET
-    @ApiOperation(value = "Get statistics across workflow", response = WorkflowStatistics.class)
+    @ApiOperation(value = "Get statistics across workflows", response = WorkflowStatistics.class,
+            notes = "query param 'from' and 'to' takes precedence over 'date_range'. " +
+                    "If 'from' is specified without 'to' it means get all jobs from 'from' timestamp till now." +
+                    "If 'to' is specified without 'from' it means get all jobs from beginning till 'from' timestamp")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllWorkflowStatistics(@ApiParam(value = "Start time of the range")
-                                             @DefaultValue("-1") @QueryParam("from") long createdAfter,
+                                             @QueryParam("from") long createdAfter,
                                              @ApiParam(value = "End time of the range")
-                                             @DefaultValue("-1") @QueryParam("to") long createdBefore,
+                                             @QueryParam("to") long createdBefore,
                                              @ApiParam(value = "Number of days to fetch jobs from today", defaultValue = "10")
-                                             @DefaultValue("-1") @QueryParam("date_range") int numberOfDays,
+                                             @DefaultValue(DEFAULT_DAYS) @QueryParam("date_range") int numberOfDays,
                                              @HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
         logger.info("Received request to get stats across workflow under namespace {} with param createdAfter {}, " +
                 "createdBefore {}, numberOfDays {}", namespace, createdAfter, createdBefore, numberOfDays);
-        if (createdAfter <= 0 && createdBefore < 0) {
+        if (namespace == null || namespace.isEmpty()) {
+            return Response.status(BAD_REQUEST).entity("missing namespace header").build();
+        }
+        if (createdAfter <= 0 && createdBefore <= 0) {
             createdAfter = timeInMillisBeforeDays(numberOfDays);
             createdBefore = System.currentTimeMillis();
-        } else if (createdBefore > 0 && createdAfter < 0) {
+        } else if (createdBefore > 0 && createdAfter <= 0) {
             createdAfter = 0;
-        } else if (createdBefore < 0) {
+        } else if (createdBefore <= 0) {
             createdBefore = System.currentTimeMillis();
         }
 
@@ -75,27 +83,33 @@ public class WorkflowStatisticsResource {
 
     @GET
     @Path("{name}")
-    @ApiOperation(value = "Get statistics for workflow with name", response = WorkflowStatistics.class)
+    @ApiOperation(value = "Get statistics for workflow by name", response = WorkflowStatistics.class,
+            notes = "query param 'from' and 'to' takes precedence over 'date_range'. " +
+                    "If 'from' is specified without 'to' it means get all jobs from 'from' timestamp till now." +
+                    "If 'to' is specified without 'from' it means get all jobs from beginning till 'from' timestamp")
     @ApiResponses(value = {
             @ApiResponse(code = 404, message = "Workflow not found")})
     @Produces(MediaType.APPLICATION_JSON)
     public Response getWorkflowStatistics(@ApiParam(value = "workflow name", required = true)
                                           @PathParam("name") String name,
                                           @ApiParam(value = "Start time of the range")
-                                          @DefaultValue("-1") @QueryParam("from") long createdAfter,
+                                          @QueryParam("from") long createdAfter,
                                           @ApiParam(value = "End time of the range")
-                                          @DefaultValue("-1") @QueryParam("to") long createdBefore,
+                                          @QueryParam("to") long createdBefore,
                                           @ApiParam(value = "Number of days to fetch jobs from today", defaultValue = "10")
-                                          @DefaultValue("-1") @QueryParam("date_range") int numberOfDays,
+                                          @DefaultValue(DEFAULT_DAYS) @QueryParam("date_range") int numberOfDays,
                                           @HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
         logger.info("Received request to get stats for workflow with name {} under namespace {} with param " +
                 "createdAfter {}, createdBefore {}, numberOfDays {}", name, namespace, createdAfter, createdBefore, numberOfDays);
-        if (createdAfter <= 0 && createdBefore < 0) {
+        if (namespace == null || namespace.isEmpty()) {
+            return Response.status(BAD_REQUEST).entity("missing namespace header").build();
+        }
+        if (createdAfter <= 0 && createdBefore <= 0) {
             createdAfter = timeInMillisBeforeDays(numberOfDays);
             createdBefore = System.currentTimeMillis();
-        } else if (createdBefore > 0 && createdAfter < 0) {
+        } else if (createdBefore > 0 && createdAfter <= 0) {
             createdAfter = 0;
-        } else if (createdBefore < 0) {
+        } else if (createdBefore <= 0) {
             createdBefore = System.currentTimeMillis();
         }
 

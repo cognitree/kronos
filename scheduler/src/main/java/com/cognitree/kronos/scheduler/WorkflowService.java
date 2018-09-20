@@ -210,6 +210,8 @@ public class WorkflowService implements Service {
             for (WorkflowTrigger workflowTrigger : workflowTriggers) {
                 WorkflowTriggerService.getService().delete(workflowTrigger);
             }
+            // delete all workflow jobs before deleting workflow
+            JobService.getService().delete(workflowId.getName(), workflowId.getNamespace());
             workflowStore.delete(workflowId);
         } catch (StoreException e) {
             logger.error("unable to delete workflow {}", workflowId, e);

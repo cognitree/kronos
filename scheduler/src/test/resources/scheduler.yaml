@@ -1,2 +1,2 @@
 storeServiceConfig:
-  storeServiceClass: com.cognitree.kronos.scheduler.store.MockStoreService
+  storeServiceClass: com.cognitree.kronos.scheduler.store.impl.RAMStoreService

@@ -43,6 +43,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -57,13 +58,16 @@ public class WorkflowResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllWorkflows(@HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
         logger.info("Received request to get all workflows under namespace {}", namespace);
+        if (namespace == null || namespace.isEmpty()) {
+            return Response.status(BAD_REQUEST).entity("missing namespace header").build();
+        }
         final List<Workflow> workflows = WorkflowService.getService().get(namespace);
         return Response.status(OK).entity(workflows).build();
     }
 
     @GET
     @Path("{name}")
-    @ApiOperation(value = "Get workflow with name", response = Workflow.class)
+    @ApiOperation(value = "Get workflow by name", response = Workflow.class)
     @ApiResponses(value = {
             @ApiResponse(code = 404, message = "Workflow not found")})
     @Produces(MediaType.APPLICATION_JSON)
@@ -71,6 +75,9 @@ public class WorkflowResource {
                                 @PathParam("name") String name,
                                 @HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
         logger.info("Received request to get workflow with name {} under namespace {}", name, namespace);
+        if (namespace == null || namespace.isEmpty()) {
+            return Response.status(BAD_REQUEST).entity("missing namespace header").build();
+        }
         WorkflowId workflowId = WorkflowId.build(name, namespace);
         final Workflow workflow = WorkflowService.getService().get(workflowId);
         if (workflow == null) {
@@ -88,13 +95,16 @@ public class WorkflowResource {
     public Response addWorkflow(@HeaderParam("namespace") String namespace, Workflow workflow) throws ServiceException, ValidationException {
         workflow.setNamespace(namespace);
         logger.info("Received request to add workflow {} under namespace {}", workflow, namespace);
+        if (namespace == null || namespace.isEmpty()) {
+            return Response.status(BAD_REQUEST).entity("missing namespace header").build();
+        }
         WorkflowService.getService().add(workflow);
         return Response.status(CREATED).entity(workflow).build();
     }
 
     @PUT
     @Path("{name}")
-    @ApiOperation(value = "Update workflow", response = Workflow.class)
+    @ApiOperation(value = "Update workflow by name", response = Workflow.class)
     @ApiResponses(value = {
             @ApiResponse(code = 404, message = "Workflow not found")})
     @Produces(MediaType.APPLICATION_JSON)
@@ -106,19 +116,26 @@ public class WorkflowResource {
         workflow.setNamespace(namespace);
         logger.info("Received request to update workflow with name {} under namespace {} to {}",
                 name, namespace, workflow);
+        if (namespace == null || namespace.isEmpty()) {
+            return Response.status(BAD_REQUEST).entity("missing namespace header").build();
+        }
         WorkflowService.getService().update(workflow);
         return Response.status(OK).entity(workflow).build();
     }
 
     @DELETE
     @Path("{name}")
-    @ApiOperation(value = "Delete workflow")
+    @ApiOperation(value = "Delete workflow by name")
     @ApiResponses(value = {
             @ApiResponse(code = 404, message = "Workflow not found")})
+    @Produces(MediaType.APPLICATION_JSON)
     public Response deleteWorkflow(@ApiParam(value = "workflow name", required = true)
                                    @PathParam("name") String name,
                                    @HeaderParam("namespace") String namespace) throws ServiceException, SchedulerException, ValidationException {
         logger.info("Received request to delete workflow with name {} under namespace {}", name, namespace);
+        if (namespace == null || namespace.isEmpty()) {
+            return Response.status(BAD_REQUEST).entity("missing namespace header").build();
+        }
         WorkflowId workflowId = WorkflowId.build(name, namespace);
         WorkflowService.getService().delete(workflowId);
         return Response.status(OK).build();

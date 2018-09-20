@@ -46,7 +46,7 @@ public class RAMWorkflowStore implements WorkflowStore {
 
     @Override
     public List<Workflow> load(String namespace) {
-        logger.debug("Received request to get all workflows in namespace {}", namespace);
+        logger.debug("Received request to get all workflow under namespace {}", namespace);
         final ArrayList<Workflow> workflows = new ArrayList<>();
         this.workflows.values().forEach(workflow -> {
             if (workflow.getNamespace().equals(namespace)) {

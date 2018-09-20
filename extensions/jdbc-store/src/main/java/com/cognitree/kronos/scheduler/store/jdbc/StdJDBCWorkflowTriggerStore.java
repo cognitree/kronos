@@ -51,16 +51,19 @@ public class StdJDBCWorkflowTriggerStore implements WorkflowTriggerStore {
 
     private static final String INSERT_WORKFLOW_TRIGGER = "INSERT INTO " + TABLE_WORKFLOW_TRIGGERS
             + " VALUES (?,?,?,?,?,?,?)";
+
+    private static final String LOAD_WORKFLOW_TRIGGER = "SELECT * FROM " + TABLE_WORKFLOW_TRIGGERS + " WHERE "
+            + COL_NAME + " = ? " + "AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
     private static final String LOAD_ALL_WORKFLOW_TRIGGER_BY_NAMESPACE = "SELECT * FROM " + TABLE_WORKFLOW_TRIGGERS
             + " WHERE " + COL_NAMESPACE + " = ?";
     private static final String LOAD_ALL_WORKFLOW_TRIGGER_BY_WORKFLOW_NAME = "SELECT * FROM " + TABLE_WORKFLOW_TRIGGERS
             + " WHERE " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
+
     private static final String UPDATE_WORKFLOW_TRIGGER = "UPDATE " + TABLE_WORKFLOW_TRIGGERS + " set " + COL_START_AT
             + " = ?, " + COL_SCHEDULE + " = ?," + " " + COL_END_AT + " = ?, " + COL_ENABLED
             + " = ? WHERE " + COL_NAME + " = ? AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
+
     private static final String DELETE_WORKFLOW_TRIGGER = "DELETE FROM " + TABLE_WORKFLOW_TRIGGERS + " WHERE "
-            + COL_NAME + " = ? " + "AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
-    private static final String LOAD_WORKFLOW_TRIGGER = "SELECT * FROM " + TABLE_WORKFLOW_TRIGGERS + " WHERE "
             + COL_NAME + " = ? " + "AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
 
     private final BasicDataSource dataSource;
@@ -84,14 +87,14 @@ public class StdJDBCWorkflowTriggerStore implements WorkflowTriggerStore {
             preparedStatement.setBoolean(++paramIndex, workflowTrigger.isEnabled());
             preparedStatement.execute();
         } catch (Exception e) {
-            logger.error("Error storing workflow trigger {} into database", workflowTrigger, e);
+            logger.error("Error storing workflow trigger {}", workflowTrigger, e);
             throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
     @Override
     public List<WorkflowTrigger> load(String namespace) throws StoreException {
-        logger.debug("Received request to get all workflow triggers in namespace {}", namespace);
+        logger.debug("Received request to get all workflow triggers under namespace {}", namespace);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_ALL_WORKFLOW_TRIGGER_BY_NAMESPACE)) {
             int paramIndex = 0;
@@ -103,14 +106,14 @@ public class StdJDBCWorkflowTriggerStore implements WorkflowTriggerStore {
             }
             return workflowTriggers;
         } catch (Exception e) {
-            logger.error("Error fetching workflow triggers from database in namespace {}", namespace, e);
+            logger.error("Error fetching workflow triggers under namespace {}", namespace, e);
             throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
     @Override
     public List<WorkflowTrigger> loadByWorkflowName(String workflowName, String namespace) throws StoreException {
-        logger.debug("Received request to get all workflow triggers with workflow name {} in namespace {}",
+        logger.debug("Received request to get all workflow triggers with workflow name {} under namespace {}",
                 workflowName, namespace);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_ALL_WORKFLOW_TRIGGER_BY_WORKFLOW_NAME)) {
@@ -124,7 +127,7 @@ public class StdJDBCWorkflowTriggerStore implements WorkflowTriggerStore {
             }
             return workflowTriggers;
         } catch (Exception e) {
-            logger.error("Error fetching workflow triggers from database with workflow name {} in namespace {}",
+            logger.error("Error fetching workflow triggers with workflow name {} under namespace {}",
                     workflowName, namespace, e);
             throw new StoreException(e.getMessage(), e.getCause());
         }
@@ -144,7 +147,7 @@ public class StdJDBCWorkflowTriggerStore implements WorkflowTriggerStore {
                 return getWorkflowTrigger(resultSet);
             }
         } catch (Exception e) {
-            logger.error("Error fetching workflow trigger with id {} from database", triggerId, e);
+            logger.error("Error fetching workflow trigger with id {}", triggerId, e);
             throw new StoreException(e.getMessage(), e.getCause());
         }
         return null;
@@ -165,7 +168,7 @@ public class StdJDBCWorkflowTriggerStore implements WorkflowTriggerStore {
             preparedStatement.setString(++paramIndex, workflowTrigger.getNamespace());
             preparedStatement.execute();
         } catch (Exception e) {
-            logger.error("Error updating workflow trigger {} into database", workflowTrigger, e);
+            logger.error("Error updating workflow trigger {}", workflowTrigger, e);
             throw new StoreException(e.getMessage(), e.getCause());
         }
     }
@@ -181,7 +184,7 @@ public class StdJDBCWorkflowTriggerStore implements WorkflowTriggerStore {
             preparedStatement.setString(++paramIndex, triggerId.getNamespace());
             preparedStatement.executeUpdate();
         } catch (Exception e) {
-            logger.error("Error delete workflow trigger with id {} from database", triggerId, e);
+            logger.error("Error delete workflow trigger with id {}", triggerId, e);
             throw new StoreException(e.getMessage(), e.getCause());
         }
     }
