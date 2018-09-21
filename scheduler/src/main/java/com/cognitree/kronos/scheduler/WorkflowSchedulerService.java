@@ -40,6 +40,7 @@ import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 import org.quartz.TriggerKey;
 import org.quartz.impl.DirectSchedulerFactory;
+import org.quartz.listeners.SchedulerListenerSupport;
 import org.quartz.simpl.SimpleThreadPool;
 import org.quartz.spi.JobStore;
 import org.slf4j.Logger;
@@ -81,14 +82,14 @@ public final class WorkflowSchedulerService implements Service {
         JobStore jobStore = storeService.getQuartzJobStore();
         SimpleThreadPool threadPool = new SimpleThreadPool(Runtime.getRuntime().availableProcessors(),
                 Thread.NORM_PRIORITY);
-        threadPool.setInstanceName(DEFAULT_SCHEDULER_NAME);
-        threadPool.setInstanceId(DEFAULT_INSTANCE_ID);
         DirectSchedulerFactory.getInstance().createScheduler(DEFAULT_SCHEDULER_NAME, DEFAULT_INSTANCE_ID, threadPool, jobStore);
         scheduler = DirectSchedulerFactory.getInstance().getScheduler(DEFAULT_SCHEDULER_NAME);
+        scheduler.getListenerManager().addSchedulerListener(new QuartzSchedulerListener());
+        // TODO: FIXME service needs to be registered with provider before scheduler is started
+        // as above listener is calling WorkflowTriggerService to delete trigger which again call WorkflowSchedulerService
+        ServiceProvider.registerService(this);
         scheduler.start();
         TaskService.getService().registerListener(new WorkflowLifecycleHandler());
-
-        ServiceProvider.registerService(this);
     }
 
     void schedule(Workflow workflow, WorkflowTrigger workflowTrigger) throws SchedulerException, ParseException {
@@ -169,7 +170,8 @@ public final class WorkflowSchedulerService implements Service {
     void delete(WorkflowTriggerId workflowTriggerId) throws SchedulerException {
         logger.info("Received request to delete quartz job for workflow trigger {}", workflowTriggerId);
         final TriggerKey jobKey = getTriggerKey(workflowTriggerId);
-        if (scheduler.checkExists(jobKey)) {
+        if (!scheduler.isInStandbyMode() && scheduler.checkExists(jobKey)) {
+            logger.info("Unschedule quartz job {}", jobKey);
             scheduler.unscheduleJob(jobKey);
         }
     }
@@ -238,6 +240,29 @@ public final class WorkflowSchedulerService implements Service {
                 WorkflowSchedulerService.getService().execute(workflow, triggerName);
             } catch (ServiceException | ValidationException e) {
                 logger.error("Error executing workflow {} for trigger {}", workflowName, triggerName, e);
+            }
+        }
+    }
+
+    public final class QuartzSchedulerListener extends SchedulerListenerSupport {
+        @Override
+        public void triggerFinalized(Trigger trigger) {
+            try {
+                final JobDataMap jobDataMap = scheduler.getJobDetail(trigger.getJobKey()).getJobDataMap();
+                final String namespace = jobDataMap.getString("namespace");
+                final String workflowName = jobDataMap.getString("workflowName");
+                final String triggerName = jobDataMap.getString("triggerName");
+                logger.info("Trigger {} for workflow {} under namespace {} has completed execution, " +
+                        "deleting it from store", triggerName, workflowName, namespace);
+                try {
+                    WorkflowTriggerService.getService()
+                            .delete(WorkflowTriggerId.build(triggerName, workflowName, namespace));
+                } catch (SchedulerException | ServiceException | ValidationException e) {
+                    logger.warn("Error deleting trigger {} for workflow {} under namespace {}",
+                            triggerName, workflowName, namespace, e);
+                }
+            } catch (Exception e) {
+                logger.error("Error retrieving job detail for trigger with key {}", trigger.getJobKey());
             }
         }
     }
