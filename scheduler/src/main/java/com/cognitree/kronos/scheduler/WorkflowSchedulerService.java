@@ -82,6 +82,7 @@ public final class WorkflowSchedulerService implements Service {
         JobStore jobStore = storeService.getQuartzJobStore();
         SimpleThreadPool threadPool = new SimpleThreadPool(Runtime.getRuntime().availableProcessors(),
                 Thread.NORM_PRIORITY);
+        threadPool.setInstanceName(DEFAULT_SCHEDULER_NAME);
         DirectSchedulerFactory.getInstance().createScheduler(DEFAULT_SCHEDULER_NAME, DEFAULT_INSTANCE_ID, threadPool, jobStore);
         scheduler = DirectSchedulerFactory.getInstance().getScheduler(DEFAULT_SCHEDULER_NAME);
         scheduler.getListenerManager().addSchedulerListener(new QuartzSchedulerListener());
