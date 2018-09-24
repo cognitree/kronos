@@ -92,11 +92,11 @@ public class TaskService implements Service {
         statusChangeListeners.remove(statusChangeListener);
     }
 
-    Task create(WorkflowTask workflowTask, String jobId, String workflowName, String namespace)
+    Task create(String namespace, WorkflowTask workflowTask, String jobId, String workflowName)
             throws ServiceException, ValidationException {
         logger.debug("Received request to create task from workflow task {} for job {}, workflow {} under namespace {}",
                 workflowTask, jobId, workflowName, namespace);
-        validateJob(jobId, workflowName, namespace);
+        validateJob(namespace, jobId, workflowName);
         Task task = new Task();
         task.setName(UUID.randomUUID().toString());
         task.setJob(jobId);
@@ -132,7 +132,7 @@ public class TaskService implements Service {
 
     public Task get(TaskId taskId) throws ServiceException, ValidationException {
         logger.debug("Received request to get task {}", taskId);
-        validateJob(taskId.getJob(), taskId.getWorkflow(), taskId.getNamespace());
+        validateJob(taskId.getNamespace(), taskId.getJob(), taskId.getWorkflow());
         try {
             return taskStore.load(taskId);
         } catch (StoreException e) {
@@ -141,12 +141,12 @@ public class TaskService implements Service {
         }
     }
 
-    public List<Task> get(String jobId, String workflowName, String namespace) throws ServiceException, ValidationException {
+    public List<Task> get(String namespace, String jobId, String workflowName) throws ServiceException, ValidationException {
         logger.debug("Received request to get all tasks with job id {} for workflow {} under namespace {}",
                 jobId, workflowName, namespace);
-        validateJob(jobId, workflowName, namespace);
+        validateJob(namespace, jobId, workflowName);
         try {
-            final List<Task> tasks = taskStore.loadByJobIdAndWorkflowName(jobId, workflowName, namespace);
+            final List<Task> tasks = taskStore.loadByJobIdAndWorkflowName(namespace, jobId, workflowName);
             return tasks == null ? Collections.emptyList() : tasks;
         } catch (StoreException e) {
             logger.error("unable to get all tasks with job id {} for workflow {} under namespace {}",
@@ -155,12 +155,12 @@ public class TaskService implements Service {
         }
     }
 
-    public List<Task> get(List<Status> statuses, String namespace) throws ServiceException, ValidationException {
+    public List<Task> get(String namespace, List<Status> statuses) throws ServiceException, ValidationException {
         logger.debug("Received request to get all tasks having status in {} under namespace {}",
                 statuses, namespace);
         validateNamespace(namespace);
         try {
-            final List<Task> tasks = taskStore.loadByStatus(statuses, namespace);
+            final List<Task> tasks = taskStore.loadByStatus(namespace, statuses);
             return tasks == null ? Collections.emptyList() : tasks;
         } catch (StoreException e) {
             logger.error("unable to get all tasks having status in {} under namespace {}",
@@ -183,13 +183,13 @@ public class TaskService implements Service {
         }
     }
 
-    public Map<Status, Integer> groupByStatus(String workflowName, String namespace, long createdAfter, long createdBefore)
+    public Map<Status, Integer> groupByStatus(String namespace, String workflowName, long createdAfter, long createdBefore)
             throws ServiceException, ValidationException {
         logger.debug("Received request  to group tasks by status having workflow name {} under namespace {} created " +
                 "between {} to {}", workflowName, namespace, createdAfter, createdBefore);
-        validateWorkflow(workflowName, namespace);
+        validateWorkflow(namespace, workflowName);
         try {
-            return taskStore.groupByStatusForWorkflowName(workflowName, namespace, createdAfter, createdBefore);
+            return taskStore.groupByStatusForWorkflowName(namespace, workflowName, createdAfter, createdBefore);
         } catch (StoreException e) {
             logger.error("unable  to group tasks by status having workflow name {} under namespace {} created " +
                     "between {} to {}", workflowName, namespace, createdAfter, createdBefore, e);
@@ -203,7 +203,7 @@ public class TaskService implements Service {
             if (taskStore.load(task) == null) {
                 throw TASK_NOT_FOUND.createException(task.getName(), task.getJob(), task.getWorkflow(), task.getNamespace());
             }
-            validateJob(task.getJob(), task.getWorkflow(), task.getNamespace());
+            validateJob(task.getNamespace(), task.getJob(), task.getWorkflow());
             Status currentStatus = task.getStatus();
             if (!isValidTransition(currentStatus, status)) {
                 logger.error("Invalid state transition for task {} from status {}, to {}", task, currentStatus, status);
@@ -261,7 +261,7 @@ public class TaskService implements Service {
 
     public void delete(TaskId taskId) throws ServiceException, ValidationException {
         logger.debug("Received request to delete task {}", taskId);
-        validateJob(taskId.getJob(), taskId.getWorkflow(), taskId.getNamespace());
+        validateJob(taskId.getNamespace(), taskId.getJob(), taskId.getWorkflow());
         try {
             if (taskStore.load(taskId) == null) {
                 throw TASK_NOT_FOUND.createException(taskId.getName(), taskId.getJob(), taskId.getWorkflow(), taskId.getNamespace());
@@ -280,16 +280,16 @@ public class TaskService implements Service {
         }
     }
 
-    private void validateWorkflow(String workflowName, String namespace) throws ServiceException, ValidationException {
-        final Workflow workflow = WorkflowService.getService().get(WorkflowId.build(workflowName, namespace));
+    private void validateWorkflow(String namespace, String workflowName) throws ServiceException, ValidationException {
+        final Workflow workflow = WorkflowService.getService().get(WorkflowId.build(namespace, workflowName));
         if (workflow == null) {
             logger.error("No workflow exists with name {} under namespace {}", workflowName, namespace);
             throw WORKFLOW_NOT_FOUND.createException(workflowName, namespace);
         }
     }
 
-    private void validateJob(String jobId, String workflowName, String namespace) throws ServiceException, ValidationException {
-        final Job job = JobService.getService().get(JobId.build(jobId, workflowName, namespace));
+    private void validateJob(String namespace, String jobId, String workflowName) throws ServiceException, ValidationException {
+        final Job job = JobService.getService().get(JobId.build(namespace, jobId, workflowName));
         if (job == null) {
             logger.error("No job exists with id {} for workflow {} under namespace {}", jobId, workflowName, namespace);
             throw JOB_NOT_FOUND.createException(jobId, workflowName, namespace);

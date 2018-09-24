@@ -83,15 +83,15 @@ public class TaskServiceTest {
         final List<Job> workflowOneJobs = jobService.get(workflowTriggerOne.getNamespace(), 0, System.currentTimeMillis());
         Assert.assertEquals(1, workflowOneJobs.size());
         Assert.assertNotNull(jobService.get(workflowOneJobs.get(0)));
-        final List<Task> workflowOneTasks = taskService.get(workflowOneJobs.get(0).getId(), workflowOneJobs.get(0).getWorkflow(),
-                workflowTriggerOne.getNamespace());
+        final List<Task> workflowOneTasks = taskService.get(workflowTriggerOne.getNamespace(), workflowOneJobs.get(0).getId(), workflowOneJobs.get(0).getWorkflow()
+        );
         Assert.assertEquals(3, workflowOneTasks.size());
 
         final List<Job> workflowTwoJobs = jobService.get(workflowTriggerTwo.getNamespace(), 0, System.currentTimeMillis());
         Assert.assertEquals(1, workflowTwoJobs.size());
         Assert.assertNotNull(jobService.get(workflowTwoJobs.get(0)));
-        final List<Task> workflowTwoTasks = taskService.get(workflowTwoJobs.get(0).getId(), workflowTwoJobs.get(0).getWorkflow(),
-                workflowTriggerTwo.getNamespace());
+        final List<Task> workflowTwoTasks = taskService.get(workflowTriggerTwo.getNamespace(), workflowTwoJobs.get(0).getId(), workflowTwoJobs.get(0).getWorkflow()
+        );
         Assert.assertEquals(3, workflowTwoTasks.size());
     }
 
@@ -107,12 +107,12 @@ public class TaskServiceTest {
         Thread.sleep(100);
 
         TaskService taskService = TaskService.getService();
-        final List<Task> workflowOneTasks = taskService.get(Collections.singletonList(Task.Status.SUCCESSFUL),
-                workflowTriggerOne.getNamespace());
+        final List<Task> workflowOneTasks = taskService.get(workflowTriggerOne.getNamespace(), Collections.singletonList(Task.Status.SUCCESSFUL)
+        );
         Assert.assertEquals(3, workflowOneTasks.size());
 
-        final List<Task> workflowTwoTasks = taskService.get(Collections.singletonList(Task.Status.SUCCESSFUL),
-                workflowTriggerTwo.getNamespace());
+        final List<Task> workflowTwoTasks = taskService.get(workflowTriggerTwo.getNamespace(), Collections.singletonList(Task.Status.SUCCESSFUL)
+        );
         Assert.assertEquals(3, workflowTwoTasks.size());
     }
 

@@ -117,7 +117,7 @@ public final class WorkflowSchedulerService implements Service {
             throws SchedulerException, ParseException {
         JobDataMap jobDataMap = new JobDataMap();
         jobDataMap.put("triggerName", workflowTrigger.getName());
-        WorkflowId workflowId = WorkflowId.build(workflowTrigger.getWorkflow(), workflowTrigger.getNamespace());
+        WorkflowId workflowId = WorkflowId.build(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow());
         final Trigger trigger = TriggerHelper.buildTrigger(workflowTrigger, jobDataMap,
                 getTriggerKey(workflowTrigger), getJobKey(workflowId));
         scheduler.scheduleJob(trigger);
@@ -137,8 +137,8 @@ public final class WorkflowSchedulerService implements Service {
             throws ServiceException, ValidationException {
         logger.info("Received request to execute workflow {} by trigger {} under namespace {}",
                 workflowName, triggerName, namespace);
-        final Workflow workflow = WorkflowService.getService().get(WorkflowId.build(workflowName, namespace));
-        final Job job = JobService.getService().create(workflow.getName(), triggerName, workflow.getNamespace());
+        final Workflow workflow = WorkflowService.getService().get(WorkflowId.build(namespace, workflowName));
+        final Job job = JobService.getService().create(workflow.getNamespace(), workflow.getName(), triggerName);
         logger.debug("Executing workflow job {}", job);
         final List<WorkflowTask> workflowTasks = orderWorkflowTasks(workflow.getTasks());
         final List<Task> tasks = new ArrayList<>();
@@ -147,7 +147,7 @@ public final class WorkflowSchedulerService implements Service {
                 logger.warn("Workflow task {} is disabled from scheduling", workflowTask);
                 continue;
             }
-            tasks.add(TaskService.getService().create(workflowTask, job.getId(), job.getWorkflow(), job.getNamespace()));
+            tasks.add(TaskService.getService().create(job.getNamespace(), workflowTask, job.getId(), job.getWorkflow()));
         }
         tasks.forEach(task -> TaskSchedulerService.getService().schedule(task));
         JobService.getService().updateStatus(job.getIdentity(), RUNNING);
@@ -234,7 +234,7 @@ public final class WorkflowSchedulerService implements Service {
             final String workflow = taskId.getWorkflow();
             final String namespace = taskId.getNamespace();
             try {
-                final List<Task> tasks = TaskService.getService().get(jobId, workflow, namespace);
+                final List<Task> tasks = TaskService.getService().get(namespace, jobId, workflow);
                 if (tasks.isEmpty()) {
                     return;
                 }
@@ -245,7 +245,7 @@ public final class WorkflowSchedulerService implements Service {
                     final boolean isSuccessful = tasks.stream()
                             .allMatch(workflowTask -> workflowTask.getStatus() == Task.Status.SUCCESSFUL);
                     final Job.Status status = isSuccessful ? SUCCESSFUL : FAILED;
-                    JobService.getService().updateStatus(JobId.build(jobId, workflow, namespace), status);
+                    JobService.getService().updateStatus(JobId.build(namespace, jobId, workflow), status);
                 }
             } catch (ServiceException | ValidationException e) {
                 logger.error("Error handling status change for task {}, from {} to {}", taskId, from, to, e);
@@ -285,7 +285,7 @@ public final class WorkflowSchedulerService implements Service {
                         "deleting it from store", triggerName, workflowName, namespace);
                 try {
                     WorkflowTriggerService.getService()
-                            .delete(WorkflowTriggerId.build(triggerName, workflowName, namespace));
+                            .delete(WorkflowTriggerId.build(namespace, triggerName, workflowName));
                 } catch (SchedulerException | ServiceException | ValidationException e) {
                     logger.warn("Error deleting trigger {} for workflow {} under namespace {}",
                             triggerName, workflowName, namespace, e);

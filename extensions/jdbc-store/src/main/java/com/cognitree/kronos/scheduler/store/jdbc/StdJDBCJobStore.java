@@ -177,7 +177,7 @@ public class StdJDBCJobStore implements JobStore {
     }
 
     @Override
-    public List<Job> loadByWorkflowName(String workflowName, String namespace, long createdAfter, long createdBefore) throws StoreException {
+    public List<Job> loadByWorkflowName(String namespace, String workflowName, long createdAfter, long createdBefore) throws StoreException {
         logger.debug("Received request to get jobs with workflow name {}, namespace {},  created after {}, created before {}",
                 workflowName, namespace, createdAfter, createdBefore);
         try (Connection connection = dataSource.getConnection();
@@ -201,7 +201,7 @@ public class StdJDBCJobStore implements JobStore {
     }
 
     @Override
-    public List<Job> loadByWorkflowNameAndTriggerName(String workflowName, String triggerName, String namespace,
+    public List<Job> loadByWorkflowNameAndTriggerName(String namespace, String workflowName, String triggerName,
                                                       long createdAfter, long createdBefore) throws StoreException {
         logger.debug("Received request to get all jobs with workflow name {} under namespace {}, triggerName {}," +
                 " created after {}, created before {}", workflowName, namespace, triggerName, createdAfter, createdBefore);
@@ -227,7 +227,7 @@ public class StdJDBCJobStore implements JobStore {
     }
 
     @Override
-    public List<Job> loadByStatus(List<Status> statuses, String namespace, long createdAfter, long createdBefore) throws StoreException {
+    public List<Job> loadByStatus(String namespace, List<Status> statuses, long createdAfter, long createdBefore) throws StoreException {
         logger.debug("Received request to get jobs with status in {} under namespace {}, created after {}, created before {}",
                 statuses, namespace, createdAfter, createdBefore);
         String placeHolders = String.join(",", Collections.nCopies(statuses.size(), "?"));
@@ -255,7 +255,7 @@ public class StdJDBCJobStore implements JobStore {
     }
 
     @Override
-    public List<Job> loadByWorkflowNameAndStatus(String workflowName, List<Job.Status> statuses, String namespace,
+    public List<Job> loadByWorkflowNameAndStatus(String namespace, String workflowName, List<Status> statuses,
                                                  long createdAfter, long createdBefore) throws StoreException {
         logger.debug("Received request to get jobs having workflow name {} with status in {} under namespace {}, " +
                 " created after {}, created before {}", workflowName, statuses, namespace, createdAfter, createdBefore);
@@ -285,8 +285,8 @@ public class StdJDBCJobStore implements JobStore {
     }
 
     @Override
-    public List<Job> loadByWorkflowNameAndTriggerNameAndStatus(String workflowName, String triggerName,
-                                                               List<Job.Status> statuses, String namespace,
+    public List<Job> loadByWorkflowNameAndTriggerNameAndStatus(String namespace, String workflowName, String triggerName,
+                                                               List<Status> statuses,
                                                                long createdAfter, long createdBefore) throws StoreException {
         logger.debug("Received request to get jobs having workflow name {}, trigger name {} with status in {} " +
                         "under namespace {}, created after {}, created before {}",
@@ -320,7 +320,7 @@ public class StdJDBCJobStore implements JobStore {
 
 
     @Override
-    public Map<Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore) throws StoreException {
+    public Map<Status, Integer> countByStatus(String namespace, long createdAfter, long createdBefore) throws StoreException {
         logger.debug("Received request to group jobs by status under namespace {}, created after {}, created before {}",
                 namespace, createdAfter, createdBefore);
         try (Connection connection = dataSource.getConnection();
@@ -343,7 +343,7 @@ public class StdJDBCJobStore implements JobStore {
     }
 
     @Override
-    public Map<Status, Integer> groupByStatusForWorkflowName(String workflowName, String namespace, long createdAfter, long createdBefore) throws StoreException {
+    public Map<Status, Integer> countByStatusForWorkflowName(String namespace, String workflowName, long createdAfter, long createdBefore) throws StoreException {
         logger.debug("Received request to group by status having workflow name {}, namespace {}, created after {}, created before {}",
                 workflowName, namespace, createdAfter, createdBefore);
         try (Connection connection = dataSource.getConnection();
@@ -401,7 +401,7 @@ public class StdJDBCJobStore implements JobStore {
     }
 
     @Override
-    public void deleteByWorkflowName(String workflowName, String namespace) throws StoreException {
+    public void deleteByWorkflowName(String namespace, String workflowName) throws StoreException {
         logger.debug("Received request to delete jobs with workflow name {}, namespace {}",
                 workflowName, namespace);
         try (Connection connection = dataSource.getConnection();

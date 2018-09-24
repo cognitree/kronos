@@ -39,7 +39,7 @@ public class RAMJobStore implements JobStore {
     @Override
     public void store(Job job) throws StoreException {
         logger.debug("Received request to store job {}", job);
-        final JobId jobId = JobId.build(job.getId(), job.getWorkflow(), job.getNamespace());
+        final JobId jobId = JobId.build(job.getNamespace(), job.getId(), job.getWorkflow());
         if (jobs.containsKey(jobId)) {
             throw new StoreException("job with id " + jobId + " already exists");
         } else {
@@ -62,7 +62,7 @@ public class RAMJobStore implements JobStore {
     @Override
     public Job load(JobId jobId) {
         logger.debug("Received request to get job with id {}", jobId);
-        return jobs.get(JobId.build(jobId.getId(), jobId.getWorkflow(), jobId.getNamespace()));
+        return jobs.get(JobId.build(jobId.getNamespace(), jobId.getId(), jobId.getWorkflow()));
     }
 
     @Override
@@ -80,7 +80,7 @@ public class RAMJobStore implements JobStore {
     }
 
     @Override
-    public List<Job> loadByWorkflowName(String workflowName, String namespace, long createdAfter, long createdBefore) {
+    public List<Job> loadByWorkflowName(String namespace, String workflowName, long createdAfter, long createdBefore) {
         logger.debug("Received request to get jobs with workflow name {}, namespace {}, created after {}, created before {}",
                 workflowName, namespace, createdAfter, createdBefore);
         final ArrayList<Job> jobs = new ArrayList<>();
@@ -94,7 +94,7 @@ public class RAMJobStore implements JobStore {
     }
 
     @Override
-    public List<Job> loadByWorkflowNameAndTriggerName(String workflowName, String triggerName, String namespace,
+    public List<Job> loadByWorkflowNameAndTriggerName(String namespace, String workflowName, String triggerName,
                                                       long createdAfter, long createdBefore) {
         logger.debug("Received request to get all jobs with workflow name {} under namespace {}, triggerName {}," +
                 " created after {}, created before {}", workflowName, namespace, triggerName, createdAfter, createdBefore);
@@ -110,7 +110,7 @@ public class RAMJobStore implements JobStore {
     }
 
     @Override
-    public List<Job> loadByStatus(List<Status> statuses, String namespace, long createdAfter, long createdBefore) {
+    public List<Job> loadByStatus(String namespace, List<Status> statuses, long createdAfter, long createdBefore) {
         logger.debug("Received request to get all jobs having status in {} under namespace {}" +
                 " created after {}, created before {}", statuses, namespace, createdAfter, createdBefore);
         final ArrayList<Job> jobs = new ArrayList<>();
@@ -124,7 +124,7 @@ public class RAMJobStore implements JobStore {
     }
 
     @Override
-    public List<Job> loadByWorkflowNameAndStatus(String workflowName, List<Status> statuses, String namespace,
+    public List<Job> loadByWorkflowNameAndStatus(String namespace, String workflowName, List<Status> statuses,
                                                  long createdAfter, long createdBefore) {
         logger.debug("Received request to get all jobs with workflow name {} having status in {} under namespace {}" +
                 " created after {}, created before {}", workflowName, statuses, namespace, createdAfter, createdBefore);
@@ -139,8 +139,8 @@ public class RAMJobStore implements JobStore {
     }
 
     @Override
-    public List<Job> loadByWorkflowNameAndTriggerNameAndStatus(String workflowName, String triggerName,
-                                                               List<Status> statuses, String namespace, long createdAfter, long createdBefore) throws StoreException {
+    public List<Job> loadByWorkflowNameAndTriggerNameAndStatus(String namespace, String workflowName, String triggerName,
+                                                               List<Status> statuses, long createdAfter, long createdBefore) throws StoreException {
         logger.debug("Received request to get all jobs with workflow name {}, trigger name {} having status in {}" +
                         " under namespace {} created after {}, created before {}",
                 workflowName, triggerName, statuses, namespace, createdAfter, createdBefore);
@@ -156,7 +156,7 @@ public class RAMJobStore implements JobStore {
     }
 
     @Override
-    public Map<Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore) {
+    public Map<Status, Integer> countByStatus(String namespace, long createdAfter, long createdBefore) {
         logger.debug("Received request to group by status jobs under namespace {}, created after {}, created before {}",
                 namespace, createdAfter, createdBefore);
         Map<Status, Integer> statusMap = new HashMap<>();
@@ -173,7 +173,7 @@ public class RAMJobStore implements JobStore {
     }
 
     @Override
-    public Map<Status, Integer> groupByStatusForWorkflowName(String workflowName, String namespace, long createdAfter, long createdBefore) {
+    public Map<Status, Integer> countByStatusForWorkflowName(String namespace, String workflowName, long createdAfter, long createdBefore) {
         logger.debug("Received request to group by status jobs with workflow name {}, namespace {}, created after {}, " +
                 "created before {}", workflowName, namespace, createdAfter, createdBefore);
         Map<Status, Integer> statusMap = new HashMap<>();
@@ -192,7 +192,7 @@ public class RAMJobStore implements JobStore {
     @Override
     public void update(Job job) throws StoreException {
         logger.info("Received request to update job to {}", job);
-        final JobId jobId = JobId.build(job.getId(), job.getWorkflow(), job.getNamespace());
+        final JobId jobId = JobId.build(job.getNamespace(), job.getId(), job.getWorkflow());
         if (!jobs.containsKey(jobId)) {
             throw new StoreException("job with id " + jobId + " does not exists");
         }
@@ -202,16 +202,16 @@ public class RAMJobStore implements JobStore {
     @Override
     public void delete(JobId jobId) throws StoreException {
         logger.debug("Received request to delete job with id {}", jobId);
-        final JobId buildJobId = JobId.build(jobId.getId(), jobId.getWorkflow(), jobId.getNamespace());
+        final JobId buildJobId = JobId.build(jobId.getNamespace(), jobId.getId(), jobId.getWorkflow());
         if (jobs.remove(buildJobId) == null) {
             throw new StoreException("job with id " + jobId + " does not exists");
         }
     }
 
     @Override
-    public void deleteByWorkflowName(String workflowName, String namespace) {
+    public void deleteByWorkflowName(String namespace, String workflowName) {
         logger.debug("Received request to delete job with workflow name {} under namespace {}", workflowName, namespace);
-        final List<Job> jobs = loadByWorkflowName(workflowName, namespace, 0, System.currentTimeMillis());
+        final List<Job> jobs = loadByWorkflowName(namespace, workflowName, 0, System.currentTimeMillis());
         jobs.forEach(this.jobs::remove);
     }
 }

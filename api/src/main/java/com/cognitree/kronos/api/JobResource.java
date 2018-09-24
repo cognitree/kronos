@@ -81,7 +81,7 @@ public class JobResource {
 
         final List<Job> jobs;
         if (statuses != null && !statuses.isEmpty()) {
-            jobs = JobService.getService().get(statuses, namespace, createdAfter, createdBefore);
+            jobs = JobService.getService().get(namespace, statuses, createdAfter, createdBefore);
         } else {
             jobs = JobService.getService().get(namespace, createdAfter, createdBefore);
         }

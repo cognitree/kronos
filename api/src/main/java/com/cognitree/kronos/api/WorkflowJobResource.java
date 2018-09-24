@@ -94,15 +94,15 @@ public class WorkflowJobResource {
         final List<Job> jobs;
         if (triggerName != null) {
             if (statuses != null && !statuses.isEmpty()) {
-                jobs = JobService.getService().get(workflowName, triggerName, statuses, namespace, createdAfter, createdBefore);
+                jobs = JobService.getService().get(namespace, workflowName, triggerName, statuses, createdAfter, createdBefore);
             } else {
-                jobs = JobService.getService().get(workflowName, triggerName, namespace, createdAfter, createdBefore);
+                jobs = JobService.getService().get(namespace, workflowName, triggerName, createdAfter, createdBefore);
             }
         } else {
             if (statuses != null && !statuses.isEmpty()) {
-                jobs = JobService.getService().get(workflowName, statuses, namespace, createdAfter, createdBefore);
+                jobs = JobService.getService().get(namespace, workflowName, statuses, createdAfter, createdBefore);
             } else {
-                jobs = JobService.getService().get(workflowName, namespace, createdAfter, createdBefore);
+                jobs = JobService.getService().get(namespace, workflowName, createdAfter, createdBefore);
 
             }
         }
@@ -125,7 +125,7 @@ public class WorkflowJobResource {
         if (namespace == null || namespace.isEmpty()) {
             return Response.status(BAD_REQUEST).entity("missing namespace header").build();
         }
-        final JobId jobId = JobId.build(id, workflowName, namespace);
+        final JobId jobId = JobId.build(namespace, id, workflowName);
         final Job job = JobService.getService().get(jobId);
         if (job == null) {
             logger.error("No job exists with id {}", jobId);

@@ -154,7 +154,7 @@ public final class TaskSchedulerService implements Service {
         final List<Namespace> namespaces = NamespaceService.getService().get();
         final List<Task> tasks = new ArrayList<>();
         for (Namespace namespace : namespaces) {
-            TaskService.getService().get(NON_FINAL_TASK_STATUS_LIST, namespace.getName());
+            TaskService.getService().get(namespace.getName(), NON_FINAL_TASK_STATUS_LIST);
         }
         if (!tasks.isEmpty()) {
             tasks.sort(Comparator.comparing(Task::getCreatedAt));
@@ -323,7 +323,7 @@ public final class TaskSchedulerService implements Service {
         final Map<String, Object> dependentTaskContext = new LinkedHashMap<>();
         for (String dependentTaskName : dependsOn) {
             // sort the tasks based on creation time and update the context from the latest task
-            TaskId dependentTaskId = TaskId.build(dependentTaskName, task.getJob(), task.getWorkflow(), task.getNamespace());
+            TaskId dependentTaskId = TaskId.build(task.getNamespace(), dependentTaskName, task.getJob(), task.getWorkflow());
             Task dependentTask = taskProvider.getTask(dependentTaskId);
             if (dependentTask != null) {
                 if (dependentTask.getContext() != null && !dependentTask.getContext().isEmpty()) {

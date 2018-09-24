@@ -66,7 +66,7 @@ public class WorkflowTriggerResource {
         if (namespace == null || namespace.isEmpty()) {
             return Response.status(BAD_REQUEST).entity("missing namespace header").build();
         }
-        final List<WorkflowTrigger> triggers = WorkflowTriggerService.getService().get(workflowName, namespace);
+        final List<WorkflowTrigger> triggers = WorkflowTriggerService.getService().get(namespace, workflowName);
         return Response.status(OK).entity(triggers).build();
     }
 
@@ -86,7 +86,7 @@ public class WorkflowTriggerResource {
         if (namespace == null || namespace.isEmpty()) {
             return Response.status(BAD_REQUEST).entity("missing namespace header").build();
         }
-        WorkflowTriggerId triggerId = WorkflowTriggerId.build(triggerName, workflowName, namespace);
+        WorkflowTriggerId triggerId = WorkflowTriggerId.build(namespace, triggerName, workflowName);
         final WorkflowTrigger workflowTrigger = WorkflowTriggerService.getService().get(triggerId);
         if (workflowTrigger == null) {
             logger.error("No workflow trigger exists with name {} under namespace {}", triggerName, namespace);
@@ -138,9 +138,9 @@ public class WorkflowTriggerResource {
             return Response.status(BAD_REQUEST).entity("missing namespace header").build();
         }
         if (enable) {
-            WorkflowTriggerService.getService().resume(WorkflowTriggerId.build(triggerName, workflowName, namespace));
+            WorkflowTriggerService.getService().resume(WorkflowTriggerId.build(namespace, triggerName, workflowName));
         } else {
-            WorkflowTriggerService.getService().pause(WorkflowTriggerId.build(triggerName, workflowName, namespace));
+            WorkflowTriggerService.getService().pause(WorkflowTriggerId.build(namespace, triggerName, workflowName));
         }
         return Response.status(ACCEPTED).build();
     }
@@ -161,7 +161,7 @@ public class WorkflowTriggerResource {
         if (namespace == null || namespace.isEmpty()) {
             return Response.status(BAD_REQUEST).entity("missing namespace header").build();
         }
-        WorkflowTriggerId triggerId = WorkflowTriggerId.build(triggerName, workflowName, namespace);
+        WorkflowTriggerId triggerId = WorkflowTriggerId.build(namespace, triggerName, workflowName);
         WorkflowTriggerService.getService().delete(triggerId);
         return Response.status(OK).build();
     }

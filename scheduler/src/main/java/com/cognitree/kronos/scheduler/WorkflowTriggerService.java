@@ -67,7 +67,7 @@ public class WorkflowTriggerService implements Service {
     public void add(WorkflowTrigger workflowTrigger) throws SchedulerException, ServiceException, ValidationException {
         logger.debug("Received request to add workflow trigger {}", workflowTrigger);
         validateTrigger(workflowTrigger);
-        validateWorkflow(workflowTrigger.getWorkflow(), workflowTrigger.getNamespace());
+        validateWorkflow(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow());
         try {
             if (workflowTriggerStore.load(workflowTrigger) != null) {
                 throw WORKFLOW_TRIGGER_ALREADY_EXISTS.createException(workflowTrigger.getName(),
@@ -130,7 +130,7 @@ public class WorkflowTriggerService implements Service {
 
     public WorkflowTrigger get(WorkflowTriggerId workflowTriggerId) throws ServiceException, ValidationException {
         logger.debug("Received request to get workflow trigger with id {}", workflowTriggerId);
-        validateWorkflow(workflowTriggerId.getWorkflow(), workflowTriggerId.getNamespace());
+        validateWorkflow(workflowTriggerId.getNamespace(), workflowTriggerId.getWorkflow());
         try {
             return workflowTriggerStore.load(workflowTriggerId);
         } catch (StoreException e) {
@@ -139,12 +139,12 @@ public class WorkflowTriggerService implements Service {
         }
     }
 
-    public List<WorkflowTrigger> get(String workflowName, String namespace) throws ServiceException, ValidationException {
+    public List<WorkflowTrigger> get(String namespace, String workflowName) throws ServiceException, ValidationException {
         logger.debug("Received request to get all workflow triggers for workflow {} under namespace {}",
                 workflowName, namespace);
-        validateWorkflow(workflowName, namespace);
+        validateWorkflow(namespace, workflowName);
         try {
-            final List<WorkflowTrigger> workflowTriggers = workflowTriggerStore.loadByWorkflowName(workflowName, namespace);
+            final List<WorkflowTrigger> workflowTriggers = workflowTriggerStore.loadByWorkflowName(namespace, workflowName);
             return workflowTriggers == null ? Collections.emptyList() : workflowTriggers;
         } catch (StoreException e) {
             logger.error("unable to get all workflow triggers for workflow {} under namespace {}",
@@ -181,8 +181,8 @@ public class WorkflowTriggerService implements Service {
         }
     }
 
-    private void validateWorkflow(String workflowName, String namespace) throws ServiceException, ValidationException {
-        WorkflowId workflowId = WorkflowId.build(workflowName, namespace);
+    private void validateWorkflow(String namespace, String workflowName) throws ServiceException, ValidationException {
+        WorkflowId workflowId = WorkflowId.build(namespace, workflowName);
         if (WorkflowService.getService().get(workflowId) == null) {
             logger.error("No workflow exists with name {} under namespace {}", workflowName, namespace);
             throw WORKFLOW_NOT_FOUND.createException(workflowName, namespace);

@@ -163,7 +163,7 @@ public class StdJDBCTaskStore implements TaskStore {
     }
 
     @Override
-    public List<Task> loadByJobIdAndWorkflowName(String jobId, String workflowName, String namespace) throws StoreException {
+    public List<Task> loadByJobIdAndWorkflowName(String namespace, String jobId, String workflowName) throws StoreException {
         logger.debug("Received request to get all tasks with job id {}, workflow name {}, namespace {}",
                 jobId, workflowName, namespace);
         try (Connection connection = dataSource.getConnection();
@@ -186,7 +186,7 @@ public class StdJDBCTaskStore implements TaskStore {
     }
 
     @Override
-    public List<Task> loadByStatus(List<Status> statuses, String namespace) throws StoreException {
+    public List<Task> loadByStatus(String namespace, List<Status> statuses) throws StoreException {
         logger.debug("Received request to get all tasks with status in {} under namespace {}", statuses, namespace);
         String placeHolders = String.join(",", Collections.nCopies(statuses.size(), "?"));
         final String sqlQuery = LOAD_TASK_BY_STATUS.replace("$statuses", placeHolders);
@@ -230,7 +230,7 @@ public class StdJDBCTaskStore implements TaskStore {
     }
 
     @Override
-    public Map<Status, Integer> groupByStatusForWorkflowName(String workflowName, String namespace,
+    public Map<Status, Integer> groupByStatusForWorkflowName(String namespace, String workflowName,
                                                              long createdAfter, long createdBefore) throws StoreException {
         logger.debug("Received request to group tasks by status having workflow name {} under namespace {}," +
                 "created after {}, created before {}", workflowName, namespace, createdAfter, createdBefore);

@@ -114,7 +114,7 @@ public class WorkflowStatisticsResource {
         }
 
         final WorkflowStatistics workflowStatistics =
-                WorkflowService.getService().getStatistics(name, namespace, createdAfter, createdBefore);
+                WorkflowService.getService().getStatistics(namespace, name, createdAfter, createdBefore);
         return Response.status(OK).entity(workflowStatistics).build();
     }
 

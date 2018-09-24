@@ -155,7 +155,7 @@ public class MailService implements Service {
                 return;
             }
             try {
-                final Workflow workflow = WorkflowService.getService().get(WorkflowId.build(job.getWorkflow(), job.getNamespace()));
+                final Workflow workflow = WorkflowService.getService().get(WorkflowId.build(job.getNamespace(), job.getWorkflow()));
                 List<String> recipients = null;
                 if (status == SUCCESSFUL) {
                     recipients = workflow.getEmailOnSuccess();
@@ -164,7 +164,7 @@ public class MailService implements Service {
                     recipients = workflow.getEmailOnFailure();
                 }
                 if (recipients != null && !recipients.isEmpty()) {
-                    final List<Task> tasks = TaskService.getService().get(job.getId(), job.getWorkflow(), job.getNamespace());
+                    final List<Task> tasks = TaskService.getService().get(job.getNamespace(), job.getId(), job.getWorkflow());
                     VelocityContext velocityContext = buildVelocityContext(job, workflow, tasks);
                     StringWriter subjectWriter = new StringWriter();
                     subjectTemplate.merge(velocityContext, subjectWriter);
@@ -183,7 +183,7 @@ public class MailService implements Service {
             velocityContext.put("job", job);
             velocityContext.put("workflow", workflow);
             velocityContext.put("tasks", tasks);
-            final WorkflowTriggerId triggerId = WorkflowTriggerId.build(job.getTrigger(), job.getWorkflow(), job.getNamespace());
+            final WorkflowTriggerId triggerId = WorkflowTriggerId.build(job.getNamespace(), job.getTrigger(), job.getWorkflow());
             final WorkflowTrigger workflowTrigger = WorkflowTriggerService.getService().get(triggerId);
             final Schedule schedule = workflowTrigger.getSchedule();
             TimeZone timeZone;
@@ -237,8 +237,8 @@ public class MailService implements Service {
                 return;
             }
             try {
-                final Job job = JobService.getService().get(JobId.build(task.getJob(), task.getWorkflow(), task.getNamespace()));
-                final Workflow workflow = WorkflowService.getService().get(WorkflowId.build(job.getWorkflow(), job.getNamespace()));
+                final Job job = JobService.getService().get(JobId.build(task.getNamespace(), task.getJob(), task.getWorkflow()));
+                final Workflow workflow = WorkflowService.getService().get(WorkflowId.build(job.getNamespace(), job.getWorkflow()));
                 List<String> recipients = workflow.getEmailOnFailure();
                 if (recipients != null && !recipients.isEmpty()) {
                     VelocityContext velocityContext = buildVelocityContext(task, job, workflow);
@@ -259,7 +259,7 @@ public class MailService implements Service {
             velocityContext.put("job", job);
             velocityContext.put("task", task);
             velocityContext.put("workflow", workflow);
-            final WorkflowTriggerId triggerId = WorkflowTriggerId.build(job.getTrigger(), job.getWorkflow(), job.getNamespace());
+            final WorkflowTriggerId triggerId = WorkflowTriggerId.build(job.getNamespace(), job.getTrigger(), job.getWorkflow());
             final WorkflowTrigger workflowTrigger = WorkflowTriggerService.getService().get(triggerId);
             final Schedule schedule = workflowTrigger.getSchedule();
             TimeZone timeZone;

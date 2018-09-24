@@ -37,7 +37,7 @@ public class RAMWorkflowStore implements WorkflowStore {
     @Override
     public void store(Workflow workflow) throws StoreException {
         logger.debug("Received request to store workflow {}", workflow);
-        final WorkflowId workflowId = WorkflowId.build(workflow.getName(), workflow.getNamespace());
+        final WorkflowId workflowId = WorkflowId.build(workflow.getNamespace(), workflow.getName());
         if (workflows.containsKey(workflowId)) {
             throw new StoreException("workflow with id " + workflowId + " already exists");
         }
@@ -59,13 +59,13 @@ public class RAMWorkflowStore implements WorkflowStore {
     @Override
     public Workflow load(WorkflowId workflowId) {
         logger.debug("Received request to load workflow with id {}", workflowId);
-        return workflows.get(WorkflowId.build(workflowId.getName(), workflowId.getNamespace()));
+        return workflows.get(WorkflowId.build(workflowId.getNamespace(), workflowId.getName()));
     }
 
     @Override
     public void update(Workflow workflow) throws StoreException {
         logger.debug("Received request to update workflow to {}", workflow);
-        final WorkflowId workflowId = WorkflowId.build(workflow.getName(), workflow.getNamespace());
+        final WorkflowId workflowId = WorkflowId.build(workflow.getNamespace(), workflow.getName());
         if (!workflows.containsKey(workflowId)) {
             throw new StoreException("workflow with id " + workflowId + " does not exists");
         }
@@ -75,7 +75,7 @@ public class RAMWorkflowStore implements WorkflowStore {
     @Override
     public void delete(WorkflowId workflowId) throws StoreException {
         logger.debug("Received request to delete workflow with id {}", workflowId);
-        final WorkflowId builtWorkflowId = WorkflowId.build(workflowId.getName(), workflowId.getNamespace());
+        final WorkflowId builtWorkflowId = WorkflowId.build(workflowId.getNamespace(), workflowId.getName());
         if (workflows.remove(builtWorkflowId) == null) {
             throw new StoreException("workflow with id " + builtWorkflowId + " does not exists");
         }

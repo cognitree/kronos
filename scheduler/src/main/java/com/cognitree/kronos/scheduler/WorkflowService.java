@@ -136,15 +136,15 @@ public class WorkflowService implements Service {
         return getWorkflowStatistics(jobStatusMap, taskStatusMap, createdAfter, createdBefore);
     }
 
-    public WorkflowStatistics getStatistics(String workflowName, String namespace, long createdAfter, long createdBefore)
+    public WorkflowStatistics getStatistics(String namespace, String workflowName, long createdAfter, long createdBefore)
             throws ValidationException, ServiceException {
         logger.debug("Received request to get statistics for jobs with name {} under namespace {} created " +
                 "between {} to {}", workflowName, namespace, createdAfter, createdBefore);
         validateNamespace(namespace);
         final Map<Job.Status, Integer> jobStatusMap =
-                JobService.getService().groupByStatus(workflowName, namespace, createdAfter, createdBefore);
+                JobService.getService().groupByStatus(namespace, workflowName, createdAfter, createdBefore);
         final Map<Task.Status, Integer> taskStatusMap =
-                TaskService.getService().groupByStatus(workflowName, namespace, createdAfter, createdBefore);
+                TaskService.getService().groupByStatus(namespace, workflowName, createdAfter, createdBefore);
         return getWorkflowStatistics(jobStatusMap, taskStatusMap, createdAfter, createdBefore);
     }
 
@@ -202,7 +202,7 @@ public class WorkflowService implements Service {
     public void pauseWorkflowTriggers(WorkflowId workflowId) throws ServiceException, ValidationException {
         logger.debug("Received request to pause all triggers for workflow {}", workflowId);
         final List<WorkflowTrigger> workflowTriggers =
-                WorkflowTriggerService.getService().get(workflowId.getName(), workflowId.getNamespace());
+                WorkflowTriggerService.getService().get(workflowId.getNamespace(), workflowId.getName());
         for (WorkflowTrigger workflowTrigger : workflowTriggers) {
             WorkflowTriggerService.getService().pause(workflowTrigger);
         }
@@ -217,12 +217,12 @@ public class WorkflowService implements Service {
             }
             // delete all triggers before deleting workflow
             final List<WorkflowTrigger> workflowTriggers =
-                    WorkflowTriggerService.getService().get(workflowId.getName(), workflowId.getNamespace());
+                    WorkflowTriggerService.getService().get(workflowId.getNamespace(), workflowId.getName());
             for (WorkflowTrigger workflowTrigger : workflowTriggers) {
                 WorkflowTriggerService.getService().delete(workflowTrigger);
             }
             // delete all workflow jobs before deleting workflow
-            JobService.getService().delete(workflowId.getName(), workflowId.getNamespace());
+            JobService.getService().delete(workflowId.getNamespace(), workflowId.getName());
             WorkflowSchedulerService.getService().delete(workflowId);
             workflowStore.delete(workflowId);
         } catch (StoreException e) {

@@ -26,16 +26,24 @@ import java.util.Objects;
 @JsonDeserialize(as = WorkflowTriggerId.class)
 public class WorkflowTriggerId {
 
+    private String namespace;
     private String name;
     private String workflow;
-    private String namespace;
 
-    public static WorkflowTriggerId build(String name, String workflowName, String namespace) {
+    public static WorkflowTriggerId build(String namespace, String name, String workflowName) {
         final WorkflowTriggerId workflowTriggerId = new WorkflowTriggerId();
+        workflowTriggerId.setNamespace(namespace);
         workflowTriggerId.setName(name);
         workflowTriggerId.setWorkflow(workflowName);
-        workflowTriggerId.setNamespace(namespace);
         return workflowTriggerId;
+    }
+
+    public String getNamespace() {
+        return namespace;
+    }
+
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
     }
 
     public String getName() {
@@ -54,36 +62,28 @@ public class WorkflowTriggerId {
         this.workflow = workflow;
     }
 
-    public String getNamespace() {
-        return namespace;
-    }
-
-    public void setNamespace(String namespace) {
-        this.namespace = namespace;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof WorkflowTriggerId)) return false;
         WorkflowTriggerId that = (WorkflowTriggerId) o;
-        return Objects.equals(name, that.name) &&
-                Objects.equals(workflow, that.workflow) &&
-                Objects.equals(namespace, that.namespace);
+        return Objects.equals(namespace, that.namespace) &&
+                Objects.equals(name, that.name) &&
+                Objects.equals(workflow, that.workflow);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(name, workflow, namespace);
+        return Objects.hash(namespace, name, workflow);
     }
 
     @Override
     public String toString() {
         return "WorkflowTriggerId{" +
-                "name='" + name + '\'' +
+                "namespace='" + namespace + '\'' +
+                ", name='" + name + '\'' +
                 ", workflow='" + workflow + '\'' +
-                ", namespace='" + namespace + '\'' +
                 '}';
     }
 }

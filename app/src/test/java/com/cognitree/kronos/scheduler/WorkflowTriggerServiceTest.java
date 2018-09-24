@@ -169,8 +169,8 @@ public class WorkflowTriggerServiceTest {
         Assert.assertNotNull(workflowTriggerTwoFromDB);
         Assert.assertEquals(workflowTriggerTwo, workflowTriggerTwoFromDB);
 
-        Assert.assertEquals(1, workflowTriggerService.get(workflowOne.getName(), namespaceOne.getName()).size());
-        Assert.assertEquals(1, workflowTriggerService.get(workflowTwo.getName(), namespaceTwo.getName()).size());
+        Assert.assertEquals(1, workflowTriggerService.get(namespaceOne.getName(), workflowOne.getName()).size());
+        Assert.assertEquals(1, workflowTriggerService.get(namespaceTwo.getName(), workflowTwo.getName()).size());
     }
 
     @Test(expected = ValidationException.class)

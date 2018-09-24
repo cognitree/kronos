@@ -26,16 +26,24 @@ import java.util.Objects;
 @JsonDeserialize(as = JobId.class)
 public class JobId {
 
+    private String namespace;
     private String id;
     private String workflow;
-    private String namespace;
 
-    public static JobId build(String id, String workflowName, String namespace) {
+    public static JobId build(String namespace, String id, String workflowName) {
         final JobId jobId = new JobId();
+        jobId.setNamespace(namespace);
         jobId.setId(id);
         jobId.setWorkflow(workflowName);
-        jobId.setNamespace(namespace);
         return jobId;
+    }
+
+    public String getNamespace() {
+        return namespace;
+    }
+
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
     }
 
     public String getId() {
@@ -54,36 +62,28 @@ public class JobId {
         this.workflow = workflow;
     }
 
-    public String getNamespace() {
-        return namespace;
-    }
-
-    public void setNamespace(String namespace) {
-        this.namespace = namespace;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof JobId)) return false;
         JobId jobId = (JobId) o;
-        return Objects.equals(id, jobId.id) &&
-                Objects.equals(workflow, jobId.workflow) &&
-                Objects.equals(namespace, jobId.namespace);
+        return Objects.equals(namespace, jobId.namespace) &&
+                Objects.equals(id, jobId.id) &&
+                Objects.equals(workflow, jobId.workflow);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(id, workflow, namespace);
+        return Objects.hash(namespace, id, workflow);
     }
 
     @Override
     public String toString() {
         return "JobId{" +
-                "id='" + id + '\'' +
+                "namespace='" + namespace + '\'' +
+                ", id='" + id + '\'' +
                 ", workflow='" + workflow + '\'' +
-                ", namespace='" + namespace + '\'' +
                 '}';
     }
 }

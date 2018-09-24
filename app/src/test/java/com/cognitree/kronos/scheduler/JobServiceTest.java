@@ -108,12 +108,12 @@ public class JobServiceTest {
         Thread.sleep(100);
 
         JobService jobService = JobService.getService();
-        final List<Job> workflowOneJobs = jobService.get(workflowTriggerOne.getWorkflow(),
-                workflowTriggerOne.getNamespace(), 0, System.currentTimeMillis());
+        final List<Job> workflowOneJobs = jobService.get(workflowTriggerOne.getNamespace(), workflowTriggerOne.getWorkflow(),
+                0, System.currentTimeMillis());
         Assert.assertEquals(1, workflowOneJobs.size());
 
-        final List<Job> workflowTwoJobs = jobService.get(workflowTriggerTwo.getWorkflow(),
-                workflowTriggerTwo.getNamespace(), 0, System.currentTimeMillis());
+        final List<Job> workflowTwoJobs = jobService.get(workflowTriggerTwo.getNamespace(), workflowTriggerTwo.getWorkflow(),
+                0, System.currentTimeMillis());
         Assert.assertEquals(1, workflowTwoJobs.size());
     }
 
@@ -130,12 +130,12 @@ public class JobServiceTest {
         Thread.sleep(100);
 
         JobService jobService = JobService.getService();
-        final List<Job> workflowOneJobs = jobService.get(workflowTriggerOne.getWorkflow(), workflowTriggerOne.getName(),
-                workflowTriggerOne.getNamespace(), 0, System.currentTimeMillis());
+        final List<Job> workflowOneJobs = jobService.get(workflowTriggerOne.getNamespace(), workflowTriggerOne.getWorkflow(),
+                workflowTriggerOne.getName(), 0, System.currentTimeMillis());
         Assert.assertEquals(1, workflowOneJobs.size());
 
-        final List<Job> workflowTwoJobs = jobService.get(workflowTriggerTwo.getWorkflow(), workflowTriggerTwo.getName(),
-                workflowTriggerTwo.getNamespace(), 0, System.currentTimeMillis());
+        final List<Job> workflowTwoJobs = jobService.get(workflowTriggerTwo.getNamespace(), workflowTriggerTwo.getWorkflow(),
+                workflowTriggerTwo.getName(), 0, System.currentTimeMillis());
         Assert.assertEquals(1, workflowTwoJobs.size());
     }
 
@@ -150,8 +150,8 @@ public class JobServiceTest {
         Thread.sleep(100);
 
         JobService jobService = JobService.getService();
-        final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getWorkflow(), workflowTrigger.getName(),
-                workflowTrigger.getNamespace(), 0, System.currentTimeMillis());
+        final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
+                workflowTrigger.getName(), 0, System.currentTimeMillis());
         Assert.assertEquals(1, workflowOneJobs.size());
 
         final List<Task> tasks = jobService.getTasks(workflowOneJobs.get(0));
@@ -184,8 +184,8 @@ public class JobServiceTest {
         Thread.sleep(100);
 
         JobService jobService = JobService.getService();
-        final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getWorkflow(), workflowTrigger.getName(),
-                workflowTrigger.getNamespace(), 0, System.currentTimeMillis());
+        final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
+                workflowTrigger.getName(), 0, System.currentTimeMillis());
         Assert.assertEquals(1, workflowOneJobs.size());
 
         final Job job = workflowOneJobs.get(0);
@@ -226,8 +226,8 @@ public class JobServiceTest {
         Thread.sleep(100);
 
         JobService jobService = JobService.getService();
-        final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getWorkflow(), workflowTrigger.getName(),
-                workflowTrigger.getNamespace(), 0, System.currentTimeMillis());
+        final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
+                workflowTrigger.getName(), 0, System.currentTimeMillis());
         Assert.assertEquals(1, workflowOneJobs.size());
 
         final Job job = workflowOneJobs.get(0);
@@ -266,15 +266,15 @@ public class JobServiceTest {
         Thread.sleep(100);
 
         JobService jobService = JobService.getService();
-        final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getWorkflow(), workflowTrigger.getName(),
-                workflowTrigger.getNamespace(), 0, System.currentTimeMillis());
+        final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
+                workflowTrigger.getName(), 0, System.currentTimeMillis());
         Assert.assertEquals(1, workflowOneJobs.size());
         final Job workflowOneJob = workflowOneJobs.get(0);
         Assert.assertEquals(workflowOneJob.getStatus(), Job.Status.SUCCESSFUL);
         jobService.delete(workflowOneJob);
 
-        final List<Job> workflowOneJobsPostDelete = jobService.get(workflowTrigger.getWorkflow(), workflowTrigger.getName(),
-                workflowTrigger.getNamespace(), 0, System.currentTimeMillis());
+        final List<Job> workflowOneJobsPostDelete = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
+                workflowTrigger.getName(), 0, System.currentTimeMillis());
         Assert.assertEquals(0, workflowOneJobsPostDelete.size());
     }
 }
