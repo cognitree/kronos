@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static com.cognitree.kronos.model.Task.Status.CREATED;
 
@@ -33,7 +34,7 @@ public class MockTaskBuilder {
     private String namespace;
     private String job;
     private String type;
-    private String maxExecutionTime = "1h";
+    private long maxExecutionTime = TimeUnit.HOURS.toMillis(1);
     private List<String> dependsOn = new ArrayList<>();
     private Map<String, Object> properties = new HashMap<>();
     private Status status = CREATED;
@@ -66,7 +67,7 @@ public class MockTaskBuilder {
         return this;
     }
 
-    public MockTaskBuilder setMaxExecutionTime(String maxExecutionTime) {
+    public MockTaskBuilder setMaxExecutionTime(long maxExecutionTime) {
         this.maxExecutionTime = maxExecutionTime;
         return this;
     }
@@ -109,7 +110,7 @@ public class MockTaskBuilder {
         task.setType(type);
         task.setStatus(status);
         task.setStatusMessage(statusMessage);
-        task.setMaxExecutionTime(maxExecutionTime);
+        task.setMaxExecutionTimeInMs(maxExecutionTime);
         task.setProperties(properties);
         task.setDependsOn(dependsOn);
         task.setCreatedAt(createdAt);

@@ -29,7 +29,6 @@ import com.cognitree.kronos.queue.consumer.ConsumerConfig;
 import com.cognitree.kronos.queue.producer.Producer;
 import com.cognitree.kronos.queue.producer.ProducerConfig;
 import com.cognitree.kronos.scheduler.model.Namespace;
-import com.cognitree.kronos.util.DateTimeUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -166,7 +165,7 @@ public final class TaskSchedulerService implements Service {
 
     private void startConsumer() {
         consumeTaskStatus();
-        final long pollInterval = DateTimeUtil.resolveDuration(consumerConfig.getPollInterval());
+        final long pollInterval = consumerConfig.getPollIntervalInMs();
         scheduledExecutorService.scheduleAtFixedRate(this::consumeTaskStatus, pollInterval, pollInterval, MILLISECONDS);
     }
 
@@ -183,8 +182,7 @@ public final class TaskSchedulerService implements Service {
             return;
         }
 
-        final long timeoutTaskTime = task.getSubmittedAt() +
-                DateTimeUtil.resolveDuration(task.getMaxExecutionTime());
+        final long timeoutTaskTime = task.getSubmittedAt() + task.getMaxExecutionTimeInMs();
         final long currentTimeMillis = System.currentTimeMillis();
 
         final TimeoutTask timeoutTask = new TimeoutTask(task);

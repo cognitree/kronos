@@ -106,7 +106,7 @@ public class StdJDBCTaskStore implements TaskStore {
             preparedStatement.setString(++paramIndex, task.getWorkflow());
             preparedStatement.setString(++paramIndex, task.getNamespace());
             preparedStatement.setString(++paramIndex, task.getType());
-            preparedStatement.setString(++paramIndex, task.getMaxExecutionTime());
+            preparedStatement.setLong(++paramIndex, task.getMaxExecutionTimeInMs());
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(task.getDependsOn()));
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(task.getProperties()));
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(task.getContext()));
@@ -301,7 +301,7 @@ public class StdJDBCTaskStore implements TaskStore {
         task.setWorkflow(resultSet.getString(++paramIndex));
         task.setNamespace(resultSet.getString(++paramIndex));
         task.setType(resultSet.getString(++paramIndex));
-        task.setMaxExecutionTime(resultSet.getString(++paramIndex));
+        task.setMaxExecutionTimeInMs(resultSet.getLong(++paramIndex));
         task.setDependsOn(MAPPER.readValue(resultSet.getString(++paramIndex), DEPENDS_ON_TYPE_REF));
         task.setProperties(MAPPER.readValue(resultSet.getString(++paramIndex), PROPERTIES_TYPE_REF));
         task.setContext(MAPPER.readValue(resultSet.getString(++paramIndex), PROPERTIES_TYPE_REF));

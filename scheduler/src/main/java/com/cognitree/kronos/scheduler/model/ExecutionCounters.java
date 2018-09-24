@@ -17,7 +17,7 @@
 
 package com.cognitree.kronos.scheduler.model;
 
-public class Statistics {
+public class ExecutionCounters {
     private int total;
     private int active;
     private int successful;
@@ -57,7 +57,7 @@ public class Statistics {
 
     @Override
     public String toString() {
-        return "Statistics{" +
+        return "ExecutionCounters{" +
                 "total=" + total +
                 ", active=" + active +
                 ", successful=" + successful +

@@ -16,4 +16,4 @@ tasks:
     properties:
       keyA: valA
       keyB: valB
-    maxExecutionTime: 100
+    maxExecutionTimeInMs: 100

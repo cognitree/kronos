@@ -17,13 +17,13 @@
 
 package com.cognitree.kronos.scheduler.store;
 
-public interface Store<E, T> {
+public interface Store<Entity, Identity> {
 
-    void store(E entity) throws StoreException;
+    void store(Entity entity) throws StoreException;
 
-    E load(T identity) throws StoreException;
+    Entity load(Identity identity) throws StoreException;
 
-    void update(E entity) throws StoreException;
+    void update(Entity entity) throws StoreException;
 
-    void delete(T identity) throws StoreException;
+    void delete(Identity identity) throws StoreException;
 }

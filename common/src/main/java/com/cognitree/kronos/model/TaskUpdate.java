@@ -31,7 +31,7 @@ public class TaskUpdate {
     private TaskId taskId;
     private Status status;
     private String statusMessage;
-    private Map<String, Object> context = new HashMap<>();
+    private Map<String, Object> context;
 
     public TaskId getTaskId() {
         return taskId;

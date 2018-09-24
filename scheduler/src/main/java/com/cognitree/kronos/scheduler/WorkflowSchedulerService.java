@@ -87,7 +87,7 @@ public final class WorkflowSchedulerService implements Service {
         scheduler = DirectSchedulerFactory.getInstance().getScheduler(DEFAULT_SCHEDULER_NAME);
         scheduler.getListenerManager().addSchedulerListener(new QuartzSchedulerListener());
         // TODO: FIXME service needs to be registered with provider before scheduler is started
-        // as above listener is calling WorkflowTriggerService to delete trigger which again call WorkflowSchedulerService
+        // as above listener might call WorkflowTriggerService to delete trigger which again call WorkflowSchedulerService
         ServiceProvider.registerService(this);
         scheduler.start();
         TaskService.getService().registerListener(new WorkflowLifecycleHandler());

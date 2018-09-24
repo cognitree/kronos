@@ -26,7 +26,6 @@ import static com.cognitree.kronos.scheduler.model.Schedule.Type.calendar;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class CalendarIntervalSchedule extends Schedule {
-
     private Type type = calendar;
     private int repeatInterval = 1;
     private IntervalUnit repeatIntervalUnit = IntervalUnit.DAY;

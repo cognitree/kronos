@@ -35,7 +35,7 @@ import static com.cognitree.kronos.model.Task.Status.CREATED;
 public class Task extends TaskId {
 
     private String type;
-    private String maxExecutionTime;
+    private long maxExecutionTimeInMs;
     private List<String> dependsOn = new ArrayList<>();
     private Map<String, Object> properties = new HashMap<>();
     private Map<String, Object> context = new HashMap<>();
@@ -54,12 +54,12 @@ public class Task extends TaskId {
         this.type = type;
     }
 
-    public String getMaxExecutionTime() {
-        return maxExecutionTime;
+    public long getMaxExecutionTimeInMs() {
+        return maxExecutionTimeInMs;
     }
 
-    public void setMaxExecutionTime(String maxExecutionTime) {
-        this.maxExecutionTime = maxExecutionTime;
+    public void setMaxExecutionTimeInMs(long maxExecutionTimeInMs) {
+        this.maxExecutionTimeInMs = maxExecutionTimeInMs;
     }
 
     public List<String> getDependsOn() {
@@ -145,7 +145,7 @@ public class Task extends TaskId {
     public String toString() {
         return "Task{" +
                 "type='" + type + '\'' +
-                ", maxExecutionTime='" + maxExecutionTime + '\'' +
+                ", maxExecutionTimeInMs='" + maxExecutionTimeInMs + '\'' +
                 ", dependsOn=" + dependsOn +
                 ", properties=" + properties +
                 ", context=" + context +
