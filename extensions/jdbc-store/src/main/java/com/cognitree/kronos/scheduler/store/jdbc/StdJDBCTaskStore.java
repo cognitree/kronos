@@ -70,8 +70,8 @@ public class StdJDBCTaskStore implements TaskStore {
     private static final String GROUP_BY_STATUS_TASK_CREATED_BETWEEN = "SELECT STATUS, COUNT(*) FROM " + TABLE_TASKS
             + " WHERE " + COL_NAMESPACE + " = ? AND " + COL_CREATED_AT + " > ? AND " + COL_CREATED_AT + " < ? " +
             "GROUP BY " + COL_STATUS;
-    private static final String GROUP_BY_STATUS_TASK_CREATED_BETWEEN_FOR_WORKFLOW = "SELECT STATUS, COUNT(*) FROM " + TABLE_TASKS
-            + " WHERE " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ? AND "
+    private static final String GROUP_BY_STATUS_TASK_CREATED_BETWEEN_FOR_WORKFLOW = "SELECT STATUS, COUNT(*) FROM "
+            + TABLE_TASKS + " WHERE " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ? AND "
             + COL_CREATED_AT + " > ? AND " + COL_CREATED_AT + " < ? " + "GROUP BY " + COL_STATUS;
 
     private static final String UPDATE_TASK = "UPDATE " + TABLE_TASKS + " SET " + COL_STATUS + " = ?, "
@@ -79,8 +79,8 @@ public class StdJDBCTaskStore implements TaskStore {
             + COL_CONTEXT + " = ? WHERE " + COL_NAME + " = ? AND " + COL_JOB_ID + " = ? " +
             "AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
 
-    private static final String DELETE_TASK = "DELETE FROM " + TABLE_TASKS + " WHERE "
-            + COL_NAME + " = ? AND " + COL_JOB_ID + " = ? AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
+    private static final String DELETE_TASK = "DELETE FROM " + TABLE_TASKS + " WHERE " + COL_NAME + " = ? AND "
+            + COL_JOB_ID + " = ? AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
 
     private static final TypeReference<Map<String, Object>> PROPERTIES_TYPE_REF =
             new TypeReference<Map<String, Object>>() {
@@ -123,7 +123,7 @@ public class StdJDBCTaskStore implements TaskStore {
     }
 
     @Override
-    public List<Task> loadByStatusIn(String namespace) throws StoreException {
+    public List<Task> load(String namespace) throws StoreException {
         logger.debug("Received request to get all tasks under namespace {}", namespace);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(LOAD_ALL_TASKS_BY_NAMESPACE)) {

@@ -50,7 +50,7 @@ public class RAMTaskStore implements TaskStore {
     }
 
     @Override
-    public List<Task> loadByStatusIn(String namespace) {
+    public List<Task> load(String namespace) {
         logger.debug("Received request to get all tasks under namespace {}", namespace);
         List<Task> tasks = new ArrayList<>();
         this.tasks.values().forEach(task -> {

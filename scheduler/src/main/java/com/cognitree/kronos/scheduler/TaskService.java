@@ -122,7 +122,7 @@ public class TaskService implements Service {
         logger.debug("Received request to get all tasks under namespace {}", namespace);
         validateNamespace(namespace);
         try {
-            final List<Task> tasks = taskStore.loadByStatusIn(namespace);
+            final List<Task> tasks = taskStore.load(namespace);
             return tasks == null ? Collections.emptyList() : tasks;
         } catch (StoreException e) {
             logger.error("unable to get all tasks under namespace {}", namespace, e);

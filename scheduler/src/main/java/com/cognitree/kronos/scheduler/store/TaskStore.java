@@ -29,7 +29,7 @@ import java.util.Map;
  */
 public interface TaskStore extends Store<Task, TaskId> {
 
-    List<Task> loadByStatusIn(String namespace) throws StoreException;
+    List<Task> load(String namespace) throws StoreException;
 
     List<Task> loadByJobIdAndWorkflowName(String jobId, String workflowName, String namespace) throws StoreException;
 
