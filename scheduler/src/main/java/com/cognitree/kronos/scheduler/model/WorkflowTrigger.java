@@ -29,7 +29,7 @@ public class WorkflowTrigger extends WorkflowTriggerId {
     private Long startAt;
     private Schedule schedule;
     private Long endAt;
-    private boolean isEnabled = true;
+    private boolean enabled = true;
 
     public Long getStartAt() {
         return startAt;
@@ -56,11 +56,11 @@ public class WorkflowTrigger extends WorkflowTriggerId {
     }
 
     public boolean isEnabled() {
-        return isEnabled;
+        return enabled;
     }
 
     public void setEnabled(boolean enabled) {
-        isEnabled = enabled;
+        this.enabled = enabled;
     }
 
     @JsonIgnore
@@ -85,7 +85,7 @@ public class WorkflowTrigger extends WorkflowTriggerId {
                 "startAt=" + startAt +
                 ", schedule=" + schedule +
                 ", endAt=" + endAt +
-                ", isEnabled=" + isEnabled +
+                ", enabled=" + enabled +
                 "} " + super.toString();
     }
 }
