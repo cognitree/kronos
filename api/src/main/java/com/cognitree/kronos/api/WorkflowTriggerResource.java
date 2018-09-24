@@ -20,6 +20,7 @@ package com.cognitree.kronos.api;
 import com.cognitree.kronos.scheduler.ServiceException;
 import com.cognitree.kronos.scheduler.ValidationException;
 import com.cognitree.kronos.scheduler.WorkflowTriggerService;
+import com.cognitree.kronos.scheduler.model.WorkflowId;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import com.cognitree.kronos.scheduler.model.WorkflowTriggerId;
 import io.swagger.annotations.Api;
@@ -118,8 +119,27 @@ public class WorkflowTriggerResource {
     }
 
     @PUT
+    @ApiOperation(value = "Enable/ Disable all triggers for workflow by name")
+    @ApiResponses(value = {
+            @ApiResponse(code = 404, message = "Workflow not found")})
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response updateWorkflow(@ApiParam(value = "workflow name", required = true)
+                                   @PathParam("workflow") String workflowName,
+                                   @ApiParam(value = "enable/ disable all workflow triggers", required = true)
+                                   @DefaultValue("true") @QueryParam("enable") boolean enable,
+                                   @HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
+        logger.info("Received request to update all triggers for workflow with name {} under namespace {} set enable to {}",
+                workflowName, namespace, enable);
+        if (namespace == null || namespace.isEmpty()) {
+            return Response.status(BAD_REQUEST).entity("missing namespace header").build();
+        }
+        WorkflowTriggerService.getService().pause(WorkflowId.build(namespace, workflowName));
+        return Response.status(ACCEPTED).build();
+    }
+
+    @PUT
     @Path("/{name}")
-    @ApiOperation(value = "Enable/Disable workflow trigger", response = WorkflowTrigger.class)
+    @ApiOperation(value = "Enable/Disable workflow trigger")
     @ApiResponses(value = {
             @ApiResponse(code = 404, message = "Workflow trigger not found")})
     @Produces(MediaType.APPLICATION_JSON)
