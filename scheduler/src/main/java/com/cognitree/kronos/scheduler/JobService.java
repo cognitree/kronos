@@ -32,7 +32,6 @@ import com.cognitree.kronos.scheduler.store.StoreService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -172,53 +171,53 @@ public class JobService implements Service {
         }
     }
 
-    public List<Job> get(List<Status> statusIn, String namespace, long createdAfter, long createdBefore)
+    public List<Job> get(List<Status> statuses, String namespace, long createdAfter, long createdBefore)
             throws ServiceException, ValidationException {
         logger.debug("Received request to get all jobs with status in {} under namespace {} " +
-                "created between {} to {}", statusIn, namespace, createdAfter, createdBefore);
+                "created between {} to {}", statuses, namespace, createdAfter, createdBefore);
         validateNamespace(namespace);
         try {
             final List<Job> jobs =
-                    jobStore.loadByStatusIn(statusIn, namespace, createdAfter, createdBefore);
+                    jobStore.loadByStatus(statuses, namespace, createdAfter, createdBefore);
             return jobs == null ? Collections.emptyList() : jobs;
         } catch (StoreException e) {
             logger.error("unable to get all jobs with status in {} under namespace {} " +
-                    "created between {} to {}", statusIn, namespace, createdAfter, createdBefore, e);
+                    "created between {} to {}", statuses, namespace, createdAfter, createdBefore, e);
             throw new ServiceException(e.getMessage());
         }
     }
 
-    public List<Job> get(String workflowName, List<Status> statusIn, String namespace,
+    public List<Job> get(String workflowName, List<Status> statuses, String namespace,
                          long createdAfter, long createdBefore) throws ServiceException, ValidationException {
         logger.debug("Received request to get all jobs with workflow name {} with status in {} under namespace {} " +
-                "created between {} to {}", workflowName, statusIn, namespace, createdAfter, createdBefore);
+                "created between {} to {}", workflowName, statuses, namespace, createdAfter, createdBefore);
         validateWorkflow(workflowName, namespace);
         try {
             final List<Job> jobs =
-                    jobStore.loadByWorkflowNameAndStatusIn(workflowName, statusIn, namespace, createdAfter, createdBefore);
+                    jobStore.loadByWorkflowNameAndStatus(workflowName, statuses, namespace, createdAfter, createdBefore);
             return jobs == null ? Collections.emptyList() : jobs;
         } catch (StoreException e) {
             logger.error("unable to get all jobs with workflow name {} with status in {} under namespace {} " +
-                    "created between {} to {}", workflowName, statusIn, namespace, createdAfter, createdBefore, e);
+                    "created between {} to {}", workflowName, statuses, namespace, createdAfter, createdBefore, e);
             throw new ServiceException(e.getMessage());
         }
     }
 
-    public List<Job> get(String workflowName, String triggerName, List<Status> statusIn, String namespace,
+    public List<Job> get(String workflowName, String triggerName, List<Status> statuses, String namespace,
                          long createdAfter, long createdBefore) throws ServiceException, ValidationException {
         logger.debug("Received request to get all jobs with workflow name {}, trigger {} with status in {} " +
                         "under namespace {} created between {} to {}",
-                workflowName, triggerName, statusIn, namespace, createdAfter, createdBefore);
+                workflowName, triggerName, statuses, namespace, createdAfter, createdBefore);
         validateWorkflow(workflowName, namespace);
         try {
             final List<Job> jobs =
-                    jobStore.loadByWorkflowNameAndTriggerNameAndStatusIn(workflowName, triggerName, statusIn,
+                    jobStore.loadByWorkflowNameAndTriggerNameAndStatus(workflowName, triggerName, statuses,
                             namespace, createdAfter, createdBefore);
             return jobs == null ? Collections.emptyList() : jobs;
         } catch (StoreException e) {
             logger.error("unable to get all jobs with workflow name {}, trigger {} with status in {} " +
                             "under namespace {} created between {} to {}",
-                    workflowName, triggerName, statusIn, namespace, createdAfter, createdBefore, e);
+                    workflowName, triggerName, statuses, namespace, createdAfter, createdBefore, e);
             throw new ServiceException(e.getMessage());
         }
     }

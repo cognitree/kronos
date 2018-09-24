@@ -17,7 +17,6 @@
 
 package com.cognitree.kronos.queue.consumer;
 
-import com.cognitree.kronos.util.DateTimeUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -43,7 +42,7 @@ public class KafkaConsumerImpl implements Consumer {
 
     private final Map<String, KafkaConsumer<String, String>> topicToKafkaConsumerMap = new HashMap<>();
     private Properties kafkaConsumerConfig;
-    private long pollTimeout;
+    private long pollTimeoutInMs;
 
 
     public void init(ObjectNode config) {
@@ -51,7 +50,7 @@ public class KafkaConsumerImpl implements Consumer {
         kafkaConsumerConfig = OBJECT_MAPPER.convertValue(config.get("kafkaConsumerConfig"), Properties.class);
         // force override consumer configuration for kafka to poll max 1 message at a time
         kafkaConsumerConfig.put("max.poll.records", 1);
-        pollTimeout = DateTimeUtil.resolveDuration(config.get("pollTimeout").asText());
+        pollTimeoutInMs = config.get("pollTimeoutInMs").asLong();
     }
 
     @Override
@@ -68,7 +67,7 @@ public class KafkaConsumerImpl implements Consumer {
         }
 
         while (tasks.size() < size) {
-            final ConsumerRecords<String, String> consumerRecords = topicToKafkaConsumerMap.get(topic).poll(pollTimeout);
+            final ConsumerRecords<String, String> consumerRecords = topicToKafkaConsumerMap.get(topic).poll(pollTimeoutInMs);
             if (consumerRecords.isEmpty()) {
                 break;
             }

@@ -39,6 +39,7 @@ public class DailyTimeIntervalSchedule extends Schedule {
     private int repeatCount = DailyTimeIntervalTrigger.REPEAT_INDEFINITELY;
     private TimeOfDay startTimeOfDay = START_OF_DAY;
     private TimeOfDay endTimeOfDay = END_OF_DAY;
+    private String timezone;
     private Set<Integer> daysOfWeek = ALL_DAYS_OF_THE_WEEK;
 
     @Override
@@ -91,6 +92,14 @@ public class DailyTimeIntervalSchedule extends Schedule {
         this.endTimeOfDay = endTimeOfDay;
     }
 
+    public String getTimezone() {
+        return timezone;
+    }
+
+    public void setTimezone(String timezone) {
+        this.timezone = timezone;
+    }
+
     public Set<Integer> getDaysOfWeek() {
         return daysOfWeek;
     }
@@ -111,24 +120,26 @@ public class DailyTimeIntervalSchedule extends Schedule {
                 repeatIntervalUnit == that.repeatIntervalUnit &&
                 Objects.equals(startTimeOfDay, that.startTimeOfDay) &&
                 Objects.equals(endTimeOfDay, that.endTimeOfDay) &&
+                Objects.equals(timezone, that.timezone) &&
                 Objects.equals(daysOfWeek, that.daysOfWeek);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(super.hashCode(), type, repeatInterval, repeatIntervalUnit, repeatCount, startTimeOfDay, endTimeOfDay, daysOfWeek);
+        return Objects.hash(super.hashCode(), type, repeatInterval, repeatIntervalUnit, repeatCount, startTimeOfDay, endTimeOfDay, timezone, daysOfWeek);
     }
 
     @Override
     public String toString() {
         return "DailyTimeIntervalSchedule{" +
                 "type=" + type +
+                ", repeatInterval=" + repeatInterval +
                 ", repeatIntervalUnit=" + repeatIntervalUnit +
                 ", repeatCount=" + repeatCount +
-                ", repeatInterval=" + repeatInterval +
                 ", startTimeOfDay=" + startTimeOfDay +
                 ", endTimeOfDay=" + endTimeOfDay +
+                ", timezone='" + timezone + '\'' +
                 ", daysOfWeek=" + daysOfWeek +
                 "} " + super.toString();
     }

@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 @JsonSerialize(as = Workflow.class)
 @JsonDeserialize(as = Workflow.class)
@@ -100,10 +101,10 @@ public class Workflow extends WorkflowId {
 
         private String name;
         private String type;
-        private Map<String, Object> properties = new HashMap<>();
         private List<String> dependsOn = new ArrayList<>();
+        private Map<String, Object> properties = new HashMap<>();
 
-        private String maxExecutionTime = "1d";
+        private long maxExecutionTimeInMs = TimeUnit.DAYS.toMillis(1);
         private boolean isEnabled = true;
 
         public String getName() {
@@ -122,14 +123,6 @@ public class Workflow extends WorkflowId {
             this.type = type;
         }
 
-        public Map<String, Object> getProperties() {
-            return properties;
-        }
-
-        public void setProperties(Map<String, Object> properties) {
-            this.properties = properties;
-        }
-
         public List<String> getDependsOn() {
             return dependsOn;
         }
@@ -138,12 +131,20 @@ public class Workflow extends WorkflowId {
             this.dependsOn = dependsOn;
         }
 
-        public String getMaxExecutionTime() {
-            return maxExecutionTime;
+        public Map<String, Object> getProperties() {
+            return properties;
         }
 
-        public void setMaxExecutionTime(String maxExecutionTime) {
-            this.maxExecutionTime = maxExecutionTime;
+        public void setProperties(Map<String, Object> properties) {
+            this.properties = properties;
+        }
+
+        public long getMaxExecutionTimeInMs() {
+            return maxExecutionTimeInMs;
+        }
+
+        public void setMaxExecutionTimeInMs(long maxExecutionTimeInMs) {
+            this.maxExecutionTimeInMs = maxExecutionTimeInMs;
         }
 
         public boolean isEnabled() {
@@ -162,15 +163,15 @@ public class Workflow extends WorkflowId {
             return isEnabled == that.isEnabled &&
                     Objects.equals(name, that.name) &&
                     Objects.equals(type, that.type) &&
-                    Objects.equals(properties, that.properties) &&
                     Objects.equals(dependsOn, that.dependsOn) &&
-                    Objects.equals(maxExecutionTime, that.maxExecutionTime);
+                    Objects.equals(properties, that.properties) &&
+                    Objects.equals(maxExecutionTimeInMs, that.maxExecutionTimeInMs);
         }
 
         @Override
         public int hashCode() {
 
-            return Objects.hash(name, type, properties, dependsOn, maxExecutionTime, isEnabled);
+            return Objects.hash(name, type, dependsOn, properties, maxExecutionTimeInMs, isEnabled);
         }
 
         @Override
@@ -178,9 +179,9 @@ public class Workflow extends WorkflowId {
             return "WorkflowTask{" +
                     "name='" + name + '\'' +
                     ", type='" + type + '\'' +
-                    ", properties=" + properties +
                     ", dependsOn=" + dependsOn +
-                    ", maxExecutionTime='" + maxExecutionTime + '\'' +
+                    ", properties=" + properties +
+                    ", maxExecutionTimeInMs='" + maxExecutionTimeInMs + '\'' +
                     ", isEnabled=" + isEnabled +
                     '}';
         }

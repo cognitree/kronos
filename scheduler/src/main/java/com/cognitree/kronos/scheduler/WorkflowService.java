@@ -21,10 +21,10 @@ import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.scheduler.graph.TopologicalSort;
+import com.cognitree.kronos.scheduler.model.ExecutionCounters;
 import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.NamespaceId;
-import com.cognitree.kronos.scheduler.model.Statistics;
 import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.WorkflowId;
 import com.cognitree.kronos.scheduler.model.WorkflowStatistics;
@@ -150,31 +150,31 @@ public class WorkflowService implements Service {
     private WorkflowStatistics getWorkflowStatistics(Map<Job.Status, Integer> jobStatusMap, Map<Task.Status, Integer> taskStatusMap,
                                                      long createdAfter, long createdBefore) {
         WorkflowStatistics workflowStatistics = new WorkflowStatistics();
-        Statistics jobStatistics = new Statistics();
-        jobStatistics.setTotal(jobStatusMap.values().stream().mapToInt(Integer::intValue).sum());
+        ExecutionCounters jobExecutionCounters = new ExecutionCounters();
+        jobExecutionCounters.setTotal(jobStatusMap.values().stream().mapToInt(Integer::intValue).sum());
         int activeJobs = 0;
         for (Job.Status status : ACTIVE_JOB_STATUS) {
             if (jobStatusMap.containsKey(status)) {
                 activeJobs += jobStatusMap.get(status);
             }
         }
-        jobStatistics.setActive(activeJobs);
-        jobStatistics.setSuccessful(jobStatusMap.getOrDefault(Job.Status.SUCCESSFUL, 0));
-        jobStatistics.setFailed(jobStatusMap.getOrDefault(Job.Status.FAILED, 0));
-        workflowStatistics.setJobs(jobStatistics);
+        jobExecutionCounters.setActive(activeJobs);
+        jobExecutionCounters.setSuccessful(jobStatusMap.getOrDefault(Job.Status.SUCCESSFUL, 0));
+        jobExecutionCounters.setFailed(jobStatusMap.getOrDefault(Job.Status.FAILED, 0));
+        workflowStatistics.setJobs(jobExecutionCounters);
 
-        Statistics taskStatistics = new Statistics();
-        taskStatistics.setTotal(taskStatusMap.values().stream().mapToInt(Integer::intValue).sum());
+        ExecutionCounters taskExecutionCounters = new ExecutionCounters();
+        taskExecutionCounters.setTotal(taskStatusMap.values().stream().mapToInt(Integer::intValue).sum());
         int activeTasks = 0;
         for (Task.Status status : ACTIVE_TASK_STATUS) {
             if (taskStatusMap.containsKey(status)) {
                 activeTasks += taskStatusMap.get(status);
             }
         }
-        taskStatistics.setActive(activeTasks);
-        taskStatistics.setSuccessful(taskStatusMap.getOrDefault(Task.Status.SUCCESSFUL, 0));
-        taskStatistics.setFailed(taskStatusMap.getOrDefault(Task.Status.FAILED, 0));
-        workflowStatistics.setTasks(taskStatistics);
+        taskExecutionCounters.setActive(activeTasks);
+        taskExecutionCounters.setSuccessful(taskStatusMap.getOrDefault(Task.Status.SUCCESSFUL, 0));
+        taskExecutionCounters.setFailed(taskStatusMap.getOrDefault(Task.Status.FAILED, 0));
+        workflowStatistics.setTasks(taskExecutionCounters);
 
         workflowStatistics.setFrom(createdAfter);
         workflowStatistics.setTo(createdBefore);

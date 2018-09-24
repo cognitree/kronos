@@ -31,7 +31,6 @@ import com.cognitree.kronos.queue.consumer.Consumer;
 import com.cognitree.kronos.queue.consumer.ConsumerConfig;
 import com.cognitree.kronos.queue.producer.Producer;
 import com.cognitree.kronos.queue.producer.ProducerConfig;
-import com.cognitree.kronos.util.DateTimeUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,7 +72,7 @@ public final class TaskExecutionService implements Service {
     private final Map<String, Integer> taskTypeToMaxParallelTasksCount = new HashMap<>();
     private final Map<String, Integer> taskTypeToRunningTasksCount = new HashMap<>();
     // used by internal tasks like polling new tasks from queue
-    private final ScheduledExecutorService internalExecutorService = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService taskConsumerThreadPool = Executors.newSingleThreadScheduledExecutor();
     // used to execute tasks
     private final ExecutorService taskExecutorThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     private Consumer consumer;
@@ -132,8 +131,8 @@ public final class TaskExecutionService implements Service {
 
     @Override
     public void start() {
-        final long pollInterval = DateTimeUtil.resolveDuration(consumerConfig.getPollInterval());
-        internalExecutorService.scheduleAtFixedRate(this::consumeTasks, 0, pollInterval, MILLISECONDS);
+        final long pollInterval = consumerConfig.getPollIntervalInMs();
+        taskConsumerThreadPool.scheduleAtFixedRate(this::consumeTasks, 0, pollInterval, MILLISECONDS);
         ServiceProvider.registerService(this);
     }
 
@@ -162,21 +161,21 @@ public final class TaskExecutionService implements Service {
      */
     private void submit(Task task) {
         logger.trace("Received task {} for execution from task queue", task);
-        updateStatus(task, SUBMITTED);
+        sendTaskUpdate(task, SUBMITTED);
         taskTypeToRunningTasksCount.put(task.getType(), taskTypeToRunningTasksCount.get(task.getType()) + 1);
         taskExecutorThreadPool.submit(() -> {
             try {
-                updateStatus(task, RUNNING);
+                sendTaskUpdate(task, RUNNING);
                 final TaskHandler handler = taskTypeToHandlerMap.get(task.getType());
                 final TaskResult taskResult = handler.handle(task);
                 if (taskResult.isSuccess()) {
-                    updateStatus(task, SUCCESSFUL, taskResult.getMessage(), taskResult.getContext());
+                    sendTaskUpdate(task, SUCCESSFUL, taskResult.getMessage(), taskResult.getContext());
                 } else {
-                    updateStatus(task, FAILED, taskResult.getMessage(), taskResult.getContext());
+                    sendTaskUpdate(task, FAILED, taskResult.getMessage(), taskResult.getContext());
                 }
             } catch (Exception e) {
                 logger.error("Error executing task {}", task, e);
-                updateStatus(task, FAILED, e.getMessage());
+                sendTaskUpdate(task, FAILED, e.getMessage());
             } finally {
                 synchronized (taskTypeToRunningTasksCount) {
                     taskTypeToRunningTasksCount.put(task.getType(), taskTypeToRunningTasksCount.get(task.getType()) - 1);
@@ -185,15 +184,15 @@ public final class TaskExecutionService implements Service {
         });
     }
 
-    private void updateStatus(TaskId taskId, Status status) {
-        updateStatus(taskId, status, null);
+    private void sendTaskUpdate(TaskId taskId, Status status) {
+        sendTaskUpdate(taskId, status, null);
     }
 
-    private void updateStatus(TaskId taskId, Status status, String statusMessage) {
-        updateStatus(taskId, status, statusMessage, null);
+    private void sendTaskUpdate(TaskId taskId, Status status, String statusMessage) {
+        sendTaskUpdate(taskId, status, statusMessage, null);
     }
 
-    private void updateStatus(TaskId taskId, Status status, String statusMessage, Map<String, Object> context) {
+    private void sendTaskUpdate(TaskId taskId, Status status, String statusMessage, Map<String, Object> context) {
         try {
             TaskUpdate taskUpdate = new TaskUpdate();
             taskUpdate.setTaskId(taskId);
@@ -223,8 +222,8 @@ public final class TaskExecutionService implements Service {
             consumer.close();
         }
         try {
-            internalExecutorService.shutdown();
-            internalExecutorService.awaitTermination(10, SECONDS);
+            taskConsumerThreadPool.shutdown();
+            taskConsumerThreadPool.awaitTermination(10, SECONDS);
             taskExecutorThreadPool.shutdown();
             taskExecutorThreadPool.awaitTermination(10, SECONDS);
         } catch (InterruptedException e) {

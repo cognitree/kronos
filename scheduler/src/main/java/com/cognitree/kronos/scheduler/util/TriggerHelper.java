@@ -39,6 +39,7 @@ import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
 
 import java.text.ParseException;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
@@ -101,7 +102,7 @@ public class TriggerHelper {
             scheduleBuilder.repeatForever();
         }
 
-        scheduleBuilder.withIntervalInMilliseconds(simpleSchedule.getInterval());
+        scheduleBuilder.withIntervalInMilliseconds(simpleSchedule.getRepeatIntervalInMs());
         if (simpleSchedule.getRepeatCount() > 0) {
             scheduleBuilder.withRepeatCount(simpleSchedule.getRepeatCount());
         }
@@ -167,15 +168,25 @@ public class TriggerHelper {
         }
         scheduleBuilder.withInterval(dailyTimeIntervalSchedule.getRepeatInterval(),
                 dailyTimeIntervalSchedule.getRepeatIntervalUnit());
-        final TimeOfDay startTimeOfDay = new TimeOfDay(dailyTimeIntervalSchedule.getStartTimeOfDay().getHour(),
-                dailyTimeIntervalSchedule.getStartTimeOfDay().getMinute(),
-                dailyTimeIntervalSchedule.getStartTimeOfDay().getSecond());
+
+        final TimeOfDay startTimeOfDay = getTimeOfDay(dailyTimeIntervalSchedule.getStartTimeOfDay(),
+                dailyTimeIntervalSchedule.getTimezone());
         scheduleBuilder.startingDailyAt(startTimeOfDay);
-        final TimeOfDay endTimeOfDay = new TimeOfDay(dailyTimeIntervalSchedule.getEndTimeOfDay().getHour(),
-                dailyTimeIntervalSchedule.getEndTimeOfDay().getMinute(),
-                dailyTimeIntervalSchedule.getEndTimeOfDay().getSecond());
+        final TimeOfDay endTimeOfDay = getTimeOfDay(dailyTimeIntervalSchedule.getEndTimeOfDay(),
+                dailyTimeIntervalSchedule.getTimezone());
         scheduleBuilder.endingDailyAt(endTimeOfDay);
         return scheduleBuilder;
+    }
+
+    private static TimeOfDay getTimeOfDay(DailyTimeIntervalSchedule.TimeOfDay timeOfDay, String timezoneId) {
+        final Calendar cal = Calendar.getInstance();
+        cal.setTime(new Date());
+        cal.set(Calendar.HOUR_OF_DAY, timeOfDay.getHour());
+        cal.set(Calendar.MINUTE, timeOfDay.getMinute());
+        cal.set(Calendar.SECOND, timeOfDay.getSecond());
+        cal.clear(Calendar.MILLISECOND);
+        cal.setTimeZone(timezoneId == null || timezoneId.isEmpty() ? TimeZone.getDefault() : TimeZone.getTimeZone(timezoneId));
+        return new TimeOfDay(cal.get(Calendar.HOUR), cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND));
     }
 
     private static ScheduleBuilder buildCalendarTimeScheduleBuilder(CalendarIntervalSchedule calendarIntervalSchedule) {

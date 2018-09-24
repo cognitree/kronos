@@ -39,15 +39,15 @@ public interface JobStore extends Store<Job, JobId> {
     List<Job> loadByWorkflowNameAndTriggerName(String workflowName, String triggerName, String namespace,
                                                long createdAfter, long createdBefore) throws StoreException;
 
-    List<Job> loadByStatusIn(List<Job.Status> statuses, String namespace,
-                             long createdAfter, long createdBefore) throws StoreException;
+    List<Job> loadByStatus(List<Job.Status> statuses, String namespace,
+                           long createdAfter, long createdBefore) throws StoreException;
 
-    List<Job> loadByWorkflowNameAndStatusIn(String workflowName, List<Job.Status> statuses, String namespace,
-                                            long createdAfter, long createdBefore) throws StoreException;
+    List<Job> loadByWorkflowNameAndStatus(String workflowName, List<Job.Status> statuses, String namespace,
+                                          long createdAfter, long createdBefore) throws StoreException;
 
-    List<Job> loadByWorkflowNameAndTriggerNameAndStatusIn(String workflowName, String triggerName,
-                                                          List<Job.Status> statuses, String namespace,
-                                                          long createdAfter, long createdBefore) throws StoreException;
+    List<Job> loadByWorkflowNameAndTriggerNameAndStatus(String workflowName, String triggerName,
+                                                        List<Job.Status> statuses, String namespace,
+                                                        long createdAfter, long createdBefore) throws StoreException;
 
     Map<Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore) throws StoreException;
 

@@ -227,7 +227,7 @@ public class StdJDBCJobStore implements JobStore {
     }
 
     @Override
-    public List<Job> loadByStatusIn(List<Status> statuses, String namespace, long createdAfter, long createdBefore) throws StoreException {
+    public List<Job> loadByStatus(List<Status> statuses, String namespace, long createdAfter, long createdBefore) throws StoreException {
         logger.debug("Received request to get jobs with status in {} under namespace {}, created after {}, created before {}",
                 statuses, namespace, createdAfter, createdBefore);
         String placeHolders = String.join(",", Collections.nCopies(statuses.size(), "?"));
@@ -255,8 +255,8 @@ public class StdJDBCJobStore implements JobStore {
     }
 
     @Override
-    public List<Job> loadByWorkflowNameAndStatusIn(String workflowName, List<Job.Status> statuses, String namespace,
-                                                   long createdAfter, long createdBefore) throws StoreException {
+    public List<Job> loadByWorkflowNameAndStatus(String workflowName, List<Job.Status> statuses, String namespace,
+                                                 long createdAfter, long createdBefore) throws StoreException {
         logger.debug("Received request to get jobs having workflow name {} with status in {} under namespace {}, " +
                 " created after {}, created before {}", workflowName, statuses, namespace, createdAfter, createdBefore);
         String placeHolders = String.join(",", Collections.nCopies(statuses.size(), "?"));
@@ -285,9 +285,9 @@ public class StdJDBCJobStore implements JobStore {
     }
 
     @Override
-    public List<Job> loadByWorkflowNameAndTriggerNameAndStatusIn(String workflowName, String triggerName,
-                                                                 List<Job.Status> statuses, String namespace,
-                                                                 long createdAfter, long createdBefore) throws StoreException {
+    public List<Job> loadByWorkflowNameAndTriggerNameAndStatus(String workflowName, String triggerName,
+                                                               List<Job.Status> statuses, String namespace,
+                                                               long createdAfter, long createdBefore) throws StoreException {
         logger.debug("Received request to get jobs having workflow name {}, trigger name {} with status in {} " +
                         "under namespace {}, created after {}, created before {}",
                 workflowName, triggerName, statuses, namespace, createdAfter, createdBefore);
