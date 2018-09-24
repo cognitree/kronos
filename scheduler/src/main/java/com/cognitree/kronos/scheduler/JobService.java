@@ -233,29 +233,29 @@ public class JobService implements Service {
         }
     }
 
-    public Map<Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore)
+    public Map<Status, Integer> countByStatus(String namespace, long createdAfter, long createdBefore)
             throws ValidationException, ServiceException {
-        logger.debug("Received request to group jobs by status under namespace {} created " +
+        logger.debug("Received request to count jobs by status under namespace {} created " +
                 "between {} to {}", namespace, createdAfter, createdBefore);
         validateNamespace(namespace);
         try {
             return jobStore.countByStatus(namespace, createdAfter, createdBefore);
         } catch (StoreException e) {
-            logger.error("unable  to group jobs by status under namespace {} created between {} to {}",
+            logger.error("unable to count jobs by status under namespace {} created between {} to {}",
                     namespace, createdAfter, createdBefore, e);
             throw new ServiceException(e.getMessage());
         }
     }
 
-    public Map<Status, Integer> groupByStatus(String namespace, String workflowName, long createdAfter, long createdBefore)
+    public Map<Status, Integer> countByStatus(String namespace, String workflowName, long createdAfter, long createdBefore)
             throws ValidationException, ServiceException {
-        logger.debug("Received request  to group jobs by status for workflow {} under namespace {} created " +
+        logger.debug("Received request to count jobs by status for workflow {} under namespace {} created " +
                 "between {} to {}", workflowName, namespace, createdAfter, createdBefore);
         validateWorkflow(namespace, workflowName);
         try {
             return jobStore.countByStatusForWorkflowName(namespace, workflowName, createdAfter, createdBefore);
         } catch (StoreException e) {
-            logger.error("unable  to group jobs by status for workflow {} under namespace {} created " +
+            logger.error("unable to count jobs by status for workflow {} under namespace {} created " +
                     "between {} to {}", workflowName, namespace, createdAfter, createdBefore, e);
             throw new ServiceException(e.getMessage());
         }

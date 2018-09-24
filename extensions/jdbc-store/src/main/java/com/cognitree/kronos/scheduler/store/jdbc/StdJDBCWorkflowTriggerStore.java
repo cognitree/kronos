@@ -58,6 +58,8 @@ public class StdJDBCWorkflowTriggerStore implements WorkflowTriggerStore {
             + " WHERE " + COL_NAMESPACE + " = ?";
     private static final String LOAD_ALL_WORKFLOW_TRIGGER_BY_WORKFLOW_NAME = "SELECT * FROM " + TABLE_WORKFLOW_TRIGGERS
             + " WHERE " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
+    private static final String LOAD_ALL_WORKFLOW_TRIGGER_BY_WORKFLOW_NAME_ENABLED = "SELECT * FROM " + TABLE_WORKFLOW_TRIGGERS
+            + " WHERE " + COL_WORKFLOW_NAME + " = ? AND " + COL_ENABLED + " = ? AND " + COL_NAMESPACE + " = ?";
 
     private static final String UPDATE_WORKFLOW_TRIGGER = "UPDATE " + TABLE_WORKFLOW_TRIGGERS + " set " + COL_START_AT
             + " = ?, " + COL_SCHEDULE + " = ?," + " " + COL_END_AT + " = ?, " + COL_ENABLED
@@ -129,6 +131,29 @@ public class StdJDBCWorkflowTriggerStore implements WorkflowTriggerStore {
         } catch (Exception e) {
             logger.error("Error fetching workflow triggers with workflow name {} under namespace {}",
                     workflowName, namespace, e);
+            throw new StoreException(e.getMessage(), e.getCause());
+        }
+    }
+
+    @Override
+    public List<WorkflowTrigger> loadByWorkflowNameAndEnabled(String namespace, String workflowName, boolean enabled) throws StoreException {
+        logger.debug("Received request to get all enabled {} workflow triggers with workflow name {} under namespace {}",
+                enabled, workflowName, namespace);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(LOAD_ALL_WORKFLOW_TRIGGER_BY_WORKFLOW_NAME_ENABLED)) {
+            int paramIndex = 0;
+            preparedStatement.setString(++paramIndex, workflowName);
+            preparedStatement.setBoolean(++paramIndex, enabled);
+            preparedStatement.setString(++paramIndex, namespace);
+            final ResultSet resultSet = preparedStatement.executeQuery();
+            List<WorkflowTrigger> workflowTriggers = new ArrayList<>();
+            while (resultSet.next()) {
+                workflowTriggers.add(getWorkflowTrigger(resultSet));
+            }
+            return workflowTriggers;
+        } catch (Exception e) {
+            logger.error("Error fetching all enabled {} workflow triggers with workflow name {} under namespace {}",
+                    enabled, workflowName, namespace, e);
             throw new StoreException(e.getMessage(), e.getCause());
         }
     }

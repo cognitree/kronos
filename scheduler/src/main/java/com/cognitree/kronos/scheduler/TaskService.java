@@ -169,29 +169,29 @@ public class TaskService implements Service {
         }
     }
 
-    public Map<Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore)
+    public Map<Status, Integer> countByStatus(String namespace, long createdAfter, long createdBefore)
             throws ServiceException, ValidationException {
-        logger.debug("Received request to group tasks by status under namespace {} created between {} to {}",
+        logger.debug("Received request to count tasks by status under namespace {} created between {} to {}",
                 namespace, createdAfter, createdBefore);
         validateNamespace(namespace);
         try {
-            return taskStore.groupByStatus(namespace, createdAfter, createdBefore);
+            return taskStore.countByStatus(namespace, createdAfter, createdBefore);
         } catch (StoreException e) {
-            logger.error("unable to group tasks by status under namespace {} created between {} to {}",
+            logger.error("unable to count tasks by status under namespace {} created between {} to {}",
                     namespace, createdAfter, createdBefore, e);
             throw new ServiceException(e.getMessage());
         }
     }
 
-    public Map<Status, Integer> groupByStatus(String namespace, String workflowName, long createdAfter, long createdBefore)
+    public Map<Status, Integer> countByStatus(String namespace, String workflowName, long createdAfter, long createdBefore)
             throws ServiceException, ValidationException {
-        logger.debug("Received request  to group tasks by status having workflow name {} under namespace {} created " +
+        logger.debug("Received request to count tasks by status having workflow name {} under namespace {} created " +
                 "between {} to {}", workflowName, namespace, createdAfter, createdBefore);
         validateWorkflow(namespace, workflowName);
         try {
-            return taskStore.groupByStatusForWorkflowName(namespace, workflowName, createdAfter, createdBefore);
+            return taskStore.countByStatusForWorkflowName(namespace, workflowName, createdAfter, createdBefore);
         } catch (StoreException e) {
-            logger.error("unable  to group tasks by status having workflow name {} under namespace {} created " +
+            logger.error("unable to count tasks by status having workflow name {} under namespace {} created " +
                     "between {} to {}", workflowName, namespace, createdAfter, createdBefore, e);
             throw new ServiceException(e.getMessage());
         }

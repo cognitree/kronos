@@ -40,7 +40,7 @@ public class ExecutorApp {
             Runtime.getRuntime().addShutdownHook(new Thread(executorApp::stop));
             executorApp.start();
         } catch (Exception e) {
-            logger.error("Error starting executor", e);
+            logger.error("Error starting executor app", e);
             System.exit(0);
         }
     }

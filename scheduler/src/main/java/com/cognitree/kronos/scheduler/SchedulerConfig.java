@@ -28,7 +28,7 @@ import java.util.Objects;
 public class SchedulerConfig {
 
     /**
-     * {@link StoreService} configuration, required by the scheduler to instantiate the store provider.
+     * {@link StoreService} configuration, required by the scheduler to instantiate the store service.
      */
     private StoreServiceConfig storeServiceConfig;
 

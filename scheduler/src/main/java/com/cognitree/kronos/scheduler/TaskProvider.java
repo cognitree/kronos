@@ -47,8 +47,7 @@ import static com.cognitree.kronos.model.Task.Status.WAITING;
  * Task provider manages/ resolves task dependencies and exposes APIs to add, remove, retrieve tasks in active and
  * ready-to-execute state.
  * <p>
- * Internally, task provider is backed by a directed acyclic graph and persistence store to manage dependencies
- * across these tasks.
+ * Internally, task provider is backed by a directed acyclic graph to manage dependencies across these tasks.
  */
 final class TaskProvider {
     private static final Logger logger = LoggerFactory.getLogger(TaskProvider.class);
