@@ -181,7 +181,7 @@ public class JobServiceTest {
         // wait for the job to be triggered
         waitForTriggerToComplete(workflowTrigger, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(100);
+        Thread.sleep(200);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
