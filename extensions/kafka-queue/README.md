@@ -21,8 +21,8 @@ consumerConfig:
       group.id: kronos
       key.deserializer : org.apache.kafka.common.serialization.StringDeserializer
       value.deserializer : org.apache.kafka.common.serialization.StringDeserializer
-    pollTimeout: 5s
-  pollInterval: 5s
+    pollTimeoutInMs: 1000
+  pollIntervalInMs: 1000
 taskStatusQueue: taskstatus
 ```
 
