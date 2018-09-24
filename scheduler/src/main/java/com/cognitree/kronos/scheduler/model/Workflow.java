@@ -105,7 +105,7 @@ public class Workflow extends WorkflowId {
         private Map<String, Object> properties = new HashMap<>();
 
         private long maxExecutionTimeInMs = TimeUnit.DAYS.toMillis(1);
-        private boolean isEnabled = true;
+        private boolean enabled = true;
 
         public String getName() {
             return name;
@@ -148,11 +148,11 @@ public class Workflow extends WorkflowId {
         }
 
         public boolean isEnabled() {
-            return isEnabled;
+            return enabled;
         }
 
         public void setEnabled(boolean enabled) {
-            isEnabled = enabled;
+            this.enabled = enabled;
         }
 
         @Override
@@ -160,7 +160,7 @@ public class Workflow extends WorkflowId {
             if (this == o) return true;
             if (!(o instanceof WorkflowTask)) return false;
             WorkflowTask that = (WorkflowTask) o;
-            return isEnabled == that.isEnabled &&
+            return enabled == that.enabled &&
                     Objects.equals(name, that.name) &&
                     Objects.equals(type, that.type) &&
                     Objects.equals(dependsOn, that.dependsOn) &&
@@ -171,7 +171,7 @@ public class Workflow extends WorkflowId {
         @Override
         public int hashCode() {
 
-            return Objects.hash(name, type, dependsOn, properties, maxExecutionTimeInMs, isEnabled);
+            return Objects.hash(name, type, dependsOn, properties, maxExecutionTimeInMs, enabled);
         }
 
         @Override
@@ -182,7 +182,7 @@ public class Workflow extends WorkflowId {
                     ", dependsOn=" + dependsOn +
                     ", properties=" + properties +
                     ", maxExecutionTimeInMs='" + maxExecutionTimeInMs + '\'' +
-                    ", isEnabled=" + isEnabled +
+                    ", enabled=" + enabled +
                     '}';
         }
     }
