@@ -32,7 +32,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.DELETE;
-import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -40,12 +39,10 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
-import static javax.ws.rs.core.Response.Status.ACCEPTED;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -124,26 +121,6 @@ public class WorkflowResource {
         }
         WorkflowService.getService().update(workflow);
         return Response.status(OK).entity(workflow).build();
-    }
-
-    @PUT
-    @Path("{name}")
-    @ApiOperation(value = "Enable/ Disable all triggers for workflow by name", response = Workflow.class)
-    @ApiResponses(value = {
-            @ApiResponse(code = 404, message = "Workflow not found")})
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response updateWorkflow(@ApiParam(value = "workflow name", required = true)
-                                   @PathParam("name") String name,
-                                   @ApiParam(value = "enable/ disable the workflow trigger", required = true)
-                                   @DefaultValue("true") @QueryParam("enable") boolean enable,
-                                   @HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
-        logger.info("Received request to update all triggers for workflow with name {} under namespace {} set enable to {}",
-                name, namespace, enable);
-        if (namespace == null || namespace.isEmpty()) {
-            return Response.status(BAD_REQUEST).entity("missing namespace header").build();
-        }
-        WorkflowService.getService().pauseWorkflowTriggers(WorkflowId.build(namespace, name));
-        return Response.status(ACCEPTED).build();
     }
 
     @DELETE

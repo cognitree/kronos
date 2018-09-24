@@ -98,6 +98,13 @@ public class WorkflowTriggerService implements Service {
         }
     }
 
+    public void pause(WorkflowId workflowId) throws ServiceException, ValidationException {
+        logger.debug("Received request to pause all triggers for workflow {}", workflowId);
+        final List<WorkflowTrigger> workflowTriggers = get(workflowId.getNamespace(), workflowId.getName());
+        for (WorkflowTrigger workflowTrigger : workflowTriggers) {
+            pause(workflowTrigger);
+        }
+    }
 
     public void pause(WorkflowTriggerId workflowTriggerId) throws ServiceException, ValidationException {
         logger.debug("Received request to pause workflow trigger {}", workflowTriggerId);
