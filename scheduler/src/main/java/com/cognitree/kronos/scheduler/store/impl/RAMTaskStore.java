@@ -93,8 +93,8 @@ public class RAMTaskStore implements TaskStore {
     }
 
     @Override
-    public Map<Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore) {
-        logger.debug("Received request to group by status tasks under namespace {}, created after {}, created before {}",
+    public Map<Status, Integer> countByStatus(String namespace, long createdAfter, long createdBefore) {
+        logger.debug("Received request to count by status tasks under namespace {}, created after {}, created before {}",
                 namespace, createdAfter, createdBefore);
         Map<Status, Integer> statusMap = new HashMap<>();
         for (Status status : Status.values()) {
@@ -110,9 +110,9 @@ public class RAMTaskStore implements TaskStore {
     }
 
     @Override
-    public Map<Status, Integer> groupByStatusForWorkflowName(String namespace, String workflowName,
+    public Map<Status, Integer> countByStatusForWorkflowName(String namespace, String workflowName,
                                                              long createdAfter, long createdBefore) throws StoreException {
-        logger.debug("Received request to group by status tasks having workflow name {} under namespace {}, " +
+        logger.debug("Received request to count by status tasks having workflow name {} under namespace {}, " +
                 "created after {}, created before {}", workflowName, namespace, createdAfter, createdBefore);
         Map<Status, Integer> statusMap = new HashMap<>();
         for (Status status : Status.values()) {

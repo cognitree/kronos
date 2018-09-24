@@ -321,7 +321,7 @@ public class StdJDBCJobStore implements JobStore {
 
     @Override
     public Map<Status, Integer> countByStatus(String namespace, long createdAfter, long createdBefore) throws StoreException {
-        logger.debug("Received request to group jobs by status under namespace {}, created after {}, created before {}",
+        logger.debug("Received request to count jobs by status under namespace {}, created after {}, created before {}",
                 namespace, createdAfter, createdBefore);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(GROUP_BY_STATUS_JOB_CREATED_BETWEEN)) {
@@ -336,7 +336,7 @@ public class StdJDBCJobStore implements JobStore {
             }
             return statusMap;
         } catch (Exception e) {
-            logger.error("Error grouping jobs by status under namespace {}, created after {}, created before {}",
+            logger.error("Error counting jobs by status under namespace {}, created after {}, created before {}",
                     namespace, createdAfter, createdBefore, e);
             throw new StoreException(e.getMessage(), e.getCause());
         }
@@ -344,7 +344,7 @@ public class StdJDBCJobStore implements JobStore {
 
     @Override
     public Map<Status, Integer> countByStatusForWorkflowName(String namespace, String workflowName, long createdAfter, long createdBefore) throws StoreException {
-        logger.debug("Received request to group by status having workflow name {}, namespace {}, created after {}, created before {}",
+        logger.debug("Received request to count by status having workflow name {}, namespace {}, created after {}, created before {}",
                 workflowName, namespace, createdAfter, createdBefore);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(GROUP_BY_STATUS_JOB_WITH_NAME_CREATED_BETWEEN)) {
@@ -360,7 +360,7 @@ public class StdJDBCJobStore implements JobStore {
             }
             return statusMap;
         } catch (Exception e) {
-            logger.error("Error grouping jobs by status having workflow name {} under namespace {}, created after {}, created before {}",
+            logger.error("Error counting jobs by status having workflow name {} under namespace {}, created after {}, created before {}",
                     workflowName, namespace, createdAfter, createdBefore, e);
             throw new StoreException(e.getMessage(), e.getCause());
         }
@@ -411,7 +411,7 @@ public class StdJDBCJobStore implements JobStore {
             preparedStatement.setString(++paramIndex, namespace);
             preparedStatement.executeUpdate();
         } catch (Exception e) {
-            logger.error("Error fetching jobs with workflow name {}, namespace {}", workflowName, namespace, e);
+            logger.error("Error deleting jobs with workflow name {}, namespace {}", workflowName, namespace, e);
             throw new StoreException(e.getMessage(), e.getCause());
         }
     }

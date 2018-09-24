@@ -209,8 +209,9 @@ public class StdJDBCTaskStore implements TaskStore {
     }
 
     @Override
-    public Map<Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore) throws StoreException {
-        logger.debug("Received request to get all tasks under namespace {}", namespace);
+    public Map<Status, Integer> countByStatus(String namespace, long createdAfter, long createdBefore) throws StoreException {
+        logger.debug("Received request to count all tasks by status under namespace {}," +
+                "created after {}, created before {}", namespace, createdAfter, createdBefore);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(GROUP_BY_STATUS_TASK_CREATED_BETWEEN)) {
             int paramIndex = 0;
@@ -224,15 +225,16 @@ public class StdJDBCTaskStore implements TaskStore {
             }
             return statusMap;
         } catch (Exception e) {
-            logger.error("Error loading all tasks under namespace {}", namespace, e);
+            logger.error("Error loading all tasks under namespace {}, created after {}, created before {}",
+                    namespace, createdAfter, createdBefore, e);
             throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
     @Override
-    public Map<Status, Integer> groupByStatusForWorkflowName(String namespace, String workflowName,
+    public Map<Status, Integer> countByStatusForWorkflowName(String namespace, String workflowName,
                                                              long createdAfter, long createdBefore) throws StoreException {
-        logger.debug("Received request to group tasks by status having workflow name {} under namespace {}," +
+        logger.debug("Received request to count tasks by status having workflow name {} under namespace {}," +
                 "created after {}, created before {}", workflowName, namespace, createdAfter, createdBefore);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(GROUP_BY_STATUS_TASK_CREATED_BETWEEN_FOR_WORKFLOW)) {
@@ -248,7 +250,7 @@ public class StdJDBCTaskStore implements TaskStore {
             }
             return statusMap;
         } catch (Exception e) {
-            logger.error("Error grouping tasks by status having workflow name {} under namespace {}," +
+            logger.error("Error counting tasks by status having workflow name {} under namespace {}," +
                     "created after {}, created before {}", workflowName, namespace, createdAfter, createdBefore, e);
             throw new StoreException(e.getMessage(), e.getCause());
         }

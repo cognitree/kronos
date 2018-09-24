@@ -223,6 +223,25 @@ public final class WorkflowSchedulerService implements Service {
         }
     }
 
+    /**
+     * quartz job scheduled per workflow and submits the workflow for execution
+     */
+    public static final class WorkflowSchedulerJob implements org.quartz.Job {
+        @Override
+        public void execute(JobExecutionContext jobExecutionContext) {
+            final JobDataMap jobDataMap = jobExecutionContext.getMergedJobDataMap();
+            logger.trace("received request to execute workflow with data map {}", jobDataMap.getWrappedMap());
+            final String namespace = jobDataMap.getString("namespace");
+            final String workflowName = jobDataMap.getString("workflowName");
+            final String triggerName = jobDataMap.getString("triggerName");
+            try {
+                WorkflowSchedulerService.getService().execute(workflowName, triggerName, namespace);
+            } catch (ServiceException | ValidationException e) {
+                logger.error("Error executing workflow {} for trigger {}", workflowName, triggerName, e);
+            }
+        }
+    }
+
     public static final class WorkflowLifecycleHandler implements TaskStatusChangeListener {
         @Override
         public void statusChanged(TaskId taskId, Task.Status from, Task.Status to) {
@@ -249,25 +268,6 @@ public final class WorkflowSchedulerService implements Service {
                 }
             } catch (ServiceException | ValidationException e) {
                 logger.error("Error handling status change for task {}, from {} to {}", taskId, from, to, e);
-            }
-        }
-    }
-
-    /**
-     * quartz job scheduled per workflow and submits the workflow for execution
-     */
-    public static final class WorkflowSchedulerJob implements org.quartz.Job {
-        @Override
-        public void execute(JobExecutionContext jobExecutionContext) {
-            final JobDataMap jobDataMap = jobExecutionContext.getMergedJobDataMap();
-            logger.trace("received request to execute workflow with data map {}", jobDataMap.getWrappedMap());
-            final String namespace = jobDataMap.getString("namespace");
-            final String workflowName = jobDataMap.getString("workflowName");
-            final String triggerName = jobDataMap.getString("triggerName");
-            try {
-                WorkflowSchedulerService.getService().execute(workflowName, triggerName, namespace);
-            } catch (ServiceException | ValidationException e) {
-                logger.error("Error executing workflow {} for trigger {}", workflowName, triggerName, e);
             }
         }
     }

@@ -70,6 +70,20 @@ public class RAMWorkflowTriggerStore implements WorkflowTriggerStore {
     }
 
     @Override
+    public List<WorkflowTrigger> loadByWorkflowNameAndEnabled(String namespace, String workflowName, boolean enabled) throws StoreException {
+        logger.debug("Received request to get all enabled {} workflow triggers with workflow name {} under namespace {}",
+                enabled, workflowName, namespace);
+        final ArrayList<WorkflowTrigger> workflowTriggers = new ArrayList<>();
+        this.workflowTriggers.values().forEach(workflowTrigger -> {
+            if (workflowTrigger.getWorkflow().equals(workflowName) && workflowTrigger.getNamespace().equals(namespace)
+                    && workflowTrigger.isEnabled() == enabled) {
+                workflowTriggers.add(workflowTrigger);
+            }
+        });
+        return workflowTriggers;
+    }
+
+    @Override
     public WorkflowTrigger load(WorkflowTriggerId triggerId) {
         logger.debug("Received request to load workflow trigger with id {}", triggerId);
         return workflowTriggers.get(WorkflowTriggerId.build(triggerId.getNamespace(), triggerId.getName(),

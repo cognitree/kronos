@@ -35,8 +35,8 @@ public interface TaskStore extends Store<Task, TaskId> {
 
     List<Task> loadByStatus(String namespace, List<Status> statuses) throws StoreException;
 
-    Map<Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore) throws StoreException;
+    Map<Status, Integer> countByStatus(String namespace, long createdAfter, long createdBefore) throws StoreException;
 
-    Map<Status, Integer> groupByStatusForWorkflowName(String namespace, String workflowName,
+    Map<Status, Integer> countByStatusForWorkflowName(String namespace, String workflowName,
                                                       long createdAfter, long createdBefore) throws StoreException;
 }

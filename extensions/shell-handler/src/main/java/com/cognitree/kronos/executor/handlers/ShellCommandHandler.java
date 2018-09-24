@@ -56,7 +56,7 @@ public class ShellCommandHandler implements TaskHandler {
         cmdWithArgs.add(getProperty(taskProperties, PROP_CMD));
 
         if (taskProperties.containsKey(PROP_ARGS)) {
-            final String[] args = getProperty(taskProperties, PROP_ARGS, "").split(" ");
+            final String[] args = getProperty(taskProperties, PROP_ARGS).split(" ");
             cmdWithArgs.addAll(Arrays.asList(args));
         }
 
@@ -64,8 +64,12 @@ public class ShellCommandHandler implements TaskHandler {
         if (taskProperties.containsKey(PROPERTY_WORKING_DIR)) {
             processBuilder.directory(new File(getProperty(taskProperties, PROPERTY_WORKING_DIR)));
         }
-        String logDirPath = getProperty(taskProperties, PROPERTY_LOG_DIR,
-                System.getProperty("java.io.tmpdir"));
+        final String logDirPath;
+        if (taskProperties.containsKey(PROPERTY_LOG_DIR)) {
+            logDirPath = getProperty(taskProperties, PROPERTY_LOG_DIR);
+        } else {
+            logDirPath = System.getProperty("java.io.tmpdir");
+        }
         File logDir = new File(logDirPath);
         // create log directory is does not exist
         if (!logDir.exists() && !logDir.mkdirs()) {
@@ -90,9 +94,5 @@ public class ShellCommandHandler implements TaskHandler {
 
     private String getProperty(Map<String, Object> properties, String key) {
         return String.valueOf(properties.get(key));
-    }
-
-    private String getProperty(Map<String, Object> properties, String key, String defaultValue) {
-        return String.valueOf(properties.getOrDefault(key, defaultValue));
     }
 }

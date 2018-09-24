@@ -46,7 +46,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
-import static javax.ws.rs.core.Response.Status.ACCEPTED;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -61,13 +60,20 @@ public class WorkflowTriggerResource {
     @ApiOperation(value = "Get all workflow triggers", response = WorkflowTrigger.class, responseContainer = "List")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllWorkflowTriggers(@PathParam("workflow") String workflowName,
-                                           @HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
-        logger.info("Received request to get all workflow triggers for workflow {} under namespace {}",
-                workflowName, namespace);
+                                           @QueryParam("enable") Boolean enable,
+                                           @HeaderParam("namespace") String namespace)
+            throws ServiceException, ValidationException {
+        logger.info("Received request to get all workflow triggers for workflow {} with query param enable {} under namespace {}",
+                workflowName, enable, namespace);
         if (namespace == null || namespace.isEmpty()) {
             return Response.status(BAD_REQUEST).entity("missing namespace header").build();
         }
-        final List<WorkflowTrigger> triggers = WorkflowTriggerService.getService().get(namespace, workflowName);
+        final List<WorkflowTrigger> triggers;
+        if (enable == null) {
+            triggers = WorkflowTriggerService.getService().get(namespace, workflowName);
+        } else {
+            triggers = WorkflowTriggerService.getService().get(namespace, workflowName, enable);
+        }
         return Response.status(OK).entity(triggers).build();
     }
 
@@ -119,28 +125,37 @@ public class WorkflowTriggerResource {
     }
 
     @PUT
-    @ApiOperation(value = "Enable/ Disable all triggers for workflow by name")
+    @ApiOperation(value = "Enable/ Disable all triggers for workflow by name", response = WorkflowTrigger.class, responseContainer = "List")
     @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "list of affected triggers"),
             @ApiResponse(code = 404, message = "Workflow not found")})
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateWorkflow(@ApiParam(value = "workflow name", required = true)
                                    @PathParam("workflow") String workflowName,
                                    @ApiParam(value = "enable/ disable all workflow triggers", required = true)
                                    @DefaultValue("true") @QueryParam("enable") boolean enable,
-                                   @HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
+                                   @HeaderParam("namespace") String namespace)
+            throws ServiceException, ValidationException, SchedulerException {
         logger.info("Received request to update all triggers for workflow with name {} under namespace {} set enable to {}",
                 workflowName, namespace, enable);
         if (namespace == null || namespace.isEmpty()) {
             return Response.status(BAD_REQUEST).entity("missing namespace header").build();
         }
-        WorkflowTriggerService.getService().pause(WorkflowId.build(namespace, workflowName));
-        return Response.status(ACCEPTED).build();
+        final List<WorkflowTrigger> workflowTriggers;
+        if (enable) {
+            workflowTriggers = WorkflowTriggerService.getService().resume(WorkflowId.build(namespace, workflowName));
+        } else {
+            workflowTriggers = WorkflowTriggerService.getService().pause(WorkflowId.build(namespace, workflowName));
+        }
+        return Response.status(OK).entity(workflowTriggers).build();
     }
 
     @PUT
     @Path("/{name}")
-    @ApiOperation(value = "Enable/Disable workflow trigger")
+    @ApiOperation(value = "Enable/Disable workflow trigger", response = WorkflowTrigger.class)
     @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Affected workflow trigger. If empty it means workflow trigger was already " +
+                    "in resultant state"),
             @ApiResponse(code = 404, message = "Workflow trigger not found")})
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateWorkflowTrigger(@ApiParam(value = "workflow name", required = true)
@@ -151,18 +166,18 @@ public class WorkflowTriggerResource {
                                           @DefaultValue("true") @QueryParam("enable") boolean enable,
                                           @HeaderParam("namespace") String namespace)
             throws ServiceException, ValidationException, SchedulerException {
-        // override workflow name and namespace
         logger.info("Received request to update workflow trigger {} for workflow {} under namespace {} set enable to {}",
                 triggerName, workflowName, namespace);
         if (namespace == null || namespace.isEmpty()) {
             return Response.status(BAD_REQUEST).entity("missing namespace header").build();
         }
+        final WorkflowTrigger workflowTrigger;
         if (enable) {
-            WorkflowTriggerService.getService().resume(WorkflowTriggerId.build(namespace, triggerName, workflowName));
+            workflowTrigger = WorkflowTriggerService.getService().resume(WorkflowTriggerId.build(namespace, triggerName, workflowName));
         } else {
-            WorkflowTriggerService.getService().pause(WorkflowTriggerId.build(namespace, triggerName, workflowName));
+            workflowTrigger = WorkflowTriggerService.getService().pause(WorkflowTriggerId.build(namespace, triggerName, workflowName));
         }
-        return Response.status(ACCEPTED).build();
+        return Response.status(OK).entity(workflowTrigger).build();
     }
 
     @DELETE

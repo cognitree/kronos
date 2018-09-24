@@ -157,7 +157,7 @@ public class RAMJobStore implements JobStore {
 
     @Override
     public Map<Status, Integer> countByStatus(String namespace, long createdAfter, long createdBefore) {
-        logger.debug("Received request to group by status jobs under namespace {}, created after {}, created before {}",
+        logger.debug("Received request to count by status jobs under namespace {}, created after {}, created before {}",
                 namespace, createdAfter, createdBefore);
         Map<Status, Integer> statusMap = new HashMap<>();
         for (Status status : Status.values()) {
@@ -174,7 +174,7 @@ public class RAMJobStore implements JobStore {
 
     @Override
     public Map<Status, Integer> countByStatusForWorkflowName(String namespace, String workflowName, long createdAfter, long createdBefore) {
-        logger.debug("Received request to group by status jobs with workflow name {}, namespace {}, created after {}, " +
+        logger.debug("Received request to count by status jobs with workflow name {}, namespace {}, created after {}, " +
                 "created before {}", workflowName, namespace, createdAfter, createdBefore);
         Map<Status, Integer> statusMap = new HashMap<>();
         for (Status status : Status.values()) {

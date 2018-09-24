@@ -30,4 +30,6 @@ public interface WorkflowTriggerStore extends Store<WorkflowTrigger, WorkflowTri
     List<WorkflowTrigger> load(String namespace) throws StoreException;
 
     List<WorkflowTrigger> loadByWorkflowName(String namespace, String workflowName) throws StoreException;
+
+    List<WorkflowTrigger> loadByWorkflowNameAndEnabled(String namespace, String workflowName, boolean enabled) throws StoreException;
 }

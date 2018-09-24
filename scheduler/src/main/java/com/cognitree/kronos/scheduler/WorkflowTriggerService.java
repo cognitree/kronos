@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -81,7 +82,21 @@ public class WorkflowTriggerService implements Service {
         }
     }
 
-    public void resume(WorkflowTriggerId workflowTriggerId) throws SchedulerException, ServiceException, ValidationException {
+    public List<WorkflowTrigger> resume(WorkflowId workflowId)
+            throws SchedulerException, ServiceException, ValidationException {
+        logger.debug("Received request to resume all workflow trigger for workflow {}", workflowId);
+        final ArrayList<WorkflowTrigger> affectedTriggers = new ArrayList<>();
+        final List<WorkflowTrigger> workflowTriggers = get(workflowId.getNamespace(), workflowId.getName());
+        for (WorkflowTrigger workflowTrigger : workflowTriggers) {
+            final WorkflowTrigger affectedTrigger = resume(workflowTrigger);
+            if (affectedTrigger != null) {
+                affectedTriggers.add(affectedTrigger);
+            }
+        }
+        return affectedTriggers;
+    }
+
+    public WorkflowTrigger resume(WorkflowTriggerId workflowTriggerId) throws SchedulerException, ServiceException, ValidationException {
         logger.debug("Received request to resume workflow trigger {}", workflowTriggerId);
         try {
             final WorkflowTrigger workflowTrigger = workflowTriggerStore.load(workflowTriggerId);
@@ -89,24 +104,33 @@ public class WorkflowTriggerService implements Service {
                 throw WORKFLOW_TRIGGER_NOT_FOUND.createException(workflowTriggerId.getName(),
                         workflowTriggerId.getWorkflow(), workflowTriggerId.getNamespace());
             }
+            if (workflowTrigger.isEnabled()) {
+                return null;
+            }
             workflowTrigger.setEnabled(true);
             WorkflowSchedulerService.getService().resume(workflowTrigger);
             workflowTriggerStore.update(workflowTrigger);
+            return workflowTrigger;
         } catch (StoreException e) {
             logger.error("unable to resume workflow trigger {}", workflowTriggerId, e);
             throw new ServiceException(e.getMessage());
         }
     }
 
-    public void pause(WorkflowId workflowId) throws ServiceException, ValidationException {
+    public List<WorkflowTrigger> pause(WorkflowId workflowId) throws ServiceException, ValidationException {
         logger.debug("Received request to pause all triggers for workflow {}", workflowId);
+        final ArrayList<WorkflowTrigger> affectedTriggers = new ArrayList<>();
         final List<WorkflowTrigger> workflowTriggers = get(workflowId.getNamespace(), workflowId.getName());
         for (WorkflowTrigger workflowTrigger : workflowTriggers) {
-            pause(workflowTrigger);
+            final WorkflowTrigger affectedTrigger = pause(workflowTrigger);
+            if (affectedTrigger != null) {
+                affectedTriggers.add(affectedTrigger);
+            }
         }
+        return affectedTriggers;
     }
 
-    public void pause(WorkflowTriggerId workflowTriggerId) throws ServiceException, ValidationException {
+    public WorkflowTrigger pause(WorkflowTriggerId workflowTriggerId) throws ServiceException, ValidationException {
         logger.debug("Received request to pause workflow trigger {}", workflowTriggerId);
         try {
             final WorkflowTrigger workflowTrigger = workflowTriggerStore.load(workflowTriggerId);
@@ -114,9 +138,14 @@ public class WorkflowTriggerService implements Service {
                 throw WORKFLOW_TRIGGER_NOT_FOUND.createException(workflowTriggerId.getName(),
                         workflowTriggerId.getWorkflow(), workflowTriggerId.getNamespace());
             }
+            if (!workflowTrigger.isEnabled()) {
+                logger.warn("workflow trigger {} is already in pause state", workflowTrigger);
+                return null;
+            }
             workflowTrigger.setEnabled(false);
             WorkflowSchedulerService.getService().pause(workflowTrigger);
             workflowTriggerStore.update(workflowTrigger);
+            return workflowTrigger;
         } catch (StoreException | SchedulerException e) {
             logger.error("unable to pause workflow trigger {}", workflowTriggerId, e);
             throw new ServiceException(e.getMessage());
@@ -156,6 +185,21 @@ public class WorkflowTriggerService implements Service {
         } catch (StoreException e) {
             logger.error("unable to get all workflow triggers for workflow {} under namespace {}",
                     workflowName, namespace, e);
+            throw new ServiceException(e.getMessage());
+        }
+    }
+
+    public List<WorkflowTrigger> get(String namespace, String workflowName, boolean enabled) throws ServiceException, ValidationException {
+        logger.debug("Received request to get all enabled {} workflow triggers for workflow {} under namespace {}",
+                enabled, workflowName, namespace);
+        validateWorkflow(namespace, workflowName);
+        try {
+            final List<WorkflowTrigger> workflowTriggers =
+                    workflowTriggerStore.loadByWorkflowNameAndEnabled(namespace, workflowName, enabled);
+            return workflowTriggers == null ? Collections.emptyList() : workflowTriggers;
+        } catch (StoreException e) {
+            logger.error("unable to get all enabled {} workflow triggers for workflow {} under namespace {}",
+                    enabled, workflowName, namespace, e);
             throw new ServiceException(e.getMessage());
         }
     }

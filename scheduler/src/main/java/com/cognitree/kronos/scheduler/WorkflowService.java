@@ -131,8 +131,8 @@ public class WorkflowService implements Service {
                 "between {} to {}", namespace, createdAfter, createdBefore);
         validateNamespace(namespace);
         final Map<Job.Status, Integer> jobStatusMap =
-                JobService.getService().groupByStatus(namespace, createdAfter, createdBefore);
-        final Map<Task.Status, Integer> taskStatusMap = TaskService.getService().groupByStatus(namespace, createdAfter, createdBefore);
+                JobService.getService().countByStatus(namespace, createdAfter, createdBefore);
+        final Map<Task.Status, Integer> taskStatusMap = TaskService.getService().countByStatus(namespace, createdAfter, createdBefore);
         return getWorkflowStatistics(jobStatusMap, taskStatusMap, createdAfter, createdBefore);
     }
 
@@ -142,9 +142,9 @@ public class WorkflowService implements Service {
                 "between {} to {}", workflowName, namespace, createdAfter, createdBefore);
         validateNamespace(namespace);
         final Map<Job.Status, Integer> jobStatusMap =
-                JobService.getService().groupByStatus(namespace, workflowName, createdAfter, createdBefore);
+                JobService.getService().countByStatus(namespace, workflowName, createdAfter, createdBefore);
         final Map<Task.Status, Integer> taskStatusMap =
-                TaskService.getService().groupByStatus(namespace, workflowName, createdAfter, createdBefore);
+                TaskService.getService().countByStatus(namespace, workflowName, createdAfter, createdBefore);
         return getWorkflowStatistics(jobStatusMap, taskStatusMap, createdAfter, createdBefore);
     }
 
