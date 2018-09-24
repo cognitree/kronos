@@ -21,7 +21,6 @@ import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.NamespaceId;
-import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.WorkflowId;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import com.cognitree.kronos.scheduler.model.WorkflowTriggerId;
@@ -37,7 +36,7 @@ import java.text.ParseException;
 import java.util.Collections;
 import java.util.List;
 
-import static com.cognitree.kronos.scheduler.ValidationError.*;
+import static com.cognitree.kronos.scheduler.ValidationError.INVALID_WORKFLOW_TRIGGER;
 import static com.cognitree.kronos.scheduler.ValidationError.NAMESPACE_NOT_FOUND;
 import static com.cognitree.kronos.scheduler.ValidationError.WORKFLOW_NOT_FOUND;
 import static com.cognitree.kronos.scheduler.ValidationError.WORKFLOW_TRIGGER_ALREADY_EXISTS;
@@ -74,12 +73,45 @@ public class WorkflowTriggerService implements Service {
                 throw WORKFLOW_TRIGGER_ALREADY_EXISTS.createException(workflowTrigger.getName(),
                         workflowTrigger.getWorkflow(), workflowTrigger.getNamespace());
             }
+            WorkflowSchedulerService.getService().add(workflowTrigger);
             workflowTriggerStore.store(workflowTrigger);
-            final Workflow workflow = WorkflowService.getService()
-                    .get(WorkflowId.build(workflowTrigger.getWorkflow(), workflowTrigger.getNamespace()));
-            WorkflowSchedulerService.getService().schedule(workflow, workflowTrigger);
         } catch (StoreException | ParseException e) {
             logger.error("unable to add workflow trigger {}", workflowTrigger, e);
+            throw new ServiceException(e.getMessage());
+        }
+    }
+
+    public void resume(WorkflowTriggerId workflowTriggerId) throws SchedulerException, ServiceException, ValidationException {
+        logger.debug("Received request to resume workflow trigger {}", workflowTriggerId);
+        try {
+            final WorkflowTrigger workflowTrigger = workflowTriggerStore.load(workflowTriggerId);
+            if (workflowTrigger == null) {
+                throw WORKFLOW_TRIGGER_NOT_FOUND.createException(workflowTriggerId.getName(),
+                        workflowTriggerId.getWorkflow(), workflowTriggerId.getNamespace());
+            }
+            workflowTrigger.setEnabled(true);
+            WorkflowSchedulerService.getService().resume(workflowTrigger);
+            workflowTriggerStore.update(workflowTrigger);
+        } catch (StoreException e) {
+            logger.error("unable to resume workflow trigger {}", workflowTriggerId, e);
+            throw new ServiceException(e.getMessage());
+        }
+    }
+
+
+    public void pause(WorkflowTriggerId workflowTriggerId) throws ServiceException, ValidationException {
+        logger.debug("Received request to pause workflow trigger {}", workflowTriggerId);
+        try {
+            final WorkflowTrigger workflowTrigger = workflowTriggerStore.load(workflowTriggerId);
+            if (workflowTrigger == null) {
+                throw WORKFLOW_TRIGGER_NOT_FOUND.createException(workflowTriggerId.getName(),
+                        workflowTriggerId.getWorkflow(), workflowTriggerId.getNamespace());
+            }
+            workflowTrigger.setEnabled(false);
+            WorkflowSchedulerService.getService().pause(workflowTrigger);
+            workflowTriggerStore.update(workflowTrigger);
+        } catch (StoreException | SchedulerException e) {
+            logger.error("unable to pause workflow trigger {}", workflowTriggerId, e);
             throw new ServiceException(e.getMessage());
         }
     }
@@ -129,8 +161,8 @@ public class WorkflowTriggerService implements Service {
                 throw WORKFLOW_TRIGGER_NOT_FOUND.createException(workflowTriggerId.getName(),
                         workflowTriggerId.getWorkflow(), workflowTriggerId.getNamespace());
             }
-            workflowTriggerStore.delete(workflowTriggerId);
             WorkflowSchedulerService.getService().delete(workflowTriggerId);
+            workflowTriggerStore.delete(workflowTriggerId);
         } catch (StoreException e) {
             logger.error("unable to delete workflow trigger {}", workflowTriggerId, e);
             throw new ServiceException(e.getMessage());
@@ -138,6 +170,9 @@ public class WorkflowTriggerService implements Service {
     }
 
     private void validateTrigger(WorkflowTrigger workflowTrigger) throws ValidationException {
+        if (!workflowTrigger.isEnabled()) {
+            throw INVALID_WORKFLOW_TRIGGER.createException("trigger is in disabled mode");
+        }
         try {
             TriggerHelper.buildTrigger(workflowTrigger);
         } catch (Exception e) {

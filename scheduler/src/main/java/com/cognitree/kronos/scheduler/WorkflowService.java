@@ -78,9 +78,10 @@ public class WorkflowService implements Service {
             if (workflowStore.load(workflow) != null) {
                 throw WORKFLOW_ALREADY_EXISTS.createException(workflow.getName(), workflow.getNamespace());
             }
+            WorkflowSchedulerService.getService().add(workflow);
             workflowStore.store(workflow);
-        } catch (StoreException e) {
-            logger.error("unable to store workflow {}", workflow, e);
+        } catch (StoreException | SchedulerException e) {
+            logger.error("unable to add workflow {}", workflow, e);
             throw new ServiceException(e.getMessage());
         }
     }
@@ -190,10 +191,20 @@ public class WorkflowService implements Service {
             if (workflowStore.load(workflow) == null) {
                 throw WORKFLOW_NOT_FOUND.createException(workflow.getName(), workflow.getNamespace());
             }
+            WorkflowSchedulerService.getService().update(workflow);
             workflowStore.update(workflow);
-        } catch (StoreException e) {
+        } catch (StoreException | SchedulerException e) {
             logger.error("unable to update workflow {}", workflow, e);
             throw new ServiceException(e.getMessage());
+        }
+    }
+
+    public void pauseWorkflowTriggers(WorkflowId workflowId) throws ServiceException, ValidationException {
+        logger.debug("Received request to pause all triggers for workflow {}", workflowId);
+        final List<WorkflowTrigger> workflowTriggers =
+                WorkflowTriggerService.getService().get(workflowId.getName(), workflowId.getNamespace());
+        for (WorkflowTrigger workflowTrigger : workflowTriggers) {
+            WorkflowTriggerService.getService().pause(workflowTrigger);
         }
     }
 
@@ -212,6 +223,7 @@ public class WorkflowService implements Service {
             }
             // delete all workflow jobs before deleting workflow
             JobService.getService().delete(workflowId.getName(), workflowId.getNamespace());
+            WorkflowSchedulerService.getService().delete(workflowId);
             workflowStore.delete(workflowId);
         } catch (StoreException e) {
             logger.error("unable to delete workflow {}", workflowId, e);

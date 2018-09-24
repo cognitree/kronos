@@ -93,41 +93,51 @@ public final class WorkflowSchedulerService implements Service {
         TaskService.getService().registerListener(new WorkflowLifecycleHandler());
     }
 
-    void schedule(Workflow workflow, WorkflowTrigger workflowTrigger) throws SchedulerException, ParseException {
-        if (!workflowTrigger.isEnabled()) {
-            logger.warn("Workflow trigger {} is disabled from scheduling", workflowTrigger);
-            return;
-        }
+    void add(Workflow workflow) throws SchedulerException {
+        addJob(workflow, false);
+    }
 
+    void update(Workflow workflow) throws SchedulerException {
+        addJob(workflow, true);
+    }
+
+    private void addJob(Workflow workflow, boolean replace) throws SchedulerException {
         JobDataMap jobDataMap = new JobDataMap();
         jobDataMap.put("namespace", workflow.getNamespace());
         jobDataMap.put("workflowName", workflow.getName());
-        jobDataMap.put("triggerName", workflowTrigger.getName());
         JobDetail jobDetail = newJob(WorkflowSchedulerJob.class)
-                .withIdentity(getJobKey(workflowTrigger))
+                .withIdentity(getJobKey(workflow))
+                .storeDurably()
                 .usingJobData(jobDataMap)
                 .build();
-
-        final Trigger trigger = TriggerHelper.buildTrigger(workflowTrigger, getTriggerKey(workflowTrigger));
-        scheduler.scheduleJob(jobDetail, trigger);
+        scheduler.addJob(jobDetail, replace);
     }
 
-    private JobKey getJobKey(WorkflowTriggerId workflowTriggerId) {
-        return new JobKey(workflowTriggerId.getName(),
-                getGroup(workflowTriggerId.getWorkflow(), workflowTriggerId.getNamespace()));
+    void add(WorkflowTrigger workflowTrigger)
+            throws SchedulerException, ParseException {
+        JobDataMap jobDataMap = new JobDataMap();
+        jobDataMap.put("triggerName", workflowTrigger.getName());
+        WorkflowId workflowId = WorkflowId.build(workflowTrigger.getWorkflow(), workflowTrigger.getNamespace());
+        final Trigger trigger = TriggerHelper.buildTrigger(workflowTrigger, jobDataMap,
+                getTriggerKey(workflowTrigger), getJobKey(workflowId));
+        scheduler.scheduleJob(trigger);
     }
 
-    private TriggerKey getTriggerKey(WorkflowTriggerId workflowTriggerId) {
-        return new TriggerKey(workflowTriggerId.getName(),
-                getGroup(workflowTriggerId.getWorkflow(), workflowTriggerId.getNamespace()));
+    void resume(WorkflowTrigger workflowTrigger) throws SchedulerException {
+        logger.info("Received request to resume workflow trigger {}", workflowTrigger);
+        scheduler.resumeTrigger(getTriggerKey(workflowTrigger));
     }
 
-    private String getGroup(String workflowName, String namespace) {
-        return workflowName + ":" + namespace;
+    void pause(WorkflowTrigger workflowTrigger) throws SchedulerException {
+        logger.info("Received request to pause workflow trigger {}", workflowTrigger);
+        scheduler.pauseTrigger(getTriggerKey(workflowTrigger));
     }
 
-    private Job execute(Workflow workflow, String triggerName) throws ServiceException, ValidationException {
-        logger.info("Received request to execute workflow {} by trigger {}", workflow, triggerName);
+    private void execute(String workflowName, String triggerName, String namespace)
+            throws ServiceException, ValidationException {
+        logger.info("Received request to execute workflow {} by trigger {} under namespace {}",
+                workflowName, triggerName, namespace);
+        final Workflow workflow = WorkflowService.getService().get(WorkflowId.build(workflowName, namespace));
         final Job job = JobService.getService().create(workflow.getName(), triggerName, workflow.getNamespace());
         logger.debug("Executing workflow job {}", job);
         final List<WorkflowTask> workflowTasks = orderWorkflowTasks(workflow.getTasks());
@@ -141,7 +151,6 @@ public final class WorkflowSchedulerService implements Service {
         }
         tasks.forEach(task -> TaskSchedulerService.getService().schedule(task));
         JobService.getService().updateStatus(job.getIdentity(), RUNNING);
-        return job;
     }
 
     /**
@@ -168,13 +177,33 @@ public final class WorkflowSchedulerService implements Service {
         return topologicalSort.sort();
     }
 
-    void delete(WorkflowTriggerId workflowTriggerId) throws SchedulerException {
-        logger.info("Received request to delete quartz job for workflow trigger {}", workflowTriggerId);
-        final TriggerKey jobKey = getTriggerKey(workflowTriggerId);
+    void delete(WorkflowId workflowId) throws SchedulerException {
+        logger.info("Received request to delete quartz job for workflow {}", workflowId);
+        final JobKey jobKey = getJobKey(workflowId);
         if (!scheduler.isInStandbyMode() && scheduler.checkExists(jobKey)) {
-            logger.info("Unschedule quartz job {}", jobKey);
-            scheduler.unscheduleJob(jobKey);
+            logger.info("Delete quartz job {}", jobKey);
+            scheduler.deleteJob(jobKey);
         }
+    }
+
+    void delete(WorkflowTriggerId workflowTriggerId) throws SchedulerException {
+        logger.info("Received request to delete quartz trigger for workflow trigger {}", workflowTriggerId);
+        final TriggerKey triggerKey = getTriggerKey(workflowTriggerId);
+        if (!scheduler.isInStandbyMode() && scheduler.checkExists(triggerKey)) {
+            logger.info("Delete quartz trigger with key {}", triggerKey);
+            scheduler.unscheduleJob(triggerKey);
+        }
+    }
+
+    // used in junit
+    JobKey getJobKey(WorkflowId workflowId) {
+        return new JobKey(workflowId.getName(), workflowId.getNamespace());
+    }
+
+    // used in junit
+    TriggerKey getTriggerKey(WorkflowTriggerId workflowTriggerId) {
+        return new TriggerKey(workflowTriggerId.getName(),
+                workflowTriggerId.getWorkflow() + ":" + workflowTriggerId.getNamespace());
     }
 
     // used in junit
@@ -230,15 +259,13 @@ public final class WorkflowSchedulerService implements Service {
     public static final class WorkflowSchedulerJob implements org.quartz.Job {
         @Override
         public void execute(JobExecutionContext jobExecutionContext) {
-            final JobDataMap jobDataMap = jobExecutionContext.getJobDetail().getJobDataMap();
+            final JobDataMap jobDataMap = jobExecutionContext.getMergedJobDataMap();
             logger.trace("received request to execute workflow with data map {}", jobDataMap.getWrappedMap());
             final String namespace = jobDataMap.getString("namespace");
             final String workflowName = jobDataMap.getString("workflowName");
             final String triggerName = jobDataMap.getString("triggerName");
             try {
-                final WorkflowId workflowId = WorkflowId.build(workflowName, namespace);
-                final Workflow workflow = WorkflowService.getService().get(workflowId);
-                WorkflowSchedulerService.getService().execute(workflow, triggerName);
+                WorkflowSchedulerService.getService().execute(workflowName, triggerName, namespace);
             } catch (ServiceException | ValidationException e) {
                 logger.error("Error executing workflow {} for trigger {}", workflowName, triggerName, e);
             }
@@ -249,10 +276,11 @@ public final class WorkflowSchedulerService implements Service {
         @Override
         public void triggerFinalized(Trigger trigger) {
             try {
-                final JobDataMap jobDataMap = scheduler.getJobDetail(trigger.getJobKey()).getJobDataMap();
-                final String namespace = jobDataMap.getString("namespace");
-                final String workflowName = jobDataMap.getString("workflowName");
-                final String triggerName = jobDataMap.getString("triggerName");
+                final JobDataMap workflowDataMap = scheduler.getJobDetail(trigger.getJobKey()).getJobDataMap();
+                final String namespace = workflowDataMap.getString("namespace");
+                final String workflowName = workflowDataMap.getString("workflowName");
+                final JobDataMap triggerDataMap = trigger.getJobDataMap();
+                final String triggerName = triggerDataMap.getString("triggerName");
                 logger.info("Trigger {} for workflow {} under namespace {} has completed execution, " +
                         "deleting it from store", triggerName, workflowName, namespace);
                 try {
