@@ -30,6 +30,8 @@ import org.quartz.CronScheduleBuilder;
 import org.quartz.CronTrigger;
 import org.quartz.DailyTimeIntervalScheduleBuilder;
 import org.quartz.DailyTimeIntervalTrigger;
+import org.quartz.JobDataMap;
+import org.quartz.JobKey;
 import org.quartz.ScheduleBuilder;
 import org.quartz.SimpleScheduleBuilder;
 import org.quartz.SimpleTrigger;
@@ -41,6 +43,7 @@ import org.quartz.TriggerKey;
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
 import static java.util.TimeZone.getTimeZone;
@@ -53,16 +56,21 @@ import static org.quartz.TriggerBuilder.newTrigger;
 public class TriggerHelper {
 
     public static Trigger buildTrigger(WorkflowTrigger workflowTrigger) throws ParseException {
-        return buildTrigger(workflowTrigger, null);
+        return buildTrigger(workflowTrigger, null, null, null);
     }
 
-    public static Trigger buildTrigger(WorkflowTrigger workflowTrigger,
-                                       TriggerKey triggerKey) throws ParseException {
+    public static Trigger buildTrigger(WorkflowTrigger workflowTrigger, JobDataMap jobDataMap,
+                                       TriggerKey triggerKey, JobKey jobKey) throws ParseException {
         final ScheduleBuilder scheduleBuilder = buildSchedulerBuilder(workflowTrigger.getSchedule());
         TriggerBuilder triggerBuilder = newTrigger()
                 .withSchedule(scheduleBuilder)
                 .startNow()
+                .forJob(jobKey)
                 .withIdentity(triggerKey);
+
+        if (jobDataMap != null) {
+            triggerBuilder.usingJobData(jobDataMap);
+        }
 
         // Set Start Date
         if (workflowTrigger.getStartAt() != null) {
@@ -178,6 +186,9 @@ public class TriggerHelper {
         return scheduleBuilder;
     }
 
+    /**
+     * convert time of day to a specific timezone
+     */
     private static TimeOfDay getTimeOfDay(DailyTimeIntervalSchedule.TimeOfDay timeOfDay, String timezoneId) {
         final Calendar cal = Calendar.getInstance();
         cal.setTime(new Date());
@@ -185,8 +196,11 @@ public class TriggerHelper {
         cal.set(Calendar.MINUTE, timeOfDay.getMinute());
         cal.set(Calendar.SECOND, timeOfDay.getSecond());
         cal.clear(Calendar.MILLISECOND);
-        cal.setTimeZone(timezoneId == null || timezoneId.isEmpty() ? TimeZone.getDefault() : TimeZone.getTimeZone(timezoneId));
-        return new TimeOfDay(cal.get(Calendar.HOUR), cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND));
+        final TimeZone timeZone = timezoneId == null || timezoneId.isEmpty()
+                ? TimeZone.getDefault() : TimeZone.getTimeZone(timezoneId);
+        final Calendar timezoneCal = new GregorianCalendar(timeZone);
+        timezoneCal.setTimeInMillis(cal.getTimeInMillis());
+        return new TimeOfDay(timezoneCal.get(Calendar.HOUR), timezoneCal.get(Calendar.MINUTE), timezoneCal.get(Calendar.SECOND));
     }
 
     private static ScheduleBuilder buildCalendarTimeScheduleBuilder(CalendarIntervalSchedule calendarIntervalSchedule) {

@@ -63,25 +63,48 @@ public class WorkflowSchedulerServiceTest {
         final WorkflowSchedulerService workflowSchedulerService = WorkflowSchedulerService.getService();
         final Workflow workflow = createWorkflow(UUID.randomUUID().toString(),
                 UUID.randomUUID().toString());
+        workflowSchedulerService.add(workflow);
         final WorkflowTrigger workflowTrigger = createWorkflowTrigger(UUID.randomUUID().toString(),
                 workflow.getName(), workflow.getNamespace());
-        workflowSchedulerService.schedule(workflow, workflowTrigger);
+        workflowSchedulerService.add(workflowTrigger);
         final Scheduler scheduler = workflowSchedulerService.getScheduler();
-        Assert.assertTrue(scheduler.checkExists(getJobKey(workflowTrigger)));
+        Assert.assertTrue(scheduler.checkExists(workflowSchedulerService.getJobKey(workflow)));
     }
 
     @Test
-    public void testDeleteWorkflow() throws SchedulerException, IOException, ParseException {
+    public void testDeleteWorkflow() throws SchedulerException, IOException {
+        final WorkflowSchedulerService workflowSchedulerService = WorkflowSchedulerService.getService();
+        final Workflow workflow = createWorkflow(UUID.randomUUID().toString(), UUID.randomUUID().toString());
+        workflowSchedulerService.add(workflow);
+        final Scheduler scheduler = workflowSchedulerService.getScheduler();
+        Assert.assertTrue(scheduler.checkExists(workflowSchedulerService.getJobKey(workflow)));
+        workflowSchedulerService.delete(workflow);
+        Assert.assertFalse(scheduler.checkExists(workflowSchedulerService.getJobKey(workflow)));
+    }
+
+    @Test(expected = SchedulerException.class)
+    public void testAddWorkflowTriggerWithoutWorkflow() throws SchedulerException, ParseException {
+        final WorkflowSchedulerService workflowSchedulerService = WorkflowSchedulerService.getService();
+        final WorkflowTrigger workflowTrigger = createWorkflowTrigger(UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(), UUID.randomUUID().toString());
+        workflowSchedulerService.add(workflowTrigger);
+        Assert.fail();
+    }
+
+    @Test
+    public void testDeleteWorkflowTrigger() throws SchedulerException, IOException, ParseException {
         final WorkflowSchedulerService workflowSchedulerService = WorkflowSchedulerService.getService();
         final Workflow workflow = createWorkflow(UUID.randomUUID().toString(),
                 UUID.randomUUID().toString());
+        workflowSchedulerService.add(workflow);
         final WorkflowTrigger workflowTrigger = createWorkflowTrigger(UUID.randomUUID().toString(),
                 workflow.getName(), workflow.getNamespace());
-        workflowSchedulerService.schedule(workflow, workflowTrigger);
+        workflowSchedulerService.add(workflowTrigger);
         final Scheduler scheduler = workflowSchedulerService.getScheduler();
-        Assert.assertTrue(scheduler.checkExists(getJobKey(workflowTrigger)));
+        Assert.assertTrue(scheduler.checkExists(workflowSchedulerService.getTriggerKey(workflowTrigger)));
         workflowSchedulerService.delete(workflowTrigger);
-        Assert.assertFalse(scheduler.checkExists(getJobKey(workflowTrigger)));
+        Assert.assertTrue(scheduler.checkExists(workflowSchedulerService.getJobKey(workflow)));
+        Assert.assertFalse(scheduler.checkExists(workflowSchedulerService.getTriggerKey(workflowTrigger)));
     }
 
     @Test
@@ -115,10 +138,6 @@ public class WorkflowSchedulerServiceTest {
         workflowTrigger.setStartAt(nextFireTime - 100);
         workflowTrigger.setEndAt(nextFireTime + 100);
         return workflowTrigger;
-    }
-
-    private JobKey getJobKey(WorkflowTrigger workflowTrigger) {
-        return new JobKey(workflowTrigger.getName(), workflowTrigger.getWorkflow() + ":" + workflowTrigger.getNamespace());
     }
 
 }

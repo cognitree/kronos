@@ -32,16 +32,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
+import static javax.ws.rs.core.Response.Status.ACCEPTED;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -100,9 +104,10 @@ public class WorkflowTriggerResource {
                                           @PathParam("workflow") String workflowName,
                                           @HeaderParam("namespace") String namespace,
                                           WorkflowTrigger workflowTrigger) throws ServiceException, ValidationException, SchedulerException {
-        // override workflow name and namespace
+        // override workflow name and namespace and enabled flag
         workflowTrigger.setWorkflow(workflowName);
         workflowTrigger.setNamespace(namespace);
+        workflowTrigger.setEnabled(true);
         logger.info("Received request to create workflow trigger {} for workflow {} under namespace {}",
                 workflowTrigger, workflowName, namespace);
         if (namespace == null || namespace.isEmpty()) {
@@ -110,6 +115,34 @@ public class WorkflowTriggerResource {
         }
         WorkflowTriggerService.getService().add(workflowTrigger);
         return Response.status(CREATED).entity(workflowTrigger).build();
+    }
+
+    @PUT
+    @Path("/{name}")
+    @ApiOperation(value = "Enable/Disable workflow trigger", response = WorkflowTrigger.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 404, message = "Workflow trigger not found")})
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response updateWorkflowTrigger(@ApiParam(value = "workflow name", required = true)
+                                          @PathParam("workflow") String workflowName,
+                                          @ApiParam(value = "workflow trigger name", required = true)
+                                          @PathParam("name") String triggerName,
+                                          @ApiParam(value = "enable/ disable the workflow trigger", required = true)
+                                          @DefaultValue("true") @QueryParam("enable") boolean enable,
+                                          @HeaderParam("namespace") String namespace)
+            throws ServiceException, ValidationException, SchedulerException {
+        // override workflow name and namespace
+        logger.info("Received request to update workflow trigger {} for workflow {} under namespace {} set enable to {}",
+                triggerName, workflowName, namespace);
+        if (namespace == null || namespace.isEmpty()) {
+            return Response.status(BAD_REQUEST).entity("missing namespace header").build();
+        }
+        if (enable) {
+            WorkflowTriggerService.getService().resume(WorkflowTriggerId.build(triggerName, workflowName, namespace));
+        } else {
+            WorkflowTriggerService.getService().pause(WorkflowTriggerId.build(triggerName, workflowName, namespace));
+        }
+        return Response.status(ACCEPTED).build();
     }
 
     @DELETE
