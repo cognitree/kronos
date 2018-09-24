@@ -36,8 +36,8 @@ public class RAMWorkflowTriggerStore implements WorkflowTriggerStore {
     @Override
     public void store(WorkflowTrigger workflowTrigger) throws StoreException {
         logger.debug("Received request to store workflow trigger {}", workflowTrigger);
-        final WorkflowTriggerId triggerId = WorkflowTriggerId.build(workflowTrigger.getName(),
-                workflowTrigger.getWorkflow(), workflowTrigger.getNamespace());
+        final WorkflowTriggerId triggerId = WorkflowTriggerId.build(workflowTrigger.getNamespace(), workflowTrigger.getName(),
+                workflowTrigger.getWorkflow());
         if (workflowTriggers.containsKey(triggerId)) {
             throw new StoreException("workflow trigger with id " + triggerId + " already exists");
         }
@@ -57,7 +57,7 @@ public class RAMWorkflowTriggerStore implements WorkflowTriggerStore {
     }
 
     @Override
-    public List<WorkflowTrigger> loadByWorkflowName(String workflowName, String namespace) {
+    public List<WorkflowTrigger> loadByWorkflowName(String namespace, String workflowName) {
         logger.debug("Received request to get all workflow triggers with workflow name {} under namespace {}",
                 workflowName, namespace);
         final ArrayList<WorkflowTrigger> workflowTriggers = new ArrayList<>();
@@ -72,15 +72,15 @@ public class RAMWorkflowTriggerStore implements WorkflowTriggerStore {
     @Override
     public WorkflowTrigger load(WorkflowTriggerId triggerId) {
         logger.debug("Received request to load workflow trigger with id {}", triggerId);
-        return workflowTriggers.get(WorkflowTriggerId.build(triggerId.getName(),
-                triggerId.getWorkflow(), triggerId.getNamespace()));
+        return workflowTriggers.get(WorkflowTriggerId.build(triggerId.getNamespace(), triggerId.getName(),
+                triggerId.getWorkflow()));
     }
 
     @Override
     public void update(WorkflowTrigger workflowTrigger) throws StoreException {
         logger.debug("Received request to update workflow trigger to {}", workflowTrigger);
-        final WorkflowTriggerId triggerId = WorkflowTriggerId.build(workflowTrigger.getName(),
-                workflowTrigger.getWorkflow(), workflowTrigger.getNamespace());
+        final WorkflowTriggerId triggerId = WorkflowTriggerId.build(workflowTrigger.getNamespace(), workflowTrigger.getName(),
+                workflowTrigger.getWorkflow());
         if (!workflowTriggers.containsKey(triggerId)) {
             throw new StoreException("workflow trigger with id " + triggerId + " does not exists");
         }
@@ -90,8 +90,8 @@ public class RAMWorkflowTriggerStore implements WorkflowTriggerStore {
     @Override
     public void delete(WorkflowTriggerId triggerId) throws StoreException {
         logger.debug("Received request to delete workflow trigger with id {}", triggerId);
-        final WorkflowTriggerId builtTriggerId = WorkflowTriggerId.build(triggerId.getName(),
-                triggerId.getWorkflow(), triggerId.getNamespace());
+        final WorkflowTriggerId builtTriggerId = WorkflowTriggerId.build(triggerId.getNamespace(), triggerId.getName(),
+                triggerId.getWorkflow());
         if (workflowTriggers.remove(builtTriggerId) == null) {
             throw new StoreException("workflow trigger with id " + builtTriggerId + " does not exists");
         }

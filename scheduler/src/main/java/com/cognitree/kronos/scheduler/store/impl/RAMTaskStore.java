@@ -42,7 +42,7 @@ public class RAMTaskStore implements TaskStore {
     @Override
     public void store(Task task) throws StoreException {
         logger.debug("Received request to store task {}", task);
-        final TaskId taskId = TaskId.build(task.getName(), task.getJob(), task.getWorkflow(), task.getNamespace());
+        final TaskId taskId = TaskId.build(task.getNamespace(), task.getName(), task.getJob(), task.getWorkflow());
         if (tasks.containsKey(taskId)) {
             throw new StoreException("task with id " + taskId + " already exists");
         }
@@ -64,11 +64,11 @@ public class RAMTaskStore implements TaskStore {
     @Override
     public Task load(TaskId taskId) {
         logger.debug("Received request to load task with id {}", taskId);
-        return tasks.get(TaskId.build(taskId.getName(), taskId.getJob(), taskId.getWorkflow(), taskId.getNamespace()));
+        return tasks.get(TaskId.build(taskId.getNamespace(), taskId.getName(), taskId.getJob(), taskId.getWorkflow()));
     }
 
     @Override
-    public List<Task> loadByJobIdAndWorkflowName(String jobId, String workflowName, String namespace) {
+    public List<Task> loadByJobIdAndWorkflowName(String namespace, String jobId, String workflowName) {
         logger.debug("Received request to get all tasks with job id {}, namespace {}", jobId, namespace);
         List<Task> tasks = new ArrayList<>();
         this.tasks.values().forEach(task -> {
@@ -81,7 +81,7 @@ public class RAMTaskStore implements TaskStore {
     }
 
     @Override
-    public List<Task> loadByStatus(List<Status> statuses, String namespace) {
+    public List<Task> loadByStatus(String namespace, List<Status> statuses) {
         logger.debug("Received request to get all tasks with status in {}, namespace {}", statuses, namespace);
         List<Task> tasks = new ArrayList<>();
         this.tasks.values().forEach(task -> {
@@ -110,7 +110,7 @@ public class RAMTaskStore implements TaskStore {
     }
 
     @Override
-    public Map<Status, Integer> groupByStatusForWorkflowName(String workflowName, String namespace,
+    public Map<Status, Integer> groupByStatusForWorkflowName(String namespace, String workflowName,
                                                              long createdAfter, long createdBefore) throws StoreException {
         logger.debug("Received request to group by status tasks having workflow name {} under namespace {}, " +
                 "created after {}, created before {}", workflowName, namespace, createdAfter, createdBefore);
@@ -120,7 +120,7 @@ public class RAMTaskStore implements TaskStore {
         }
 
         try {
-            final List<Job> jobs = JobService.getService().get(workflowName, namespace, createdAfter, createdBefore);
+            final List<Job> jobs = JobService.getService().get(namespace, workflowName, createdAfter, createdBefore);
             for (Task task : tasks.values()) {
                 if (task.getWorkflow().equals(workflowName) && task.getNamespace().equals(namespace)
                         && task.getCreatedAt() > createdAfter && task.getCreatedAt() < createdBefore) {
@@ -140,7 +140,7 @@ public class RAMTaskStore implements TaskStore {
     @Override
     public void update(Task task) throws StoreException {
         logger.debug("Received request to update task to {}", task);
-        final TaskId taskId = TaskId.build(task.getName(), task.getJob(), task.getWorkflow(), task.getNamespace());
+        final TaskId taskId = TaskId.build(task.getNamespace(), task.getName(), task.getJob(), task.getWorkflow());
         if (!tasks.containsKey(taskId)) {
             throw new StoreException("task with id " + taskId + " does not exists");
         }
@@ -150,7 +150,7 @@ public class RAMTaskStore implements TaskStore {
     @Override
     public void delete(TaskId taskId) throws StoreException {
         logger.debug("Received request to delete task with id {}", taskId);
-        final TaskId builtTaskId = TaskId.build(taskId.getName(), taskId.getJob(), taskId.getWorkflow(), taskId.getNamespace());
+        final TaskId builtTaskId = TaskId.build(taskId.getNamespace(), taskId.getName(), taskId.getJob(), taskId.getWorkflow());
         if (tasks.remove(builtTaskId) == null) {
             throw new StoreException("task with id " + builtTaskId + " does not exists");
         }

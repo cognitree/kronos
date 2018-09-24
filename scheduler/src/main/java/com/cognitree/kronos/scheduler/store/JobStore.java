@@ -33,26 +33,26 @@ public interface JobStore extends Store<Job, JobId> {
 
     List<Job> load(String namespace, long createdAfter, long createdBefore) throws StoreException;
 
-    List<Job> loadByWorkflowName(String workflowName, String namespace,
+    List<Job> loadByWorkflowName(String namespace, String workflowName,
                                  long createdAfter, long createdBefore) throws StoreException;
 
-    List<Job> loadByWorkflowNameAndTriggerName(String workflowName, String triggerName, String namespace,
+    List<Job> loadByWorkflowNameAndTriggerName(String namespace, String workflowName, String triggerName,
                                                long createdAfter, long createdBefore) throws StoreException;
 
-    List<Job> loadByStatus(List<Job.Status> statuses, String namespace,
+    List<Job> loadByStatus(String namespace, List<Status> statuses,
                            long createdAfter, long createdBefore) throws StoreException;
 
-    List<Job> loadByWorkflowNameAndStatus(String workflowName, List<Job.Status> statuses, String namespace,
+    List<Job> loadByWorkflowNameAndStatus(String namespace, String workflowName, List<Status> statuses,
                                           long createdAfter, long createdBefore) throws StoreException;
 
-    List<Job> loadByWorkflowNameAndTriggerNameAndStatus(String workflowName, String triggerName,
-                                                        List<Job.Status> statuses, String namespace,
+    List<Job> loadByWorkflowNameAndTriggerNameAndStatus(String namespace, String workflowName, String triggerName,
+                                                        List<Status> statuses,
                                                         long createdAfter, long createdBefore) throws StoreException;
 
-    Map<Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore) throws StoreException;
+    Map<Status, Integer> countByStatus(String namespace, long createdAfter, long createdBefore) throws StoreException;
 
-    Map<Status, Integer> groupByStatusForWorkflowName(String workflowName, String namespace,
+    Map<Status, Integer> countByStatusForWorkflowName(String namespace, String workflowName,
                                                       long createdAfter, long createdBefore) throws StoreException;
 
-    void deleteByWorkflowName(String workflowName, String namespace) throws StoreException;
+    void deleteByWorkflowName(String namespace, String workflowName) throws StoreException;
 }

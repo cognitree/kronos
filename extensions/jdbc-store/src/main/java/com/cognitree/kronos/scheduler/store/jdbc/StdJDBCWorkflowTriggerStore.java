@@ -112,7 +112,7 @@ public class StdJDBCWorkflowTriggerStore implements WorkflowTriggerStore {
     }
 
     @Override
-    public List<WorkflowTrigger> loadByWorkflowName(String workflowName, String namespace) throws StoreException {
+    public List<WorkflowTrigger> loadByWorkflowName(String namespace, String workflowName) throws StoreException {
         logger.debug("Received request to get all workflow triggers with workflow name {} under namespace {}",
                 workflowName, namespace);
         try (Connection connection = dataSource.getConnection();

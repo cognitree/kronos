@@ -31,12 +31,12 @@ public interface TaskStore extends Store<Task, TaskId> {
 
     List<Task> load(String namespace) throws StoreException;
 
-    List<Task> loadByJobIdAndWorkflowName(String jobId, String workflowName, String namespace) throws StoreException;
+    List<Task> loadByJobIdAndWorkflowName(String namespace, String jobId, String workflowName) throws StoreException;
 
-    List<Task> loadByStatus(List<Status> statuses, String namespace) throws StoreException;
+    List<Task> loadByStatus(String namespace, List<Status> statuses) throws StoreException;
 
     Map<Status, Integer> groupByStatus(String namespace, long createdAfter, long createdBefore) throws StoreException;
 
-    Map<Status, Integer> groupByStatusForWorkflowName(String workflowName, String namespace,
+    Map<Status, Integer> groupByStatusForWorkflowName(String namespace, String workflowName,
                                                       long createdAfter, long createdBefore) throws StoreException;
 }

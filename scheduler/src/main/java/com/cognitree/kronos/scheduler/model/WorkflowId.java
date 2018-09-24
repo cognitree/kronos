@@ -26,22 +26,14 @@ import java.util.Objects;
 @JsonDeserialize(as = WorkflowId.class)
 public class WorkflowId {
 
-    private String name;
     private String namespace;
+    private String name;
 
-    public static WorkflowId build(String name, String namespace) {
+    public static WorkflowId build(String namespace, String workflowName) {
         final WorkflowId workflowId = new WorkflowId();
-        workflowId.setName(name);
         workflowId.setNamespace(namespace);
+        workflowId.setName(workflowName);
         return workflowId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getNamespace() {
@@ -52,25 +44,34 @@ public class WorkflowId {
         this.namespace = namespace;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof WorkflowId)) return false;
         WorkflowId that = (WorkflowId) o;
-        return Objects.equals(name, that.name) &&
-                Objects.equals(namespace, that.namespace);
+        return Objects.equals(namespace, that.namespace) &&
+                Objects.equals(name, that.name);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, namespace);
+
+        return Objects.hash(namespace, name);
     }
 
     @Override
     public String toString() {
         return "WorkflowId{" +
-                "name='" + name + '\'' +
-                ", namespace='" + namespace + '\'' +
+                "namespace='" + namespace + '\'' +
+                ", name='" + name + '\'' +
                 '}';
     }
 }

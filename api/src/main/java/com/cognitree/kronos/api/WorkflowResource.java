@@ -81,7 +81,7 @@ public class WorkflowResource {
         if (namespace == null || namespace.isEmpty()) {
             return Response.status(BAD_REQUEST).entity("missing namespace header").build();
         }
-        WorkflowId workflowId = WorkflowId.build(name, namespace);
+        WorkflowId workflowId = WorkflowId.build(namespace, name);
         final Workflow workflow = WorkflowService.getService().get(workflowId);
         if (workflow == null) {
             logger.error("No workflow exists with name {} under namespace {}", name, namespace);
@@ -142,7 +142,7 @@ public class WorkflowResource {
         if (namespace == null || namespace.isEmpty()) {
             return Response.status(BAD_REQUEST).entity("missing namespace header").build();
         }
-        WorkflowService.getService().pauseWorkflowTriggers(WorkflowId.build(name, namespace));
+        WorkflowService.getService().pauseWorkflowTriggers(WorkflowId.build(namespace, name));
         return Response.status(ACCEPTED).build();
     }
 
@@ -159,7 +159,7 @@ public class WorkflowResource {
         if (namespace == null || namespace.isEmpty()) {
             return Response.status(BAD_REQUEST).entity("missing namespace header").build();
         }
-        WorkflowId workflowId = WorkflowId.build(name, namespace);
+        WorkflowId workflowId = WorkflowId.build(namespace, name);
         WorkflowService.getService().delete(workflowId);
         return Response.status(OK).build();
     }
