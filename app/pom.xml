@@ -96,6 +96,12 @@
             <artifactId>spark-handler</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.cognitree.kronos</groupId>
+            <artifactId>rabbitmq-queue</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
         <!-- extensions end -->
     </dependencies>
 

@@ -115,6 +115,7 @@ public final class TaskExecutionService implements Service {
     private void initTaskHandlersAndExecutors() throws Exception {
         for (Map.Entry<String, TaskHandlerConfig> taskTypeToHandlerConfigEntry : taskTypeToHandlerConfig.entrySet()) {
             final String taskType = taskTypeToHandlerConfigEntry.getKey();
+            consumer.initTopic(taskType);
             final TaskHandlerConfig taskHandlerConfig = taskTypeToHandlerConfigEntry.getValue();
             logger.info("Initializing task handler of type {} with config {}", taskType, taskHandlerConfig);
             final TaskHandler taskHandler = (TaskHandler) Class.forName(taskHandlerConfig.getHandlerClass())

@@ -33,6 +33,13 @@ public interface Consumer {
     void init(ObjectNode consumerConfig);
 
     /**
+     * create a queue with name topic
+     *
+     * @param topic string is used to create a queue.
+     */
+    void initTopic(String topic);
+
+    /**
      * polls data from the underlying queue
      *
      * @param topic topic to poll from
