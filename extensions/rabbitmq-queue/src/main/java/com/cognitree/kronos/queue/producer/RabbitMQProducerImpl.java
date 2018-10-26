@@ -52,11 +52,6 @@ public class RabbitMQProducerImpl implements Producer {
         }
     }
 
-    private void ensureQueueExists(String topic, String exchangeName) throws IOException {
-        channel.queueDeclare(topic, true, false, false, null);
-        channel.queueBind(topic, exchangeName, topic);
-    }
-
     @Override
     public void close() {
         try {
@@ -66,5 +61,10 @@ public class RabbitMQProducerImpl implements Producer {
             logger.error("close: Failed to close the connection to the channel : " + e.getMessage(), e);
         }
         logger.info("close: Closed the connection to the factory");
+    }
+
+    private void ensureQueueExists(String topic, String exchangeName) throws IOException {
+        channel.queueDeclare(topic, true, false, false, null);
+        channel.queueBind(topic, exchangeName, topic);
     }
 }

@@ -12,7 +12,6 @@ consumerConfig:
       hostname: localhost
       port: 5672
       exchangeName: exchange
-      prefetchCount: 3
     pollTimeoutInMs: 5000
   pollIntervalInMs: 5000
 taskStatusQueue: taskstatus
