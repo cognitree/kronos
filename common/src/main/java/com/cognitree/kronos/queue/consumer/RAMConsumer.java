@@ -33,8 +33,6 @@ public class RAMConsumer implements Consumer {
     public void init(ObjectNode config) {
         logger.info("Initializing consumer for RAM(in-memory) queue with config {}", config);
     }
-    @Override
-    public void initTopic(String topic){}
 
     @Override
     public List<String> poll(String topic) {

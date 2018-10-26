@@ -54,9 +54,6 @@ public class KafkaConsumerImpl implements Consumer {
     }
 
     @Override
-    public void initTopic(String topic){}
-
-    @Override
     public List<String> poll(String topic) {
         return poll(topic, Integer.MAX_VALUE);
     }

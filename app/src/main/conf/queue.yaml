@@ -1,6 +1,25 @@
+#producerConfig:
+#  producerClass: com.cognitree.kronos.queue.producer.RAMProducer
+#consumerConfig:
+#  consumerClass: com.cognitree.kronos.queue.consumer.RAMConsumer
+#  pollIntervalInMs: 100
+#taskStatusQueue: taskstatus
+
 producerConfig:
-  producerClass: com.cognitree.kronos.queue.producer.RAMProducer
+  producerClass: com.cognitree.kronos.queue.producer.RabbitMQProducerImpl
+  config:
+    rabbitmqProducerConfig:
+      hostname: localhost
+      port: 5672
+      exchangeName: exchange
 consumerConfig:
-  consumerClass: com.cognitree.kronos.queue.consumer.RAMConsumer
-  pollIntervalInMs: 100
+  consumerClass: com.cognitree.kronos.queue.consumer.RabbitMQConsumerImpl
+  config:
+    rabbitmqConsumerConfig:
+      hostname: localhost
+      port: 5672
+      exchangeName: exchange
+      prefetchCount: 3
+    pollTimeoutInMs: 5000
+  pollIntervalInMs: 5000
 taskStatusQueue: taskstatus

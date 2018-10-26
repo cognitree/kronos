@@ -164,7 +164,6 @@ public final class TaskSchedulerService implements Service {
     }
 
     private void startConsumer() {
-        consumer.initTopic(statusQueue);
         consumeTaskStatus();
         final long pollInterval = consumerConfig.getPollIntervalInMs();
         scheduledExecutorService.scheduleAtFixedRate(this::consumeTaskStatus, pollInterval, pollInterval, MILLISECONDS);

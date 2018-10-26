@@ -1,2 +1,12 @@
+#storeServiceConfig:
+#  storeServiceClass: com.cognitree.kronos.scheduler.store.impl.RAMStoreService
+
 storeServiceConfig:
-  storeServiceClass: com.cognitree.kronos.scheduler.store.impl.RAMStoreService
+  storeServiceClass: com.cognitree.kronos.scheduler.store.jdbc.EmbeddedHSQLStoreService
+  config:
+    # directory to keep the kronos data
+    dbPath: /tmp
+    #username:
+    #password:
+    #minIdleConnection:
+    #maxIdleConnection:

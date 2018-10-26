@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RabbitMQConsumerImpl implements Consumer {
 
@@ -23,17 +24,20 @@ public class RabbitMQConsumerImpl implements Consumer {
     private static final String DEFAULT_EXCHANGE_NAME = "kronos_exchange";
 
     private Channel channel;
+    private Connection connection;
     private Properties rabbitmqConsumerConfig;
     private ConcurrentHashMap<String, LinkedBlockingQueue<String>> messages = new ConcurrentHashMap<>();
 
     public void init(ObjectNode config) {
         logger.info("init: Initializing consumer for rabbitmq with config {}", config);
         rabbitmqConsumerConfig = OBJECT_MAPPER.convertValue(config.get("rabbitmqConsumerConfig"), Properties.class);
+        // force override consumer configuration for rabbitmq to poll max 1 message at a time
+        rabbitmqConsumerConfig.put("max.poll.records", 1);
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(rabbitmqConsumerConfig.getProperty("hostname"));
         factory.setPort(Integer.parseInt(rabbitmqConsumerConfig.getProperty("port")));
         try {
-            Connection connection = factory.newConnection();
+            connection = factory.newConnection();
             channel = connection.createChannel();
             String exchangeName = rabbitmqConsumerConfig.getProperty("exchangeName", DEFAULT_EXCHANGE_NAME);
             channel.exchangeDeclare(exchangeName, BuiltinExchangeType.TOPIC, true);
@@ -42,32 +46,38 @@ public class RabbitMQConsumerImpl implements Consumer {
         }
     }
 
-    @Override
-    public void initTopic(String topic) {
+    private void initConsumer(String topic) {
         String exchangeName = rabbitmqConsumerConfig.getProperty("exchangeName", DEFAULT_EXCHANGE_NAME);
         int prefetchCount = Integer.parseInt(rabbitmqConsumerConfig.getProperty("prefetchCount"));
         try {
             ensureQueueExists(topic, exchangeName);
             channel.basicQos(prefetchCount);
             DefaultConsumer consumer = new DefaultConsumer(channel) {
+
                 @Override
                 public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
                                            byte[] body) {
                     String message = new String(body, StandardCharsets.UTF_8);
-                    if (messages.get(topic) == null) {
-                        LinkedBlockingQueue<String> newQueue = new LinkedBlockingQueue<>();
-                        newQueue.add(message);
-                        messages.put(topic, newQueue);
+                    AtomicBoolean lock = new AtomicBoolean(messages.get(topic) == null);
+                    if (lock.compareAndSet(true, false)) {
+                        LinkedBlockingQueue<String> newTopicQueue = new LinkedBlockingQueue<>();
+                        newTopicQueue.add(message);
+                        messages.put(topic, newTopicQueue);
                     } else {
                         LinkedBlockingQueue<String> topicMessages = messages.get(topic);
                         topicMessages.add(message);
                     }
+                    try {
+                        channel.basicAck(envelope.getDeliveryTag(), false);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             };
-            channel.basicConsume(topic, true, consumer);
+//            channel.basicConsume(topic, false, consumer);
+            logger.info("initConsumer: Created a consumer for the topic " + topic);
         } catch (IOException e) {
-            logger.error("initTopic: Unable to create a consumer for the topic " + topic, e);
-            throw new RuntimeException(e);
+            logger.error("initConsumer: Unable to create a consumer for the topic " + topic, e);
         }
     }
 
@@ -78,7 +88,7 @@ public class RabbitMQConsumerImpl implements Consumer {
 
     @Override
     public List<String> poll(String topic) {
-        return poll(topic, Integer.MAX_VALUE);
+        return poll(topic, 100000);
     }
 
     @Override
@@ -91,11 +101,23 @@ public class RabbitMQConsumerImpl implements Consumer {
         try {
             if (!messages.containsKey(topic)) {
                 createRabbitMQConsumerTopic(topic);
+                initConsumer(topic);
             }
             LinkedBlockingQueue<String> tempQueue = messages.get(topic);
-            tempQueue.drainTo(tasks, size);
+            while (size-- > 0) {
+                GetResponse response = channel.basicGet(topic, false);
+                if (response != null) {
+                    AMQP.BasicProperties properties = response.getProps();
+                    byte[] body = response.getBody();
+                    long deliveryTag = response.getEnvelope().getDeliveryTag();
+                    String message = new String(body);
+                    tasks.add(message);
+                    channel.basicAck(deliveryTag, false);
+                }
+            }
+//            tempQueue.drainTo(tasks, size);
         } catch (Exception e) {
-            logger.error("poll: Unable to drain the messages from Queue from the HashMap for the topic " + topic, e);
+            logger.error("poll: Unable to drain the messages from Queue for the topic " + topic, e);
         }
         return tasks;
     }
@@ -110,8 +132,7 @@ public class RabbitMQConsumerImpl implements Consumer {
     @Override
     public void close() {
         try {
-            channel.close();
-            channel.getConnection().close();
+            connection.close();
         } catch (Exception e) {
             logger.error("close: Failed to close the connection to the channel : " + e.getMessage(), e);
         }
