@@ -114,7 +114,7 @@ public class TopologicalSort<V> {
         List<V> result = new ArrayList<>();
         while (!zeroVerts.isEmpty()) {
             V v = zeroVerts.pop();                  // Choose a vertex with zero in-degree
-            result.add(v);                          // Vertex v is next in topol order
+            result.add(v);                          // Vertex v is next in topological order
             // "Remove" vertex v by updating its neighbors
             for (V neighbor : neighbors.get(v)) {
                 degree.put(neighbor, degree.get(neighbor) - 1);
