@@ -1,0 +1,17 @@
+producerConfig:
+  producerClass: com.cognitree.kronos.queue.producer.RabbitMQProducerImpl
+  config:
+    rabbitmqProducerConfig:
+      hostname: localhost
+      port: 5672
+      exchangeName: exchange
+consumerConfig:
+  consumerClass: com.cognitree.kronos.queue.consumer.RabbitMQConsumerImpl
+  config:
+    rabbitmqConsumerConfig:
+      hostname: localhost
+      port: 5672
+      exchangeName: exchange
+    pollTimeoutInMs: 5000
+  pollIntervalInMs: 5000
+taskStatusQueue: taskstatus
