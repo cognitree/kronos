@@ -1,2 +1,6 @@
 storeServiceConfig:
-  storeServiceClass: com.cognitree.kronos.scheduler.store.StoreService
+  storeServiceClass: com.cognitree.kronos.scheduler.store.mongo.MongoStoreServiceImpl
+  config:
+    host: localhost
+    portNumber: 27017
+    databaseName: quartz
