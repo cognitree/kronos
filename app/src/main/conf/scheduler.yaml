@@ -1,2 +1,0 @@
-storeServiceConfig:
-  storeServiceClass: com.cognitree.kronos.scheduler.store.StoreService
