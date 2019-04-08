@@ -351,8 +351,15 @@ public final class TaskSchedulerService implements Service {
             return;
         }
 
-        final Map<String, Object> modifiedTaskProperties = new HashMap<>();
-        task.getProperties().forEach((key, value) -> {
+        Map<String, Object> modifiedTaskProperties = new HashMap<>();
+        updateTaskProperties(task.getProperties(), dependentTaskContext, modifiedTaskProperties);
+
+        task.setProperties(modifiedTaskProperties);
+    }
+
+    private void updateTaskProperties(Map<String, Object> properties, Map<String, Object> dependentTaskContext,
+                                      Map<String, Object> modifiedTaskProperties) {
+        properties.forEach((key, value) -> {
             if (value instanceof String && ((String) value).startsWith("${") && ((String) value).endsWith("}")) {
                 final String valueToReplace = ((String) value).substring(2, ((String) value).length() - 1);
                 if (dependentTaskContext.containsKey(valueToReplace)) {
@@ -370,18 +377,15 @@ public final class TaskSchedulerService implements Service {
                             " setting it to null", key);
                     modifiedTaskProperties.put(key, null);
                 }
+            } else if(value instanceof Map) {
+                Map<String, Object> nestedTaskProperties = new HashMap<>();
+                modifiedTaskProperties.put(key, nestedTaskProperties);
+                updateTaskProperties((Map<String, Object>) value, dependentTaskContext, nestedTaskProperties);
             } else {
                 // copy the remaining key value pair as it is from current task properties
                 modifiedTaskProperties.put(key, value);
             }
         });
-
-        dependentTaskContext.forEach((key, value) -> {
-            if (!modifiedTaskProperties.containsKey(key.substring(key.indexOf(".") + 1))) {
-                modifiedTaskProperties.put(key.substring(key.indexOf(".") + 1), value);
-            }
-        });
-        task.setProperties(modifiedTaskProperties);
     }
 
     // used in junit
