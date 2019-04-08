@@ -154,7 +154,7 @@ public final class TaskSchedulerService implements Service {
         final List<Namespace> namespaces = NamespaceService.getService().get();
         final List<Task> tasks = new ArrayList<>();
         for (Namespace namespace : namespaces) {
-            TaskService.getService().get(namespace.getName(), NON_FINAL_TASK_STATUS_LIST);
+            tasks.addAll(TaskService.getService().get(namespace.getName(), NON_FINAL_TASK_STATUS_LIST));
         }
         if (!tasks.isEmpty()) {
             tasks.sort(Comparator.comparing(Task::getCreatedAt));
@@ -219,7 +219,7 @@ public final class TaskSchedulerService implements Service {
     /**
      * deletes all the stale tasks from memory older than task purge interval
      */
-    void deleteStaleTasks() {
+    private void deleteStaleTasks() {
         taskProvider.removeStaleTasks(HOURS.toMillis(TASK_PURGE_INTERVAL));
     }
 
@@ -345,8 +345,7 @@ public final class TaskSchedulerService implements Service {
      * @param task
      * @param dependentTaskContext
      */
-    // used in junit
-    void updateTaskProperties(Task task, Map<String, Object> dependentTaskContext) {
+    private void updateTaskProperties(Task task, Map<String, Object> dependentTaskContext) {
         if (dependentTaskContext == null || dependentTaskContext.isEmpty()) {
             return;
         }
@@ -386,21 +385,6 @@ public final class TaskSchedulerService implements Service {
                 modifiedTaskProperties.put(key, value);
             }
         });
-    }
-
-    // used in junit
-    TaskProvider getTaskProvider() {
-        return taskProvider;
-    }
-
-    // used in junit
-    Consumer getConsumer() {
-        return consumer;
-    }
-
-    // used in junit
-    Producer getProducer() {
-        return producer;
     }
 
     @Override
