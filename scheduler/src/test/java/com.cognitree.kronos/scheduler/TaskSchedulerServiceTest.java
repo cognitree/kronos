@@ -32,7 +32,8 @@ public class TaskSchedulerServiceTest {
         values.put("start", "${*.start}");
         values.put("end", "${*.end}");
 
-        properties.put("namespace", "orch");
+        properties.put("namespace", "${A.namespace}");
+        properties.put("logDir", "/tmp");
         properties.put("values", values);
 
         task.setNamespace("testspace");
@@ -42,13 +43,17 @@ public class TaskSchedulerServiceTest {
         task.setProperties(properties);
 
         Map<String, Object> dependentTaskContext = new HashMap<>();
+        dependentTaskContext.put("A.namespace", "orch");
         dependentTaskContext.put("A.start", 1230);
         dependentTaskContext.put("B.end", 1240);
 
         taskSchedulerService.updateTaskProperties(task, dependentTaskContext);
 
-        Assert.assertEquals((((Map<String, Object>) task.getProperties().get("values")).get("start")), 1230);
-        Assert.assertEquals((((Map<String, Object>) task.getProperties().get("values")).get("end")), 1240);
+        Assert.assertEquals(3, task.getProperties().size());
+        Assert.assertEquals("orch", task.getProperties().get("namespace"));
+        Assert.assertEquals(5, ((Map<String, Object>) task.getProperties().get("values")).size());
+        Assert.assertEquals(1230, (((Map<String, Object>) task.getProperties().get("values")).get("start")));
+        Assert.assertEquals(1240, (((Map<String, Object>) task.getProperties().get("values")).get("end")));
 
     }
 }
