@@ -220,7 +220,7 @@ public class MailService implements Service {
                 try {
                     Task task = TaskService.getService().get(taskId);
                     // ignore if failure is due to task dependency resolution
-                    if (!task.getStatusMessage().equals(Messages.FAILED_TO_RESOLVE_DEPENDENCY)) {
+                    if (task.getStatusMessage() != null && !task.getStatusMessage().equals(Messages.FAILED_TO_RESOLVE_DEPENDENCY)) {
                         notifyTaskFailure(task);
                     }
                 } catch (ServiceException | ValidationException e) {

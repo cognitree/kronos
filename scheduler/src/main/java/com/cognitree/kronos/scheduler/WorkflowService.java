@@ -82,7 +82,7 @@ public class WorkflowService implements Service {
             workflowStore.store(workflow);
         } catch (StoreException | SchedulerException e) {
             logger.error("unable to add workflow {}", workflow, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -94,7 +94,7 @@ public class WorkflowService implements Service {
             return workflows == null ? Collections.emptyList() : workflows;
         } catch (StoreException e) {
             logger.error("unable to get all workflow under namespace {}", namespace, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -105,7 +105,7 @@ public class WorkflowService implements Service {
             return workflowStore.load(workflowId);
         } catch (StoreException e) {
             logger.error("unable to get workflow {}", workflowId, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -195,7 +195,7 @@ public class WorkflowService implements Service {
             workflowStore.update(workflow);
         } catch (StoreException | SchedulerException e) {
             logger.error("unable to update workflow {}", workflow, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -218,7 +218,7 @@ public class WorkflowService implements Service {
             workflowStore.delete(workflowId);
         } catch (StoreException e) {
             logger.error("unable to delete workflow {}", workflowId, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
 
     }
