@@ -345,7 +345,8 @@ public final class TaskSchedulerService implements Service {
      * @param task
      * @param dependentTaskContext
      */
-    private void updateTaskProperties(Task task, Map<String, Object> dependentTaskContext) {
+    // used in junit test case
+    void updateTaskProperties(Task task, Map<String, Object> dependentTaskContext) {
         if (dependentTaskContext == null || dependentTaskContext.isEmpty()) {
             return;
         }
