@@ -25,12 +25,15 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A {@link Consumer} implementation using Kafka as queue in backend.
@@ -67,7 +70,8 @@ public class KafkaConsumerImpl implements Consumer {
         }
 
         while (tasks.size() < size) {
-            final ConsumerRecords<String, String> consumerRecords = topicToKafkaConsumerMap.get(topic).poll(pollTimeoutInMs);
+            final ConsumerRecords<String, String> consumerRecords = topicToKafkaConsumerMap.get(topic)
+                    .poll(Duration.ofMillis(pollTimeoutInMs));
             if (consumerRecords.isEmpty()) {
                 break;
             }
