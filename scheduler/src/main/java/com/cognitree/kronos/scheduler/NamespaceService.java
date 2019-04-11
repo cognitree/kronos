@@ -62,7 +62,7 @@ public class NamespaceService implements Service {
             return namespaces == null ? Collections.emptyList() : namespaces;
         } catch (StoreException e) {
             logger.error("unable to get all namespaces", e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -72,7 +72,7 @@ public class NamespaceService implements Service {
             return namespaceStore.load(namespaceId);
         } catch (StoreException e) {
             logger.error("unable to get namespace with id {}", namespaceId, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -85,7 +85,7 @@ public class NamespaceService implements Service {
             namespaceStore.store(namespace);
         } catch (StoreException e) {
             logger.error("unable to add namespace {}", namespace, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -98,7 +98,7 @@ public class NamespaceService implements Service {
             namespaceStore.update(namespace);
         } catch (StoreException e) {
             logger.error("unable to update namespace to {}", namespace, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 

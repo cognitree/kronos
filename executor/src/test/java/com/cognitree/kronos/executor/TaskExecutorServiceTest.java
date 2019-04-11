@@ -184,7 +184,7 @@ public class TaskExecutorServiceTest {
         tasksStatus.forEach(taskStatus -> {
             try {
                 final TaskUpdate taskUpdate = MAPPER.readValue(taskStatus, TaskUpdate.class);
-                final Task task = (Task) tasksMap.get(taskUpdate.getTaskId());
+                final Task task = tasksMap.get(taskUpdate.getTaskId());
                 task.setStatus(taskUpdate.getStatus());
                 task.setStatusMessage(taskUpdate.getStatusMessage());
             } catch (IOException e) {
