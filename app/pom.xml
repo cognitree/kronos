@@ -96,6 +96,11 @@
             <artifactId>spark-handler</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.cognitree.kronos</groupId>
+            <artifactId>mongo-store</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!-- extensions end -->
     </dependencies>
 
