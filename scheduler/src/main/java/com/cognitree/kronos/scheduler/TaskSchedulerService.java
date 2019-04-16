@@ -350,16 +350,14 @@ public final class TaskSchedulerService implements Service {
         if (dependentTaskContext == null || dependentTaskContext.isEmpty()) {
             return;
         }
-
-        Map<String, Object> modifiedTaskProperties = new HashMap<>();
-        updateTaskProperties(task.getProperties(), dependentTaskContext, modifiedTaskProperties);
-
+        final Map<String, Object> modifiedTaskProperties = updateTaskProperties(task.getProperties(), dependentTaskContext);
         task.setProperties(modifiedTaskProperties);
     }
 
-    private void updateTaskProperties(Map<String, Object> properties, Map<String, Object> dependentTaskContext,
-                                      Map<String, Object> modifiedTaskProperties) {
-        properties.forEach((key, value) -> {
+    private HashMap<String, Object> updateTaskProperties(Map<String, Object> taskProperties,
+                                                         Map<String, Object> dependentTaskContext) {
+        final HashMap<String, Object> modifiedTaskProperties = new HashMap<>();
+        taskProperties.forEach((key, value) -> {
             if (value instanceof String && ((String) value).startsWith("${") && ((String) value).endsWith("}")) {
                 final String valueToReplace = ((String) value).substring(2, ((String) value).length() - 1);
                 if (dependentTaskContext.containsKey(valueToReplace)) {
@@ -377,15 +375,14 @@ public final class TaskSchedulerService implements Service {
                             " setting it to null", key);
                     modifiedTaskProperties.put(key, null);
                 }
-            } else if(value instanceof Map) {
-                Map<String, Object> nestedTaskProperties = new HashMap<>();
-                modifiedTaskProperties.put(key, nestedTaskProperties);
-                updateTaskProperties((Map<String, Object>) value, dependentTaskContext, nestedTaskProperties);
+            } else if (value instanceof Map) {
+                modifiedTaskProperties.put(key, updateTaskProperties((Map<String, Object>) value, dependentTaskContext));
             } else {
                 // copy the remaining key value pair as it is from current task properties
                 modifiedTaskProperties.put(key, value);
             }
         });
+        return modifiedTaskProperties;
     }
 
     @Override
