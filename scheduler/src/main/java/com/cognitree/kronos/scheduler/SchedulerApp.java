@@ -69,6 +69,7 @@ public class SchedulerApp {
         MailService mailService = new MailService(schedulerConfig.getMailConfig());
         WorkflowSchedulerService workflowSchedulerService = new WorkflowSchedulerService();
         TaskSchedulerService taskSchedulerService = new TaskSchedulerService(queueConfig);
+        ConfigUpdateService configUpdateService = new ConfigUpdateService(queueConfig);
 
         logger.info("Initializing scheduler app");
         // initialize all service
@@ -81,6 +82,7 @@ public class SchedulerApp {
         mailService.init();
         workflowSchedulerService.init();
         taskSchedulerService.init();
+        configUpdateService.init();
 
         logger.info("Starting scheduler app");
         // start all service
@@ -93,11 +95,15 @@ public class SchedulerApp {
         mailService.start();
         workflowSchedulerService.start();
         taskSchedulerService.start();
+        configUpdateService.start();
     }
 
     public void stop() {
         logger.info("Stopping scheduler app");
         // stop services in the reverse order
+        if (ConfigUpdateService.getService() != null) {
+            ConfigUpdateService.getService().stop();
+        }
         if (WorkflowSchedulerService.getService() != null) {
             WorkflowSchedulerService.getService().stop();
         }
