@@ -49,7 +49,7 @@ public class MongoStoreService extends StoreService {
     private static final String PASSWORD = "password";
     private static final String AUTH_DATABASE = "authDatabase";
     private static final String DEFAULT_AUTH_DATABASE = "admin";
-    private static final String QUARTZ_DATABASE = "quartzDatabase";
+    private static final String SCHEDULER_DATABASE = "schedulerDatabase";
     private static final String DEFAULT_QUARTZ_DATABASE = "quartz";
 
     private String host;
@@ -97,8 +97,8 @@ public class MongoStoreService extends StoreService {
             credential = MongoCredential.createCredential(config.get(USER).asText(), authDatabase,
                     config.get(PASSWORD).asText().toCharArray());
         }
-        if (config != null && config.hasNonNull(QUARTZ_DATABASE)) {
-            quartzDatabase = config.get(QUARTZ_DATABASE).asText();
+        if (config != null && config.hasNonNull(SCHEDULER_DATABASE)) {
+            quartzDatabase = config.get(SCHEDULER_DATABASE).asText();
         } else {
             quartzDatabase = DEFAULT_QUARTZ_DATABASE;
         }

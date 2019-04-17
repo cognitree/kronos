@@ -21,4 +21,4 @@ Other optional configurable parameters are
     - user (username to use for authentication)
     - password (password of the user to use for authentication)
     - authDatabase (authentication database to use for authentication)
-    - quartzDatabase (name of the database to use for storing quartz state)
+    - schedulerDatabase (name of the database to use for storing scheduler state)
