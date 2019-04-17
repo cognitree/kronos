@@ -52,6 +52,7 @@ import static com.cognitree.kronos.model.Task.Status.SKIPPED;
 import static com.cognitree.kronos.model.Task.Status.WAITING;
 import static com.cognitree.kronos.scheduler.model.Messages.FAILED_DEPENDEE_TASK;
 import static com.cognitree.kronos.scheduler.model.Messages.FAILED_TO_RESOLVE_DEPENDENCY;
+import static com.cognitree.kronos.scheduler.model.Messages.SKIPPED_DEPENDEE_TASK;
 import static com.cognitree.kronos.scheduler.model.Messages.TASK_SUBMISSION_FAILED;
 import static com.cognitree.kronos.scheduler.model.Messages.TIMED_OUT;
 import static java.util.Comparator.comparing;
@@ -279,7 +280,7 @@ public final class TaskSchedulerService implements Service {
                 break;
             case SKIPPED:
             case FAILED:
-                markDependentTasksAsSkipped(task);
+                markDependentTasksAsSkipped(task, status);
                 // do not break
             case SUCCESSFUL:
                 final ScheduledFuture<?> taskTimeoutFuture = taskTimeoutHandlersMap.remove(task.getName());
@@ -292,9 +293,13 @@ public final class TaskSchedulerService implements Service {
         }
     }
 
-    private void markDependentTasksAsSkipped(Task task) {
+    private void markDependentTasksAsSkipped(Task task, Status parentStatus) {
         for (Task dependentTask : taskProvider.getDependentTasks(task)) {
-            updateStatus(dependentTask, SKIPPED, FAILED_DEPENDEE_TASK);
+            if (parentStatus == FAILED) {
+                updateStatus(dependentTask, SKIPPED, FAILED_DEPENDEE_TASK);
+            } else {
+                updateStatus(dependentTask, SKIPPED, SKIPPED_DEPENDEE_TASK);
+            }
         }
     }
 
@@ -380,7 +385,7 @@ public final class TaskSchedulerService implements Service {
                             " setting it to null", key);
                     modifiedTaskProperties.put(key, null);
                 }
-            } else if(value instanceof Map) {
+            } else if (value instanceof Map) {
                 Map<String, Object> nestedTaskProperties = new HashMap<>();
                 modifiedTaskProperties.put(key, nestedTaskProperties);
                 updateTaskProperties((Map<String, Object>) value, dependentTaskContext, nestedTaskProperties);
