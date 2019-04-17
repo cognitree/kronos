@@ -84,7 +84,8 @@ public class KafkaConsumerImpl implements Consumer {
 
     private synchronized void createKafkaConsumer(String topic) {
         if (!topicToKafkaConsumerMap.containsKey(topic)) {
-            final Properties kafkaConsumerConfig = new Properties(this.kafkaConsumerConfig);
+            final Properties kafkaConsumerConfig = new Properties();
+            kafkaConsumerConfig.putAll(this.kafkaConsumerConfig);
             kafkaConsumerConfig.put(GROUP_ID, kafkaConsumerConfig.getProperty(GROUP_ID) + "-" + topic);
             logger.info("Creating kafka consumer on topic {} with consumer config {}", topic, kafkaConsumerConfig);
             KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(kafkaConsumerConfig);
