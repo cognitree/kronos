@@ -36,7 +36,7 @@ public class ConfigUpdateService implements Service {
     }
 
     private final ConsumerConfig consumerConfig;
-    private final String configUpdatesQueue;
+    final String configUpdatesQueue;
 
     private Consumer consumer;
     private long pollInterval;
@@ -105,7 +105,7 @@ public class ConfigUpdateService implements Service {
             } catch (IOException e) {
                 // Do not throw the exception but continue to process other updates
                 logger.error("processUpdates: unable to parse the config update received: " + configUpdateAsString, e);
-            } catch (ServiceException | ValidationException | SchedulerException e) {
+            } catch (UnsupportedOperationException | ServiceException | ValidationException | SchedulerException e) {
                 // Do not throw the exception but continue to process other updates
                 logger.error("processUpdates: error occurred in processing the config update received: " + configUpdateAsString, e);
             }
