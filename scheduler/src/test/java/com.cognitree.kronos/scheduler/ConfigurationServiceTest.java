@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 import static com.cognitree.kronos.scheduler.TestHelper.*;
 
-public class ConfigUpdateServiceTest {
+public class ConfigurationServiceTest {
 
     private static final SchedulerApp SCHEDULER_APP = new SchedulerApp();
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -34,8 +34,8 @@ public class ConfigUpdateServiceTest {
 
     @Test
     public void testNamespaceUpdates() throws Exception {
-        ConfigUpdateService configUpdateService = ConfigUpdateService.getService();
-        LinkedBlockingQueue<String> queue = RAMQueueFactory.getQueue(configUpdateService.configUpdatesQueue);
+        ConfigurationService configurationService = ConfigurationService.getService();
+        LinkedBlockingQueue<String> queue = RAMQueueFactory.getQueue(configurationService.configurationQueue);
 
         // Create Namespace
         String testNsName = "testNamespaceUpdates";
@@ -69,9 +69,9 @@ public class ConfigUpdateServiceTest {
 
     @Test
     public void testWorkflowUpdates() throws Exception {
-        ConfigUpdateService configUpdateService = ConfigUpdateService.getService();
+        ConfigurationService configurationService = ConfigurationService.getService();
         LinkedBlockingQueue<String> queue = RAMQueueFactory
-                .getQueue(configUpdateService.configUpdatesQueue);
+                .getQueue(configurationService.configurationQueue);
 
         String testNsName = "testWorkflowUpdatesNs";
         // Create Namespace
@@ -118,9 +118,9 @@ public class ConfigUpdateServiceTest {
 
     @Test
     public void testWorkflowTriggerUpdates() throws Exception {
-        ConfigUpdateService configUpdateService = ConfigUpdateService.getService();
+        ConfigurationService configurationService = ConfigurationService.getService();
         LinkedBlockingQueue<String> queue = RAMQueueFactory
-                .getQueue(configUpdateService.configUpdatesQueue);
+                .getQueue(configurationService.configurationQueue);
 
         // Create Namespace
         String testNsName = "testWorkflowTriggerUpdatesNs";

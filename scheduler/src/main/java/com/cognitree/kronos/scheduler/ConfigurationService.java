@@ -27,16 +27,16 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * A service that consumes config updates from a specified queue and processes them.
  *
  */
-public class ConfigUpdateService implements Service {
+public class ConfigurationService implements Service {
 
-    private static final Logger logger = LoggerFactory.getLogger(ConfigUpdateService.class);
+    private static final Logger logger = LoggerFactory.getLogger(ConfigurationService.class);
 
-    public static ConfigUpdateService getService() {
-        return (ConfigUpdateService) ServiceProvider.getService(ConfigUpdateService.class.getSimpleName());
+    public static ConfigurationService getService() {
+        return (ConfigurationService) ServiceProvider.getService(ConfigurationService.class.getSimpleName());
     }
 
     private final ConsumerConfig consumerConfig;
-    final String configUpdatesQueue;
+    final String configurationQueue;
 
     private Consumer consumer;
     private long pollInterval;
@@ -47,20 +47,20 @@ public class ConfigUpdateService implements Service {
     private final ScheduledExecutorService scheduledExecutorService =
             Executors.newScheduledThreadPool(1);
 
-    ConfigUpdateService(QueueConfig queueConfig) {
+    ConfigurationService(QueueConfig queueConfig) {
         this.consumerConfig = queueConfig.getConsumerConfig();
-        this.configUpdatesQueue = queueConfig.getConfigUpdatesQueue();
+        this.configurationQueue = queueConfig.getConfigurationQueue();
     }
 
     @Override
     public void init() throws Exception {
-        logger.info("init: Initializing config update service");
+        logger.info("init: Initializing configuration service");
         initConsumer();
     }
 
     @Override
     public void start() {
-        logger.info("start: Starting config update service");
+        logger.info("start: Starting configuration service");
         ServiceProvider.registerService(this);
         scheduledExecutorService.scheduleAtFixedRate(this::failSafeProcessUpdates, pollInterval, pollInterval, MILLISECONDS);
     }
@@ -95,7 +95,7 @@ public class ConfigUpdateService implements Service {
      * Poll, parse and process updates from the configured queue.
      */
     private void processUpdates() {
-        final List<String> configUpdates = consumer.poll(configUpdatesQueue);
+        final List<String> configUpdates = consumer.poll(configurationQueue);
         for (String configUpdateAsString : configUpdates) {
             if (configUpdateAsString.trim().isEmpty())
                 logger.trace("processUpdates: quietly skipping over empty config update...");
