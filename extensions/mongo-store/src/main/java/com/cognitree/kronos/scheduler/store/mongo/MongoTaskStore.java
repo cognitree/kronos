@@ -4,9 +4,7 @@ import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.TaskId;
 import com.cognitree.kronos.scheduler.store.StoreException;
 import com.cognitree.kronos.scheduler.store.TaskStore;
-import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Accumulators;
 import com.mongodb.client.model.Aggregates;
 import org.bson.Document;
@@ -30,113 +28,74 @@ import static com.mongodb.client.model.Updates.set;
 /**
  * A standard MongoDB based implementation of {@link TaskStore}.
  */
-public class MongoTaskStore implements TaskStore {
+public class MongoTaskStore extends MongoStore implements TaskStore {
 
     private static final Logger logger = LoggerFactory.getLogger(MongoTaskStore.class);
 
     private static final String COLLECTION_NAME = "tasks";
 
-    private final MongoClient mongoClient;
-
     MongoTaskStore(MongoClient mongoClient) {
-        this.mongoClient = mongoClient;
+        super(mongoClient);
     }
 
     @Override
     public void store(Task task) throws StoreException {
         logger.debug("Received request to store task {}", task);
-        try {
-            MongoCollection<Task> taskCollection = getTaskCollection(task.getNamespace());
-            taskCollection.insertOne(task);
-        } catch (Exception e) {
-            logger.error("Error storing task {}", task, e);
-            throw new StoreException(e.getMessage(), e.getCause());
-        }
+        insertOne(task.getNamespace(), COLLECTION_NAME, task, Task.class);
     }
 
     @Override
     public List<Task> load(String namespace) throws StoreException {
         logger.debug("Received request to get all tasks under namespace {}", namespace);
-        try {
-            MongoCollection<Task> taskCollection = getTaskCollection(namespace);
-            return taskCollection.find().into(new ArrayList<>());
-        } catch (Exception e) {
-            logger.error("Error loading all tasks under namespace {}", namespace, e);
-            throw new StoreException(e.getMessage(), e.getCause());
-        }
+        return findAll(namespace, COLLECTION_NAME, Task.class);
     }
 
     @Override
     public Task load(TaskId taskId) throws StoreException {
         logger.debug("Received request to load task with id {}", taskId);
-        try {
-            MongoCollection<Task> taskCollection = getTaskCollection(taskId.getNamespace());
-            return taskCollection.find(
-                    and(
-                            eq("name", taskId.getName()),
-                            eq("job", taskId.getJob()),
-                            eq("workflow", taskId.getWorkflow()),
-                            eq("namespace", taskId.getNamespace())))
-                    .first();
-        } catch (Exception e) {
-            logger.error("Error loading task with id {}", taskId, e);
-            throw new StoreException(e.getMessage(), e.getCause());
-        }
+        return findOne(taskId.getNamespace(), COLLECTION_NAME,
+                and(
+                        eq("name", taskId.getName()),
+                        eq("job", taskId.getJob()),
+                        eq("workflow", taskId.getWorkflow()),
+                        eq("namespace", taskId.getNamespace())),
+                Task.class);
     }
 
     @Override
     public List<Task> loadByJobIdAndWorkflowName(String namespace, String jobId, String workflowName) throws StoreException {
         logger.debug("Received request to get all tasks with job id {}, workflow name {}, namespace {}",
                 jobId, workflowName, namespace);
-        try {
-            MongoCollection<Task> taskCollection = getTaskCollection(namespace);
-            return taskCollection.find(
-                    and(
-                            eq("job", jobId),
-                            eq("workflow", workflowName),
-                            eq("namespace", namespace)))
-                    .into(new ArrayList<>());
-        } catch (Exception e) {
-            logger.error("Error fetching tasks with job id {}, workflow name {}, namespace {}",
-                    jobId, workflowName, namespace, e);
-            throw new StoreException(e.getMessage(), e.getCause());
-        }
+        return findMany(namespace, COLLECTION_NAME,
+                and(
+                        eq("job", jobId),
+                        eq("workflow", workflowName),
+                        eq("namespace", namespace)),
+                Task.class);
     }
 
     @Override
     public List<Task> loadByStatus(String namespace, List<Task.Status> statuses) throws StoreException {
         logger.debug("Received request to get all tasks with status in {} under namespace {}", statuses, namespace);
-        try {
-            MongoCollection<Task> taskCollection = getTaskCollection(namespace);
-            return taskCollection.find(
-                    and(
-                            in("status", statuses),
-                            eq("namespace", namespace)))
-                    .into(new ArrayList<>());
-        } catch (Exception e) {
-            logger.error("Error fetching task with status in {} under namespace {}", statuses, namespace, e);
-            throw new StoreException(e.getMessage(), e.getCause());
-        }
+        return findMany(namespace, COLLECTION_NAME,
+                and(
+                        in("status", statuses),
+                        eq("namespace", namespace)),
+                Task.class);
     }
 
     @Override
     public Map<Task.Status, Integer> countByStatus(String namespace, long createdAfter, long createdBefore) throws StoreException {
         logger.debug("Received request to count all tasks by status under namespace {}," +
                 "created after {}, created before {}", namespace, createdAfter, createdBefore);
-        try {
-            MongoCollection<Document> taskCollection = mongoClient.getDatabase(namespace)
-                    .getCollection(COLLECTION_NAME);
-            Bson filter = Aggregates.match(
-                    and(
-                            eq("namespace", namespace),
-                            lt("createdAt", createdBefore),
-                            gt("createdAt", createdAfter)));
-            return aggregateByStatus(taskCollection, filter);
-        } catch (Exception e) {
-            logger.error("Error loading all tasks under namespace {}, created after {}, created before {}",
-                    namespace, createdAfter, createdBefore, e);
-            throw new StoreException(e.getMessage(), e.getCause());
-        }
+        ArrayList<Bson> pipelines = new ArrayList<>();
+        pipelines.add(Aggregates.match(
+                and(
+                        eq("namespace", namespace),
+                        lt("createdAt", createdBefore),
+                        gt("createdAt", createdAfter))));
+        pipelines.add(Aggregates.group("$status", Accumulators.sum("count", 1)));
+        return aggregateByStatus(namespace, pipelines);
     }
 
     @Override
@@ -144,28 +103,19 @@ public class MongoTaskStore implements TaskStore {
                                                                   long createdAfter, long createdBefore) throws StoreException {
         logger.debug("Received request to count tasks by status having workflow name {} under namespace {}," +
                 "created after {}, created before {}", workflowName, namespace, createdAfter, createdBefore);
-        try {
-            MongoCollection<Document> taskCollection = mongoClient.getDatabase(namespace)
-                    .getCollection(COLLECTION_NAME);
-            Bson filter = Aggregates.match(
-                    and(
-                            eq("namespace", namespace),
-                            eq("workflow", workflowName),
-                            lt("createdAt", createdBefore),
-                            gt("createdAt", createdAfter)));
-            return aggregateByStatus(taskCollection, filter);
-        } catch (Exception e) {
-            logger.error("Error counting tasks by status having workflow name {} under namespace {}," +
-                    "created after {}, created before {}", workflowName, namespace, createdAfter, createdBefore, e);
-            throw new StoreException(e.getMessage(), e.getCause());
-        }
+        ArrayList<Bson> pipelines = new ArrayList<>();
+        pipelines.add(Aggregates.match(
+                and(
+                        eq("namespace", namespace),
+                        eq("workflow", workflowName),
+                        lt("createdAt", createdBefore),
+                        gt("createdAt", createdAfter))));
+        pipelines.add(Aggregates.group("$status", Accumulators.sum("count", 1)));
+        return aggregateByStatus(namespace, pipelines);
     }
 
-    private HashMap<Task.Status, Integer> aggregateByStatus(MongoCollection<Document> collection, Bson filter) {
-        ArrayList<Bson> pipelines = new ArrayList<>();
-        pipelines.add(filter);
-        pipelines.add(Aggregates.group("$status", Accumulators.sum("count", 1)));
-        AggregateIterable<Document> aggregates = collection.aggregate(pipelines);
+    private HashMap<Task.Status, Integer> aggregateByStatus(String namespace, ArrayList<Bson> pipelines) throws StoreException {
+        ArrayList<Document> aggregates = aggregate(namespace, COLLECTION_NAME, pipelines, Document.class);
         HashMap<Task.Status, Integer> statusMap = new HashMap<>();
         for (Document aggregate : aggregates) {
             Task.Status status = Task.Status.valueOf(aggregate.get("_id").toString());
@@ -177,38 +127,23 @@ public class MongoTaskStore implements TaskStore {
     @Override
     public void update(Task task) throws StoreException {
         logger.debug("Received request to update task to {}", task);
-        try {
-            MongoCollection<Task> taskCollection = getTaskCollection(task.getNamespace());
-            taskCollection.updateMany(
-                    and(
-                            eq("name", task.getName()),
-                            eq("job", task.getJob()),
-                            eq("workflow", task.getWorkflow())),
-                    combine(
-                            set("status", task.getStatus().toString()),
-                            set("statusMessage", task.getStatusMessage()),
-                            set("submittedAt", task.getSubmittedAt()),
-                            set("completedAt", task.getCompletedAt()),
-                            set("context", task.getContext())));
-        } catch (Exception e) {
-            logger.error("Error updating task with to {}", task, e);
-            throw new StoreException(e.getMessage(), e.getCause());
-        }
+        findOneAndUpdate(task.getNamespace(), COLLECTION_NAME,
+                and(
+                        eq("name", task.getName()),
+                        eq("job", task.getJob()),
+                        eq("workflow", task.getWorkflow())),
+                combine(
+                        set("status", task.getStatus().toString()),
+                        set("statusMessage", task.getStatusMessage()),
+                        set("submittedAt", task.getSubmittedAt()),
+                        set("completedAt", task.getCompletedAt()),
+                        set("context", task.getContext())),
+                Task.class);
     }
 
     @Override
     public void delete(TaskId taskId) throws StoreException {
         logger.debug("Received request to delete task with id {}", taskId);
-        try {
-            MongoCollection<Task> taskCollection = getTaskCollection(taskId.getNamespace());
-            taskCollection.deleteOne(eq("job", taskId.getJob()));
-        } catch (Exception e) {
-            logger.error("Error deleting task with id {}", taskId, e);
-            throw new StoreException(e.getMessage(), e.getCause());
-        }
-    }
-
-    private MongoCollection<Task> getTaskCollection(String namespace) {
-        return mongoClient.getDatabase(namespace).getCollection(COLLECTION_NAME, Task.class);
+        deleteOne(taskId.getNamespace(), COLLECTION_NAME, eq("job", taskId.getJob()), Task.class);
     }
 }

@@ -68,7 +68,7 @@ public class StdJDBCNamespaceStore implements NamespaceStore {
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error storing namespace {}", namespace, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -85,7 +85,7 @@ public class StdJDBCNamespaceStore implements NamespaceStore {
             return namespaces;
         } catch (Exception e) {
             logger.error("Error fetching all namespaces", e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -102,7 +102,7 @@ public class StdJDBCNamespaceStore implements NamespaceStore {
             }
         } catch (Exception e) {
             logger.error("Error fetching namespace with id {}", namespaceId, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
         return null;
     }
@@ -118,7 +118,7 @@ public class StdJDBCNamespaceStore implements NamespaceStore {
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error updating namespace to {}", namespace, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -132,7 +132,7 @@ public class StdJDBCNamespaceStore implements NamespaceStore {
             preparedStatement.executeUpdate();
         } catch (Exception e) {
             logger.error("Error deleting namespace with id {}", namespaceId, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 

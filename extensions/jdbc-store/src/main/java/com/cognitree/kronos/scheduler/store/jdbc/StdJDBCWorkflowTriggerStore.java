@@ -90,7 +90,7 @@ public class StdJDBCWorkflowTriggerStore implements WorkflowTriggerStore {
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error storing workflow trigger {}", workflowTrigger, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -109,7 +109,7 @@ public class StdJDBCWorkflowTriggerStore implements WorkflowTriggerStore {
             return workflowTriggers;
         } catch (Exception e) {
             logger.error("Error fetching workflow triggers under namespace {}", namespace, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -131,7 +131,7 @@ public class StdJDBCWorkflowTriggerStore implements WorkflowTriggerStore {
         } catch (Exception e) {
             logger.error("Error fetching workflow triggers with workflow name {} under namespace {}",
                     workflowName, namespace, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -154,7 +154,7 @@ public class StdJDBCWorkflowTriggerStore implements WorkflowTriggerStore {
         } catch (Exception e) {
             logger.error("Error fetching all enabled {} workflow triggers with workflow name {} under namespace {}",
                     enabled, workflowName, namespace, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -173,7 +173,7 @@ public class StdJDBCWorkflowTriggerStore implements WorkflowTriggerStore {
             }
         } catch (Exception e) {
             logger.error("Error fetching workflow trigger with id {}", triggerId, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
         return null;
     }
@@ -194,7 +194,7 @@ public class StdJDBCWorkflowTriggerStore implements WorkflowTriggerStore {
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error updating workflow trigger {}", workflowTrigger, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -210,7 +210,7 @@ public class StdJDBCWorkflowTriggerStore implements WorkflowTriggerStore {
             preparedStatement.executeUpdate();
         } catch (Exception e) {
             logger.error("Error delete workflow trigger with id {}", triggerId, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
