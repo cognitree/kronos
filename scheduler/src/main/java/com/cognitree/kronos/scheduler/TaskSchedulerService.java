@@ -48,7 +48,9 @@ import java.util.concurrent.ScheduledFuture;
 import static com.cognitree.kronos.model.Task.Status.CREATED;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
+import static com.cognitree.kronos.model.Task.Status.SKIPPED;
 import static com.cognitree.kronos.model.Task.Status.WAITING;
+import static com.cognitree.kronos.scheduler.model.Messages.FAILED_DEPENDEE_TASK;
 import static com.cognitree.kronos.scheduler.model.Messages.FAILED_TO_RESOLVE_DEPENDENCY;
 import static com.cognitree.kronos.scheduler.model.Messages.TASK_SUBMISSION_FAILED;
 import static com.cognitree.kronos.scheduler.model.Messages.TIMED_OUT;
@@ -275,8 +277,9 @@ public final class TaskSchedulerService implements Service {
             case SUBMITTED:
                 createTimeoutTask(task);
                 break;
+            case SKIPPED:
             case FAILED:
-                markDependentTasksAsFailed(task);
+                markDependentTasksAsSkipped(task);
                 // do not break
             case SUCCESSFUL:
                 final ScheduledFuture<?> taskTimeoutFuture = taskTimeoutHandlersMap.remove(task.getName());
@@ -289,9 +292,9 @@ public final class TaskSchedulerService implements Service {
         }
     }
 
-    private void markDependentTasksAsFailed(Task task) {
+    private void markDependentTasksAsSkipped(Task task) {
         for (Task dependentTask : taskProvider.getDependentTasks(task)) {
-            updateStatus(dependentTask, FAILED, FAILED_TO_RESOLVE_DEPENDENCY);
+            updateStatus(dependentTask, SKIPPED, FAILED_DEPENDEE_TASK);
         }
     }
 

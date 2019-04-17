@@ -244,8 +244,8 @@ public class JobServiceTest {
                     Assert.assertEquals(Task.Status.FAILED, task.getStatus());
                     break;
                 case "taskThree":
-                    Assert.assertEquals(Task.Status.FAILED, task.getStatus());
-                    Assert.assertEquals(Messages.FAILED_TO_RESOLVE_DEPENDENCY, task.getStatusMessage());
+                    Assert.assertEquals(Task.Status.SKIPPED, task.getStatus());
+                    Assert.assertEquals(Messages.FAILED_DEPENDEE_TASK, task.getStatusMessage());
                     break;
                 default:
                     Assert.fail();
