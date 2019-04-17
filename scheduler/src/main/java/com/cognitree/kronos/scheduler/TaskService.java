@@ -217,6 +217,7 @@ public class TaskService implements Service {
                     task.setSubmittedAt(System.currentTimeMillis());
                     break;
                 case SUCCESSFUL:
+                case SKIPPED:
                 case FAILED:
                     task.setCompletedAt(System.currentTimeMillis());
                     break;
@@ -241,6 +242,8 @@ public class TaskService implements Service {
                 return currentStatus == SCHEDULED;
             case RUNNING:
                 return currentStatus == SUBMITTED;
+            case SKIPPED:
+                return currentStatus == CREATED || currentStatus == WAITING;
             case SUCCESSFUL:
             case FAILED:
                 return currentStatus != SUCCESSFUL && currentStatus != FAILED;

@@ -166,6 +166,7 @@ public class Task extends TaskId {
         SUBMITTED(false),
         RUNNING(false),
         SUCCESSFUL(true),
+        SKIPPED(true), // a task is marked as skipped it the task it depends on fails.
         FAILED(true);
 
         private final boolean isFinal;
