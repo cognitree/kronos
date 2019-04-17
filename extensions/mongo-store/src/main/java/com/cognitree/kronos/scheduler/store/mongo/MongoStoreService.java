@@ -20,7 +20,6 @@ import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoDatabase;
 import com.novemberain.quartz.mongodb.MongoDBJobStore;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -49,10 +48,14 @@ public class MongoStoreService extends StoreService {
     private static final String USER = "user";
     private static final String PASSWORD = "password";
     private static final String AUTH_DATABASE = "authDatabase";
+    private static final String DEFAULT_AUTH_DATABASE = "admin";
+    private static final String QUARTZ_DATABASE = "quartzDatabase";
+    private static final String DEFAULT_QUARTZ_DATABASE = "quartz";
 
     private String host;
     private int port;
     private MongoCredential credential;
+    private String quartzDatabase;
     private MongoClient mongoClient;
 
     private NamespaceStore namespaceStore;
@@ -74,20 +77,30 @@ public class MongoStoreService extends StoreService {
     }
 
     private void parseConfig() {
-        if (config.hasNonNull(HOST)) {
+        if (config != null && config.hasNonNull(HOST)) {
             host = config.get(HOST).asText();
         } else {
             host = DEFAULT_HOST;
         }
-        if (config.hasNonNull(PORT)) {
+        if (config != null && config.hasNonNull(PORT)) {
             port = Integer.parseInt(config.get(PORT).asText());
         } else {
             port = DEFAULT_PORT;
         }
-
-        if (config.hasNonNull(USER) && config.hasNonNull(PASSWORD) && config.hasNonNull(AUTH_DATABASE)) {
-            credential = MongoCredential.createCredential(config.get(USER).asText(),
-                    config.get(AUTH_DATABASE).asText(), config.get(PASSWORD).asText().toCharArray());
+        if (config != null && config.hasNonNull(USER) && config.hasNonNull(PASSWORD)) {
+            String authDatabase;
+            if (config.hasNonNull(AUTH_DATABASE)) {
+                authDatabase = config.get(AUTH_DATABASE).asText();
+            } else {
+                authDatabase = DEFAULT_AUTH_DATABASE;
+            }
+            credential = MongoCredential.createCredential(config.get(USER).asText(), authDatabase,
+                    config.get(PASSWORD).asText().toCharArray());
+        }
+        if (config != null && config.hasNonNull(QUARTZ_DATABASE)) {
+            quartzDatabase = config.get(QUARTZ_DATABASE).asText();
+        } else {
+            quartzDatabase = DEFAULT_QUARTZ_DATABASE;
         }
     }
 
@@ -96,6 +109,7 @@ public class MongoStoreService extends StoreService {
                 .register(ClassModel.builder(Schedule.class).enableDiscriminator(true).build(),
                         ClassModel.builder(SimpleSchedule.class).enableDiscriminator(true).build(),
                         ClassModel.builder(CronSchedule.class).enableDiscriminator(true).build(),
+                        ClassModel.builder(FixedDelaySchedule.class).enableDiscriminator(true).build(),
                         ClassModel.builder(DailyTimeIntervalSchedule.class).enableDiscriminator(true).build(),
                         ClassModel.builder(CalendarIntervalSchedule.class).enableDiscriminator(true).build())
                 .build();
@@ -129,7 +143,7 @@ public class MongoStoreService extends StoreService {
         workflowTriggerStore = new MongoWorkflowTriggerStore(mongoClient);
         jobStore = new MongoJobStore(mongoClient);
         taskStore = new MongoTaskStore(mongoClient);
-        quartzJobStore = getQuartJobStore(mongoClient);
+        quartzJobStore = new MongoDBJobStore(mongoClient.getDatabase(quartzDatabase));
     }
 
     @Override
@@ -160,11 +174,6 @@ public class MongoStoreService extends StoreService {
     @Override
     public org.quartz.spi.JobStore getQuartzJobStore() {
         return quartzJobStore;
-    }
-
-    private org.quartz.spi.JobStore getQuartJobStore(MongoClient mongoClient) {
-        MongoDatabase database = mongoClient.getDatabase(config.get("quartzDatabase").asText());
-        return new MongoDBJobStore(database);
     }
 
     @Override

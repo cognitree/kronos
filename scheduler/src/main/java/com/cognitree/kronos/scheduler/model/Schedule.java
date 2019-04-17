@@ -28,6 +28,7 @@ import java.util.Objects;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = SimpleSchedule.class, name = "simple"),
         @JsonSubTypes.Type(value = CronSchedule.class, name = "cron"),
+        @JsonSubTypes.Type(value = FixedDelaySchedule.class, name = "fixed"),
         @JsonSubTypes.Type(value = DailyTimeIntervalSchedule.class, name = "daily_time"),
         @JsonSubTypes.Type(value = CalendarIntervalSchedule.class, name = "calendar")
 })
@@ -76,6 +77,6 @@ public abstract class Schedule {
     }
 
     public enum Type {
-        cron, simple, daily_time, calendar
+        cron, simple, fixed, daily_time, calendar
     }
 }
