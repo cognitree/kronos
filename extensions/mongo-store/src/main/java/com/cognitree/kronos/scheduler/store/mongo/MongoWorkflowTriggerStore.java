@@ -37,8 +37,9 @@ public class MongoWorkflowTriggerStore implements WorkflowTriggerStore {
     public void store(WorkflowTrigger workflowTrigger) throws StoreException {
         logger.debug("Received request to store workflow trigger {}", workflowTrigger);
         try {
-            MongoCollection<WorkflowTrigger> mongoCollection = getMongoCollection(workflowTrigger.getNamespace());
-            mongoCollection.insertOne(workflowTrigger);
+            MongoCollection<WorkflowTrigger> workflowTriggerCollection =
+                    getWorkflowTriggerCollection(workflowTrigger.getNamespace());
+            workflowTriggerCollection.insertOne(workflowTrigger);
         } catch (Exception e) {
             logger.error("Error storing workflow trigger {}", workflowTrigger, e);
             throw new StoreException(e.getMessage(), e.getCause());
@@ -49,8 +50,8 @@ public class MongoWorkflowTriggerStore implements WorkflowTriggerStore {
     public List<WorkflowTrigger> load(String namespace) throws StoreException {
         logger.debug("Received request to get all workflow triggers under namespace {}", namespace);
         try {
-            MongoCollection<WorkflowTrigger> mongoCollection = getMongoCollection(namespace);
-            return mongoCollection.find(eq("namespace", namespace)).into(new ArrayList<>());
+            MongoCollection<WorkflowTrigger> workflowTriggerCollection = getWorkflowTriggerCollection(namespace);
+            return workflowTriggerCollection.find(eq("namespace", namespace)).into(new ArrayList<>());
         } catch (Exception e) {
             logger.error("Error fetching workflow triggers under namespace {}", namespace, e);
             throw new StoreException(e.getMessage(), e.getCause());
@@ -62,10 +63,10 @@ public class MongoWorkflowTriggerStore implements WorkflowTriggerStore {
         logger.debug("Received request to get all workflow triggers with workflow name {} under namespace {}",
                 workflowName, namespace);
         try {
-            MongoCollection<WorkflowTrigger> mongoCollection = getMongoCollection(namespace);
+            MongoCollection<WorkflowTrigger> workflowTriggerCollection = getWorkflowTriggerCollection(namespace);
             BasicDBObject query = new BasicDBObject("namespace", namespace)
                     .append("workflow", workflowName);
-            return mongoCollection.find(
+            return workflowTriggerCollection.find(
                     and(
                             eq("workflow", workflowName),
                             eq("namespace", namespace)))
@@ -78,13 +79,13 @@ public class MongoWorkflowTriggerStore implements WorkflowTriggerStore {
     }
 
     @Override
-    public List<WorkflowTrigger> loadByWorkflowNameAndEnabled(String namespace,
-                                                              String workflowName, boolean enabled) throws StoreException {
+    public List<WorkflowTrigger> loadByWorkflowNameAndEnabled(String namespace, String workflowName, boolean enabled)
+            throws StoreException {
         logger.debug("Received request to get all enabled {} workflow triggers with workflow name {} under namespace {}",
                 enabled, workflowName, namespace);
         try {
-            MongoCollection<WorkflowTrigger> mongoCollection = getMongoCollection(namespace);
-            return mongoCollection.find(
+            MongoCollection<WorkflowTrigger> workflowTriggerCollection = getWorkflowTriggerCollection(namespace);
+            return workflowTriggerCollection.find(
                     and(
                             eq("workflow", workflowName),
                             eq("enabled", enabled),
@@ -101,8 +102,9 @@ public class MongoWorkflowTriggerStore implements WorkflowTriggerStore {
     public WorkflowTrigger load(WorkflowTriggerId workflowTriggerId) throws StoreException {
         logger.debug("Received request to load workflow trigger with id {}", workflowTriggerId);
         try {
-            MongoCollection<WorkflowTrigger> mongoCollection = getMongoCollection(workflowTriggerId.getNamespace());
-            return mongoCollection.find(
+            MongoCollection<WorkflowTrigger> workflowTriggerCollection =
+                    getWorkflowTriggerCollection(workflowTriggerId.getNamespace());
+            return workflowTriggerCollection.find(
                     and(
                             eq("name", workflowTriggerId.getName()),
                             eq("workflow", workflowTriggerId.getWorkflow()),
@@ -118,8 +120,9 @@ public class MongoWorkflowTriggerStore implements WorkflowTriggerStore {
     public void update(WorkflowTrigger workflowTrigger) throws StoreException {
         logger.debug("Received request to update workflow trigger to {}", workflowTrigger);
         try {
-            MongoCollection<WorkflowTrigger> mongoCollection = getMongoCollection(workflowTrigger.getNamespace());
-            mongoCollection.findOneAndUpdate(
+            MongoCollection<WorkflowTrigger> workflowTriggerCollection =
+                    getWorkflowTriggerCollection(workflowTrigger.getNamespace());
+            workflowTriggerCollection.findOneAndUpdate(
                     and(
                             eq("name", workflowTrigger.getName()),
                             eq("workflow", workflowTrigger.getWorkflow())),
@@ -139,8 +142,9 @@ public class MongoWorkflowTriggerStore implements WorkflowTriggerStore {
     public void delete(WorkflowTriggerId workflowTriggerId) throws StoreException {
         logger.debug("Received request to delete workflow trigger with id {}", workflowTriggerId);
         try {
-            MongoCollection<WorkflowTrigger> mongoCollection = getMongoCollection(workflowTriggerId.getNamespace());
-            mongoCollection.deleteOne(
+            MongoCollection<WorkflowTrigger> workflowTriggerCollection =
+                    getWorkflowTriggerCollection(workflowTriggerId.getNamespace());
+            workflowTriggerCollection.deleteOne(
                     and(
                             eq("name", workflowTriggerId.getName()),
                             eq("workflow", workflowTriggerId.getWorkflow()),
@@ -151,7 +155,7 @@ public class MongoWorkflowTriggerStore implements WorkflowTriggerStore {
         }
     }
 
-    private MongoCollection<WorkflowTrigger> getMongoCollection(String namespace) {
+    private MongoCollection<WorkflowTrigger> getWorkflowTriggerCollection(String namespace) {
         return mongoClient.getDatabase(namespace).getCollection(COLLECTION_NAME, WorkflowTrigger.class);
     }
 }

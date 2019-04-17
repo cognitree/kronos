@@ -46,7 +46,7 @@ public class MongoTaskStore implements TaskStore {
     public void store(Task task) throws StoreException {
         logger.debug("Received request to store task {}", task);
         try {
-            MongoCollection<Task> taskCollection = getMongoCollection(task.getNamespace());
+            MongoCollection<Task> taskCollection = getTaskCollection(task.getNamespace());
             taskCollection.insertOne(task);
         } catch (Exception e) {
             logger.error("Error storing task {}", task, e);
@@ -58,8 +58,8 @@ public class MongoTaskStore implements TaskStore {
     public List<Task> load(String namespace) throws StoreException {
         logger.debug("Received request to get all tasks under namespace {}", namespace);
         try {
-            MongoCollection<Task> mongoCollection = getMongoCollection(namespace);
-            return mongoCollection.find().into(new ArrayList<>());
+            MongoCollection<Task> taskCollection = getTaskCollection(namespace);
+            return taskCollection.find().into(new ArrayList<>());
         } catch (Exception e) {
             logger.error("Error loading all tasks under namespace {}", namespace, e);
             throw new StoreException(e.getMessage(), e.getCause());
@@ -70,8 +70,8 @@ public class MongoTaskStore implements TaskStore {
     public Task load(TaskId taskId) throws StoreException {
         logger.debug("Received request to load task with id {}", taskId);
         try {
-            MongoCollection<Task> mongoCollection = getMongoCollection(taskId.getNamespace());
-            return mongoCollection.find(
+            MongoCollection<Task> taskCollection = getTaskCollection(taskId.getNamespace());
+            return taskCollection.find(
                     and(
                             eq("name", taskId.getName()),
                             eq("job", taskId.getJob()),
@@ -89,8 +89,8 @@ public class MongoTaskStore implements TaskStore {
         logger.debug("Received request to get all tasks with job id {}, workflow name {}, namespace {}",
                 jobId, workflowName, namespace);
         try {
-            MongoCollection<Task> mongoCollection = getMongoCollection(namespace);
-            return mongoCollection.find(
+            MongoCollection<Task> taskCollection = getTaskCollection(namespace);
+            return taskCollection.find(
                     and(
                             eq("job", jobId),
                             eq("workflow", workflowName),
@@ -107,8 +107,8 @@ public class MongoTaskStore implements TaskStore {
     public List<Task> loadByStatus(String namespace, List<Task.Status> statuses) throws StoreException {
         logger.debug("Received request to get all tasks with status in {} under namespace {}", statuses, namespace);
         try {
-            MongoCollection<Task> mongoCollection = getMongoCollection(namespace);
-            return mongoCollection.find(
+            MongoCollection<Task> taskCollection = getTaskCollection(namespace);
+            return taskCollection.find(
                     and(
                             in("status", statuses),
                             eq("namespace", namespace)))
@@ -124,24 +124,14 @@ public class MongoTaskStore implements TaskStore {
         logger.debug("Received request to count all tasks by status under namespace {}," +
                 "created after {}, created before {}", namespace, createdAfter, createdBefore);
         try {
-            MongoCollection<Document> mongoCollection = mongoClient.getDatabase(namespace)
+            MongoCollection<Document> taskCollection = mongoClient.getDatabase(namespace)
                     .getCollection(COLLECTION_NAME);
-            List<Bson> pipelines = new ArrayList<>();
-            pipelines.add(Aggregates.match(
+            Bson filter = Aggregates.match(
                     and(
                             eq("namespace", namespace),
                             lt("createdAt", createdBefore),
-                            gt("createdAt", createdAfter))));
-
-            pipelines.add(Aggregates.group("$status", Accumulators.sum("count", 1)));
-
-            AggregateIterable<Document> tasks = mongoCollection.aggregate(pipelines);
-            Map<Task.Status, Integer> statusMap = new HashMap<>();
-            for (Document task : tasks) {
-                Task.Status status = Task.Status.valueOf(task.get("_id").toString());
-                statusMap.put(status, task.getInteger("count"));
-            }
-            return statusMap;
+                            gt("createdAt", createdAfter)));
+            return aggregateByStatus(taskCollection, filter);
         } catch (Exception e) {
             logger.error("Error loading all tasks under namespace {}, created after {}, created before {}",
                     namespace, createdAfter, createdBefore, e);
@@ -155,23 +145,15 @@ public class MongoTaskStore implements TaskStore {
         logger.debug("Received request to count tasks by status having workflow name {} under namespace {}," +
                 "created after {}, created before {}", workflowName, namespace, createdAfter, createdBefore);
         try {
-            MongoCollection<Document> mongoCollection = mongoClient.getDatabase(namespace)
+            MongoCollection<Document> taskCollection = mongoClient.getDatabase(namespace)
                     .getCollection(COLLECTION_NAME);
-            List<Bson> pipelines = new ArrayList<>();
-            pipelines.add(Aggregates.match(
+            Bson filter = Aggregates.match(
                     and(
                             eq("namespace", namespace),
                             eq("workflow", workflowName),
                             lt("createdAt", createdBefore),
-                            gt("createdAt", createdAfter))));
-            pipelines.add(Aggregates.group("$status", Accumulators.sum("count", 1)));
-            AggregateIterable<Document> tasks = mongoCollection.aggregate(pipelines);
-            Map<Task.Status, Integer> statusMap = new HashMap<>();
-            for (Document task : tasks) {
-                Task.Status status = Task.Status.valueOf(task.get("_id").toString());
-                statusMap.put(status, task.getInteger("count"));
-            }
-            return statusMap;
+                            gt("createdAt", createdAfter)));
+            return aggregateByStatus(taskCollection, filter);
         } catch (Exception e) {
             logger.error("Error counting tasks by status having workflow name {} under namespace {}," +
                     "created after {}, created before {}", workflowName, namespace, createdAfter, createdBefore, e);
@@ -179,12 +161,25 @@ public class MongoTaskStore implements TaskStore {
         }
     }
 
+    private HashMap<Task.Status, Integer> aggregateByStatus(MongoCollection<Document> collection, Bson filter) {
+        ArrayList<Bson> pipelines = new ArrayList<>();
+        pipelines.add(filter);
+        pipelines.add(Aggregates.group("$status", Accumulators.sum("count", 1)));
+        AggregateIterable<Document> aggregates = collection.aggregate(pipelines);
+        HashMap<Task.Status, Integer> statusMap = new HashMap<>();
+        for (Document aggregate : aggregates) {
+            Task.Status status = Task.Status.valueOf(aggregate.get("_id").toString());
+            statusMap.put(status, aggregate.getInteger("count"));
+        }
+        return statusMap;
+    }
+
     @Override
     public void update(Task task) throws StoreException {
         logger.debug("Received request to update task to {}", task);
         try {
-            MongoCollection<Task> mongoCollection = getMongoCollection(task.getNamespace());
-            mongoCollection.updateMany(
+            MongoCollection<Task> taskCollection = getTaskCollection(task.getNamespace());
+            taskCollection.updateMany(
                     and(
                             eq("name", task.getName()),
                             eq("job", task.getJob()),
@@ -205,15 +200,15 @@ public class MongoTaskStore implements TaskStore {
     public void delete(TaskId taskId) throws StoreException {
         logger.debug("Received request to delete task with id {}", taskId);
         try {
-            MongoCollection<Task> mongoCollection = getMongoCollection(taskId.getNamespace());
-            mongoCollection.deleteOne(eq("job", taskId.getJob()));
+            MongoCollection<Task> taskCollection = getTaskCollection(taskId.getNamespace());
+            taskCollection.deleteOne(eq("job", taskId.getJob()));
         } catch (Exception e) {
             logger.error("Error deleting task with id {}", taskId, e);
             throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
-    private MongoCollection<Task> getMongoCollection(String namespace) {
+    private MongoCollection<Task> getTaskCollection(String namespace) {
         return mongoClient.getDatabase(namespace).getCollection(COLLECTION_NAME, Task.class);
     }
 }

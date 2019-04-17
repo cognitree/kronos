@@ -67,6 +67,10 @@ public class SchedulerApp {
         JobService jobService = new JobService();
         WorkflowTriggerService workflowTriggerService = new WorkflowTriggerService();
         MailService mailService = new MailService(schedulerConfig.getMailConfig());
+        // The order between task scheduler and workflow scheduler service is of importance
+        // task scheduler service should be started before workflow scheduler service.
+        // Workflow scheduler services starts the quartz scheduler which intern might schedule some tasks
+        // based on misfire policies and if the task scheduler service is not initialized that, it will result in NPE.
         TaskSchedulerService taskSchedulerService = new TaskSchedulerService(queueConfig);
         WorkflowSchedulerService workflowSchedulerService = new WorkflowSchedulerService();
 

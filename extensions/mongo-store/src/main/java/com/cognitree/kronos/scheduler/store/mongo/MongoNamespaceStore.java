@@ -36,8 +36,8 @@ public class MongoNamespaceStore implements NamespaceStore {
     public void store(Namespace namespace) throws StoreException {
         logger.debug("Received request to store namespace {}", namespace);
         try {
-            MongoCollection<Namespace> mongoCollection = getMongoCollection();
-            mongoCollection.insertOne(namespace);
+            MongoCollection<Namespace> namespaceCollection = getNamespaceCollection();
+            namespaceCollection.insertOne(namespace);
         } catch (Exception e) {
             logger.error("Error storing namespace {}", namespace, e);
             throw new StoreException(e.getMessage(), e.getCause());
@@ -48,8 +48,8 @@ public class MongoNamespaceStore implements NamespaceStore {
     public List<Namespace> load() throws StoreException {
         logger.debug("Received request to get all namespaces");
         try {
-            MongoCollection<Namespace> mongoCollection = getMongoCollection();
-            return mongoCollection.find().into(new ArrayList<>());
+            MongoCollection<Namespace> namespaceCollection = getNamespaceCollection();
+            return namespaceCollection.find().into(new ArrayList<>());
         } catch (Exception e) {
             logger.error("Error fetching all namespaces", e);
             throw new StoreException(e.getMessage(), e.getCause());
@@ -62,8 +62,8 @@ public class MongoNamespaceStore implements NamespaceStore {
         logger.debug("Received request to load namespace with id {}", namespaceId);
 
         try {
-            MongoCollection<Namespace> mongoCollection = getMongoCollection();
-            return mongoCollection.find(eq("name", namespaceId.getName())).first();
+            MongoCollection<Namespace> namespaceCollection = getNamespaceCollection();
+            return namespaceCollection.find(eq("name", namespaceId.getName())).first();
         } catch (Exception e) {
             logger.error("Error fetching namespace with id {}", namespaceId, e);
             throw new StoreException(e.getMessage(), e.getCause());
@@ -74,8 +74,8 @@ public class MongoNamespaceStore implements NamespaceStore {
     public void update(Namespace namespace) throws StoreException {
         logger.debug("Received request to update namespace to {}", namespace);
         try {
-            MongoCollection<Namespace> mongoCollection = getMongoCollection();
-            mongoCollection.findOneAndUpdate(
+            MongoCollection<Namespace> namespaceCollection = getNamespaceCollection();
+            namespaceCollection.findOneAndUpdate(
                     eq("name", namespace.getName()),
                     set("description", namespace.getDescription()));
         } catch (Exception e) {
@@ -88,16 +88,16 @@ public class MongoNamespaceStore implements NamespaceStore {
     public void delete(NamespaceId namespaceId) throws StoreException {
         logger.debug("Received request to delete job with id {}", namespaceId);
         try {
-            MongoDatabase database = mongoClient.getDatabase(namespaceId.getName());
-            database.drop();
-            getMongoCollection().deleteOne(eq("name", namespaceId.getName()));
+            MongoDatabase namespaceDatabase = mongoClient.getDatabase(namespaceId.getName());
+            namespaceDatabase.drop();
+            getNamespaceCollection().deleteOne(eq("name", namespaceId.getName()));
         } catch (Exception e) {
             logger.error("Error deleting namespace with id {}", namespaceId, e);
             throw new StoreException(e.getMessage(), e.getCause());
         }
     }
 
-    private MongoCollection<Namespace> getMongoCollection() {
+    private MongoCollection<Namespace> getNamespaceCollection() {
         return mongoClient.getDatabase(DATABASE_NAME).getCollection(COLLECTION_NAME, Namespace.class);
     }
 }

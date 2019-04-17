@@ -66,6 +66,8 @@ import static org.quartz.impl.DirectSchedulerFactory.DEFAULT_SCHEDULER_NAME;
 public final class WorkflowSchedulerService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(WorkflowSchedulerService.class);
 
+    // any CRUD operation on scheduler should be synchronized to avoid issues while pausing and resuming a workflow
+    // applicable mostly for fixed delay schedule as it deletes the old trigger and creates a new one for each run.
     private Scheduler scheduler;
 
     public static WorkflowSchedulerService getService() {
@@ -103,7 +105,7 @@ public final class WorkflowSchedulerService implements Service {
         addJob(workflow, true);
     }
 
-    private void addJob(Workflow workflow, boolean replace) throws SchedulerException {
+    private synchronized void addJob(Workflow workflow, boolean replace) throws SchedulerException {
         JobDataMap jobDataMap = new JobDataMap();
         jobDataMap.put("namespace", workflow.getNamespace());
         jobDataMap.put("workflowName", workflow.getName());

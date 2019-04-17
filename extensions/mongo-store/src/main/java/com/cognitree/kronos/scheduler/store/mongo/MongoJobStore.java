@@ -46,7 +46,7 @@ public class MongoJobStore implements JobStore {
     public void store(Job job) throws StoreException {
         logger.debug("Received request to store job {}", job);
         try {
-            MongoCollection<Job> jobCollection = getMongoCollection(job.getNamespace());
+            MongoCollection<Job> jobCollection = getJobCollection(job.getNamespace());
             jobCollection.insertOne(job);
         } catch (Exception e) {
             logger.error("Error storing job {}", job, e);
@@ -58,8 +58,8 @@ public class MongoJobStore implements JobStore {
     public List<Job> load(String namespace) throws StoreException {
         logger.debug("Received request to get all jobs under namespace {}", namespace);
         try {
-            MongoCollection<Job> mongoCollection = getMongoCollection(namespace);
-            return mongoCollection.find(eq("namespace", namespace)).into(new ArrayList<>());
+            MongoCollection<Job> jobCollection = getJobCollection(namespace);
+            return jobCollection.find(eq("namespace", namespace)).into(new ArrayList<>());
         } catch (Exception e) {
             logger.error("Error fetching all jobs under namespace {}", namespace, e);
             throw new StoreException(e.getMessage(), e.getCause());
@@ -71,8 +71,8 @@ public class MongoJobStore implements JobStore {
         logger.debug("Received request to get all jobs under namespace {}, created after {}, created before {}",
                 namespace, createdAfter, createdBefore);
         try {
-            MongoCollection<Job> mongoCollection = getMongoCollection(namespace);
-            return mongoCollection.find(
+            MongoCollection<Job> jobCollection = getJobCollection(namespace);
+            return jobCollection.find(
                     and(
                             eq("namespace", namespace),
                             lt("createdAt", createdBefore),
@@ -90,8 +90,8 @@ public class MongoJobStore implements JobStore {
         logger.debug("Received request to get jobs with workflow name {}, namespace {},  created after {}, created before {}",
                 workflowName, namespace, createdAfter, createdBefore);
         try {
-            MongoCollection<Job> mongoCollection = getMongoCollection(namespace);
-            return mongoCollection.find(
+            MongoCollection<Job> jobCollection = getJobCollection(namespace);
+            return jobCollection.find(
                     and(
                             eq("namespace", namespace),
                             eq("workflow", workflowName),
@@ -111,8 +111,8 @@ public class MongoJobStore implements JobStore {
         logger.debug("Received request to get all jobs with workflow name {} under namespace {}, triggerName {}," +
                 " created after {}, created before {}", workflowName, namespace, triggerName, createdAfter, createdBefore);
         try {
-            MongoCollection<Job> mongoCollection = getMongoCollection(namespace);
-            return mongoCollection.find(
+            MongoCollection<Job> jobCollection = getJobCollection(namespace);
+            return jobCollection.find(
                     and(
                             eq("namespace", namespace),
                             eq("workflow", workflowName),
@@ -133,8 +133,8 @@ public class MongoJobStore implements JobStore {
         logger.debug("Received request to get jobs with status in {} under namespace {}, created after {}, created before {}",
                 statuses, namespace, createdAfter, createdBefore);
         try {
-            MongoCollection<Job> mongoCollection = getMongoCollection(namespace);
-            return mongoCollection.find(
+            MongoCollection<Job> jobCollection = getJobCollection(namespace);
+            return jobCollection.find(
                     and(
                             eq("namespace", namespace),
                             in("status", statuses),
@@ -154,8 +154,8 @@ public class MongoJobStore implements JobStore {
         logger.debug("Received request to get jobs having workflow name {} with status in {} under namespace {}, " +
                 " created after {}, created before {}", workflowName, statuses, namespace, createdAfter, createdBefore);
         try {
-            MongoCollection<Job> mongoCollection = getMongoCollection(namespace);
-            return mongoCollection.find(
+            MongoCollection<Job> jobCollection = getJobCollection(namespace);
+            return jobCollection.find(
                     and(
                             eq("namespace", namespace),
                             eq("workflow", workflowName),
@@ -178,8 +178,8 @@ public class MongoJobStore implements JobStore {
                         "under namespace {}, created after {}, created before {}",
                 workflowName, triggerName, statuses, namespace, createdAfter, createdBefore);
         try {
-            MongoCollection<Job> mongoCollection = getMongoCollection(namespace);
-            return mongoCollection.find(
+            MongoCollection<Job> jobCollection = getJobCollection(namespace);
+            return jobCollection.find(
                     and(
                             eq("namespace", namespace),
                             eq("workflow", workflowName),
@@ -201,24 +201,13 @@ public class MongoJobStore implements JobStore {
         logger.debug("Received request to count jobs by status under namespace {}, created after {}, created before {}",
                 namespace, createdAfter, createdBefore);
         try {
-            MongoCollection<Document> mongoCollection = mongoClient.getDatabase(namespace)
+            MongoCollection<Document> jobCollection = mongoClient.getDatabase(namespace)
                     .getCollection(COLLECTION_NAME);
-            ArrayList<Bson> pipelines = new ArrayList<>();
-            pipelines.add(Aggregates.match(and(
+            Bson filter = Aggregates.match(and(
                     eq("namespace", namespace),
                     lt("createdAt", createdBefore),
-                    gt("createdAt", createdAfter))));
-            pipelines.add(Aggregates.group("$status", Accumulators.sum("count", 1)));
-
-            AggregateIterable<Document> jobs = mongoCollection.aggregate(pipelines);
-            HashMap<Job.Status, Integer> statusMap = new HashMap<>();
-            for (Document job : jobs) {
-                Job.Status status = Job.Status.valueOf(job.get("_id").toString());
-                statusMap.put(status, job.getInteger("count"));
-            }
-            logger.debug("loadByStatus : returned {} jobs for namespace {} created after {} created before {}",
-                    namespace, createdAfter, createdBefore);
-            return statusMap;
+                    gt("createdAt", createdAfter)));
+            return aggregateByStatus(jobCollection, filter);
         } catch (Exception e) {
             logger.error("Error counting jobs by status under namespace {}, created after {}, created before {}",
                     namespace, createdAfter, createdBefore, e);
@@ -232,22 +221,14 @@ public class MongoJobStore implements JobStore {
         logger.debug("Received request to count by status having workflow name {}, namespace {}, created after {}, created before {}",
                 workflowName, namespace, createdAfter, createdBefore);
         try {
-            MongoCollection<Document> mongoCollection = mongoClient.getDatabase(namespace)
+            MongoCollection<Document> jobCollection = mongoClient.getDatabase(namespace)
                     .getCollection(COLLECTION_NAME);
-            ArrayList<Bson> pipelines = new ArrayList<>();
-            pipelines.add(Aggregates.match(and(
+            Bson filter = Aggregates.match(and(
                     eq("namespace", namespace),
                     eq("workflow", workflowName),
                     lt("createdAt", createdBefore),
-                    gt("createdAt", createdAfter))));
-            pipelines.add(Aggregates.group("$status", Accumulators.sum("count", 1)));
-            AggregateIterable<Document> jobs = mongoCollection.aggregate(pipelines);
-            HashMap<Job.Status, Integer> statusMap = new HashMap<>();
-            for (Document job : jobs) {
-                Job.Status status = Job.Status.valueOf(job.get("_id").toString());
-                statusMap.put(status, job.getInteger("count"));
-            }
-            return statusMap;
+                    gt("createdAt", createdAfter)));
+            return aggregateByStatus(jobCollection, filter);
         } catch (Exception e) {
             logger.error("Error counting jobs by status having workflow name {} under namespace {}, created after {}, created before {}",
                     workflowName, namespace, createdAfter, createdBefore, e);
@@ -255,12 +236,25 @@ public class MongoJobStore implements JobStore {
         }
     }
 
+    private HashMap<Job.Status, Integer> aggregateByStatus(MongoCollection<Document> collection, Bson filter) {
+        ArrayList<Bson> pipelines = new ArrayList<>();
+        pipelines.add(filter);
+        pipelines.add(Aggregates.group("$status", Accumulators.sum("count", 1)));
+        AggregateIterable<Document> aggregates = collection.aggregate(pipelines);
+        HashMap<Job.Status, Integer> statusMap = new HashMap<>();
+        for (Document aggregate : aggregates) {
+            Job.Status status = Job.Status.valueOf(aggregate.get("_id").toString());
+            statusMap.put(status, aggregate.getInteger("count"));
+        }
+        return statusMap;
+    }
+
     @Override
     public Job load(JobId jobId) throws StoreException {
         logger.debug("Received request to delete job with id {}", jobId);
         try {
-            MongoCollection<Job> mongoCollection = getMongoCollection(jobId.getNamespace());
-            return mongoCollection.find(eq("_id", jobId.getId())).first();
+            MongoCollection<Job> jobCollection = getJobCollection(jobId.getNamespace());
+            return jobCollection.find(eq("_id", jobId.getId())).first();
         } catch (Exception e) {
             logger.error("Error deleting job with id {}", jobId, e);
             throw new StoreException(e.getMessage(), e.getCause());
@@ -271,8 +265,8 @@ public class MongoJobStore implements JobStore {
     public void update(Job job) throws StoreException {
         logger.info("Received request to update job to {}", job);
         try {
-            MongoCollection<Job> mongoCollection = getMongoCollection(job.getNamespace());
-            mongoCollection.findOneAndUpdate(
+            MongoCollection<Job> jobCollection = getJobCollection(job.getNamespace());
+            jobCollection.findOneAndUpdate(
                     eq("_id", job.getId()),
                     combine(
                             set("status", job.getStatus().toString()),
@@ -288,8 +282,8 @@ public class MongoJobStore implements JobStore {
     public void delete(JobId jobId) throws StoreException {
         logger.debug("Received request to delete job with id {}", jobId);
         try {
-            MongoCollection<Job> mongoCollection = getMongoCollection(jobId.getNamespace());
-            mongoCollection.deleteOne(
+            MongoCollection<Job> jobCollection = getJobCollection(jobId.getNamespace());
+            jobCollection.deleteOne(
                     and(
                             eq("_id", jobId.getId()),
                             eq("workflow", jobId.getWorkflow()),
@@ -305,8 +299,8 @@ public class MongoJobStore implements JobStore {
         logger.debug("Received request to delete jobs with workflow name {}, namespace {}",
                 workflowName, namespace);
         try {
-            MongoCollection<Job> mongoCollection = getMongoCollection(namespace);
-            mongoCollection.deleteOne(
+            MongoCollection<Job> jobCollection = getJobCollection(namespace);
+            jobCollection.deleteOne(
                     and(
                             eq("namespace", namespace),
                             eq("workflow", workflowName)));
@@ -316,7 +310,7 @@ public class MongoJobStore implements JobStore {
         }
     }
 
-    private MongoCollection<Job> getMongoCollection(String namespace) {
+    private MongoCollection<Job> getJobCollection(String namespace) {
         return mongoClient.getDatabase(namespace).getCollection(COLLECTION_NAME, Job.class);
     }
 }

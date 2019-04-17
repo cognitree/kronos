@@ -36,7 +36,7 @@ public class MongoWorkflowStore implements WorkflowStore {
     public void store(Workflow workflow) throws StoreException {
         logger.debug("Received request to store workflow {}", workflow);
         try {
-            MongoCollection<Workflow> workflowCollection = getMongoCollection(workflow.getNamespace());
+            MongoCollection<Workflow> workflowCollection = getWorkflowCollection(workflow.getNamespace());
             workflowCollection.insertOne(workflow);
         } catch (Exception e) {
             logger.error("Error storing workflow {}", workflow, e);
@@ -48,8 +48,8 @@ public class MongoWorkflowStore implements WorkflowStore {
     public List<Workflow> load(String namespace) throws RuntimeException, StoreException {
         logger.debug("Received request to get all workflow under namespace {}", namespace);
         try {
-            MongoCollection<Workflow> mongoCollection = getMongoCollection(namespace);
-            return mongoCollection.find(eq("namespace", namespace)).into(new ArrayList<>());
+            MongoCollection<Workflow> workflowCollection = getWorkflowCollection(namespace);
+            return workflowCollection.find(eq("namespace", namespace)).into(new ArrayList<>());
         } catch (Exception e) {
             logger.error("Error fetching all workflow under namespace {}", namespace, e);
             throw new StoreException(e.getMessage(), e.getCause());
@@ -60,8 +60,8 @@ public class MongoWorkflowStore implements WorkflowStore {
     public Workflow load(WorkflowId workflowId) throws StoreException {
         logger.debug("Received request to load workflow with id {}", workflowId);
         try {
-            MongoCollection<Workflow> mongoCollection = getMongoCollection(workflowId.getNamespace());
-            return mongoCollection.find(
+            MongoCollection<Workflow> workflowCollection = getWorkflowCollection(workflowId.getNamespace());
+            return workflowCollection.find(
                     and(
                             eq("name", workflowId.getName()),
                             eq("namespace", workflowId.getNamespace())))
@@ -76,8 +76,8 @@ public class MongoWorkflowStore implements WorkflowStore {
     public void update(Workflow workflow) throws StoreException {
         logger.debug("Received request to update workflow to {}", workflow);
         try {
-            MongoCollection<Workflow> mongoCollection = getMongoCollection(workflow.getNamespace());
-            mongoCollection.findOneAndUpdate(
+            MongoCollection<Workflow> workflowCollection = getWorkflowCollection(workflow.getNamespace());
+            workflowCollection.findOneAndUpdate(
                     eq("name", workflow.getName()),
                     combine(
                             set("description", workflow.getDescription()),
@@ -92,8 +92,8 @@ public class MongoWorkflowStore implements WorkflowStore {
     public void delete(WorkflowId workflowId) throws StoreException {
         logger.debug("Received request to delete workflow with id {}", workflowId);
         try {
-            MongoCollection<Workflow> mongoCollection = getMongoCollection(workflowId.getNamespace());
-            mongoCollection.deleteOne(
+            MongoCollection<Workflow> workflowCollection = getWorkflowCollection(workflowId.getNamespace());
+            workflowCollection.deleteOne(
                     and(
                             eq("name", workflowId.getName()),
                             eq("namespace", workflowId.getNamespace())));
@@ -103,7 +103,7 @@ public class MongoWorkflowStore implements WorkflowStore {
         }
     }
 
-    private MongoCollection<Workflow> getMongoCollection(String namespace) {
+    private MongoCollection<Workflow> getWorkflowCollection(String namespace) {
         return mongoClient.getDatabase(namespace)
                 .getCollection(COLLECTION_NAME, Workflow.class);
     }
