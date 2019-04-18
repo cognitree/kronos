@@ -120,11 +120,11 @@ public class ConfigurationService implements Service {
     private void processUpdate(ConfigUpdate configUpdate)
             throws ServiceException, ValidationException, SchedulerException {
         if (configUpdate.getModel() instanceof Namespace) {
-            processNamespaceUpdate(configUpdate);
+            processUpdate(configUpdate.getAction(), (Namespace) configUpdate.getModel());
         } else if (configUpdate.getModel() instanceof Workflow) {
-            processWorkflowUpdate(configUpdate);
+            processUpdate(configUpdate.getAction(), (Workflow) configUpdate.getModel());
         } else if (configUpdate.getModel() instanceof WorkflowTrigger) {
-            processWorkflowTriggerUpdate(configUpdate);
+            processUpdate(configUpdate.getAction(), (WorkflowTrigger) configUpdate.getModel());
         } else {
             logger.error("processUpdate : received an unhandled model object in the config update : {}", configUpdate);
             throw new UnsupportedOperationException("Unsupported entity : " + configUpdate.getModel());
@@ -134,30 +134,29 @@ public class ConfigurationService implements Service {
     /**
      * Process config updates to Namespaces
      */
-    private void processNamespaceUpdate(ConfigUpdate configUpdate)
+    private void processUpdate(ConfigUpdate.Action action, Namespace namespace)
             throws ServiceException, ValidationException {
-        Namespace namespace = (Namespace) configUpdate.getModel();
-        switch (configUpdate.getAction()) {
+        switch (action) {
             case create:
                 NamespaceService.getService().add(namespace);
                 break;
             case delete:
-                logger.error("processUpdate : delete is not support for a namespace : {}", configUpdate);
+                logger.error("processUpdate : delete is not support for a namespace : {}", namespace);
                 throw new UnsupportedOperationException("Delete is not support for a namespace");
             case update:
-            default:
                 NamespaceService.getService().update(namespace);
                 break;
+            default:
+                throw new UnsupportedOperationException("Unsupported action " + action + " for a namespace");
         }
     }
 
     /**
      * Process config updates to Workflows
      */
-    private void processWorkflowUpdate(ConfigUpdate configUpdate)
+    private void processUpdate(ConfigUpdate.Action action, Workflow workflow)
             throws ValidationException, ServiceException, SchedulerException {
-        Workflow workflow = (Workflow) configUpdate.getModel();
-        switch (configUpdate.getAction()) {
+        switch (action) {
             case create:
                 WorkflowService.getService().add(workflow);
                 break;
@@ -165,19 +164,19 @@ public class ConfigurationService implements Service {
                 WorkflowService.getService().delete(workflow);
                 break;
             case update:
-            default:
                 WorkflowService.getService().update(workflow);
                 break;
+            default:
+                throw new UnsupportedOperationException("Unsupported action " + action + " for a workflow");
         }
     }
 
     /**
      * Process config updates to WorkflowTriggers
      */
-    private void processWorkflowTriggerUpdate(ConfigUpdate configUpdate)
+    private void processUpdate(ConfigUpdate.Action action, WorkflowTrigger trigger)
             throws SchedulerException, ServiceException, ValidationException {
-        WorkflowTrigger trigger = (WorkflowTrigger) configUpdate.getModel();
-        switch (configUpdate.getAction()) {
+        switch (action) {
             case create:
                 WorkflowTriggerService.getService().add(trigger);
                 break;
@@ -185,11 +184,13 @@ public class ConfigurationService implements Service {
                 WorkflowTriggerService.getService().delete(trigger);
                 break;
             case update:
-            default:
                 if (trigger.isEnabled())
                     WorkflowTriggerService.getService().resume(trigger);
                 else
                     WorkflowTriggerService.getService().pause(trigger);
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported action " + action + " for a workflow trigger");
         }
     }
 }
