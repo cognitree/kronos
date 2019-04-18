@@ -4,3 +4,4 @@ consumerConfig:
   consumerClass: com.cognitree.kronos.queue.consumer.RAMConsumer
   pollIntervalInMs: 100
 taskStatusQueue: taskstatus
+configurationQueue: configurations

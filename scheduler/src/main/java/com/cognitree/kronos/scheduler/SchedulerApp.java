@@ -73,6 +73,7 @@ public class SchedulerApp {
         // based on misfire policies and if the task scheduler service is not initialized that, it will result in NPE.
         TaskSchedulerService taskSchedulerService = new TaskSchedulerService(queueConfig);
         WorkflowSchedulerService workflowSchedulerService = new WorkflowSchedulerService();
+        ConfigurationService configurationService = new ConfigurationService(queueConfig);
 
         logger.info("Initializing scheduler app");
         // initialize all service
@@ -85,6 +86,7 @@ public class SchedulerApp {
         mailService.init();
         taskSchedulerService.init();
         workflowSchedulerService.init();
+        configurationService.init();
 
         logger.info("Starting scheduler app");
         // start all service
@@ -97,11 +99,15 @@ public class SchedulerApp {
         mailService.start();
         taskSchedulerService.start();
         workflowSchedulerService.start();
+        configurationService.start();
     }
 
     public void stop() {
         logger.info("Stopping scheduler app");
         // stop services in the reverse order
+        if (ConfigurationService.getService() != null) {
+            ConfigurationService.getService().stop();
+        }
         if (WorkflowSchedulerService.getService() != null) {
             WorkflowSchedulerService.getService().stop();
         }

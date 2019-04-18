@@ -17,35 +17,26 @@
 
 package com.cognitree.kronos.scheduler;
 
-import com.cognitree.kronos.scheduler.model.CronSchedule;
 import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.quartz.CronExpression;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.text.ParseException;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import static com.cognitree.kronos.scheduler.TestHelper.createWorkflow;
+import static com.cognitree.kronos.scheduler.TestHelper.createWorkflowTrigger;
+
 public class WorkflowSchedulerServiceTest {
 
-    private static final CronSchedule schedule = new CronSchedule();
-    private static final ObjectMapper YAML_MAPPER = new ObjectMapper(new YAMLFactory());
     private static final SchedulerApp SCHEDULER_APP = new SchedulerApp();
-
-    static {
-        schedule.setCronExpression("0/2 * * * * ?");
-    }
 
     @BeforeClass
     public static void start() throws Exception {
@@ -116,27 +107,4 @@ public class WorkflowSchedulerServiceTest {
         Assert.assertEquals("taskTwo", workflowTasks.get(1).getName());
         Assert.assertEquals("taskThree", workflowTasks.get(2).getName());
     }
-
-    private Workflow createWorkflow(String workflowName, String namespace) throws IOException {
-        final InputStream resourceAsStream =
-                getClass().getClassLoader().getResourceAsStream("workflow.yaml");
-        final Workflow workflow = YAML_MAPPER.readValue(resourceAsStream, Workflow.class);
-        workflow.setName(workflowName);
-        workflow.setNamespace(namespace);
-        return workflow;
-    }
-
-    private WorkflowTrigger createWorkflowTrigger(String triggerName, String workflow, String namespace) throws ParseException {
-        final long nextFireTime = new CronExpression(schedule.getCronExpression())
-                .getNextValidTimeAfter(new Date(System.currentTimeMillis() + 100)).getTime();
-        final WorkflowTrigger workflowTrigger = new WorkflowTrigger();
-        workflowTrigger.setName(triggerName);
-        workflowTrigger.setWorkflow(workflow);
-        workflowTrigger.setNamespace(namespace);
-        workflowTrigger.setSchedule(schedule);
-        workflowTrigger.setStartAt(nextFireTime - 100);
-        workflowTrigger.setEndAt(nextFireTime + 100);
-        return workflowTrigger;
-    }
-
 }
