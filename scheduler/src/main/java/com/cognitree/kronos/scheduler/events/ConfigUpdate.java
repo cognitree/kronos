@@ -1,6 +1,5 @@
 package com.cognitree.kronos.scheduler.events;
 
-import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
@@ -20,7 +19,6 @@ public class ConfigUpdate {
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.WRAPPER_OBJECT)
     @JsonSubTypes(value = {
-            @JsonSubTypes.Type(Job.class),
             @JsonSubTypes.Type(Namespace.class),
             @JsonSubTypes.Type(Workflow.class),
             @JsonSubTypes.Type(WorkflowTrigger.class)

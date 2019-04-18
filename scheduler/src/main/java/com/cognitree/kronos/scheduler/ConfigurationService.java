@@ -6,7 +6,6 @@ import com.cognitree.kronos.queue.QueueConfig;
 import com.cognitree.kronos.queue.consumer.Consumer;
 import com.cognitree.kronos.queue.consumer.ConsumerConfig;
 import com.cognitree.kronos.scheduler.events.ConfigUpdate;
-import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
@@ -120,9 +119,7 @@ public class ConfigurationService implements Service {
      */
     private void processUpdate(ConfigUpdate configUpdate)
             throws ServiceException, ValidationException, SchedulerException {
-        if (configUpdate.getModel() instanceof Job) {
-            processJobUpdate(configUpdate);
-        } else if (configUpdate.getModel() instanceof Namespace) {
+        if (configUpdate.getModel() instanceof Namespace) {
             processNamespaceUpdate(configUpdate);
         } else if (configUpdate.getModel() instanceof Workflow) {
             processWorkflowUpdate(configUpdate);
@@ -131,25 +128,6 @@ public class ConfigurationService implements Service {
         } else {
             logger.error("processUpdate : received an unhandled model object in the config update : {}", configUpdate);
             throw new UnsupportedOperationException("Unsupported entity : " + configUpdate.getModel());
-        }
-    }
-
-    /**
-     * Process config updates to Job
-     */
-    private void processJobUpdate(ConfigUpdate configUpdate) throws ServiceException, ValidationException {
-        Job job = (Job) configUpdate.getModel();
-        switch (configUpdate.getAction()) {
-            case create:
-                JobService.getService().create(job.getNamespace(), job.getWorkflow(), job.getTrigger());
-                break;
-            case delete:
-                JobService.getService().delete(job);
-                break;
-            case update:
-            default:
-                JobService.getService().updateStatus(job, job.getStatus());
-                break;
         }
     }
 
