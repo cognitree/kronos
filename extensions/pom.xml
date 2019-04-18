@@ -37,6 +37,7 @@
         <module>jdbc-store</module>
         <module>spark-handler</module>
         <module>embedded-hsql-store</module>
+        <module>mongo-store</module>
     </modules>
 
     <dependencies>

@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.bson.codecs.pojo.annotations.BsonIgnore;
 
 import static com.cognitree.kronos.scheduler.model.Job.Status.CREATED;
 
@@ -70,6 +71,7 @@ public class Job extends JobId {
     }
 
     @JsonIgnore
+    @BsonIgnore
     public JobId getIdentity() {
         return this;
     }

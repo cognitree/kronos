@@ -110,7 +110,7 @@ public class StdJDBCJobStore implements JobStore {
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error storing job {}", job, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -129,7 +129,7 @@ public class StdJDBCJobStore implements JobStore {
             return jobs;
         } catch (Exception e) {
             logger.error("Error fetching all jobs under namespace {}", namespace, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -148,7 +148,7 @@ public class StdJDBCJobStore implements JobStore {
             }
         } catch (Exception e) {
             logger.error("Error fetching job with id {}", jobId, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
         return null;
     }
@@ -172,7 +172,7 @@ public class StdJDBCJobStore implements JobStore {
         } catch (Exception e) {
             logger.error("Error fetching all jobs under namespace {} created after {}, created before {}",
                     namespace, createdAfter, createdBefore, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -196,7 +196,7 @@ public class StdJDBCJobStore implements JobStore {
         } catch (Exception e) {
             logger.error("Error fetching jobs with workflow name {}, namespace {}, created after {}, created before {}",
                     workflowName, namespace, createdAfter, createdBefore, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -222,7 +222,7 @@ public class StdJDBCJobStore implements JobStore {
         } catch (Exception e) {
             logger.error("Error fetching all jobs with workflow name {} under namespace {} created after {}, " +
                     "created before {}", workflowName, namespace, createdAfter, createdBefore, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -250,7 +250,7 @@ public class StdJDBCJobStore implements JobStore {
         } catch (Exception e) {
             logger.error("Error fetching jobs with status in {} under namespace {}, created after {}",
                     statuses, namespace, createdAfter, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -280,7 +280,7 @@ public class StdJDBCJobStore implements JobStore {
         } catch (Exception e) {
             logger.error("Error fetching jobs having workflow name {} with status in {} under namespace {}, " +
                     "created after {}, created before {}", workflowName, statuses, namespace, createdAfter, createdBefore, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -314,7 +314,7 @@ public class StdJDBCJobStore implements JobStore {
             logger.error("Error fetching jobs having workflow name {}, trigger name {} with status in {} under " +
                             "namespace {}, created after {}, created before {}",
                     workflowName, triggerName, statuses, namespace, createdAfter, createdBefore, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -338,7 +338,7 @@ public class StdJDBCJobStore implements JobStore {
         } catch (Exception e) {
             logger.error("Error counting jobs by status under namespace {}, created after {}, created before {}",
                     namespace, createdAfter, createdBefore, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -362,7 +362,7 @@ public class StdJDBCJobStore implements JobStore {
         } catch (Exception e) {
             logger.error("Error counting jobs by status having workflow name {} under namespace {}, created after {}, created before {}",
                     workflowName, namespace, createdAfter, createdBefore, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -381,7 +381,7 @@ public class StdJDBCJobStore implements JobStore {
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error updating job to {}", job, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -396,7 +396,7 @@ public class StdJDBCJobStore implements JobStore {
             preparedStatement.executeUpdate();
         } catch (Exception e) {
             logger.error("Error deleting job with id {}", jobId, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -412,7 +412,7 @@ public class StdJDBCJobStore implements JobStore {
             preparedStatement.executeUpdate();
         } catch (Exception e) {
             logger.error("Error deleting jobs with workflow name {}, namespace {}", workflowName, namespace, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 

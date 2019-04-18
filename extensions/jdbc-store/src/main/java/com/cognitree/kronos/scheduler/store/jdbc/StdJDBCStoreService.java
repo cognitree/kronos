@@ -92,7 +92,6 @@ public class StdJDBCStoreService extends StoreService {
     public void start() throws Exception {
         logger.info("Starting JDBC store service");
         initDatabase();
-        ServiceProvider.registerService(this);
     }
 
     private void parseConfig() throws Exception {
