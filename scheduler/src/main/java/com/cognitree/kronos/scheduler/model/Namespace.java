@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.bson.codecs.pojo.annotations.BsonIgnore;
 
 @JsonSerialize(as = Namespace.class)
 @JsonDeserialize(as = Namespace.class)
@@ -37,6 +38,7 @@ public class Namespace extends NamespaceId {
     }
 
     @JsonIgnore
+    @BsonIgnore
     public NamespaceId getIdentity() {
         return this;
     }

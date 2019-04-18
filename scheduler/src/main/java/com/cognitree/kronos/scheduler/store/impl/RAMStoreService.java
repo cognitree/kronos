@@ -56,7 +56,6 @@ public class RAMStoreService extends StoreService {
     @Override
     public void start() {
         logger.info("Starting RAM store service");
-        ServiceProvider.registerService(this);
     }
 
     @Override

@@ -83,7 +83,7 @@ public class StdJDBCWorkflowStore implements WorkflowStore {
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error storing workflow {}", workflow, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -102,7 +102,7 @@ public class StdJDBCWorkflowStore implements WorkflowStore {
             return workflows;
         } catch (Exception e) {
             logger.error("Error fetching all workflow under namespace {}", namespace, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -120,7 +120,7 @@ public class StdJDBCWorkflowStore implements WorkflowStore {
             }
         } catch (Exception e) {
             logger.error("Error fetching workflow with id {}", workflowId, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
         return null;
     }
@@ -138,7 +138,7 @@ public class StdJDBCWorkflowStore implements WorkflowStore {
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error updating workflow to {}", workflow, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -153,7 +153,7 @@ public class StdJDBCWorkflowStore implements WorkflowStore {
             preparedStatement.executeUpdate();
         } catch (Exception e) {
             logger.error("Error deleting workflow with id {}", workflowId, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 

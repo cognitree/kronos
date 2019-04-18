@@ -81,7 +81,7 @@ public class JobService implements Service {
         } catch (StoreException e) {
             logger.error("unable to create job from workflow {}, trigger {} under namespace {}",
                     workflowName, triggerName, namespace, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
         return job;
     }
@@ -112,7 +112,7 @@ public class JobService implements Service {
             return jobs == null ? Collections.emptyList() : jobs;
         } catch (StoreException e) {
             logger.error("unable to get all jobs under namespace {}", namespace, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -123,7 +123,7 @@ public class JobService implements Service {
             return jobStore.load(jobId);
         } catch (StoreException e) {
             logger.error("unable to get job {}", jobId, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -137,7 +137,7 @@ public class JobService implements Service {
         } catch (StoreException e) {
             logger.error("unable to get all jobs under namespace {} created between {} to {}",
                     namespace, createdAfter, createdBefore, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -151,7 +151,7 @@ public class JobService implements Service {
         } catch (StoreException e) {
             logger.error("unable to get all jobs with workflow name {} under namespace {} created between {} to {}",
                     workflowName, namespace, createdAfter, createdBefore, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -167,7 +167,7 @@ public class JobService implements Service {
         } catch (StoreException e) {
             logger.error("unable to get all jobs with workflow name {}, trigger {} under namespace {} " +
                     "created between {} to {}", workflowName, triggerName, namespace, createdAfter, createdBefore, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -183,7 +183,7 @@ public class JobService implements Service {
         } catch (StoreException e) {
             logger.error("unable to get all jobs with status in {} under namespace {} " +
                     "created between {} to {}", statuses, namespace, createdAfter, createdBefore, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -199,7 +199,7 @@ public class JobService implements Service {
         } catch (StoreException e) {
             logger.error("unable to get all jobs with workflow name {} with status in {} under namespace {} " +
                     "created between {} to {}", workflowName, statuses, namespace, createdAfter, createdBefore, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -218,7 +218,7 @@ public class JobService implements Service {
             logger.error("unable to get all jobs with workflow name {}, trigger {} with status in {} " +
                             "under namespace {} created between {} to {}",
                     workflowName, triggerName, statuses, namespace, createdAfter, createdBefore, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -229,7 +229,7 @@ public class JobService implements Service {
             return TaskService.getService().get(jobId.getNamespace(), jobId.getId(), jobId.getWorkflow());
         } catch (ServiceException e) {
             logger.error("unable to get all tasks executed for job {}", jobId, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -243,7 +243,7 @@ public class JobService implements Service {
         } catch (StoreException e) {
             logger.error("unable to count jobs by status under namespace {} created between {} to {}",
                     namespace, createdAfter, createdBefore, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -257,7 +257,7 @@ public class JobService implements Service {
         } catch (StoreException e) {
             logger.error("unable to count jobs by status for workflow {} under namespace {} created " +
                     "between {} to {}", workflowName, namespace, createdAfter, createdBefore, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -286,7 +286,7 @@ public class JobService implements Service {
             notifyListeners(job, currentStatus, status);
         } catch (StoreException e) {
             logger.error("unable to update job {} status to {}", jobId, status, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -307,7 +307,7 @@ public class JobService implements Service {
             jobStore.delete(jobId);
         } catch (StoreException e) {
             logger.error("unable to delete job {}", jobId, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -318,7 +318,7 @@ public class JobService implements Service {
             jobStore.deleteByWorkflowName(namespace, workflowName);
         } catch (StoreException e) {
             logger.error("unable to delete all jobs with workflow name {} under namespace", workflowName, namespace, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 

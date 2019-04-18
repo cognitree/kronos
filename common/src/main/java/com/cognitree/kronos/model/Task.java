@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.bson.codecs.pojo.annotations.BsonIgnore;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -127,6 +128,7 @@ public class Task extends TaskId {
     }
 
     @JsonIgnore
+    @BsonIgnore
     public TaskId getIdentity() {
         return this;
     }
@@ -164,6 +166,7 @@ public class Task extends TaskId {
         SUBMITTED(false),
         RUNNING(false),
         SUCCESSFUL(true),
+        SKIPPED(true), // a task is marked as skipped it the task it depends on fails.
         FAILED(true);
 
         private final boolean isFinal;

@@ -30,7 +30,7 @@
     <artifactId>kafka-queue</artifactId>
 
     <properties>
-        <kafka.client.version>1.0.0</kafka.client.version>
+        <kafka.client.version>2.2.0</kafka.client.version>
     </properties>
 
     <dependencies>

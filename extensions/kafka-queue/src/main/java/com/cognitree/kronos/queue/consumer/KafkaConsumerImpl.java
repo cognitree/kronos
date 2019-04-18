@@ -25,6 +25,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,6 +40,7 @@ public class KafkaConsumerImpl implements Consumer {
     private static final Logger logger = LoggerFactory.getLogger(KafkaConsumerImpl.class);
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final String GROUP_ID = "group.id";
 
     private final Map<String, KafkaConsumer<String, String>> topicToKafkaConsumerMap = new HashMap<>();
     private Properties kafkaConsumerConfig;
@@ -67,7 +69,8 @@ public class KafkaConsumerImpl implements Consumer {
         }
 
         while (tasks.size() < size) {
-            final ConsumerRecords<String, String> consumerRecords = topicToKafkaConsumerMap.get(topic).poll(pollTimeoutInMs);
+            final ConsumerRecords<String, String> consumerRecords = topicToKafkaConsumerMap.get(topic)
+                    .poll(Duration.ofMillis(pollTimeoutInMs));
             if (consumerRecords.isEmpty()) {
                 break;
             }
@@ -81,6 +84,9 @@ public class KafkaConsumerImpl implements Consumer {
 
     private synchronized void createKafkaConsumer(String topic) {
         if (!topicToKafkaConsumerMap.containsKey(topic)) {
+            final Properties kafkaConsumerConfig = new Properties();
+            kafkaConsumerConfig.putAll(this.kafkaConsumerConfig);
+            kafkaConsumerConfig.put(GROUP_ID, kafkaConsumerConfig.getProperty(GROUP_ID) + "-" + topic);
             logger.info("Creating kafka consumer on topic {} with consumer config {}", topic, kafkaConsumerConfig);
             KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(kafkaConsumerConfig);
             kafkaConsumer.subscribe(Collections.singletonList(topic));

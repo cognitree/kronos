@@ -25,7 +25,6 @@ import com.cognitree.kronos.scheduler.model.CalendarIntervalSchedule;
 import com.cognitree.kronos.scheduler.model.CronSchedule;
 import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.scheduler.model.JobId;
-import com.cognitree.kronos.scheduler.model.Messages;
 import com.cognitree.kronos.scheduler.model.Schedule;
 import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.WorkflowId;
@@ -89,9 +88,11 @@ public class MailService implements Service {
                     .withSessionTimeout(10 * 1000)
                     .buildMailer();
             ServiceProvider.registerService(this);
+            TaskService.getService().registerListener(new TaskNotificationHandler());
+            JobService.getService().registerListener(new JobNotificationHandler());
+        } else {
+            logger.error("Skipping mail service, no configuration provided");
         }
-        TaskService.getService().registerListener(new TaskNotificationHandler());
-        JobService.getService().registerListener(new JobNotificationHandler());
     }
 
     public void send(String subject, String body, List<String> recipients, boolean highPriority) {
@@ -149,11 +150,6 @@ public class MailService implements Service {
         }
 
         private void notifyJobCompletion(Job job, Job.Status status) {
-            final MailService mailService = MailService.getService();
-            if (mailService == null) {
-                logger.warn("unable to send job completion notification as mail service is not initialized");
-                return;
-            }
             try {
                 final Workflow workflow = WorkflowService.getService().get(WorkflowId.build(job.getNamespace(), job.getWorkflow()));
                 List<String> recipients = null;
@@ -170,7 +166,7 @@ public class MailService implements Service {
                     subjectTemplate.merge(velocityContext, subjectWriter);
                     StringWriter bodyWriter = new StringWriter();
                     bodyTemplate.merge(velocityContext, bodyWriter);
-                    mailService.send(subjectWriter.toString(), bodyWriter.toString(), recipients, status == FAILED);
+                    MailService.getService().send(subjectWriter.toString(), bodyWriter.toString(), recipients, status == FAILED);
                 }
             } catch (Exception e) {
                 logger.error("error sending email notification on completion for job {}", job, e);
@@ -219,8 +215,7 @@ public class MailService implements Service {
             if (to == Task.Status.FAILED) {
                 try {
                     Task task = TaskService.getService().get(taskId);
-                    // ignore if failure is due to task dependency resolution
-                    if (!task.getStatusMessage().equals(Messages.FAILED_TO_RESOLVE_DEPENDENCY)) {
+                    if (task.getStatusMessage() != null) {
                         notifyTaskFailure(task);
                     }
                 } catch (ServiceException | ValidationException e) {
@@ -231,11 +226,6 @@ public class MailService implements Service {
         }
 
         void notifyTaskFailure(Task task) {
-            final MailService mailService = MailService.getService();
-            if (mailService == null) {
-                logger.warn("unable to send task failure notification as mail service is not initialized");
-                return;
-            }
             try {
                 final Job job = JobService.getService().get(JobId.build(task.getNamespace(), task.getJob(), task.getWorkflow()));
                 final Workflow workflow = WorkflowService.getService().get(WorkflowId.build(job.getNamespace(), job.getWorkflow()));
@@ -246,7 +236,7 @@ public class MailService implements Service {
                     subjectTemplate.merge(velocityContext, subjectWriter);
                     StringWriter bodyWriter = new StringWriter();
                     bodyTemplate.merge(velocityContext, bodyWriter);
-                    mailService.send(subjectWriter.toString(), bodyWriter.toString(), recipients, true);
+                    MailService.getService().send(subjectWriter.toString(), bodyWriter.toString(), recipients, true);
                 }
             } catch (Exception e) {
                 logger.error("error sending email notification on failure of task {}", task, e);
