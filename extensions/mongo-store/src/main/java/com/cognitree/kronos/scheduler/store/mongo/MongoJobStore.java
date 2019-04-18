@@ -30,7 +30,7 @@ import static com.mongodb.client.model.Updates.set;
  */
 public class MongoJobStore extends MongoStore implements JobStore {
 
-    private static final Logger logger = LoggerFactory.getLogger(Job.class);
+    private static final Logger logger = LoggerFactory.getLogger(MongoJobStore.class);
 
     private static final String COLLECTION_NAME = "jobs";
 
