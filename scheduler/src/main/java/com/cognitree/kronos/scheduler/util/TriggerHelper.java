@@ -20,6 +20,7 @@ package com.cognitree.kronos.scheduler.util;
 import com.cognitree.kronos.scheduler.model.CalendarIntervalSchedule;
 import com.cognitree.kronos.scheduler.model.CronSchedule;
 import com.cognitree.kronos.scheduler.model.DailyTimeIntervalSchedule;
+import com.cognitree.kronos.scheduler.model.FixedDelaySchedule;
 import com.cognitree.kronos.scheduler.model.Schedule;
 import com.cognitree.kronos.scheduler.model.SimpleSchedule;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
@@ -72,9 +73,25 @@ public class TriggerHelper {
             triggerBuilder.usingJobData(jobDataMap);
         }
 
-        // Set Start Date
-        if (workflowTrigger.getStartAt() != null) {
-            triggerBuilder.startAt(new Date(workflowTrigger.getStartAt()));
+        if (workflowTrigger.getSchedule().getType().equals(Schedule.Type.fixed)) {
+            long currentTimeMillis = System.currentTimeMillis();
+            long startAt = workflowTrigger.getStartAt() == null ? currentTimeMillis : workflowTrigger.getStartAt();
+            int interval = ((FixedDelaySchedule) workflowTrigger.getSchedule()).getInterval();
+            Date triggerStartTime;
+            if (startAt > currentTimeMillis) {
+                triggerStartTime = new Date(startAt + interval);
+            } else {
+                while (startAt <= currentTimeMillis) {
+                    startAt += interval;
+                }
+                triggerStartTime = new Date(startAt);
+            }
+            triggerBuilder.startAt(triggerStartTime);
+        } else {
+            // Set Start Date
+            if (workflowTrigger.getStartAt() != null) {
+                triggerBuilder.startAt(new Date(workflowTrigger.getStartAt()));
+            }
         }
 
         // Set End Date
@@ -88,11 +105,14 @@ public class TriggerHelper {
     private static ScheduleBuilder buildSchedulerBuilder(Schedule schedule) throws ParseException {
         ScheduleBuilder scheduleBuilder = null;
         switch (schedule.getType()) {
+            case simple:
+                scheduleBuilder = buildSimpleScheduleBuilder((SimpleSchedule) schedule);
+                break;
             case cron:
                 scheduleBuilder = buildCronScheduleBuilder((CronSchedule) schedule);
                 break;
-            case simple:
-                scheduleBuilder = buildSimpleScheduleBuilder((SimpleSchedule) schedule);
+            case fixed:
+                scheduleBuilder = buildDelayFixedScheduleBuilder((FixedDelaySchedule) schedule);
                 break;
             case daily_time:
                 scheduleBuilder = buildDailyTimeScheduleBuilder((DailyTimeIntervalSchedule) schedule);
@@ -154,6 +174,12 @@ public class TriggerHelper {
             scheduleBuilder.inTimeZone(getTimeZone(cronSchedule.getTimezone()));
         }
         return scheduleBuilder;
+    }
+
+    private static ScheduleBuilder buildDelayFixedScheduleBuilder(FixedDelaySchedule fixedDelaySchedule) {
+        // Fixme: workaround to enable fix delay scheduling
+        // Ideally we should create custom trigger in quartz
+        return simpleSchedule();
     }
 
     private static ScheduleBuilder buildDailyTimeScheduleBuilder(DailyTimeIntervalSchedule dailyTimeIntervalSchedule) {

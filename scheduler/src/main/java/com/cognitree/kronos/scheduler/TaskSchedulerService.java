@@ -48,8 +48,11 @@ import java.util.concurrent.ScheduledFuture;
 import static com.cognitree.kronos.model.Task.Status.CREATED;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
+import static com.cognitree.kronos.model.Task.Status.SKIPPED;
 import static com.cognitree.kronos.model.Task.Status.WAITING;
+import static com.cognitree.kronos.scheduler.model.Messages.FAILED_DEPENDEE_TASK;
 import static com.cognitree.kronos.scheduler.model.Messages.FAILED_TO_RESOLVE_DEPENDENCY;
+import static com.cognitree.kronos.scheduler.model.Messages.SKIPPED_DEPENDEE_TASK;
 import static com.cognitree.kronos.scheduler.model.Messages.TASK_SUBMISSION_FAILED;
 import static com.cognitree.kronos.scheduler.model.Messages.TIMED_OUT;
 import static java.util.Comparator.comparing;
@@ -154,7 +157,7 @@ public final class TaskSchedulerService implements Service {
         final List<Namespace> namespaces = NamespaceService.getService().get();
         final List<Task> tasks = new ArrayList<>();
         for (Namespace namespace : namespaces) {
-            TaskService.getService().get(namespace.getName(), NON_FINAL_TASK_STATUS_LIST);
+            tasks.addAll(TaskService.getService().get(namespace.getName(), NON_FINAL_TASK_STATUS_LIST));
         }
         if (!tasks.isEmpty()) {
             tasks.sort(Comparator.comparing(Task::getCreatedAt));
@@ -219,7 +222,7 @@ public final class TaskSchedulerService implements Service {
     /**
      * deletes all the stale tasks from memory older than task purge interval
      */
-    void deleteStaleTasks() {
+    private void deleteStaleTasks() {
         taskProvider.removeStaleTasks(HOURS.toMillis(TASK_PURGE_INTERVAL));
     }
 
@@ -275,8 +278,9 @@ public final class TaskSchedulerService implements Service {
             case SUBMITTED:
                 createTimeoutTask(task);
                 break;
+            case SKIPPED:
             case FAILED:
-                markDependentTasksAsFailed(task);
+                markDependentTasksAsSkipped(task, status);
                 // do not break
             case SUCCESSFUL:
                 final ScheduledFuture<?> taskTimeoutFuture = taskTimeoutHandlersMap.remove(task.getName());
@@ -289,9 +293,13 @@ public final class TaskSchedulerService implements Service {
         }
     }
 
-    private void markDependentTasksAsFailed(Task task) {
+    private void markDependentTasksAsSkipped(Task task, Status parentStatus) {
         for (Task dependentTask : taskProvider.getDependentTasks(task)) {
-            updateStatus(dependentTask, FAILED, FAILED_TO_RESOLVE_DEPENDENCY);
+            if (parentStatus == FAILED) {
+                updateStatus(dependentTask, SKIPPED, FAILED_DEPENDEE_TASK);
+            } else {
+                updateStatus(dependentTask, SKIPPED, SKIPPED_DEPENDEE_TASK);
+            }
         }
     }
 
@@ -345,14 +353,19 @@ public final class TaskSchedulerService implements Service {
      * @param task
      * @param dependentTaskContext
      */
-    // used in junit
+    // used in junit test case
     void updateTaskProperties(Task task, Map<String, Object> dependentTaskContext) {
         if (dependentTaskContext == null || dependentTaskContext.isEmpty()) {
             return;
         }
+        final Map<String, Object> modifiedTaskProperties = updateTaskProperties(task.getProperties(), dependentTaskContext);
+        task.setProperties(modifiedTaskProperties);
+    }
 
-        final Map<String, Object> modifiedTaskProperties = new HashMap<>();
-        task.getProperties().forEach((key, value) -> {
+    private HashMap<String, Object> updateTaskProperties(Map<String, Object> taskProperties,
+                                                         Map<String, Object> dependentTaskContext) {
+        final HashMap<String, Object> modifiedTaskProperties = new HashMap<>();
+        taskProperties.forEach((key, value) -> {
             if (value instanceof String && ((String) value).startsWith("${") && ((String) value).endsWith("}")) {
                 final String valueToReplace = ((String) value).substring(2, ((String) value).length() - 1);
                 if (dependentTaskContext.containsKey(valueToReplace)) {
@@ -370,33 +383,14 @@ public final class TaskSchedulerService implements Service {
                             " setting it to null", key);
                     modifiedTaskProperties.put(key, null);
                 }
+            } else if (value instanceof Map) {
+                modifiedTaskProperties.put(key, updateTaskProperties((Map<String, Object>) value, dependentTaskContext));
             } else {
                 // copy the remaining key value pair as it is from current task properties
                 modifiedTaskProperties.put(key, value);
             }
         });
-
-        dependentTaskContext.forEach((key, value) -> {
-            if (!modifiedTaskProperties.containsKey(key.substring(key.indexOf(".") + 1))) {
-                modifiedTaskProperties.put(key.substring(key.indexOf(".") + 1), value);
-            }
-        });
-        task.setProperties(modifiedTaskProperties);
-    }
-
-    // used in junit
-    TaskProvider getTaskProvider() {
-        return taskProvider;
-    }
-
-    // used in junit
-    Consumer getConsumer() {
-        return consumer;
-    }
-
-    // used in junit
-    Producer getProducer() {
-        return producer;
+        return modifiedTaskProperties;
     }
 
     @Override

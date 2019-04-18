@@ -29,4 +29,17 @@
 
     <groupId>com.cognitree.kronos</groupId>
     <artifactId>common</artifactId>
+
+    <properties>
+        <bson.version>3.10.1</bson.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>bson</artifactId>
+            <version>${bson.version}</version>
+        </dependency>
+    </dependencies>
+
 </project>

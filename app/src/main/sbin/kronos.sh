@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# the script uses pgrep to get back the process id
 MAIN_CLASS="com.cognitree.kronos.Application"
 APP_NAME=""
 MODE=""
@@ -27,7 +28,7 @@ start(){
       ;;
   esac
   java $HEAP_OPTS -cp "$APP_HOME/conf:$APP_HOME/lib/*" $MAIN_CLASS $ARGS >> "$LOG_DIR/$APP_NAME-stdout-`date +%Y%m%d`.log" 2>&1 &
-  echo "$APP_NAME started: pid[`pgrep -f $MAIN_CLASS`]"
+  echo "$APP_NAME started: pid[`pgrep -f "mode $MODE"`]"
   echo "application logs available at $LOG_DIR/$APP_NAME-stdout-`date +%Y%m%d`.log"
 }
 
@@ -38,7 +39,7 @@ stop(){
     echo "$APP_NAME is already stopped"
     return
   fi
-  PID=`pgrep -f $MAIN_CLASS`
+  PID=`pgrep -f "mode $MODE"`
   echo "killing process: pid[$PID]"
   kill $PID
   echo -n "sent kill signal. waiting for shutdown."
@@ -59,7 +60,7 @@ stop(){
 }
 
 is_alive() {
-  pid=`pgrep -f $MAIN_CLASS`
+  pid=`pgrep -f "mode $MODE"`
   if [ "x" != "x"$pid ]; then
     return 1
   else
@@ -70,7 +71,7 @@ is_alive() {
 status(){
   is_alive
   if [ $? -eq 1 ]; then
-    echo "$APP_NAME is running... : pid[`pgrep -f $MAIN_CLASS`]"
+    echo "$APP_NAME is running... : pid[`pgrep -f "mode $MODE"`]"
   else
     echo "$APP_NAME is not running..."
   fi

@@ -78,7 +78,7 @@ public class WorkflowTriggerService implements Service {
             workflowTriggerStore.store(workflowTrigger);
         } catch (StoreException | ParseException e) {
             logger.error("unable to add workflow trigger {}", workflowTrigger, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -113,7 +113,7 @@ public class WorkflowTriggerService implements Service {
             return workflowTrigger;
         } catch (StoreException e) {
             logger.error("unable to resume workflow trigger {}", workflowTriggerId, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -148,7 +148,7 @@ public class WorkflowTriggerService implements Service {
             return workflowTrigger;
         } catch (StoreException | SchedulerException e) {
             logger.error("unable to pause workflow trigger {}", workflowTriggerId, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -160,7 +160,7 @@ public class WorkflowTriggerService implements Service {
             return workflowTriggers == null ? Collections.emptyList() : workflowTriggers;
         } catch (StoreException e) {
             logger.error("unable to get all workflow triggers under namespace {}", namespace, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -171,7 +171,7 @@ public class WorkflowTriggerService implements Service {
             return workflowTriggerStore.load(workflowTriggerId);
         } catch (StoreException e) {
             logger.error("unable to get workflow trigger with id {}", workflowTriggerId, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -185,7 +185,7 @@ public class WorkflowTriggerService implements Service {
         } catch (StoreException e) {
             logger.error("unable to get all workflow triggers for workflow {} under namespace {}",
                     workflowName, namespace, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -200,7 +200,7 @@ public class WorkflowTriggerService implements Service {
         } catch (StoreException e) {
             logger.error("unable to get all enabled {} workflow triggers for workflow {} under namespace {}",
                     enabled, workflowName, namespace, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -216,7 +216,7 @@ public class WorkflowTriggerService implements Service {
             workflowTriggerStore.delete(workflowTriggerId);
         } catch (StoreException e) {
             logger.error("unable to delete workflow trigger {}", workflowTriggerId, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 

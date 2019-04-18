@@ -118,7 +118,7 @@ public class StdJDBCTaskStore implements TaskStore {
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error storing task {}", task, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -137,7 +137,7 @@ public class StdJDBCTaskStore implements TaskStore {
             return tasks;
         } catch (Exception e) {
             logger.error("Error loading all tasks under namespace {}", namespace, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -157,7 +157,7 @@ public class StdJDBCTaskStore implements TaskStore {
             }
         } catch (Exception e) {
             logger.error("Error loading task with id {}", taskId, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
         return null;
     }
@@ -181,7 +181,7 @@ public class StdJDBCTaskStore implements TaskStore {
         } catch (Exception e) {
             logger.error("Error fetching tasks with job id {}, workflow name {}, namespace {}",
                     jobId, workflowName, namespace, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -204,7 +204,7 @@ public class StdJDBCTaskStore implements TaskStore {
             return tasks;
         } catch (Exception e) {
             logger.error("Error fetching task with status in {} under namespace {}", statuses, namespace, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -227,7 +227,7 @@ public class StdJDBCTaskStore implements TaskStore {
         } catch (Exception e) {
             logger.error("Error loading all tasks under namespace {}, created after {}, created before {}",
                     namespace, createdAfter, createdBefore, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -252,7 +252,7 @@ public class StdJDBCTaskStore implements TaskStore {
         } catch (Exception e) {
             logger.error("Error counting tasks by status having workflow name {} under namespace {}," +
                     "created after {}, created before {}", workflowName, namespace, createdAfter, createdBefore, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -274,7 +274,7 @@ public class StdJDBCTaskStore implements TaskStore {
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error updating task with to {}", task, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 
@@ -291,7 +291,7 @@ public class StdJDBCTaskStore implements TaskStore {
             preparedStatement.executeUpdate();
         } catch (Exception e) {
             logger.error("Error deleting task with id {}", taskId, e);
-            throw new StoreException(e.getMessage(), e.getCause());
+            throw new StoreException(e);
         }
     }
 

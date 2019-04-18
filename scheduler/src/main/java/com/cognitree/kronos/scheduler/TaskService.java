@@ -112,7 +112,7 @@ public class TaskService implements Service {
             taskStore.store(task);
         } catch (StoreException e) {
             logger.error("unable to add task {}", task, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
         return task;
     }
@@ -126,7 +126,7 @@ public class TaskService implements Service {
             return tasks == null ? Collections.emptyList() : tasks;
         } catch (StoreException e) {
             logger.error("unable to get all tasks under namespace {}", namespace, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -137,7 +137,7 @@ public class TaskService implements Service {
             return taskStore.load(taskId);
         } catch (StoreException e) {
             logger.error("unable to get task {}", taskId, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -151,7 +151,7 @@ public class TaskService implements Service {
         } catch (StoreException e) {
             logger.error("unable to get all tasks with job id {} for workflow {} under namespace {}",
                     jobId, workflowName, namespace, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -165,7 +165,7 @@ public class TaskService implements Service {
         } catch (StoreException e) {
             logger.error("unable to get all tasks having status in {} under namespace {}",
                     statuses, namespace, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -179,7 +179,7 @@ public class TaskService implements Service {
         } catch (StoreException e) {
             logger.error("unable to count tasks by status under namespace {} created between {} to {}",
                     namespace, createdAfter, createdBefore, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -193,7 +193,7 @@ public class TaskService implements Service {
         } catch (StoreException e) {
             logger.error("unable to count tasks by status having workflow name {} under namespace {} created " +
                     "between {} to {}", workflowName, namespace, createdAfter, createdBefore, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -217,6 +217,7 @@ public class TaskService implements Service {
                     task.setSubmittedAt(System.currentTimeMillis());
                     break;
                 case SUCCESSFUL:
+                case SKIPPED:
                 case FAILED:
                     task.setCompletedAt(System.currentTimeMillis());
                     break;
@@ -225,7 +226,7 @@ public class TaskService implements Service {
             notifyListeners(task, currentStatus, status);
         } catch (StoreException e) {
             logger.error("unable to update task {}", task, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
@@ -241,6 +242,8 @@ public class TaskService implements Service {
                 return currentStatus == SCHEDULED;
             case RUNNING:
                 return currentStatus == SUBMITTED;
+            case SKIPPED:
+                return currentStatus == CREATED || currentStatus == WAITING;
             case SUCCESSFUL:
             case FAILED:
                 return currentStatus != SUCCESSFUL && currentStatus != FAILED;
@@ -269,7 +272,7 @@ public class TaskService implements Service {
             taskStore.delete(taskId);
         } catch (StoreException e) {
             logger.error("unable to delete task {}", taskId, e);
-            throw new ServiceException(e.getMessage());
+            throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
 
