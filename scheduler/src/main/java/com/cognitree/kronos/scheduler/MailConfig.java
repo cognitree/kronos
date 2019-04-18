@@ -21,7 +21,6 @@ import java.util.Objects;
 
 public class MailConfig {
 
-    private boolean enabled = true;
     private String smtpHost;
     private int port;
     private String userEmail;
@@ -29,14 +28,6 @@ public class MailConfig {
     private String fromName;
     private String fromEmail;
     private String replyTo;
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
 
     public String getSmtpHost() {
         return smtpHost;
@@ -97,10 +88,9 @@ public class MailConfig {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof MailConfig)) return false;
+        if (o == null || getClass() != o.getClass()) return false;
         MailConfig that = (MailConfig) o;
-        return enabled == that.enabled &&
-                port == that.port &&
+        return port == that.port &&
                 Objects.equals(smtpHost, that.smtpHost) &&
                 Objects.equals(userEmail, that.userEmail) &&
                 Objects.equals(password, that.password) &&
@@ -111,15 +101,13 @@ public class MailConfig {
 
     @Override
     public int hashCode() {
-
-        return Objects.hash(enabled, smtpHost, port, userEmail, password, fromName, fromEmail, replyTo);
+        return Objects.hash(smtpHost, port, userEmail, password, fromName, fromEmail, replyTo);
     }
 
     @Override
     public String toString() {
         return "MailConfig{" +
-                "enabled=" + enabled +
-                ", smtpHost='" + smtpHost + '\'' +
+                "smtpHost='" + smtpHost + '\'' +
                 ", port=" + port +
                 ", userEmail='" + userEmail + '\'' +
                 ", password='" + password + '\'' +

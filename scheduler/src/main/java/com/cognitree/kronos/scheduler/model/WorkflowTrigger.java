@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.bson.codecs.pojo.annotations.BsonIgnore;
 
 @JsonSerialize(as = WorkflowTrigger.class)
 @JsonDeserialize(as = WorkflowTrigger.class)
@@ -64,6 +65,7 @@ public class WorkflowTrigger extends WorkflowTriggerId {
     }
 
     @JsonIgnore
+    @BsonIgnore
     public WorkflowTriggerId getIdentity() {
         return this;
     }

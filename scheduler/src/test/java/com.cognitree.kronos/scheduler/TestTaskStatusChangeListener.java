@@ -57,6 +57,11 @@ public class TestTaskStatusChangeListener implements TaskStatusChangeListener {
                     Assert.fail("invalid task status change notification");
                 }
                 break;
+            case SKIPPED:
+                if (lastKnownStatus != WAITING && lastKnownStatus != RUNNING) {
+                    Assert.fail("invalid task status change notification");
+                }
+                break;
             case SUBMITTED:
                 if (lastKnownStatus != SCHEDULED) {
                     Assert.fail("invalid task status change notification");

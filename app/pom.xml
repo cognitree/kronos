@@ -30,7 +30,7 @@
     <artifactId>app</artifactId>
 
     <properties>
-        <jetty.version>9.4.11.v20180605</jetty.version>
+        <jetty.version>9.4.15.v20190215</jetty.version>
         <commons-cli.version>1.4</commons-cli.version>
     </properties>
 
@@ -94,6 +94,11 @@
         <dependency>
             <groupId>com.cognitree.kronos</groupId>
             <artifactId>spark-handler</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cognitree.kronos</groupId>
+            <artifactId>mongo-store</artifactId>
             <version>${project.version}</version>
         </dependency>
         <!-- extensions end -->

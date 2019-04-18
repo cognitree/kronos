@@ -22,8 +22,10 @@ import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.TaskId;
 import com.cognitree.kronos.scheduler.graph.TopologicalSort;
+import com.cognitree.kronos.scheduler.model.FixedDelaySchedule;
 import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.scheduler.model.JobId;
+import com.cognitree.kronos.scheduler.model.Schedule;
 import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.Workflow.WorkflowTask;
 import com.cognitree.kronos.scheduler.model.WorkflowId;
@@ -64,6 +66,8 @@ import static org.quartz.impl.DirectSchedulerFactory.DEFAULT_SCHEDULER_NAME;
 public final class WorkflowSchedulerService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(WorkflowSchedulerService.class);
 
+    // any CRUD operation on scheduler should be synchronized to avoid issues while pausing and resuming a workflow
+    // applicable mostly for fixed delay schedule as it deletes the old trigger and creates a new one for each run.
     private Scheduler scheduler;
 
     public static WorkflowSchedulerService getService() {
@@ -101,7 +105,7 @@ public final class WorkflowSchedulerService implements Service {
         addJob(workflow, true);
     }
 
-    private void addJob(Workflow workflow, boolean replace) throws SchedulerException {
+    private synchronized void addJob(Workflow workflow, boolean replace) throws SchedulerException {
         JobDataMap jobDataMap = new JobDataMap();
         jobDataMap.put("namespace", workflow.getNamespace());
         jobDataMap.put("workflowName", workflow.getName());
@@ -113,7 +117,7 @@ public final class WorkflowSchedulerService implements Service {
         scheduler.addJob(jobDetail, replace);
     }
 
-    void add(WorkflowTrigger workflowTrigger)
+    synchronized void add(WorkflowTrigger workflowTrigger)
             throws SchedulerException, ParseException {
         JobDataMap jobDataMap = new JobDataMap();
         jobDataMap.put("triggerName", workflowTrigger.getName());
@@ -123,12 +127,12 @@ public final class WorkflowSchedulerService implements Service {
         scheduler.scheduleJob(trigger);
     }
 
-    void resume(WorkflowTrigger workflowTrigger) throws SchedulerException {
+    synchronized void resume(WorkflowTrigger workflowTrigger) throws SchedulerException {
         logger.info("Received request to resume workflow trigger {}", workflowTrigger);
         scheduler.resumeTrigger(getTriggerKey(workflowTrigger));
     }
 
-    void pause(WorkflowTrigger workflowTrigger) throws SchedulerException {
+    synchronized void pause(WorkflowTrigger workflowTrigger) throws SchedulerException {
         logger.info("Received request to pause workflow trigger {}", workflowTrigger);
         scheduler.pauseTrigger(getTriggerKey(workflowTrigger));
     }
@@ -177,7 +181,7 @@ public final class WorkflowSchedulerService implements Service {
         return topologicalSort.sort();
     }
 
-    void delete(WorkflowId workflowId) throws SchedulerException {
+    synchronized void delete(WorkflowId workflowId) throws SchedulerException {
         logger.info("Received request to delete quartz job for workflow {}", workflowId);
         final JobKey jobKey = getJobKey(workflowId);
         if (!scheduler.isInStandbyMode() && scheduler.checkExists(jobKey)) {
@@ -186,7 +190,7 @@ public final class WorkflowSchedulerService implements Service {
         }
     }
 
-    void delete(WorkflowTriggerId workflowTriggerId) throws SchedulerException {
+    synchronized void delete(WorkflowTriggerId workflowTriggerId) throws SchedulerException {
         logger.info("Received request to delete quartz trigger for workflow trigger {}", workflowTriggerId);
         final TriggerKey triggerKey = getTriggerKey(workflowTriggerId);
         if (!scheduler.isInStandbyMode() && scheduler.checkExists(triggerKey)) {
@@ -209,6 +213,36 @@ public final class WorkflowSchedulerService implements Service {
     // used in junit
     Scheduler getScheduler() {
         return scheduler;
+    }
+
+    private boolean shouldReschedule(WorkflowTrigger workflowTrigger) {
+        Schedule schedule = workflowTrigger.getSchedule();
+        if (schedule.getType() == Schedule.Type.fixed) {
+            long nextTriggerTime = System.currentTimeMillis() +
+                    ((FixedDelaySchedule) workflowTrigger.getSchedule()).getInterval();
+            return workflowTrigger.getEndAt() == null || nextTriggerTime < workflowTrigger.getEndAt();
+        }
+        return false;
+    }
+
+    private synchronized void reschedule(WorkflowTrigger workflowTrigger) {
+        if (workflowTrigger.getSchedule().getType().equals(Schedule.Type.fixed)) {
+            try {
+                workflowTrigger = WorkflowTriggerService.getService().get(workflowTrigger);
+                if (!workflowTrigger.isEnabled()) {
+                    scheduler.standby();
+                    WorkflowSchedulerService.getService().delete(workflowTrigger);
+                    WorkflowSchedulerService.getService().add(workflowTrigger);
+                    WorkflowSchedulerService.getService().pause(workflowTrigger);
+                    scheduler.start();
+                } else {
+                    WorkflowSchedulerService.getService().delete(workflowTrigger);
+                    WorkflowSchedulerService.getService().add(workflowTrigger);
+                }
+            } catch (SchedulerException | ParseException | ServiceException | ValidationException e) {
+                logger.error("Error rescheduling trigger {} ", workflowTrigger.getIdentity(), e);
+            }
+        }
     }
 
     @Override
@@ -265,6 +299,12 @@ public final class WorkflowSchedulerService implements Service {
                             .allMatch(workflowTask -> workflowTask.getStatus() == Task.Status.SUCCESSFUL);
                     final Job.Status status = isSuccessful ? SUCCESSFUL : FAILED;
                     JobService.getService().updateStatus(JobId.build(namespace, jobId, workflow), status);
+                    Job job = JobService.getService().get(JobId.build(namespace, jobId, workflow));
+                    WorkflowTrigger workflowTrigger = WorkflowTriggerService.getService()
+                            .get(WorkflowTriggerId.build(namespace, job.getTrigger(), job.getWorkflow()));
+                    if (workflowTrigger != null && WorkflowSchedulerService.getService().shouldReschedule(workflowTrigger)) {
+                        WorkflowSchedulerService.getService().reschedule(workflowTrigger);
+                    }
                 }
             } catch (ServiceException | ValidationException e) {
                 logger.error("Error handling status change for task {}, from {} to {}", taskId, from, to, e);
@@ -281,11 +321,14 @@ public final class WorkflowSchedulerService implements Service {
                 final String workflowName = workflowDataMap.getString("workflowName");
                 final JobDataMap triggerDataMap = trigger.getJobDataMap();
                 final String triggerName = triggerDataMap.getString("triggerName");
-                logger.info("Trigger {} for workflow {} under namespace {} has completed execution, " +
-                        "deleting it from store", triggerName, workflowName, namespace);
                 try {
-                    WorkflowTriggerService.getService()
-                            .delete(WorkflowTriggerId.build(namespace, triggerName, workflowName));
+                    WorkflowTriggerId triggerId = WorkflowTriggerId.build(namespace, triggerName, workflowName);
+                    WorkflowTrigger workflowTrigger = WorkflowTriggerService.getService().get(triggerId);
+                    if (!shouldReschedule(workflowTrigger)) {
+                        logger.info("Trigger {} for workflow {} under namespace {} has completed execution, " +
+                                "deleting it from store", triggerName, workflowName, namespace);
+                        WorkflowTriggerService.getService().delete(triggerId);
+                    }
                 } catch (SchedulerException | ServiceException | ValidationException e) {
                     logger.warn("Error deleting trigger {} for workflow {} under namespace {}",
                             triggerName, workflowName, namespace, e);

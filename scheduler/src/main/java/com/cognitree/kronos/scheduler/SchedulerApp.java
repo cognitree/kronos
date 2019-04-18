@@ -67,8 +67,13 @@ public class SchedulerApp {
         JobService jobService = new JobService();
         WorkflowTriggerService workflowTriggerService = new WorkflowTriggerService();
         MailService mailService = new MailService(schedulerConfig.getMailConfig());
-        WorkflowSchedulerService workflowSchedulerService = new WorkflowSchedulerService();
+        // The order between task scheduler and workflow scheduler service is of importance
+        // task scheduler service should be started before workflow scheduler service.
+        // Workflow scheduler services starts the quartz scheduler which in turn might schedule some tasks
+        // based on misfire policies and if the task scheduler service is not initialized that, it will result in NPE.
         TaskSchedulerService taskSchedulerService = new TaskSchedulerService(queueConfig);
+        WorkflowSchedulerService workflowSchedulerService = new WorkflowSchedulerService();
+        ConfigurationService configurationService = new ConfigurationService(queueConfig);
 
         logger.info("Initializing scheduler app");
         // initialize all service
@@ -79,8 +84,9 @@ public class SchedulerApp {
         jobService.init();
         workflowTriggerService.init();
         mailService.init();
-        workflowSchedulerService.init();
         taskSchedulerService.init();
+        workflowSchedulerService.init();
+        configurationService.init();
 
         logger.info("Starting scheduler app");
         // start all service
@@ -91,13 +97,17 @@ public class SchedulerApp {
         jobService.start();
         workflowTriggerService.start();
         mailService.start();
-        workflowSchedulerService.start();
         taskSchedulerService.start();
+        workflowSchedulerService.start();
+        configurationService.start();
     }
 
     public void stop() {
         logger.info("Stopping scheduler app");
         // stop services in the reverse order
+        if (ConfigurationService.getService() != null) {
+            ConfigurationService.getService().stop();
+        }
         if (WorkflowSchedulerService.getService() != null) {
             WorkflowSchedulerService.getService().stop();
         }

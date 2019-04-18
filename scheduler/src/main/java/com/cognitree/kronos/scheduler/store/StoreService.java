@@ -32,6 +32,7 @@ public abstract class StoreService implements Service {
 
     public StoreService(ObjectNode config) {
         this.config = config;
+        ServiceProvider.registerService(this);
     }
 
     @Override
