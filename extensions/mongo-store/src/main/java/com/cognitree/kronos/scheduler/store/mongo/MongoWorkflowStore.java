@@ -18,26 +18,26 @@ import static com.mongodb.client.model.Updates.set;
 /**
  * A standard MongoDB based implementation of {@link WorkflowStore}.
  */
-public class MongoWorkflowStore extends MongoStore implements WorkflowStore {
+public class MongoWorkflowStore extends MongoStore<Workflow> implements WorkflowStore {
 
     private static final Logger logger = LoggerFactory.getLogger(MongoWorkflowStore.class);
 
     private static final String COLLECTION_NAME = "workflows";
 
     MongoWorkflowStore(MongoClient mongoClient) {
-        super(mongoClient);
+        super(mongoClient, Workflow.class);
     }
 
     @Override
     public void store(Workflow workflow) throws StoreException {
         logger.debug("Received request to store workflow {}", workflow);
-        insertOne(workflow.getNamespace(), COLLECTION_NAME, workflow, Workflow.class);
+        insertOne(workflow.getNamespace(), COLLECTION_NAME, workflow);
     }
 
     @Override
     public List<Workflow> load(String namespace) throws RuntimeException, StoreException {
         logger.debug("Received request to get all workflow under namespace {}", namespace);
-        return findMany(namespace, COLLECTION_NAME, eq("namespace", namespace), Workflow.class);
+        return findMany(namespace, COLLECTION_NAME, eq("namespace", namespace));
     }
 
     @Override
@@ -46,8 +46,7 @@ public class MongoWorkflowStore extends MongoStore implements WorkflowStore {
         return findOne(workflowId.getNamespace(), COLLECTION_NAME,
                 and(
                         eq("name", workflowId.getName()),
-                        eq("namespace", workflowId.getNamespace())),
-                Workflow.class);
+                        eq("namespace", workflowId.getNamespace())));
     }
 
     @Override
@@ -57,8 +56,7 @@ public class MongoWorkflowStore extends MongoStore implements WorkflowStore {
                 eq("name", workflow.getName()),
                 combine(
                         set("description", workflow.getDescription()),
-                        set("tasks", workflow.getTasks())),
-                Workflow.class);
+                        set("tasks", workflow.getTasks())));
     }
 
     @Override
@@ -67,7 +65,6 @@ public class MongoWorkflowStore extends MongoStore implements WorkflowStore {
         deleteOne(workflowId.getNamespace(), COLLECTION_NAME,
                 and(
                         eq("name", workflowId.getName()),
-                        eq("namespace", workflowId.getNamespace())),
-                Workflow.class);
+                        eq("namespace", workflowId.getNamespace())));
     }
 }

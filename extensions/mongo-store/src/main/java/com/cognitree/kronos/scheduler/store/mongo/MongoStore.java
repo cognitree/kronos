@@ -3,6 +3,7 @@ package com.cognitree.kronos.scheduler.store.mongo;
 import com.cognitree.kronos.scheduler.store.StoreException;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,19 +11,21 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MongoStore {
+public class MongoStore<T> {
 
     private static final Logger logger = LoggerFactory.getLogger(MongoStore.class);
 
     private final MongoClient mongoClient;
+    private final Class<T> documentType;
 
-    MongoStore(MongoClient mongoClient) {
+    MongoStore(MongoClient mongoClient, Class<T> documentType) {
         this.mongoClient = mongoClient;
+        this.documentType = documentType;
     }
 
-    public <T> void insertOne(String database, String collection, T document, Class<T> documentType) throws StoreException {
+    public void insertOne(String database, String collection, T document) throws StoreException {
         try {
-            getCollection(database, collection, documentType).insertOne(document);
+            getCollection(database, collection).insertOne(document);
         } catch (Exception e) {
             logger.error("Error storing document {} into database {}, collection {}",
                     document, database, collection, e);
@@ -30,9 +33,9 @@ public class MongoStore {
         }
     }
 
-    public <T> T findOne(String database, String collection, Bson filter, Class<T> documentType) throws StoreException {
+    public T findOne(String database, String collection, Bson filter) throws StoreException {
         try {
-            return getCollection(database, collection, documentType).find(filter).first();
+            return getCollection(database, collection).find(filter).first();
         } catch (Exception e) {
             logger.error("Error finding document with filter {} in database {}, collection {}",
                     filter, database, collection, e);
@@ -40,9 +43,9 @@ public class MongoStore {
         }
     }
 
-    public <T> ArrayList<T> findMany(String database, String collection, Bson filter, Class<T> documentType) throws StoreException {
+    public ArrayList<T> findMany(String database, String collection, Bson filter) throws StoreException {
         try {
-            return getCollection(database, collection, documentType).find(filter).into(new ArrayList<>());
+            return getCollection(database, collection).find(filter).into(new ArrayList<>());
         } catch (Exception e) {
             logger.error("Error finding document with filter {} in database {}, collection {}",
                     filter, database, collection, e);
@@ -50,9 +53,9 @@ public class MongoStore {
         }
     }
 
-    public <T> ArrayList<T> findAll(String database, String collection, Class<T> documentType) throws StoreException {
+    public ArrayList<T> findAll(String database, String collection) throws StoreException {
         try {
-            return getCollection(database, collection, documentType).find().into(new ArrayList<>());
+            return getCollection(database, collection).find().into(new ArrayList<>());
         } catch (Exception e) {
             logger.error("Error finding all document in database {}, collection {}", database, collection, e);
             throw new StoreException(e);
@@ -60,9 +63,9 @@ public class MongoStore {
     }
 
 
-    public <T> void findOneAndUpdate(String database, String collection, Bson filter, Bson update, Class<T> documentType) throws StoreException {
+    public void findOneAndUpdate(String database, String collection, Bson filter, Bson update) throws StoreException {
         try {
-            getCollection(database, collection, documentType).findOneAndUpdate(filter, update);
+            getCollection(database, collection).findOneAndUpdate(filter, update);
         } catch (Exception e) {
             logger.error("Error updating document with filter {}, update {} in database {}, collection {}",
                     filter, update, database, collection, e);
@@ -70,9 +73,9 @@ public class MongoStore {
         }
     }
 
-    public <T> void deleteOne(String database, String collection, Bson filter, Class<T> documentType) throws StoreException {
+    public void deleteOne(String database, String collection, Bson filter) throws StoreException {
         try {
-            getCollection(database, collection, documentType).deleteOne(filter);
+            getCollection(database, collection).deleteOne(filter);
         } catch (Exception e) {
             logger.error("Error deleting document {} from database {}, collection {}",
                     filter, database, collection, e);
@@ -80,9 +83,11 @@ public class MongoStore {
         }
     }
 
-    public <T> ArrayList<T> aggregate(String database, String collection, List<Bson> pipelines, Class<T> documentType) throws StoreException {
+    public ArrayList<Document> aggregate(String database, String collection, List<Bson> pipelines) throws StoreException {
         try {
-            return getCollection(database, collection, documentType).aggregate(pipelines).into(new ArrayList<>());
+            MongoCollection<Document> mongoCollection =
+                    mongoClient.getDatabase(database).getCollection(collection, Document.class);
+            return mongoCollection.aggregate(pipelines).into(new ArrayList<>());
         } catch (Exception e) {
             logger.error("Error aggregating pipelines {} in database {}, collection {}", pipelines,
                     database, collection, e);
@@ -99,7 +104,7 @@ public class MongoStore {
         }
     }
 
-    public <T> MongoCollection<T> getCollection(String database, String collection, Class<T> documentType) {
+    public MongoCollection<T> getCollection(String database, String collection) {
         return mongoClient.getDatabase(database).getCollection(collection, documentType);
     }
 }

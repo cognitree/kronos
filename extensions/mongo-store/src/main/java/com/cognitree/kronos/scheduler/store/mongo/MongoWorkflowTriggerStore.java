@@ -18,26 +18,26 @@ import static com.mongodb.client.model.Updates.set;
 /**
  * A standard MongoDB based implementation of {@link WorkflowTrigger}.
  */
-public class MongoWorkflowTriggerStore extends MongoStore implements WorkflowTriggerStore {
+public class MongoWorkflowTriggerStore extends MongoStore<WorkflowTrigger> implements WorkflowTriggerStore {
 
     private static final Logger logger = LoggerFactory.getLogger(MongoWorkflowTriggerStore.class);
 
     private static final String COLLECTION_NAME = "workflow_triggers";
 
     MongoWorkflowTriggerStore(MongoClient mongoClient) {
-        super(mongoClient);
+        super(mongoClient, WorkflowTrigger.class);
     }
 
     @Override
     public void store(WorkflowTrigger workflowTrigger) throws StoreException {
         logger.debug("Received request to store workflow trigger {}", workflowTrigger);
-        insertOne(workflowTrigger.getNamespace(), COLLECTION_NAME, workflowTrigger, WorkflowTrigger.class);
+        insertOne(workflowTrigger.getNamespace(), COLLECTION_NAME, workflowTrigger);
     }
 
     @Override
     public List<WorkflowTrigger> load(String namespace) throws StoreException {
         logger.debug("Received request to get all workflow triggers under namespace {}", namespace);
-        return findMany(namespace, COLLECTION_NAME, eq("namespace", namespace), WorkflowTrigger.class);
+        return findMany(namespace, COLLECTION_NAME, eq("namespace", namespace));
     }
 
     @Override
@@ -47,8 +47,7 @@ public class MongoWorkflowTriggerStore extends MongoStore implements WorkflowTri
         return findMany(namespace, COLLECTION_NAME,
                 and(
                         eq("workflow", workflowName),
-                        eq("namespace", namespace)),
-                WorkflowTrigger.class);
+                        eq("namespace", namespace)));
     }
 
     @Override
@@ -60,8 +59,7 @@ public class MongoWorkflowTriggerStore extends MongoStore implements WorkflowTri
                 and(
                         eq("workflow", workflowName),
                         eq("enabled", enabled),
-                        eq("namespace", namespace)),
-                WorkflowTrigger.class);
+                        eq("namespace", namespace)));
     }
 
     @Override
@@ -71,8 +69,7 @@ public class MongoWorkflowTriggerStore extends MongoStore implements WorkflowTri
                 and(
                         eq("name", workflowTriggerId.getName()),
                         eq("workflow", workflowTriggerId.getWorkflow()),
-                        eq("namespace", workflowTriggerId.getNamespace())),
-                WorkflowTrigger.class);
+                        eq("namespace", workflowTriggerId.getNamespace())));
     }
 
     @Override
@@ -86,8 +83,7 @@ public class MongoWorkflowTriggerStore extends MongoStore implements WorkflowTri
                         set("startAt", workflowTrigger.getStartAt()),
                         set("schedule", workflowTrigger.getSchedule()),
                         set("endAt", workflowTrigger.getEndAt()),
-                        set("enabled", workflowTrigger.isEnabled())),
-                WorkflowTrigger.class);
+                        set("enabled", workflowTrigger.isEnabled())));
     }
 
     @Override
@@ -97,7 +93,6 @@ public class MongoWorkflowTriggerStore extends MongoStore implements WorkflowTri
                 and(
                         eq("name", workflowTriggerId.getName()),
                         eq("workflow", workflowTriggerId.getWorkflow()),
-                        eq("namespace", workflowTriggerId.getNamespace())),
-                WorkflowTrigger.class);
+                        eq("namespace", workflowTriggerId.getNamespace())));
     }
 }

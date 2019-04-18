@@ -28,26 +28,26 @@ import static com.mongodb.client.model.Updates.set;
 /**
  * A standard MongoDB based implementation of {@link TaskStore}.
  */
-public class MongoTaskStore extends MongoStore implements TaskStore {
+public class MongoTaskStore extends MongoStore<Task> implements TaskStore {
 
     private static final Logger logger = LoggerFactory.getLogger(MongoTaskStore.class);
 
     private static final String COLLECTION_NAME = "tasks";
 
     MongoTaskStore(MongoClient mongoClient) {
-        super(mongoClient);
+        super(mongoClient, Task.class);
     }
 
     @Override
     public void store(Task task) throws StoreException {
         logger.debug("Received request to store task {}", task);
-        insertOne(task.getNamespace(), COLLECTION_NAME, task, Task.class);
+        insertOne(task.getNamespace(), COLLECTION_NAME, task);
     }
 
     @Override
     public List<Task> load(String namespace) throws StoreException {
         logger.debug("Received request to get all tasks under namespace {}", namespace);
-        return findAll(namespace, COLLECTION_NAME, Task.class);
+        return findAll(namespace, COLLECTION_NAME);
     }
 
     @Override
@@ -58,8 +58,7 @@ public class MongoTaskStore extends MongoStore implements TaskStore {
                         eq("name", taskId.getName()),
                         eq("job", taskId.getJob()),
                         eq("workflow", taskId.getWorkflow()),
-                        eq("namespace", taskId.getNamespace())),
-                Task.class);
+                        eq("namespace", taskId.getNamespace())));
     }
 
     @Override
@@ -70,8 +69,7 @@ public class MongoTaskStore extends MongoStore implements TaskStore {
                 and(
                         eq("job", jobId),
                         eq("workflow", workflowName),
-                        eq("namespace", namespace)),
-                Task.class);
+                        eq("namespace", namespace)));
     }
 
     @Override
@@ -80,8 +78,7 @@ public class MongoTaskStore extends MongoStore implements TaskStore {
         return findMany(namespace, COLLECTION_NAME,
                 and(
                         in("status", statuses),
-                        eq("namespace", namespace)),
-                Task.class);
+                        eq("namespace", namespace)));
     }
 
     @Override
@@ -115,7 +112,7 @@ public class MongoTaskStore extends MongoStore implements TaskStore {
     }
 
     private HashMap<Task.Status, Integer> aggregateByStatus(String namespace, ArrayList<Bson> pipelines) throws StoreException {
-        ArrayList<Document> aggregates = aggregate(namespace, COLLECTION_NAME, pipelines, Document.class);
+        ArrayList<Document> aggregates = aggregate(namespace, COLLECTION_NAME, pipelines);
         HashMap<Task.Status, Integer> statusMap = new HashMap<>();
         for (Document aggregate : aggregates) {
             Task.Status status = Task.Status.valueOf(aggregate.get("_id").toString());
@@ -137,13 +134,12 @@ public class MongoTaskStore extends MongoStore implements TaskStore {
                         set("statusMessage", task.getStatusMessage()),
                         set("submittedAt", task.getSubmittedAt()),
                         set("completedAt", task.getCompletedAt()),
-                        set("context", task.getContext())),
-                Task.class);
+                        set("context", task.getContext())));
     }
 
     @Override
     public void delete(TaskId taskId) throws StoreException {
         logger.debug("Received request to delete task with id {}", taskId);
-        deleteOne(taskId.getNamespace(), COLLECTION_NAME, eq("job", taskId.getJob()), Task.class);
+        deleteOne(taskId.getNamespace(), COLLECTION_NAME, eq("job", taskId.getJob()));
     }
 }

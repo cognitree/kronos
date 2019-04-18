@@ -16,7 +16,7 @@ import static com.mongodb.client.model.Updates.set;
 /**
  * A standard MongoDB based implementation of {@link NamespaceStore}.
  */
-public class MongoNamespaceStore extends MongoStore implements NamespaceStore {
+public class MongoNamespaceStore extends MongoStore<Namespace> implements NamespaceStore {
 
     private static final Logger logger = LoggerFactory.getLogger(MongoNamespaceStore.class);
 
@@ -24,25 +24,25 @@ public class MongoNamespaceStore extends MongoStore implements NamespaceStore {
     private static final String COLLECTION_NAME = "config";
 
     MongoNamespaceStore(MongoClient mongoClient) {
-        super(mongoClient);
+        super(mongoClient, Namespace.class);
     }
 
     @Override
     public void store(Namespace namespace) throws StoreException {
         logger.debug("Received request to store namespace {}", namespace);
-        insertOne(DATABASE_NAME, COLLECTION_NAME, namespace, Namespace.class);
+        insertOne(DATABASE_NAME, COLLECTION_NAME, namespace);
     }
 
     @Override
     public List<Namespace> load() throws StoreException {
         logger.debug("Received request to get all namespaces");
-        return findAll(DATABASE_NAME, COLLECTION_NAME, Namespace.class);
+        return findAll(DATABASE_NAME, COLLECTION_NAME);
     }
 
     @Override
     public Namespace load(NamespaceId namespaceId) throws StoreException {
         logger.debug("Received request to load namespace with id {}", namespaceId);
-        return findOne(DATABASE_NAME, COLLECTION_NAME, eq("name", namespaceId.getName()), Namespace.class);
+        return findOne(DATABASE_NAME, COLLECTION_NAME, eq("name", namespaceId.getName()));
     }
 
     @Override
@@ -50,14 +50,13 @@ public class MongoNamespaceStore extends MongoStore implements NamespaceStore {
         logger.debug("Received request to update namespace to {}", namespace);
         findOneAndUpdate(DATABASE_NAME, COLLECTION_NAME,
                 eq("name", namespace.getName()),
-                set("description", namespace.getDescription()),
-                Namespace.class);
+                set("description", namespace.getDescription()));
     }
 
     @Override
     public void delete(NamespaceId namespaceId) throws StoreException {
         logger.debug("Received request to delete job with id {}", namespaceId);
-        deleteOne(DATABASE_NAME, COLLECTION_NAME, eq("name", namespaceId.getName()), Namespace.class);
+        deleteOne(DATABASE_NAME, COLLECTION_NAME, eq("name", namespaceId.getName()));
         dropDatabase(DATABASE_NAME);
     }
 }

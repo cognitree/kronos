@@ -28,26 +28,26 @@ import static com.mongodb.client.model.Updates.set;
 /**
  * A standard MongoDB based implementation of {@link JobStore}.
  */
-public class MongoJobStore extends MongoStore implements JobStore {
+public class MongoJobStore extends MongoStore<Job> implements JobStore {
 
     private static final Logger logger = LoggerFactory.getLogger(MongoJobStore.class);
 
     private static final String COLLECTION_NAME = "jobs";
 
     MongoJobStore(MongoClient mongoClient) {
-        super(mongoClient);
+        super(mongoClient, Job.class);
     }
 
     @Override
     public void store(Job job) throws StoreException {
         logger.debug("Received request to store job {}", job);
-        insertOne(job.getNamespace(), COLLECTION_NAME, job, Job.class);
+        insertOne(job.getNamespace(), COLLECTION_NAME, job);
     }
 
     @Override
     public List<Job> load(String namespace) throws StoreException {
         logger.debug("Received request to get all jobs under namespace {}", namespace);
-        return findMany(namespace, COLLECTION_NAME, eq("namespace", namespace), Job.class);
+        return findMany(namespace, COLLECTION_NAME, eq("namespace", namespace));
     }
 
     @Override
@@ -58,8 +58,7 @@ public class MongoJobStore extends MongoStore implements JobStore {
                 and(
                         eq("namespace", namespace),
                         lt("createdAt", createdBefore),
-                        gt("createdAt", createdAfter)),
-                Job.class);
+                        gt("createdAt", createdAfter)));
     }
 
     @Override
@@ -71,8 +70,7 @@ public class MongoJobStore extends MongoStore implements JobStore {
                         eq("namespace", namespace),
                         eq("workflow", workflowName),
                         lt("createdAt", createdBefore),
-                        gt("createdAt", createdAfter)),
-                Job.class);
+                        gt("createdAt", createdAfter)));
     }
 
     @Override
@@ -86,8 +84,7 @@ public class MongoJobStore extends MongoStore implements JobStore {
                         eq("workflow", workflowName),
                         eq("trigger", triggerName),
                         lt("createdAt", createdBefore),
-                        gt("createdAt", createdAfter)),
-                Job.class);
+                        gt("createdAt", createdAfter)));
     }
 
     @Override
@@ -100,8 +97,7 @@ public class MongoJobStore extends MongoStore implements JobStore {
                         eq("namespace", namespace),
                         in("status", statuses),
                         lt("createdAt", createdBefore),
-                        gt("createdAt", createdAfter)),
-                Job.class);
+                        gt("createdAt", createdAfter)));
     }
 
     @Override
@@ -115,8 +111,7 @@ public class MongoJobStore extends MongoStore implements JobStore {
                         eq("workflow", workflowName),
                         in("status", statuses),
                         lt("createdAt", createdBefore),
-                        gt("createdAt", createdAfter)),
-                Job.class);
+                        gt("createdAt", createdAfter)));
     }
 
     @Override
@@ -133,8 +128,7 @@ public class MongoJobStore extends MongoStore implements JobStore {
                         eq("trigger", triggerName),
                         in("status", statuses),
                         lt("createdAt", createdBefore),
-                        gt("createdAt", createdAfter)),
-                Job.class);
+                        gt("createdAt", createdAfter)));
 
     }
 
@@ -169,7 +163,7 @@ public class MongoJobStore extends MongoStore implements JobStore {
     }
 
     private Map<Job.Status, Integer> aggregateByStatus(String namespace, ArrayList<Bson> pipelines) throws StoreException {
-        ArrayList<Document> aggregates = aggregate(namespace, COLLECTION_NAME, pipelines, Document.class);
+        ArrayList<Document> aggregates = aggregate(namespace, COLLECTION_NAME, pipelines);
         HashMap<Job.Status, Integer> statusMap = new HashMap<>();
         for (Document aggregate : aggregates) {
             Job.Status status = Job.Status.valueOf(aggregate.get("_id").toString());
@@ -181,7 +175,7 @@ public class MongoJobStore extends MongoStore implements JobStore {
     @Override
     public Job load(JobId jobId) throws StoreException {
         logger.debug("Received request to delete job with id {}", jobId);
-        return findOne(jobId.getNamespace(), COLLECTION_NAME, eq("_id", jobId.getId()), Job.class);
+        return findOne(jobId.getNamespace(), COLLECTION_NAME, eq("_id", jobId.getId()));
     }
 
     @Override
@@ -192,8 +186,7 @@ public class MongoJobStore extends MongoStore implements JobStore {
                 combine(
                         set("status", job.getStatus().toString()),
                         set("createdAt", job.getCreatedAt()),
-                        set("completedAt", job.getCompletedAt())),
-                Job.class);
+                        set("completedAt", job.getCompletedAt())));
     }
 
     @Override
@@ -203,8 +196,7 @@ public class MongoJobStore extends MongoStore implements JobStore {
                 and(
                         eq("_id", jobId.getId()),
                         eq("workflow", jobId.getWorkflow()),
-                        eq("namespace", jobId.getNamespace())),
-                Job.class);
+                        eq("namespace", jobId.getNamespace())));
     }
 
     @Override
@@ -214,7 +206,6 @@ public class MongoJobStore extends MongoStore implements JobStore {
         deleteOne(namespace, COLLECTION_NAME,
                 and(
                         eq("namespace", namespace),
-                        eq("workflow", workflowName)),
-                Job.class);
+                        eq("workflow", workflowName)));
     }
 }
