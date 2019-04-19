@@ -35,7 +35,8 @@ public class ConfigurationService implements Service {
     }
 
     private final ConsumerConfig consumerConfig;
-    private final String configurationQueue;
+    // used in junit test case
+    final String configurationQueue;
 
     private Consumer consumer;
     private long pollInterval;
