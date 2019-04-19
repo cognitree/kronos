@@ -98,6 +98,13 @@ public final class TaskSchedulerService implements Service {
     private TaskProvider taskProvider;
 
     public TaskSchedulerService(QueueConfig queueConfig) {
+        if (queueConfig.getTaskStatusQueue() == null || queueConfig.getConsumerConfig() == null ||
+                queueConfig.getProducerConfig() == null) {
+            logger.error("missing one or more mandatory configuration: " +
+                    "taskStatusQueue/ consumerConfig/ producerConfig");
+            throw new IllegalArgumentException("missing one or more mandatory configuration: " +
+                    "taskStatusQueue/ consumerConfig/ producerConfig");
+        }
         this.producerConfig = queueConfig.getProducerConfig();
         this.consumerConfig = queueConfig.getConsumerConfig();
         this.statusQueue = queueConfig.getTaskStatusQueue();

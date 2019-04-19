@@ -1,0 +1,8 @@
+{
+  "name": "WorkflowTrigger",
+  "schedule": {
+    "type": "calendar",
+    "repeatInterval": 5,
+    "repeatIntervalUnit":"MINUTE"
+  }
+}

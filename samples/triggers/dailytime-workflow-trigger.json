@@ -1,0 +1,25 @@
+{
+  "name": "WorkflowTrigger",
+  "schedule": {
+    "type": "daily_time",
+    "repeatInterval": 5,
+    "repeatIntervalUnit": "MINUTE",
+    "startTimeOfDay": {
+      "hour": 9,
+      "minute": 0,
+      "second": 0
+    },
+    "endTimeOfDay": {
+      "hour": 18,
+      "minute": 0,
+      "second": 0
+    },
+    "daysOfWeek": [
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
+  }
+}

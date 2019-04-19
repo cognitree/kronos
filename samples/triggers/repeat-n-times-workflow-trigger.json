@@ -1,0 +1,8 @@
+{
+  "name": "WorkflowTrigger",
+  "schedule": {
+    "type": "simple",
+    "repeatCount": 5,
+    "repeatIntervalInMs": 30000
+  }
+}

@@ -219,7 +219,7 @@ public final class WorkflowSchedulerService implements Service {
         Schedule schedule = workflowTrigger.getSchedule();
         if (schedule.getType() == Schedule.Type.fixed) {
             long nextTriggerTime = System.currentTimeMillis() +
-                    ((FixedDelaySchedule) workflowTrigger.getSchedule()).getInterval();
+                    ((FixedDelaySchedule) workflowTrigger.getSchedule()).getIntervalInMs();
             return workflowTrigger.getEndAt() == null || nextTriggerTime < workflowTrigger.getEndAt();
         }
         return false;

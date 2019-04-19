@@ -76,7 +76,7 @@ public class TriggerHelper {
         if (workflowTrigger.getSchedule().getType().equals(Schedule.Type.fixed)) {
             long currentTimeMillis = System.currentTimeMillis();
             long startAt = workflowTrigger.getStartAt() == null ? currentTimeMillis : workflowTrigger.getStartAt();
-            int interval = ((FixedDelaySchedule) workflowTrigger.getSchedule()).getInterval();
+            long interval = ((FixedDelaySchedule) workflowTrigger.getSchedule()).getIntervalInMs();
             Date triggerStartTime;
             if (startAt > currentTimeMillis) {
                 triggerStartTime = new Date(startAt + interval);
