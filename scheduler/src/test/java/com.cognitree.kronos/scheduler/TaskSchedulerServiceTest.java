@@ -2,20 +2,29 @@ package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.queue.QueueConfig;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class TaskSchedulerServiceTest {
-    private TaskSchedulerService taskSchedulerService;
 
-    @Before
-    public void setup() {
-        taskSchedulerService = new TaskSchedulerService(new QueueConfig());
+    private static final SchedulerApp SCHEDULER_APP = new SchedulerApp();
+
+    @BeforeClass
+    public static void start() throws Exception {
+        SCHEDULER_APP.start();
     }
+
+    @AfterClass
+    public static void stop() {
+        SCHEDULER_APP.stop();
+    }
+
 
     @Test
     public void updateTaskProperties() {
@@ -39,7 +48,7 @@ public class TaskSchedulerServiceTest {
         dependentTaskContext.put("taskA.start", 1230);
         dependentTaskContext.put("taskB.end", 1240);
 
-        taskSchedulerService.updateTaskProperties(task, dependentTaskContext);
+        TaskSchedulerService.getService().updateTaskProperties(task, dependentTaskContext);
 
         Assert.assertEquals(3, task.getProperties().size());
         Assert.assertEquals("default", task.getProperties().get("namespace"));

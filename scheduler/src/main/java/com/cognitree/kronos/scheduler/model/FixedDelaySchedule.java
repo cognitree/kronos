@@ -17,7 +17,7 @@ import static com.cognitree.kronos.scheduler.model.Schedule.Type.fixed;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FixedDelaySchedule extends Schedule {
     private Type type = fixed;
-    private int interval;
+    private long intervalInMs;
 
     @Override
     public Type getType() {
@@ -29,12 +29,12 @@ public class FixedDelaySchedule extends Schedule {
         this.type = type;
     }
 
-    public int getInterval() {
-        return interval;
+    public long getIntervalInMs() {
+        return intervalInMs;
     }
 
-    public void setInterval(int interval) {
-        this.interval = interval;
+    public void setIntervalInMs(long intervalInMs) {
+        this.intervalInMs = intervalInMs;
     }
 
     @Override
@@ -43,20 +43,20 @@ public class FixedDelaySchedule extends Schedule {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         FixedDelaySchedule that = (FixedDelaySchedule) o;
-        return interval == that.interval &&
+        return intervalInMs == that.intervalInMs &&
                 type == that.type;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), type, interval);
+        return Objects.hash(super.hashCode(), type, intervalInMs);
     }
 
     @Override
     public String toString() {
         return "FixedDelaySchedule{" +
                 "type=" + type +
-                ", interval=" + interval +
+                ", intervalInMs=" + intervalInMs +
                 '}';
     }
 }

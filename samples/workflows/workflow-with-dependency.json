@@ -1,0 +1,42 @@
+{
+  "name": "Workflow",
+  "description": "This workflow run three task dependant on each other",
+  "tasks": [
+    {
+      "name": "TaskOne",
+      "type": "shellCommand",
+      "properties": {
+        "cmd": "echo",
+        "args": "Hello from TaskOne",
+        "workingDir": "/tmp/",
+        "logDir": "/tmp/"
+      }
+    },
+    {
+      "name": "TaskTwo",
+      "type": "shellCommand",
+      "properties": {
+        "cmd": "sleep",
+        "args": 20,
+        "workingDir": "/tmp/",
+        "logDir": "/tmp/"
+      },
+      "dependsOn": [
+        "TaskOne"
+      ]
+    },
+    {
+      "name": "TaskThree",
+      "type": "shellCommand",
+      "properties": {
+        "cmd": "echo",
+        "args": "Hello from TaskThree",
+        "workingDir": "/tmp/",
+        "logDir": "/tmp/"
+      },
+      "dependsOn": [
+        "TaskTwo"
+      ]
+    }
+  ]
+}

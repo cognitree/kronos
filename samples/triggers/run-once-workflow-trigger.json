@@ -1,0 +1,6 @@
+{
+  "name": "WorkflowTrigger",
+  "schedule": {
+    "type": "simple"
+  }
+}
