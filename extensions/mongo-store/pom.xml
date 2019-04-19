@@ -5,7 +5,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>extensions</artifactId>
-        <groupId>com.cognitree.kronos</groupId>
+        <groupId>com.cognitree.kronos.extensions</groupId>
         <version>2.2</version>
     </parent>
 

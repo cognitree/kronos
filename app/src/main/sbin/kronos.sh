@@ -27,7 +27,7 @@ start(){
       ARGS="--mode $MODE --host $HOST --port $PORT --resourceBase $APP_HOME/webapp --contextPath / --descriptor $APP_HOME/webapp/WEB-INF/web.xml"
       ;;
   esac
-  java $HEAP_OPTS -cp "$APP_HOME/conf:$APP_HOME/lib/*" $MAIN_CLASS $ARGS >> "$LOG_DIR/$APP_NAME-stdout-`date +%Y%m%d`.log" 2>&1 &
+  java $HEAP_OPTS -cp "$APP_HOME/conf:$APP_HOME/lib/*:$APP_HOME/lib/ext/*" $MAIN_CLASS $ARGS >> "$LOG_DIR/$APP_NAME-stdout-`date +%Y%m%d`.log" 2>&1 &
   echo "$APP_NAME started: pid[`pgrep -f "mode $MODE"`]"
   echo "application logs available at $LOG_DIR/$APP_NAME-stdout-`date +%Y%m%d`.log"
 }

@@ -27,7 +27,7 @@
         <version>2.2</version>
     </parent>
 
-    <groupId>com.cognitree.kronos</groupId>
+    <groupId>com.cognitree.kronos.extensions</groupId>
     <artifactId>extensions</artifactId>
     <packaging>pom</packaging>
 
