@@ -49,7 +49,24 @@
             <directory>src/main/webapp</directory>
             <outputDirectory>webapp</outputDirectory>
         </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/swagger-ui-2.1.1/dist</directory>
+            <outputDirectory>webapp</outputDirectory>
+            <excludes>
+                <exclude>index.html</exclude>
+            </excludes>
+        </fileSet>
     </fileSets>
+    <files>
+        <file>
+            <source>${basedir}/src/main/webapp/index.html</source>
+            <outputDirectory>webapp</outputDirectory>
+        </file>
+        <file>
+            <source>${basedir}/src/main/webapp/swagger.json</source>
+            <outputDirectory>webapp</outputDirectory>
+        </file>
+    </files>
     <dependencySets>
         <dependencySet>
             <outputDirectory>/lib</outputDirectory>

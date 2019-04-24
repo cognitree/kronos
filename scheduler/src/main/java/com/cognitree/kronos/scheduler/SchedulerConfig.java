@@ -38,6 +38,11 @@ public class SchedulerConfig {
      */
     private MailConfig mailConfig;
 
+    /**
+     * enable {@link ConfigurationService} that consumes config updates from a specified queue and processes them
+     */
+    private boolean enableConfigurationService = false;
+
     public StoreServiceConfig getStoreServiceConfig() {
         return storeServiceConfig;
     }
@@ -54,19 +59,27 @@ public class SchedulerConfig {
         this.mailConfig = mailConfig;
     }
 
+    public boolean isEnableConfigurationService() {
+        return enableConfigurationService;
+    }
+
+    public void setEnableConfigurationService(boolean enableConfigurationService) {
+        this.enableConfigurationService = enableConfigurationService;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof SchedulerConfig)) return false;
+        if (o == null || getClass() != o.getClass()) return false;
         SchedulerConfig that = (SchedulerConfig) o;
-        return Objects.equals(storeServiceConfig, that.storeServiceConfig) &&
+        return enableConfigurationService == that.enableConfigurationService &&
+                Objects.equals(storeServiceConfig, that.storeServiceConfig) &&
                 Objects.equals(mailConfig, that.mailConfig);
     }
 
     @Override
     public int hashCode() {
-
-        return Objects.hash(storeServiceConfig, mailConfig);
+        return Objects.hash(storeServiceConfig, mailConfig, enableConfigurationService);
     }
 
     @Override
@@ -74,6 +87,7 @@ public class SchedulerConfig {
         return "SchedulerConfig{" +
                 "storeServiceConfig=" + storeServiceConfig +
                 ", mailConfig=" + mailConfig +
+                ", enableConfigurationService=" + enableConfigurationService +
                 '}';
     }
 }

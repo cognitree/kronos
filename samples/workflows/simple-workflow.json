@@ -1,0 +1,16 @@
+{
+  "name": "Workflow",
+  "description": "This workflow run a task a of type shell command",
+  "tasks": [
+    {
+      "name": "Task",
+      "type": "shellCommand",
+      "properties": {
+        "cmd": "echo",
+        "args": "Hello world",
+        "workingDir": "/tmp/",
+        "logDir": "/tmp/"
+      }
+    }
+  ]
+}

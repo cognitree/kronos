@@ -35,6 +35,7 @@ public class ConfigurationService implements Service {
     }
 
     private final ConsumerConfig consumerConfig;
+    // used in junit test case
     final String configurationQueue;
 
     private Consumer consumer;
@@ -47,6 +48,11 @@ public class ConfigurationService implements Service {
             Executors.newScheduledThreadPool(1);
 
     ConfigurationService(QueueConfig queueConfig) {
+        if (queueConfig.getConfigurationQueue() == null || queueConfig.getConsumerConfig() == null) {
+            logger.error("missing one or more mandatory configuration: configurationQueue/ consumerConfig ");
+            throw new IllegalArgumentException("missing one or more mandatory configuration: " +
+                    "configurationQueue/ consumerConfig");
+        }
         this.consumerConfig = queueConfig.getConsumerConfig();
         this.configurationQueue = queueConfig.getConfigurationQueue();
     }

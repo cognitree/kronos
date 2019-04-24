@@ -98,6 +98,13 @@ public final class TaskSchedulerService implements Service {
     private TaskProvider taskProvider;
 
     public TaskSchedulerService(QueueConfig queueConfig) {
+        if (queueConfig.getTaskStatusQueue() == null || queueConfig.getConsumerConfig() == null ||
+                queueConfig.getProducerConfig() == null) {
+            logger.error("missing one or more mandatory configuration: " +
+                    "taskStatusQueue/ consumerConfig/ producerConfig");
+            throw new IllegalArgumentException("missing one or more mandatory configuration: " +
+                    "taskStatusQueue/ consumerConfig/ producerConfig");
+        }
         this.producerConfig = queueConfig.getProducerConfig();
         this.consumerConfig = queueConfig.getConsumerConfig();
         this.statusQueue = queueConfig.getTaskStatusQueue();
@@ -295,6 +302,10 @@ public final class TaskSchedulerService implements Service {
 
     private void markDependentTasksAsSkipped(Task task, Status parentStatus) {
         for (Task dependentTask : taskProvider.getDependentTasks(task)) {
+            if (dependentTask.getStatus() == SKIPPED) {
+                logger.debug("dependent task is already marked as SKIPPED, ignore updating task status");
+                continue;
+            }
             if (parentStatus == FAILED) {
                 updateStatus(dependentTask, SKIPPED, FAILED_DEPENDEE_TASK);
             } else {

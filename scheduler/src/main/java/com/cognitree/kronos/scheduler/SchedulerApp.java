@@ -73,7 +73,6 @@ public class SchedulerApp {
         // based on misfire policies and if the task scheduler service is not initialized that, it will result in NPE.
         TaskSchedulerService taskSchedulerService = new TaskSchedulerService(queueConfig);
         WorkflowSchedulerService workflowSchedulerService = new WorkflowSchedulerService();
-        ConfigurationService configurationService = new ConfigurationService(queueConfig);
 
         logger.info("Initializing scheduler app");
         // initialize all service
@@ -86,7 +85,6 @@ public class SchedulerApp {
         mailService.init();
         taskSchedulerService.init();
         workflowSchedulerService.init();
-        configurationService.init();
 
         logger.info("Starting scheduler app");
         // start all service
@@ -99,15 +97,22 @@ public class SchedulerApp {
         mailService.start();
         taskSchedulerService.start();
         workflowSchedulerService.start();
-        configurationService.start();
+
+        startAddOnServices(schedulerConfig, queueConfig);
+    }
+
+    private void startAddOnServices(SchedulerConfig schedulerConfig, QueueConfig queueConfig) throws Exception {
+        if (schedulerConfig.isEnableConfigurationService()) {
+            ConfigurationService configurationService = new ConfigurationService(queueConfig);
+            configurationService.init();
+            configurationService.start();
+        }
     }
 
     public void stop() {
         logger.info("Stopping scheduler app");
         // stop services in the reverse order
-        if (ConfigurationService.getService() != null) {
-            ConfigurationService.getService().stop();
-        }
+        stopAddOnServices();
         if (WorkflowSchedulerService.getService() != null) {
             WorkflowSchedulerService.getService().stop();
         }
@@ -132,6 +137,12 @@ public class SchedulerApp {
         Service storeProviderService = ServiceProvider.getService(StoreService.class.getSimpleName());
         if (storeProviderService != null) {
             storeProviderService.stop();
+        }
+    }
+
+    private void stopAddOnServices() {
+        if (ConfigurationService.getService() != null) {
+            ConfigurationService.getService().stop();
         }
     }
 }
