@@ -72,6 +72,21 @@
             <outputDirectory>/lib</outputDirectory>
             <useProjectArtifact>true</useProjectArtifact>
             <scope>runtime</scope>
+            <excludes>
+                <exclude>com.cognitree.kronos.extensions:*</exclude>
+            </excludes>
+            <useTransitiveDependencies>true</useTransitiveDependencies>
+            <useTransitiveFiltering>true</useTransitiveFiltering>
+        </dependencySet>
+        <dependencySet>
+            <outputDirectory>/lib/ext</outputDirectory>
+            <useProjectArtifact>false</useProjectArtifact>
+            <scope>runtime</scope>
+            <includes>
+                <include>com.cognitree.kronos.extensions:*</include>
+            </includes>
+            <useTransitiveDependencies>true</useTransitiveDependencies>
+            <useTransitiveFiltering>true</useTransitiveFiltering>
         </dependencySet>
     </dependencySets>
 </assembly>
