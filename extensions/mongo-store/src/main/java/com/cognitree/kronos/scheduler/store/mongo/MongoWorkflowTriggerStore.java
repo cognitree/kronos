@@ -83,7 +83,8 @@ public class MongoWorkflowTriggerStore extends MongoStore<WorkflowTrigger> imple
                         set("startAt", workflowTrigger.getStartAt()),
                         set("schedule", workflowTrigger.getSchedule()),
                         set("endAt", workflowTrigger.getEndAt()),
-                        set("enabled", workflowTrigger.isEnabled())));
+                        set("enabled", workflowTrigger.isEnabled()),
+                        set("properties", workflowTrigger.getProperties())));
     }
 
     @Override

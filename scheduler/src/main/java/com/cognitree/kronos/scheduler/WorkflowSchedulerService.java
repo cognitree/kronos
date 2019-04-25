@@ -142,6 +142,8 @@ public final class WorkflowSchedulerService implements Service {
         logger.info("Received request to execute workflow {} by trigger {} under namespace {}",
                 workflowName, triggerName, namespace);
         final Workflow workflow = WorkflowService.getService().get(WorkflowId.build(namespace, workflowName));
+        final WorkflowTrigger workflowTrigger = WorkflowTriggerService.getService()
+                .get(WorkflowTriggerId.build(namespace, triggerName, workflowName));
         final Job job = JobService.getService().create(workflow.getNamespace(), workflow.getName(), triggerName);
         logger.debug("Executing workflow job {}", job);
         final List<WorkflowTask> workflowTasks = orderWorkflowTasks(workflow.getTasks());
@@ -151,7 +153,8 @@ public final class WorkflowSchedulerService implements Service {
                 logger.warn("Workflow task {} is disabled from scheduling", workflowTask);
                 continue;
             }
-            tasks.add(TaskService.getService().create(job.getNamespace(), workflowTask, job.getId(), job.getWorkflow()));
+            tasks.add(TaskService.getService().create(job.getNamespace(), workflowTask, job.getId(), job.getWorkflow(),
+                    workflow.getProperties(), workflowTrigger.getProperties()));
         }
         tasks.forEach(task -> TaskSchedulerService.getService().schedule(task));
         JobService.getService().updateStatus(job.getIdentity(), RUNNING);

@@ -68,7 +68,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * from the queue
  * </p>
  */
-public final class TaskSchedulerService implements Service {
+final class TaskSchedulerService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(TaskSchedulerService.class);
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -381,13 +381,6 @@ public final class TaskSchedulerService implements Service {
                 final String valueToReplace = ((String) value).substring(2, ((String) value).length() - 1);
                 if (dependentTaskContext.containsKey(valueToReplace)) {
                     modifiedTaskProperties.put(key, dependentTaskContext.get(valueToReplace));
-                } else if (valueToReplace.startsWith("*") && valueToReplace.length() > 2) {
-                    final String propertyToReplace = valueToReplace.substring(2);
-                    dependentTaskContext.keySet().forEach(contextKey -> {
-                        if (contextKey.substring(contextKey.indexOf(".") + 1).equals(propertyToReplace)) {
-                            modifiedTaskProperties.put(key, dependentTaskContext.get(contextKey));
-                        }
-                    });
                 } else {
                     // no dynamic property found to replace, setting it to null
                     logger.error("No dynamic property found in dependent task context to replace key: {}," +

@@ -67,8 +67,8 @@ public class WorkflowTriggerService implements Service {
 
     public void add(WorkflowTrigger workflowTrigger) throws SchedulerException, ServiceException, ValidationException {
         logger.debug("Received request to add workflow trigger {}", workflowTrigger);
-        validateTrigger(workflowTrigger);
         validateWorkflow(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow());
+        validateTrigger(workflowTrigger);
         try {
             if (workflowTriggerStore.load(workflowTrigger) != null) {
                 throw WORKFLOW_TRIGGER_ALREADY_EXISTS.createException(workflowTrigger.getName(),

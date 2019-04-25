@@ -39,6 +39,7 @@ public class Workflow extends WorkflowId {
     private List<WorkflowTask> tasks = new ArrayList<>();
     private List<String> emailOnFailure = new ArrayList<>();
     private List<String> emailOnSuccess = new ArrayList<>();
+    private Map<String, Object> properties = new HashMap<>();
 
     public String getDescription() {
         return description;
@@ -72,6 +73,14 @@ public class Workflow extends WorkflowId {
         this.emailOnSuccess = emailOnSuccess;
     }
 
+    public Map<String, Object> getProperties() {
+        return properties;
+    }
+
+    public void setProperties(Map<String, Object> properties) {
+        this.properties = properties;
+    }
+
     @JsonIgnore
     @BsonIgnore
     public WorkflowId getIdentity() {
@@ -92,10 +101,11 @@ public class Workflow extends WorkflowId {
     public String toString() {
         return "Workflow{" +
                 "description='" + description + '\'' +
+                ", properties=" + properties +
                 ", tasks=" + tasks +
                 ", emailOnFailure=" + emailOnFailure +
                 ", emailOnSuccess=" + emailOnSuccess +
-                "} " + super.toString();
+                '}';
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

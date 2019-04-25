@@ -56,7 +56,8 @@ public class MongoWorkflowStore extends MongoStore<Workflow> implements Workflow
                 eq("name", workflow.getName()),
                 combine(
                         set("description", workflow.getDescription()),
-                        set("tasks", workflow.getTasks())));
+                        set("tasks", workflow.getTasks()),
+                        set("properties", workflow.getProperties())));
     }
 
     @Override

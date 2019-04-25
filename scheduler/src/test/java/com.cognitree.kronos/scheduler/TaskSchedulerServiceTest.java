@@ -35,7 +35,7 @@ public class TaskSchedulerServiceTest {
         Map<String, Object> values = new HashMap<>();
         values.put("type", "content");
         values.put("start", "${taskA.start}");
-        values.put("end", "${*.end}");
+        values.put("end", "${taskB.end}");
         properties.put("values", values);
         task.setNamespace("default");
         task.setJob("jobA");
