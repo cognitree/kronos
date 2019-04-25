@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.Map;
 import java.util.UUID;
 
 public class TestUtil {
@@ -56,15 +57,27 @@ public class TestUtil {
 
     public static Workflow createWorkflow(String workflowTemplate, String workflowName,
                                           String namespace) throws IOException {
+        return createWorkflow(workflowTemplate, workflowName, namespace, null);
+    }
+
+    public static Workflow createWorkflow(String workflowTemplate, String workflowName,
+                                          String namespace, Map<String, Object> properties) throws IOException {
         final InputStream resourceAsStream =
                 TestUtil.class.getClassLoader().getResourceAsStream(workflowTemplate);
         final Workflow workflow = YAML_MAPPER.readValue(resourceAsStream, Workflow.class);
         workflow.setName(workflowName);
         workflow.setNamespace(namespace);
+        workflow.setProperties(properties);
         return workflow;
     }
 
-    public static WorkflowTrigger createWorkflowTrigger(String triggerName, String workflow, String namespace) throws ParseException {
+    public static WorkflowTrigger createWorkflowTrigger(String triggerName, String workflow, String namespace)
+            throws ParseException {
+        return createWorkflowTrigger(triggerName, workflow, namespace, null);
+    }
+
+    public static WorkflowTrigger createWorkflowTrigger(String triggerName, String workflow, String namespace,
+                                                        Map<String, Object> properties) throws ParseException {
         final long nextFireTime = new CronExpression(SCHEDULE.getCronExpression())
                 .getNextValidTimeAfter(new Date(System.currentTimeMillis() + 100)).getTime();
         final WorkflowTrigger workflowTrigger = new WorkflowTrigger();
@@ -74,17 +87,23 @@ public class TestUtil {
         workflowTrigger.setSchedule(SCHEDULE);
         workflowTrigger.setStartAt(nextFireTime - 100);
         workflowTrigger.setEndAt(nextFireTime + 100);
+        workflowTrigger.setProperties(properties);
         return workflowTrigger;
     }
 
     public static WorkflowTrigger scheduleWorkflow(String workflowTemplate) throws Exception {
+        return scheduleWorkflow(workflowTemplate, null, null);
+    }
+
+    public static WorkflowTrigger scheduleWorkflow(String workflowTemplate, Map<String, Object> workflowProps,
+                                                   Map<String, Object> triggerProps) throws Exception {
         Namespace namespace = createNamespace(UUID.randomUUID().toString());
         NamespaceService.getService().add(namespace);
         final Workflow workflow = createWorkflow(workflowTemplate,
-                UUID.randomUUID().toString(), namespace.getName());
+                UUID.randomUUID().toString(), namespace.getName(), workflowProps);
         WorkflowService.getService().add(workflow);
         final WorkflowTrigger workflowTrigger = createWorkflowTrigger(UUID.randomUUID().toString(),
-                workflow.getName(), workflow.getNamespace());
+                workflow.getName(), workflow.getNamespace(), triggerProps);
         WorkflowTriggerService.getService().add(workflowTrigger);
         return workflowTrigger;
     }

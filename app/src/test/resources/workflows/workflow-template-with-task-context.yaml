@@ -1,0 +1,22 @@
+# name and namespace will be set while creating a workflow
+description: sample workflow
+tasks:
+  - name: taskOne
+    type: typeSuccess
+    properties:
+      keyA: valA
+      keyB: valB
+  - name: taskTwo
+    type: typeSuccess
+    properties:
+      keyA: valA
+      keyB: ${taskOne.valOne}
+      keyC: ${taskOne.valThree}
+    dependsOn: ["taskOne"]
+  - name: taskThree
+    type: typeSuccess
+    properties:
+      keyA: valA
+      keyB: ${taskOne.valTwo}
+      keyC: ${taskOne.valThree}
+    dependsOn: ["taskOne"]
