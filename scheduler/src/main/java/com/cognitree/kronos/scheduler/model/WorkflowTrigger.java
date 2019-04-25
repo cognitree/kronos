@@ -34,6 +34,11 @@ public class WorkflowTrigger extends WorkflowTriggerId {
     private Schedule schedule;
     private Long endAt;
     private boolean enabled = true;
+    /**
+     * Set of properties to be overridden at a workflow before execution.
+     * Any property present at a workflow level {@link Workflow#properties} can be overridden
+     * before the workflow is sent for execution by the trigger.
+     */
     private Map<String, Object> properties = new HashMap<>();
 
     public Long getStartAt() {

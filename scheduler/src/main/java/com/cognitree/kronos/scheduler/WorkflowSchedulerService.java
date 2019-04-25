@@ -164,7 +164,7 @@ public final class WorkflowSchedulerService implements Service {
     }
 
     /**
-     * override workflow properties from trigger properties
+     * overrides workflow properties from trigger properties
      *
      * @param workflowProperties
      * @param triggerProperties

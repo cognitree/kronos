@@ -39,6 +39,13 @@ public class Workflow extends WorkflowId {
     private List<WorkflowTask> tasks = new ArrayList<>();
     private List<String> emailOnFailure = new ArrayList<>();
     private List<String> emailOnSuccess = new ArrayList<>();
+    /**
+     * global properties available to each task within the workflow. The task can refer to a property defined at a workflow
+     * level as ${workflow.prop_name} where prop_name is the name of the property defined at workflow level.
+     * <p>
+     * Note: The property can be overridden by a trigger associated with this workflow, check {@link WorkflowTrigger#properties}
+     * for details
+     */
     private Map<String, Object> properties = new HashMap<>();
 
     public String getDescription() {
