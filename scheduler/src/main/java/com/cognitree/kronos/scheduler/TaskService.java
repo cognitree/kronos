@@ -93,8 +93,20 @@ public class TaskService implements Service {
         statusChangeListeners.remove(statusChangeListener);
     }
 
+    /**
+     * creates a task instance from workflow task.
+     *
+     * @param namespace          namespace of the task
+     * @param workflowTask       task definition
+     * @param jobId              id of the job task belongs to
+     * @param workflowName       name of the workflow task belongs to
+     * @param workflowProperties workflow properties to be updated in task
+     * @return
+     * @throws ServiceException
+     * @throws ValidationException
+     */
     Task create(String namespace, WorkflowTask workflowTask, String jobId, String workflowName,
-                Map<String, Object> workflowProperties, Map<String, Object> triggerProperties)
+                Map<String, Object> workflowProperties)
             throws ServiceException, ValidationException {
         logger.debug("Received request to create task from workflow task {} for job {}, workflow {} under namespace {}",
                 workflowTask, jobId, workflowName, namespace);
@@ -108,8 +120,7 @@ public class TaskService implements Service {
         task.setType(workflowTask.getType());
         task.setMaxExecutionTimeInMs(workflowTask.getMaxExecutionTimeInMs());
         task.setDependsOn(workflowTask.getDependsOn());
-        Map<String, Object> taskProperties = updateTaskProperties(workflowTask.getProperties(),
-                workflowProperties, triggerProperties);
+        final Map<String, Object> taskProperties = updateTaskProperties(workflowTask.getProperties(), workflowProperties);
         task.setProperties(taskProperties);
         task.setCreatedAt(System.currentTimeMillis());
         try {
@@ -121,24 +132,15 @@ public class TaskService implements Service {
         return task;
     }
 
-    private Map<String, Object> updateTaskProperties(Map<String, Object> properties,
-                                                      Map<String, Object> workflowProperties,
-                                                      Map<String, Object> triggerProperties) {
-        if (workflowProperties == null && triggerProperties == null) {
-            return properties;
-        }
-        final HashMap<String, Object> propertiesToOverride = new HashMap<>();
-        if (workflowProperties != null) {
-            propertiesToOverride.putAll(workflowProperties);
-        }
-        if (triggerProperties != null) {
-            propertiesToOverride.putAll(triggerProperties);
-        }
-        return updateTaskProperties(properties, propertiesToOverride);
-    }
-
+    /**
+     * Updates dynamic workflow task property defined at a workflow level as ${workflow.prop_name}
+     *
+     * @param taskProperties
+     * @param propertiesToOverride
+     * @return
+     */
     private Map<String, Object> updateTaskProperties(Map<String, Object> taskProperties,
-                                                 Map<String, Object> propertiesToOverride) {
+                                                     Map<String, Object> propertiesToOverride) {
         final HashMap<String, Object> modifiedTaskProperties = new HashMap<>();
         for (Map.Entry<String, Object> entry : taskProperties.entrySet()) {
             final Object value = entry.getValue();

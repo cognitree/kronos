@@ -266,12 +266,12 @@ public class WorkflowService implements Service {
 
         final Map<String, Object> workflowProperties = workflow.getProperties();
         for (Workflow.WorkflowTask workflowTask : workflowTasks) {
-            validateProperties(workflowTask.getName(), workflowTask.getProperties(), workflowProperties);
+            validateWorkflowProperties(workflowTask.getName(), workflowTask.getProperties(), workflowProperties);
         }
     }
 
-    private void validateProperties(String workflowTask, Map<String, Object> taskProperties,
-                                    Map<String, Object> workflowProperties) throws ValidationException {
+    private void validateWorkflowProperties(String workflowTask, Map<String, Object> taskProperties,
+                                            Map<String, Object> workflowProperties) throws ValidationException {
         for (Map.Entry<String, Object> entry : taskProperties.entrySet()) {
             final Object value = entry.getValue();
             if (value instanceof String &&
@@ -282,7 +282,7 @@ public class WorkflowService implements Service {
                     throw MISSING_PARAM_IN_WORKFLOW.createException(valueToReplace, workflowTask);
                 }
             } else if (value instanceof Map) {
-                validateProperties(workflowTask, (Map<String, Object>) value, workflowProperties);
+                validateWorkflowProperties(workflowTask, (Map<String, Object>) value, workflowProperties);
             }
         }
     }
