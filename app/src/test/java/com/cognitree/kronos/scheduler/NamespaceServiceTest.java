@@ -37,6 +37,8 @@ public class NamespaceServiceTest{
     public static void start() throws Exception {
         SCHEDULER_APP.start();
         EXECUTOR_APP.start();
+        // wait for the application to initialize itself
+        Thread.sleep(100);
     }
 
     @AfterClass

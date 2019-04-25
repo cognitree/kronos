@@ -3,6 +3,7 @@ package com.cognitree.kronos.scheduler;
 import com.cognitree.kronos.queue.RAMQueueFactory;
 import com.cognitree.kronos.scheduler.events.ConfigUpdate;
 import com.cognitree.kronos.scheduler.model.Namespace;
+import com.cognitree.kronos.scheduler.model.SimpleSchedule;
 import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,7 +16,10 @@ import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 
-import static com.cognitree.kronos.scheduler.TestHelper.*;
+import static com.cognitree.kronos.TestUtil.createConfigUpdate;
+import static com.cognitree.kronos.TestUtil.createNamespace;
+import static com.cognitree.kronos.TestUtil.createWorkflow;
+import static com.cognitree.kronos.TestUtil.createWorkflowTrigger;
 
 public class ConfigurationServiceTest {
 
@@ -44,7 +48,7 @@ public class ConfigurationServiceTest {
         Namespace namespace = createNamespace(testNsName);
         ConfigUpdate createNamespaceConfigUpdate = createConfigUpdate(ConfigUpdate.Action.create, namespace);
         queue.offer(MAPPER.writerFor(ConfigUpdate.class).writeValueAsString(createNamespaceConfigUpdate));
-        Thread.sleep(3000);
+        Thread.sleep(100);
         List<Namespace> namespacesAfterCreate = getNamespacesWithName(testNsName);
         Assert.assertEquals(1, namespacesAfterCreate.size());
         Assert.assertEquals(namespace, namespacesAfterCreate.get(0));
@@ -53,7 +57,7 @@ public class ConfigurationServiceTest {
         namespace.setDescription("updated description");
         ConfigUpdate updateNamespaceConfigUpdate = createConfigUpdate(ConfigUpdate.Action.update, namespace);
         queue.offer(MAPPER.writerFor(ConfigUpdate.class).writeValueAsString(updateNamespaceConfigUpdate));
-        Thread.sleep(3000);
+        Thread.sleep(100);
         List<Namespace> namespacesAfterUpdate = getNamespacesWithName(testNsName);
         Assert.assertFalse(namespacesAfterUpdate.isEmpty());
         Assert.assertEquals(1, namespacesAfterUpdate.size());
@@ -78,16 +82,16 @@ public class ConfigurationServiceTest {
         Namespace namespace = createNamespace(testNsName);
         ConfigUpdate createNamespaceConfigUpdate = createConfigUpdate(ConfigUpdate.Action.create, namespace);
         queue.offer(MAPPER.writerFor(ConfigUpdate.class).writeValueAsString(createNamespaceConfigUpdate));
-        Thread.sleep(3000);
+        Thread.sleep(100);
 
         String testWorkflowName = "testWorkflowUpdatesWf";
         List<Workflow> workflowBeforeCreate = getWorkflowsWithName(testNsName, testWorkflowName);
         Assert.assertEquals(0, workflowBeforeCreate.size());
         // Create Workflow
-        Workflow workflow = createWorkflow(testWorkflowName, testNsName);
+        Workflow workflow = createWorkflow("workflow.yaml", testWorkflowName, testNsName);
         ConfigUpdate createWorkflowConfigUpdate = createConfigUpdate(ConfigUpdate.Action.create, workflow);
         queue.offer(MAPPER.writerFor(ConfigUpdate.class).writeValueAsString(createWorkflowConfigUpdate));
-        Thread.sleep(3000);
+        Thread.sleep(100);
         List<Workflow> workflowsAfterCreate = getWorkflowsWithName(testNsName, testWorkflowName);
         Assert.assertEquals(1, workflowsAfterCreate.size());
         Assert.assertEquals(workflow, workflowsAfterCreate.get(0));
@@ -96,7 +100,7 @@ public class ConfigurationServiceTest {
         workflow.setDescription("Updated Description");
         ConfigUpdate updateWorkflowConfigUpdate = createConfigUpdate(ConfigUpdate.Action.update, workflow);
         queue.offer(MAPPER.writerFor(ConfigUpdate.class).writeValueAsString(updateWorkflowConfigUpdate));
-        Thread.sleep(3000);
+        Thread.sleep(100);
         List<Workflow> workflowsAfterUpdate = getWorkflowsWithName(testNsName, testWorkflowName);
         Assert.assertEquals(1, workflowsAfterUpdate.size());
         Assert.assertEquals(workflow, workflowsAfterUpdate.get(0));
@@ -104,7 +108,7 @@ public class ConfigurationServiceTest {
         // Delete Workflow
         ConfigUpdate deleteWorkflowConfigUpdate = createConfigUpdate(ConfigUpdate.Action.delete, workflow);
         queue.offer(MAPPER.writerFor(ConfigUpdate.class).writeValueAsString(deleteWorkflowConfigUpdate));
-        Thread.sleep(3000);
+        Thread.sleep(100);
         List<Workflow> workflowsAfterDelete = getWorkflowsWithName(testNsName, testWorkflowName);
         Assert.assertEquals(0, workflowsAfterDelete.size());
     }
@@ -129,19 +133,23 @@ public class ConfigurationServiceTest {
         queue.offer(MAPPER.writerFor(ConfigUpdate.class).writeValueAsString(createNamespaceConfigUpdate));
         // Create Workflow
         String testWorkflowName = "testWorkflowTriggerUpdatesWf";
-        Workflow workflow = createWorkflow(testWorkflowName, testNsName);
+        Workflow workflow = createWorkflow("workflow.yaml", testWorkflowName, testNsName);
         ConfigUpdate createWorkflowConfigUpdate = createConfigUpdate(ConfigUpdate.Action.create, workflow);
         queue.offer(MAPPER.writerFor(ConfigUpdate.class).writeValueAsString(createWorkflowConfigUpdate));
-        Thread.sleep(3000);
+        Thread.sleep(100);
 
         String testTriggerName = "testWorkflowTriggerUpdatesTgr";
         // Create Workflow trigger
         List<WorkflowTrigger> workflowTriggersBeforeCreate = getWorkflowTriggersWithName(testNsName, testWorkflowName, testTriggerName);
         Assert.assertEquals(0, workflowTriggersBeforeCreate.size());
-        WorkflowTrigger trigger = createSimpleWorkflowTrigger(testTriggerName, testWorkflowName, testNsName);
+        WorkflowTrigger trigger = createWorkflowTrigger(testTriggerName, testWorkflowName, testNsName);
+        SimpleSchedule simpleSchedule = new SimpleSchedule();
+        simpleSchedule.setRepeatForever(true);
+        simpleSchedule.setRepeatIntervalInMs(1000);
+        trigger.setSchedule(simpleSchedule);
         ConfigUpdate createWorkflowTriggerConfigUpdate = createConfigUpdate(ConfigUpdate.Action.create, trigger);
         queue.offer(MAPPER.writerFor(ConfigUpdate.class).writeValueAsString(createWorkflowTriggerConfigUpdate));
-        Thread.sleep(3000);
+        Thread.sleep(100);
         List<WorkflowTrigger> workflowTriggersAfterCreate = getWorkflowTriggersWithName(testNsName, testWorkflowName, testTriggerName);
         Assert.assertEquals(1, workflowTriggersAfterCreate.size());
         Assert.assertEquals(trigger, workflowTriggersAfterCreate.get(0));
@@ -150,7 +158,7 @@ public class ConfigurationServiceTest {
         trigger.setEnabled(false);
         ConfigUpdate updateWorkflowTriggerConfigUpdate = createConfigUpdate(ConfigUpdate.Action.update, trigger);
         queue.offer(MAPPER.writerFor(ConfigUpdate.class).writeValueAsString(updateWorkflowTriggerConfigUpdate));
-        Thread.sleep(3000);
+        Thread.sleep(100);
         List<WorkflowTrigger> workflowTriggersAfterUpdate = getWorkflowTriggersWithName(testNsName, testWorkflowName, testTriggerName);
         Assert.assertEquals(1, workflowTriggersAfterUpdate.size());
         Assert.assertEquals(trigger, workflowTriggersAfterUpdate.get(0));
@@ -158,7 +166,7 @@ public class ConfigurationServiceTest {
         // Update Workflow trigger
         ConfigUpdate deleteWorkflowTriggerConfigUpdate = createConfigUpdate(ConfigUpdate.Action.delete, trigger);
         queue.offer(MAPPER.writerFor(ConfigUpdate.class).writeValueAsString(deleteWorkflowTriggerConfigUpdate));
-        Thread.sleep(3000);
+        Thread.sleep(100);
         List<WorkflowTrigger> workflowTriggersAfterDelete = getWorkflowTriggersWithName(testNsName, testWorkflowName, testTriggerName);
         Assert.assertEquals(0, workflowTriggersAfterDelete.size());
     }
