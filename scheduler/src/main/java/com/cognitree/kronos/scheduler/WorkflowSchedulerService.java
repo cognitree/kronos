@@ -372,7 +372,7 @@ public final class WorkflowSchedulerService implements Service {
                             triggerName, workflowName, namespace, e);
                 }
             } catch (Exception e) {
-                logger.error("Error retrieving job detail for trigger with key {}", trigger.getJobKey());
+                logger.error("Error retrieving job detail for trigger with key {}", trigger.getJobKey(), e);
             }
         }
     }
