@@ -20,9 +20,7 @@ package com.cognitree.kronos.scheduler;
 import com.cognitree.kronos.executor.ExecutorApp;
 import com.cognitree.kronos.executor.handlers.MockSuccessTaskHandler;
 import com.cognitree.kronos.model.Task;
-import com.cognitree.kronos.scheduler.model.CronSchedule;
 import com.cognitree.kronos.scheduler.model.Namespace;
-import com.cognitree.kronos.scheduler.model.SimpleSchedule;
 import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import org.junit.AfterClass;
@@ -196,10 +194,6 @@ public class WorkflowTriggerServiceTest {
         final WorkflowTriggerService workflowTriggerService = WorkflowTriggerService.getService();
         final WorkflowTrigger workflowTriggerOne = createWorkflowTrigger(UUID.randomUUID().toString(),
                 workflowOne.getName(), namespaceOne.getName());
-        SimpleSchedule simpleSchedule = new SimpleSchedule();
-        simpleSchedule.setRepeatForever(true);
-        simpleSchedule.setRepeatIntervalInMs(1000);
-        workflowTriggerOne.setSchedule(simpleSchedule);
         workflowTriggerService.add(workflowTriggerOne);
         workflowTriggerService.add(workflowTriggerOne);
         Assert.fail();

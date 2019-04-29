@@ -18,11 +18,10 @@
 package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.queue.RAMQueueFactory;
-import com.cognitree.kronos.scheduler.model.events.ConfigUpdate;
 import com.cognitree.kronos.scheduler.model.Namespace;
-import com.cognitree.kronos.scheduler.model.SimpleSchedule;
 import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
+import com.cognitree.kronos.scheduler.model.events.ConfigUpdate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.AfterClass;
 import org.junit.Assert;
