@@ -67,7 +67,7 @@ public class JobService implements Service {
     }
 
     Job create(String namespace, String workflowName, String triggerName) throws ServiceException, ValidationException {
-        logger.debug("Received request to create job from workflow {}, trigger {} under namespace {}",
+        logger.info("Received request to create job from workflow {}, trigger {} under namespace {}",
                 workflowName, triggerName, namespace);
         validateWorkflow(namespace, workflowName);
         final Job job = new Job();
@@ -262,7 +262,7 @@ public class JobService implements Service {
     }
 
     void updateStatus(JobId jobId, Status status) throws ServiceException, ValidationException {
-        logger.debug("Received request to update job {} status to {}", jobId, status);
+        logger.info("Received request to update job {} status to {}", jobId, status);
         validateWorkflow(jobId.getNamespace(), jobId.getWorkflow());
         try {
             final Job job = get(jobId);
@@ -301,7 +301,7 @@ public class JobService implements Service {
     }
 
     public void delete(JobId jobId) throws ServiceException, ValidationException {
-        logger.debug("Received request to delete job {}", jobId);
+        logger.info("Received request to delete job {}", jobId);
         validateWorkflow(jobId.getNamespace(), jobId.getWorkflow());
         try {
             jobStore.delete(jobId);
@@ -312,7 +312,7 @@ public class JobService implements Service {
     }
 
     public void delete(String namespace, String workflowName) throws ServiceException, ValidationException {
-        logger.debug("Received request to delete all jobs with workflow name {} under namespace", workflowName, namespace);
+        logger.info("Received request to delete all jobs with workflow name {} under namespace", workflowName, namespace);
         validateWorkflow(namespace, workflowName);
         try {
             jobStore.deleteByWorkflowName(namespace, workflowName);

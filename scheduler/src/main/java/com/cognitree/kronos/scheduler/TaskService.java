@@ -111,7 +111,7 @@ public class TaskService implements Service {
     Task create(String namespace, WorkflowTask workflowTask, String jobId, String workflowName,
                 Map<String, Object> workflowProperties)
             throws ServiceException, ValidationException {
-        logger.debug("Received request to create task from workflow task {} for job {}, workflow {} under namespace {}",
+        logger.info("Received request to create task from workflow task {} for job {}, workflow {} under namespace {}",
                 workflowTask, jobId, workflowName, namespace);
         validateJob(namespace, jobId, workflowName);
         Task task = new Task();
@@ -309,7 +309,7 @@ public class TaskService implements Service {
     }
 
     public void delete(TaskId taskId) throws ServiceException, ValidationException {
-        logger.debug("Received request to delete task {}", taskId);
+        logger.info("Received request to delete task {}", taskId);
         validateJob(taskId.getNamespace(), taskId.getJob(), taskId.getWorkflow());
         try {
             if (taskStore.load(taskId) == null) {

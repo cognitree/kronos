@@ -91,7 +91,7 @@ public class WorkflowService implements Service {
     }
 
     public void add(Workflow workflow) throws ValidationException, ServiceException {
-        logger.debug("Received request to add workflow {}", workflow);
+        logger.info("Received request to add workflow {}", workflow);
         validateNamespace(workflow.getNamespace());
         validate(workflow);
         try {
@@ -188,7 +188,7 @@ public class WorkflowService implements Service {
 
 
     public void update(Workflow workflow) throws ValidationException, ServiceException {
-        logger.debug("Received request to update workflow {}", workflow);
+        logger.info("Received request to update workflow {}", workflow);
         validateNamespace(workflow.getNamespace());
         validate(workflow);
         try {
@@ -204,7 +204,7 @@ public class WorkflowService implements Service {
     }
 
     public void delete(WorkflowId workflowId) throws SchedulerException, ServiceException, ValidationException {
-        logger.debug("Received request to delete workflow {}", workflowId);
+        logger.info("Received request to delete workflow {}", workflowId);
         validateNamespace(workflowId.getNamespace());
         try {
             if (workflowStore.load(workflowId) == null) {
