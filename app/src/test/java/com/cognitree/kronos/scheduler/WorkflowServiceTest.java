@@ -194,10 +194,10 @@ public class WorkflowServiceTest {
         for (Task workflowTask : workflowTasks) {
             Assert.assertEquals(workflowTask.getContext(), MockSuccessTaskHandler.CONTEXT);
             if (workflowTask.getName().equals("taskTwo")) {
-                Assert.assertEquals(workflowTask.getProperties().get("keyB"), 1234);
+                Assert.assertEquals(1234, workflowTask.getProperties().get("keyB"));
             }
             if (workflowTask.getName().equals("taskThree")) {
-                Assert.assertEquals(workflowTask.getProperties().get("keyB"), "abcd");
+                Assert.assertEquals("abcd", workflowTask.getProperties().get("keyB"));
             }
         }
     }

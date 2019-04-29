@@ -249,12 +249,12 @@ public class WorkflowTriggerServiceTest {
         final List<Task> workflowTasks = taskService.get(workflowTrigger.getNamespace());
         Assert.assertEquals(3, workflowTasks.size());
         for (Task workflowTask : workflowTasks) {
-            Assert.assertEquals(workflowTask.getContext(), MockSuccessTaskHandler.CONTEXT);
+            Assert.assertEquals(MockSuccessTaskHandler.CONTEXT, workflowTask.getContext());
             if (workflowTask.getName().equals("taskTwo")) {
-                Assert.assertEquals(workflowTask.getProperties().get("keyB"), 123456);
+                Assert.assertEquals(123456, workflowTask.getProperties().get("keyB"));
             }
             if (workflowTask.getName().equals("taskThree")) {
-                Assert.assertEquals(workflowTask.getProperties().get("keyB"), "abcdef");
+                Assert.assertEquals("abcdef", workflowTask.getProperties().get("keyB"));
             }
         }
     }
@@ -282,10 +282,10 @@ public class WorkflowTriggerServiceTest {
         for (Task workflowTask : workflowTasks) {
             Assert.assertEquals(workflowTask.getContext(), MockSuccessTaskHandler.CONTEXT);
             if (workflowTask.getName().equals("taskTwo")) {
-                Assert.assertEquals(workflowTask.getProperties().get("keyB"), 123456);
+                Assert.assertEquals(123456, workflowTask.getProperties().get("keyB"));
             }
             if (workflowTask.getName().equals("taskThree")) {
-                Assert.assertEquals(workflowTask.getProperties().get("keyB"), "abcd");
+                Assert.assertEquals("abcd", workflowTask.getProperties().get("keyB"));
             }
         }
     }
