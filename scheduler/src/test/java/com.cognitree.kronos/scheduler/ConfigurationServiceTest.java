@@ -159,6 +159,8 @@ public class ConfigurationServiceTest {
         List<WorkflowTrigger> workflowTriggersBeforeCreate = getWorkflowTriggersWithName(testNsName, testWorkflowName, testTriggerName);
         Assert.assertEquals(0, workflowTriggersBeforeCreate.size());
         WorkflowTrigger trigger = createWorkflowTrigger(testTriggerName, testWorkflowName, testNsName);
+        trigger.setEndAt(null);
+        trigger.setStartAt(null);
         ConfigUpdate createWorkflowTriggerConfigUpdate = createConfigUpdate(ConfigUpdate.Action.create, trigger);
         queue.offer(MAPPER.writerFor(ConfigUpdate.class).writeValueAsString(createWorkflowTriggerConfigUpdate));
         Thread.sleep(100);
