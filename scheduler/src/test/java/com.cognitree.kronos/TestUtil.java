@@ -20,6 +20,7 @@ package com.cognitree.kronos;
 import com.cognitree.kronos.scheduler.NamespaceService;
 import com.cognitree.kronos.scheduler.WorkflowService;
 import com.cognitree.kronos.scheduler.WorkflowTriggerService;
+import com.cognitree.kronos.scheduler.model.CronSchedule;
 import com.cognitree.kronos.scheduler.model.events.ConfigUpdate;
 import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.SimpleSchedule;
@@ -28,11 +29,14 @@ import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.Assert;
+import org.quartz.CronExpression;
 import org.quartz.Scheduler;
 import org.quartz.TriggerKey;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
+import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 
@@ -40,7 +44,10 @@ public class TestUtil {
 
     private static final ObjectMapper YAML_MAPPER = new ObjectMapper(new YAMLFactory());
 
-    private static final SimpleSchedule SCHEDULE = new SimpleSchedule();
+    private static final CronSchedule SCHEDULE = new CronSchedule();
+    static {
+        SCHEDULE.setCronExpression("0/2 * * * * ?");
+    }
 
     public static ConfigUpdate createConfigUpdate(ConfigUpdate.Action action, Object model) {
         ConfigUpdate configUpdate = new ConfigUpdate();
@@ -71,18 +78,22 @@ public class TestUtil {
         return workflow;
     }
 
-    public static WorkflowTrigger createWorkflowTrigger(String triggerName, String workflow, String namespace) {
+    public static WorkflowTrigger createWorkflowTrigger(String triggerName, String workflow, String namespace) throws ParseException {
         return createWorkflowTrigger(triggerName, workflow, namespace, null);
     }
 
     public static WorkflowTrigger createWorkflowTrigger(String triggerName, String workflow, String namespace,
-                                                        Map<String, Object> properties) {
+                                                        Map<String, Object> properties) throws ParseException {
+        final long nextFireTime = new CronExpression(SCHEDULE.getCronExpression())
+                .getNextValidTimeAfter(new Date(System.currentTimeMillis() + 100)).getTime();
         final WorkflowTrigger workflowTrigger = new WorkflowTrigger();
         workflowTrigger.setName(triggerName);
         workflowTrigger.setWorkflow(workflow);
         workflowTrigger.setNamespace(namespace);
         workflowTrigger.setSchedule(SCHEDULE);
         workflowTrigger.setProperties(properties);
+        workflowTrigger.setStartAt(nextFireTime - 100);
+        workflowTrigger.setEndAt(nextFireTime + 100);
         return workflowTrigger;
     }
 

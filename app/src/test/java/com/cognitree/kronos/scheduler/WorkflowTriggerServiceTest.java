@@ -217,9 +217,6 @@ public class WorkflowTriggerServiceTest {
         final WorkflowTriggerService workflowTriggerService = WorkflowTriggerService.getService();
         final WorkflowTrigger workflowTriggerOne = createWorkflowTrigger(UUID.randomUUID().toString(),
                 workflowOne.getName(), namespaceOne.getName());
-        CronSchedule cronSchedule = new CronSchedule();
-        cronSchedule.setCronExpression("0 0/1 * 1/1 * ? *");
-        workflowTriggerOne.setSchedule(cronSchedule);
         workflowTriggerService.add(workflowTriggerOne);
 
         workflowTriggerService.delete(workflowTriggerOne);

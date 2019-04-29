@@ -160,10 +160,6 @@ public class ConfigurationServiceTest {
         List<WorkflowTrigger> workflowTriggersBeforeCreate = getWorkflowTriggersWithName(testNsName, testWorkflowName, testTriggerName);
         Assert.assertEquals(0, workflowTriggersBeforeCreate.size());
         WorkflowTrigger trigger = createWorkflowTrigger(testTriggerName, testWorkflowName, testNsName);
-        SimpleSchedule simpleSchedule = new SimpleSchedule();
-        simpleSchedule.setRepeatForever(true);
-        simpleSchedule.setRepeatIntervalInMs(1000);
-        trigger.setSchedule(simpleSchedule);
         ConfigUpdate createWorkflowTriggerConfigUpdate = createConfigUpdate(ConfigUpdate.Action.create, trigger);
         queue.offer(MAPPER.writerFor(ConfigUpdate.class).writeValueAsString(createWorkflowTriggerConfigUpdate));
         Thread.sleep(100);
