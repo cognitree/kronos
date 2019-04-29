@@ -299,7 +299,7 @@ public class TaskService implements Service {
             case CREATED:
                 return currentStatus == null;
             case WAITING:
-                return currentStatus == CREATED || currentStatus == FAILED; //Enabled retry on failure
+                return currentStatus == CREATED;
             case SCHEDULED:
                 return currentStatus == WAITING || currentStatus == UP_FOR_RETRY;
             case SUBMITTED:
@@ -312,7 +312,7 @@ public class TaskService implements Service {
             case FAILED:
                 return currentStatus != SUCCESSFUL && currentStatus != FAILED;
             case UP_FOR_RETRY:
-                return currentStatus == RUNNING || currentStatus == FAILED;
+                return currentStatus == RUNNING;
             default:
                 return false;
         }
