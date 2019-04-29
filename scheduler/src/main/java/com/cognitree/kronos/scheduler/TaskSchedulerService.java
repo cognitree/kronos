@@ -323,8 +323,8 @@ final class TaskSchedulerService implements Service {
         final List<Task> readyTasks = taskProvider.getReadyTasks();
         for (Task task : readyTasks) {
             try {
-                // update task context from the tasks it depends on before scheduling
-                updateTaskContext(task);
+                // update dynamic task properties from the tasks it depends on before scheduling
+                updateTaskProperties(task);
                 producer.send(task.getType(), MAPPER.writeValueAsString(task));
                 updateStatus(task, SCHEDULED, null);
             } catch (Exception e) {
@@ -335,11 +335,22 @@ final class TaskSchedulerService implements Service {
     }
 
     /**
-     * updates the task properties with the context from the tasks it depends on.
+     * updates the task properties from the context of the tasks it depends on.
+     * A dependent task can refer to the result ( passed as task content) of the task it depends on.
+     * A dependent task can refer to a property available at any level in the hierarchy above it.
+     * <p>
+     * for e.g.
+     * If task C depends on B and B depends on A.
+     * Task C can refer to property of A via {A.keyName}, where keyName is the output of task A set as {@link Task#getContext()}.
      *
      * @param task
      */
-    private void updateTaskContext(Task task) {
+    private void updateTaskProperties(Task task) {
+        final Map<String, Object> dependentTaskContext = getDependentTaskContext(task);
+        updateTaskProperties(task, dependentTaskContext);
+    }
+
+    private Map<String, Object> getDependentTaskContext(Task task) {
         final List<String> dependsOn = task.getDependsOn();
         final Map<String, Object> dependentTaskContext = new LinkedHashMap<>();
         for (String dependentTaskName : dependsOn) {
@@ -351,9 +362,10 @@ final class TaskSchedulerService implements Service {
                     dependentTask.getContext().forEach((key, value) ->
                             dependentTaskContext.put(dependentTask.getName() + "." + key, value));
                 }
+                dependentTaskContext.putAll(getDependentTaskContext(dependentTask));
             }
         }
-        updateTaskProperties(task, dependentTaskContext);
+        return dependentTaskContext;
     }
 
     /**

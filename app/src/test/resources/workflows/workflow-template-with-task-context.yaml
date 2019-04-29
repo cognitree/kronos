@@ -19,4 +19,4 @@ tasks:
       keyA: valA
       keyB: ${taskOne.valTwo}
       keyC: ${taskOne.valThree}
-    dependsOn: ["taskOne"]
+    dependsOn: ["taskTwo"]
