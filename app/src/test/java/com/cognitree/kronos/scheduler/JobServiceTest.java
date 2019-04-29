@@ -272,7 +272,7 @@ public class JobServiceTest {
                 workflowTrigger.getName(), 0, System.currentTimeMillis());
         Assert.assertEquals(1, workflowOneJobs.size());
         final Job workflowOneJob = workflowOneJobs.get(0);
-        Assert.assertEquals(workflowOneJob.getStatus(), Job.Status.SUCCESSFUL);
+        Assert.assertEquals(Job.Status.SUCCESSFUL, workflowOneJob.getStatus());
         jobService.delete(workflowOneJob);
 
         final List<Job> workflowOneJobsPostDelete = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),

@@ -145,6 +145,12 @@ public final class WorkflowSchedulerService implements Service {
         final Workflow workflow = WorkflowService.getService().get(WorkflowId.build(namespace, workflowName));
         final WorkflowTrigger workflowTrigger = WorkflowTriggerService.getService()
                 .get(WorkflowTriggerId.build(namespace, triggerName, workflowName));
+        // it might happen than user deleted the workflow trigger post scheduling of job by quartz, ignore silently
+        if (workflowTrigger == null) {
+            logger.error("Unable to execute the workflow {} under namespace {}, trigger {} is missing",
+                    workflowName, namespace, triggerName);
+            return;
+        }
         final Job job = JobService.getService().create(workflow.getNamespace(), workflow.getName(), triggerName);
         logger.debug("Executing workflow job {}", job);
         final List<WorkflowTask> workflowTasks = orderWorkflowTasks(workflow.getTasks());
