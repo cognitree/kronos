@@ -11,6 +11,9 @@ tasks:
     properties:
       keyA: valA
       keyB: valB
+    policies:
+      - type: retry
+        maxRetryCount: 3
   - name: taskThree
     type: typeSuccess
     properties:

@@ -19,6 +19,8 @@ package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
+import com.cognitree.kronos.model.Policy;
+import com.cognitree.kronos.model.RetryPolicy;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskId;
@@ -40,14 +42,17 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 import static com.cognitree.kronos.model.Task.Status.CREATED;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
+import static com.cognitree.kronos.model.Task.Status.RUNNING;
 import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
 import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
 import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
+import static com.cognitree.kronos.model.Task.Status.UP_FOR_RETRY;
 import static com.cognitree.kronos.model.Task.Status.WAITING;
 import static com.cognitree.kronos.scheduler.ValidationError.JOB_NOT_FOUND;
 import static com.cognitree.kronos.scheduler.ValidationError.NAMESPACE_NOT_FOUND;
@@ -121,6 +126,7 @@ public class TaskService implements Service {
         task.setName(workflowTask.getName());
         task.setNamespace(namespace);
         task.setType(workflowTask.getType());
+        task.setPolicies(workflowTask.getPolicies());
         task.setMaxExecutionTimeInMs(workflowTask.getMaxExecutionTimeInMs());
         task.setDependsOn(workflowTask.getDependsOn());
         final Map<String, Object> taskProperties = updateTaskProperties(workflowTask.getProperties(), workflowProperties);
@@ -255,12 +261,24 @@ public class TaskService implements Service {
                 logger.error("Invalid state transition for task {} from status {}, to {}", task, currentStatus, status);
                 throw new ServiceException("Invalid state transition from " + currentStatus + " to " + status);
             }
+
+            if (status == FAILED && isRetryEnabled(task)) {
+                logger.info("Resubmit the task {} for retry", task);
+                updateStatus(task, UP_FOR_RETRY, null, context);
+                return;
+            }
+
             task.setStatus(status);
             task.setStatusMessage(statusMessage);
             task.setContext(context);
             switch (status) {
+                case UP_FOR_RETRY:
+                    task.setRetryCount(task.getRetryCount() + 1);
+                    break;
                 case SUBMITTED:
-                    task.setSubmittedAt(System.currentTimeMillis());
+                    if (task.getSubmittedAt() == null) { // TODO fix me: support for retry
+                        task.setSubmittedAt(System.currentTimeMillis());
+                    }
                     break;
                 case SUCCESSFUL:
                 case SKIPPED:
@@ -281,9 +299,9 @@ public class TaskService implements Service {
             case CREATED:
                 return currentStatus == null;
             case WAITING:
-                return currentStatus == CREATED;
+                return currentStatus == CREATED || currentStatus == FAILED; //Enabled retry on failure
             case SCHEDULED:
-                return currentStatus == WAITING;
+                return currentStatus == WAITING || currentStatus == UP_FOR_RETRY;
             case SUBMITTED:
                 return currentStatus == SCHEDULED;
             case RUNNING:
@@ -293,9 +311,21 @@ public class TaskService implements Service {
             case SUCCESSFUL:
             case FAILED:
                 return currentStatus != SUCCESSFUL && currentStatus != FAILED;
+            case UP_FOR_RETRY:
+                return currentStatus == RUNNING || currentStatus == FAILED;
             default:
                 return false;
         }
+    }
+
+    private boolean isRetryEnabled(Task task) {
+        /* Also ensure that the retry count is less than max retry count */
+        Optional<Policy> retryPolicyOpt = task.getPolicies().stream().filter(t -> t.getType() == Policy.Type.retry).findFirst();
+        if (retryPolicyOpt.isPresent()) {
+            int maxRetryCount = ((RetryPolicy) retryPolicyOpt.get()).getMaxRetryCount();
+            return maxRetryCount > task.getRetryCount();
+        }
+        return false;
     }
 
     private void notifyListeners(Task task, Status from, Status to) {

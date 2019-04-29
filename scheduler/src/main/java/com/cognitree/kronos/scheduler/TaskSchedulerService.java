@@ -49,6 +49,7 @@ import static com.cognitree.kronos.model.Task.Status.CREATED;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
 import static com.cognitree.kronos.model.Task.Status.SKIPPED;
+import static com.cognitree.kronos.model.Task.Status.UP_FOR_RETRY;
 import static com.cognitree.kronos.model.Task.Status.WAITING;
 import static com.cognitree.kronos.scheduler.model.Constants.DYNAMIC_VAR_PREFIX;
 import static com.cognitree.kronos.scheduler.model.Constants.DYNAMIC_VAR_SUFFFIX;
@@ -279,6 +280,7 @@ final class TaskSchedulerService implements Service {
         switch (status) {
             case CREATED:
                 break;
+            case UP_FOR_RETRY:
             case WAITING:
                 scheduleReadyTasks();
                 break;
@@ -324,7 +326,10 @@ final class TaskSchedulerService implements Service {
         for (Task task : readyTasks) {
             try {
                 // update dynamic task properties from the tasks it depends on before scheduling
-                updateTaskProperties(task);
+                // only if the task is not being retried
+                if (task.getStatus() != UP_FOR_RETRY) {
+                    updateTaskProperties(task);
+                }
                 producer.send(task.getType(), MAPPER.writeValueAsString(task));
                 updateStatus(task, SCHEDULED, null);
             } catch (Exception e) {

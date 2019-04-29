@@ -39,6 +39,7 @@ public class Task extends TaskId {
     private long maxExecutionTimeInMs;
     private List<String> dependsOn = new ArrayList<>();
     private Map<String, Object> properties = new HashMap<>();
+    private List<Policy> policies = new ArrayList<>();
     private Map<String, Object> context = new HashMap<>();
 
     private Status status = CREATED;
@@ -46,6 +47,7 @@ public class Task extends TaskId {
     private Long createdAt;
     private Long submittedAt;
     private Long completedAt;
+    private int retryCount = 0;
 
     public String getType() {
         return type;
@@ -77,6 +79,14 @@ public class Task extends TaskId {
 
     public void setProperties(Map<String, Object> properties) {
         this.properties = properties;
+    }
+
+    public List<Policy> getPolicies() {
+        return policies;
+    }
+
+    public void setPolicies(List<Policy> policies) {
+        this.policies = policies;
     }
 
     public Map<String, Object> getContext() {
@@ -127,6 +137,14 @@ public class Task extends TaskId {
         this.completedAt = completedAt;
     }
 
+    public int getRetryCount() {
+        return retryCount;
+    }
+
+    public void setRetryCount(int retryCount) {
+        this.retryCount = retryCount;
+    }
+
     @JsonIgnore
     @BsonIgnore
     public TaskId getIdentity() {
@@ -147,21 +165,24 @@ public class Task extends TaskId {
     public String toString() {
         return "Task{" +
                 "type='" + type + '\'' +
-                ", maxExecutionTimeInMs='" + maxExecutionTimeInMs + '\'' +
+                ", maxExecutionTimeInMs=" + maxExecutionTimeInMs +
                 ", dependsOn=" + dependsOn +
                 ", properties=" + properties +
+                ", policies=" + policies +
                 ", context=" + context +
                 ", status=" + status +
                 ", statusMessage='" + statusMessage + '\'' +
                 ", createdAt=" + createdAt +
                 ", submittedAt=" + submittedAt +
                 ", completedAt=" + completedAt +
+                ", retryCount=" + retryCount +
                 "} " + super.toString();
     }
 
     public enum Status {
         CREATED(false),
         WAITING(false),
+        UP_FOR_RETRY(false),
         SCHEDULED(false),
         SUBMITTED(false),
         RUNNING(false),

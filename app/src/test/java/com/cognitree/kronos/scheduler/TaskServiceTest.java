@@ -29,7 +29,6 @@ import org.junit.Test;
 import org.quartz.Scheduler;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 
 import static com.cognitree.kronos.TestUtil.scheduleWorkflow;

@@ -225,7 +225,7 @@ public class JobServiceTest {
         // wait for the job to be triggered
         waitForTriggerToComplete(workflowTrigger, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(100);
+        Thread.sleep(500);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
@@ -244,6 +244,7 @@ public class JobServiceTest {
                 case "taskTwo":
                     taskTwo = task;
                     Assert.assertEquals(Task.Status.FAILED, task.getStatus());
+                    Assert.assertEquals(3, task.getRetryCount());
                     break;
                 case "taskThree":
                     Assert.assertEquals(Task.Status.SKIPPED, task.getStatus());
