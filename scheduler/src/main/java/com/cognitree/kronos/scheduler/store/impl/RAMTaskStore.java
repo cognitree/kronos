@@ -48,7 +48,6 @@ public class RAMTaskStore implements TaskStore {
             throw new StoreException("task with id " + taskId + " already exists");
         }
         tasks.put(taskId, task);
-        System.out.println("Current size: " + tasks.size());
     }
 
     @Override
