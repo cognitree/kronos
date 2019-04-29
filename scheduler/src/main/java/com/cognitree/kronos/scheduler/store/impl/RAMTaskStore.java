@@ -33,11 +33,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RAMTaskStore implements TaskStore {
     private static final Logger logger = LoggerFactory.getLogger(RAMTaskStore.class);
 
-    private final Map<TaskId, Task> tasks = new HashMap<>();
+    private final Map<TaskId, Task> tasks = new ConcurrentHashMap<>();
 
     @Override
     public void store(Task task) throws StoreException {
@@ -47,6 +48,7 @@ public class RAMTaskStore implements TaskStore {
             throw new StoreException("task with id " + taskId + " already exists");
         }
         tasks.put(taskId, task);
+        System.out.println("Current size: " + tasks.size());
     }
 
     @Override
