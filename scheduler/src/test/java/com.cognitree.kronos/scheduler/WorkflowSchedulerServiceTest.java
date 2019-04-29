@@ -34,7 +34,6 @@ import java.util.UUID;
 import static com.cognitree.kronos.TestUtil.createWorkflow;
 import static com.cognitree.kronos.TestUtil.createWorkflowTrigger;
 
-
 public class WorkflowSchedulerServiceTest {
 
     private static final SchedulerApp SCHEDULER_APP = new SchedulerApp();

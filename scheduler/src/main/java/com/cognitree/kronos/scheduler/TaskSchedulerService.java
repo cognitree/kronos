@@ -50,6 +50,8 @@ import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
 import static com.cognitree.kronos.model.Task.Status.SKIPPED;
 import static com.cognitree.kronos.model.Task.Status.WAITING;
+import static com.cognitree.kronos.scheduler.model.Constants.DYNAMIC_VAR_PREFIX;
+import static com.cognitree.kronos.scheduler.model.Constants.DYNAMIC_VAR_SUFFFIX;
 import static com.cognitree.kronos.scheduler.model.Messages.FAILED_DEPENDEE_TASK;
 import static com.cognitree.kronos.scheduler.model.Messages.FAILED_TO_RESOLVE_DEPENDENCY;
 import static com.cognitree.kronos.scheduler.model.Messages.SKIPPED_DEPENDEE_TASK;
@@ -364,8 +366,7 @@ final class TaskSchedulerService implements Service {
      * @param task
      * @param dependentTaskContext
      */
-    // used in junit test case
-    void updateTaskProperties(Task task, Map<String, Object> dependentTaskContext) {
+    private void updateTaskProperties(Task task, Map<String, Object> dependentTaskContext) {
         if (dependentTaskContext == null || dependentTaskContext.isEmpty()) {
             return;
         }
@@ -377,13 +378,16 @@ final class TaskSchedulerService implements Service {
                                                          Map<String, Object> dependentTaskContext) {
         final HashMap<String, Object> modifiedTaskProperties = new HashMap<>();
         taskProperties.forEach((key, value) -> {
-            if (value instanceof String && ((String) value).startsWith("${") && ((String) value).endsWith("}")) {
-                final String valueToReplace = ((String) value).substring(2, ((String) value).length() - 1);
+            if (value instanceof String &&
+                    ((String) value).startsWith(DYNAMIC_VAR_PREFIX) &&
+                    ((String) value).endsWith(DYNAMIC_VAR_SUFFFIX)) {
+                final String valueToReplace = ((String) value).substring(DYNAMIC_VAR_PREFIX.length(),
+                        ((String) value).length() - DYNAMIC_VAR_SUFFFIX.length()).trim();
                 if (dependentTaskContext.containsKey(valueToReplace)) {
                     modifiedTaskProperties.put(key, dependentTaskContext.get(valueToReplace));
                 } else {
                     // no dynamic property found to replace, setting it to null
-                    logger.error("No dynamic property found in dependent task context to replace key: {}," +
+                    logger.warn("No dynamic property found in dependent task context to replace key: {}," +
                             " setting it to null", key);
                     modifiedTaskProperties.put(key, null);
                 }

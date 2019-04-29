@@ -48,6 +48,9 @@ import static com.cognitree.kronos.scheduler.ValidationError.MISSING_TASK_IN_WOR
 import static com.cognitree.kronos.scheduler.ValidationError.NAMESPACE_NOT_FOUND;
 import static com.cognitree.kronos.scheduler.ValidationError.WORKFLOW_ALREADY_EXISTS;
 import static com.cognitree.kronos.scheduler.ValidationError.WORKFLOW_NOT_FOUND;
+import static com.cognitree.kronos.scheduler.model.Constants.DYNAMIC_VAR_PREFIX;
+import static com.cognitree.kronos.scheduler.model.Constants.DYNAMIC_VAR_SUFFFIX;
+import static com.cognitree.kronos.scheduler.model.Constants.WORKFLOW_NAMESPACE_PREFIX;
 
 public class WorkflowService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(WorkflowService.class);
@@ -275,9 +278,12 @@ public class WorkflowService implements Service {
         for (Map.Entry<String, Object> entry : taskProperties.entrySet()) {
             final Object value = entry.getValue();
             if (value instanceof String &&
-                    ((String) value).startsWith("${") && ((String) value).endsWith("}") &&
-                    ((String) value).contains("workflow.")) {
-                final String valueToReplace = ((String) value).substring(11, ((String) value).length() - 1);
+                    ((String) value).startsWith(DYNAMIC_VAR_PREFIX) &&
+                    ((String) value).endsWith(DYNAMIC_VAR_SUFFFIX) &&
+                    ((String) value).contains(WORKFLOW_NAMESPACE_PREFIX)) {
+                String valueToReplace = ((String) value).substring(DYNAMIC_VAR_PREFIX.length(),
+                        ((String) value).length() - DYNAMIC_VAR_SUFFFIX.length()).trim();
+                valueToReplace = valueToReplace.substring(WORKFLOW_NAMESPACE_PREFIX.length());
                 if (!workflowProperties.containsKey(valueToReplace)) {
                     throw MISSING_PARAM_IN_WORKFLOW.createException(valueToReplace, workflowTask);
                 }

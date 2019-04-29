@@ -53,6 +53,9 @@ import static com.cognitree.kronos.scheduler.ValidationError.JOB_NOT_FOUND;
 import static com.cognitree.kronos.scheduler.ValidationError.NAMESPACE_NOT_FOUND;
 import static com.cognitree.kronos.scheduler.ValidationError.TASK_NOT_FOUND;
 import static com.cognitree.kronos.scheduler.ValidationError.WORKFLOW_NOT_FOUND;
+import static com.cognitree.kronos.scheduler.model.Constants.DYNAMIC_VAR_PREFIX;
+import static com.cognitree.kronos.scheduler.model.Constants.DYNAMIC_VAR_SUFFFIX;
+import static com.cognitree.kronos.scheduler.model.Constants.WORKFLOW_NAMESPACE_PREFIX;
 
 public class TaskService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(TaskService.class);
@@ -145,9 +148,12 @@ public class TaskService implements Service {
         for (Map.Entry<String, Object> entry : taskProperties.entrySet()) {
             final Object value = entry.getValue();
             if (value instanceof String &&
-                    ((String) value).startsWith("${") && ((String) value).endsWith("}") &&
-                    ((String) value).contains("workflow.")) {
-                final String valueToReplace = ((String) value).substring(11, ((String) value).length() - 1);
+                    ((String) value).startsWith(DYNAMIC_VAR_PREFIX) &&
+                    ((String) value).endsWith(DYNAMIC_VAR_SUFFFIX) &&
+                    ((String) value).contains(WORKFLOW_NAMESPACE_PREFIX)) {
+                String valueToReplace = ((String) value).substring(DYNAMIC_VAR_PREFIX.length(),
+                        ((String) value).length() - DYNAMIC_VAR_SUFFFIX.length()).trim();
+                valueToReplace = valueToReplace.substring(WORKFLOW_NAMESPACE_PREFIX.length());
                 modifiedTaskProperties.put(entry.getKey(), propertiesToOverride.get(valueToReplace));
             } else if (value instanceof Map) {
                 updateTaskProperties((Map<String, Object>) value, propertiesToOverride);

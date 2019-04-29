@@ -20,6 +20,7 @@ package com.cognitree.kronos.scheduler;
 import com.cognitree.kronos.executor.ExecutorApp;
 import com.cognitree.kronos.executor.handlers.MockSuccessTaskHandler;
 import com.cognitree.kronos.model.Task;
+import com.cognitree.kronos.scheduler.model.CronSchedule;
 import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
@@ -211,6 +212,9 @@ public class WorkflowTriggerServiceTest {
         final WorkflowTriggerService workflowTriggerService = WorkflowTriggerService.getService();
         final WorkflowTrigger workflowTriggerOne = createWorkflowTrigger(UUID.randomUUID().toString(),
                 workflowOne.getName(), namespaceOne.getName());
+        CronSchedule cronSchedule = new CronSchedule();
+        cronSchedule.setCronExpression("0 0/1 * 1/1 * ? *");
+        workflowTriggerOne.setSchedule(cronSchedule);
         workflowTriggerService.add(workflowTriggerOne);
 
         workflowTriggerService.delete(workflowTriggerOne);

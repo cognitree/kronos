@@ -36,7 +36,7 @@ public class WorkflowTrigger extends WorkflowTriggerId {
     private boolean enabled = true;
     /**
      * Set of properties to be overridden at a workflow before execution.
-     * Any property present at a workflow level {@link Workflow#properties} can be overridden
+     * Any property present at a workflow level {@link Workflow#getProperties()} will be overridden
      * before the workflow is sent for execution by the trigger.
      */
     private Map<String, Object> properties = new HashMap<>();
@@ -106,6 +106,6 @@ public class WorkflowTrigger extends WorkflowTriggerId {
                 ", endAt=" + endAt +
                 ", enabled=" + enabled +
                 ", properties=" + properties +
-                '}';
+                "} " + super.toString();
     }
 }

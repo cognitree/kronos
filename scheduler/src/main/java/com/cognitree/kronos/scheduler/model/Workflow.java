@@ -43,7 +43,7 @@ public class Workflow extends WorkflowId {
      * global properties available to each task within the workflow. The task can refer to a property defined at a workflow
      * level as ${workflow.prop_name} where prop_name is the name of the property defined at workflow level.
      * <p>
-     * Note: The property can be overridden by a trigger associated with this workflow, check {@link WorkflowTrigger#properties}
+     * Note: The property can be overridden by a trigger associated with this workflow, check {@link WorkflowTrigger#getProperties()}
      * for details
      */
     private Map<String, Object> properties = new HashMap<>();
@@ -108,11 +108,11 @@ public class Workflow extends WorkflowId {
     public String toString() {
         return "Workflow{" +
                 "description='" + description + '\'' +
-                ", properties=" + properties +
                 ", tasks=" + tasks +
                 ", emailOnFailure=" + emailOnFailure +
                 ", emailOnSuccess=" + emailOnSuccess +
-                '}';
+                ", properties=" + properties +
+                "} " + super.toString();
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

@@ -10,7 +10,7 @@ tasks:
     type: typeSuccess
     properties:
       keyA: valA
-      keyB: ${workflow.valOne}
+      keyB: ${ workflow.valOne }
     dependsOn: ["taskOne"]
   - name: taskThree
     type: typeSuccess
