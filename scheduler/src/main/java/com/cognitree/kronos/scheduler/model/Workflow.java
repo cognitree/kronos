@@ -17,6 +17,7 @@
 
 package com.cognitree.kronos.scheduler.model;
 
+import com.cognitree.kronos.model.Policy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -39,6 +40,14 @@ public class Workflow extends WorkflowId {
     private List<WorkflowTask> tasks = new ArrayList<>();
     private List<String> emailOnFailure = new ArrayList<>();
     private List<String> emailOnSuccess = new ArrayList<>();
+    /**
+     * global properties available to each task within the workflow. The task can refer to a property defined at a workflow
+     * level as ${workflow.prop_name} where prop_name is the name of the property defined at workflow level.
+     * <p>
+     * Note: The property can be overridden by a trigger associated with this workflow, check {@link WorkflowTrigger#getProperties()}
+     * for details
+     */
+    private Map<String, Object> properties = new HashMap<>();
 
     public String getDescription() {
         return description;
@@ -72,6 +81,14 @@ public class Workflow extends WorkflowId {
         this.emailOnSuccess = emailOnSuccess;
     }
 
+    public Map<String, Object> getProperties() {
+        return properties;
+    }
+
+    public void setProperties(Map<String, Object> properties) {
+        this.properties = properties;
+    }
+
     @JsonIgnore
     @BsonIgnore
     public WorkflowId getIdentity() {
@@ -95,6 +112,7 @@ public class Workflow extends WorkflowId {
                 ", tasks=" + tasks +
                 ", emailOnFailure=" + emailOnFailure +
                 ", emailOnSuccess=" + emailOnSuccess +
+                ", properties=" + properties +
                 "} " + super.toString();
     }
 
@@ -105,6 +123,7 @@ public class Workflow extends WorkflowId {
         private String type;
         private List<String> dependsOn = new ArrayList<>();
         private Map<String, Object> properties = new HashMap<>();
+        private List<Policy> policies = new ArrayList<>();
 
         private long maxExecutionTimeInMs = TimeUnit.DAYS.toMillis(1);
         private boolean enabled = true;
@@ -141,6 +160,14 @@ public class Workflow extends WorkflowId {
             this.properties = properties;
         }
 
+        public List<Policy> getPolicies() {
+            return policies;
+        }
+
+        public void setPolicies(List<Policy> policies) {
+            this.policies = policies;
+        }
+
         public long getMaxExecutionTimeInMs() {
             return maxExecutionTimeInMs;
         }
@@ -162,18 +189,18 @@ public class Workflow extends WorkflowId {
             if (this == o) return true;
             if (!(o instanceof WorkflowTask)) return false;
             WorkflowTask that = (WorkflowTask) o;
-            return enabled == that.enabled &&
+            return maxExecutionTimeInMs == that.maxExecutionTimeInMs &&
+                    enabled == that.enabled &&
                     Objects.equals(name, that.name) &&
                     Objects.equals(type, that.type) &&
                     Objects.equals(dependsOn, that.dependsOn) &&
                     Objects.equals(properties, that.properties) &&
-                    Objects.equals(maxExecutionTimeInMs, that.maxExecutionTimeInMs);
+                    Objects.equals(policies, that.policies);
         }
 
         @Override
         public int hashCode() {
-
-            return Objects.hash(name, type, dependsOn, properties, maxExecutionTimeInMs, enabled);
+            return Objects.hash(name, type, dependsOn, properties, policies, maxExecutionTimeInMs, enabled);
         }
 
         @Override
@@ -183,7 +210,8 @@ public class Workflow extends WorkflowId {
                     ", type='" + type + '\'' +
                     ", dependsOn=" + dependsOn +
                     ", properties=" + properties +
-                    ", maxExecutionTimeInMs='" + maxExecutionTimeInMs + '\'' +
+                    ", policies=" + policies +
+                    ", maxExecutionTimeInMs=" + maxExecutionTimeInMs +
                     ", enabled=" + enabled +
                     '}';
         }

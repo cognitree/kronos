@@ -66,9 +66,9 @@ public class WorkflowTriggerService implements Service {
     }
 
     public void add(WorkflowTrigger workflowTrigger) throws SchedulerException, ServiceException, ValidationException {
-        logger.debug("Received request to add workflow trigger {}", workflowTrigger);
-        validateTrigger(workflowTrigger);
+        logger.info("Received request to add workflow trigger {}", workflowTrigger);
         validateWorkflow(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow());
+        validateTrigger(workflowTrigger);
         try {
             if (workflowTriggerStore.load(workflowTrigger) != null) {
                 throw WORKFLOW_TRIGGER_ALREADY_EXISTS.createException(workflowTrigger.getName(),
@@ -84,7 +84,7 @@ public class WorkflowTriggerService implements Service {
 
     public List<WorkflowTrigger> resume(WorkflowId workflowId)
             throws SchedulerException, ServiceException, ValidationException {
-        logger.debug("Received request to resume all workflow trigger for workflow {}", workflowId);
+        logger.info("Received request to resume all workflow trigger for workflow {}", workflowId);
         final ArrayList<WorkflowTrigger> affectedTriggers = new ArrayList<>();
         final List<WorkflowTrigger> workflowTriggers = get(workflowId.getNamespace(), workflowId.getName());
         for (WorkflowTrigger workflowTrigger : workflowTriggers) {
@@ -97,7 +97,7 @@ public class WorkflowTriggerService implements Service {
     }
 
     public WorkflowTrigger resume(WorkflowTriggerId workflowTriggerId) throws SchedulerException, ServiceException, ValidationException {
-        logger.debug("Received request to resume workflow trigger {}", workflowTriggerId);
+        logger.info("Received request to resume workflow trigger {}", workflowTriggerId);
         try {
             final WorkflowTrigger workflowTrigger = workflowTriggerStore.load(workflowTriggerId);
             if (workflowTrigger == null) {
@@ -118,7 +118,7 @@ public class WorkflowTriggerService implements Service {
     }
 
     public List<WorkflowTrigger> pause(WorkflowId workflowId) throws ServiceException, ValidationException {
-        logger.debug("Received request to pause all triggers for workflow {}", workflowId);
+        logger.info("Received request to pause all triggers for workflow {}", workflowId);
         final ArrayList<WorkflowTrigger> affectedTriggers = new ArrayList<>();
         final List<WorkflowTrigger> workflowTriggers = get(workflowId.getNamespace(), workflowId.getName());
         for (WorkflowTrigger workflowTrigger : workflowTriggers) {
@@ -131,7 +131,7 @@ public class WorkflowTriggerService implements Service {
     }
 
     public WorkflowTrigger pause(WorkflowTriggerId workflowTriggerId) throws ServiceException, ValidationException {
-        logger.debug("Received request to pause workflow trigger {}", workflowTriggerId);
+        logger.info("Received request to pause workflow trigger {}", workflowTriggerId);
         try {
             final WorkflowTrigger workflowTrigger = workflowTriggerStore.load(workflowTriggerId);
             if (workflowTrigger == null) {
@@ -205,7 +205,7 @@ public class WorkflowTriggerService implements Service {
     }
 
     public void delete(WorkflowTriggerId workflowTriggerId) throws SchedulerException, ServiceException, ValidationException {
-        logger.debug("Received request to delete workflow trigger {}", workflowTriggerId);
+        logger.info("Received request to delete workflow trigger {}", workflowTriggerId);
         validateNamespace(workflowTriggerId.getNamespace());
         try {
             if (workflowTriggerStore.load(workflowTriggerId) == null) {

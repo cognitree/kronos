@@ -41,6 +41,7 @@ import static com.cognitree.kronos.model.Task.Status.RUNNING;
 import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
 import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
 import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
+import static com.cognitree.kronos.model.Task.Status.UP_FOR_RETRY;
 import static com.cognitree.kronos.model.Task.Status.WAITING;
 
 /**
@@ -109,7 +110,7 @@ final class TaskProvider {
 
     synchronized List<Task> getReadyTasks() {
         final Predicate<Task> isReadyForExecution = this::isReadyForExecution;
-        return getTasks(Collections.singletonList(WAITING), isReadyForExecution);
+        return getTasks(Arrays.asList(UP_FOR_RETRY, WAITING), isReadyForExecution);
     }
 
     synchronized List<Task> getActiveTasks() {

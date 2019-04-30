@@ -15,29 +15,10 @@
  * limitations under the License.
  */
 
-package com.cognitree.kronos.scheduler.store.mongo.codecs;
+package com.cognitree.kronos.scheduler.model;
 
-import com.cognitree.kronos.scheduler.model.Job;
-import org.bson.BsonReader;
-import org.bson.BsonWriter;
-import org.bson.codecs.Codec;
-import org.bson.codecs.DecoderContext;
-import org.bson.codecs.EncoderContext;
-
-public class JobStatusCodec implements Codec<Job.Status> {
-
-    @Override
-    public void encode(BsonWriter writer, Job.Status value, EncoderContext encoderContext) {
-        writer.writeString(value.name());
-    }
-
-    @Override
-    public Job.Status decode(BsonReader reader, DecoderContext decoderContext) {
-        return Job.Status.valueOf(reader.readString());
-    }
-
-    @Override
-    public Class<Job.Status> getEncoderClass() {
-        return Job.Status.class;
-    }
+public interface Constants {
+    String WORKFLOW_NAMESPACE_PREFIX = "workflow.";
+    String DYNAMIC_VAR_PREFIX = "${";
+    String DYNAMIC_VAR_SUFFFIX = "}";
 }
