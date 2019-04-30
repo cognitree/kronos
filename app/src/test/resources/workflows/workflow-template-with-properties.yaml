@@ -17,4 +17,7 @@ tasks:
     properties:
       keyA: valA
       keyB: ${workflow.valTwo}
+      keyC:
+        keyA: ${workflow.valTwo}
+        keyB: valB
     dependsOn: ["taskOne"]
