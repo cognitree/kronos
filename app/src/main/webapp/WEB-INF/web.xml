@@ -46,4 +46,24 @@
         <servlet-class>io.swagger.jersey.config.JerseyJaxrsConfig</servlet-class>
         <load-on-startup>2</load-on-startup>
     </servlet>
+    <filter>
+        <filter-name>cross-origin</filter-name>
+        <filter-class>org.eclipse.jetty.servlets.CrossOriginFilter</filter-class>
+        <init-param>
+            <param-name>allowedOrigins</param-name>
+            <param-value>*</param-value>
+        </init-param>
+        <init-param>
+            <param-name>allowedMethods</param-name>
+            <param-value>GET,POST,HEAD</param-value>
+        </init-param>
+        <init-param>
+            <param-name>allowedHeaders</param-name>
+            <param-value>*</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>cross-origin</filter-name>
+        <url-pattern>/kronos/*</url-pattern>
+    </filter-mapping>
 </web-app>
