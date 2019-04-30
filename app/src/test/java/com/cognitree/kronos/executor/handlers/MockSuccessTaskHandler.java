@@ -23,10 +23,18 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 public class MockSuccessTaskHandler implements TaskHandler {
+    public static final HashMap<String, Object> CONTEXT = new HashMap<>();
+
     private static final List<String> tasks = Collections.synchronizedList(new ArrayList<>());
+
+    static {
+        CONTEXT.put("valOne", 1234);
+        CONTEXT.put("valTwo", "abcd");
+    }
 
     public static boolean isHandled(String name, String job, String namespace) {
         return tasks.contains(getTaskId(name, job, namespace));
@@ -44,6 +52,6 @@ public class MockSuccessTaskHandler implements TaskHandler {
     @Override
     public TaskResult handle(Task task) {
         tasks.add(getTaskId(task.getName(), task.getJob(), task.getNamespace()));
-        return TaskResult.SUCCESS;
+        return new TaskResult(true, null, CONTEXT);
     }
 }

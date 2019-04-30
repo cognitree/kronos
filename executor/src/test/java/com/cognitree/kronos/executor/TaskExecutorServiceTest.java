@@ -40,7 +40,6 @@ import static com.cognitree.kronos.model.Task.Status.RUNNING;
 import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
 import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
 import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
-import static java.lang.Thread.sleep;
 
 public class TaskExecutorServiceTest {
 
@@ -73,13 +72,13 @@ public class TaskExecutorServiceTest {
                 .build();
         tasksMap.put(taskOne, taskOne);
         TaskExecutionService.getService().getProducer().send(taskOne.getType(), MAPPER.writeValueAsString(taskOne));
-        sleep(100);
+        Thread.sleep(1000);
         consumeTaskStatus(tasksMap);
         // depending on the number of available cores task picked for execution
         // will be in one of the two state RUNNING or SUBMITTED
         Assert.assertTrue(taskOne.getStatus().equals(RUNNING) || taskOne.getStatus().equals(SUBMITTED));
         TestTaskHandler.finishExecution(taskOne.getName());
-        sleep(100);
+        Thread.sleep(1000);
         consumeTaskStatus(tasksMap);
         Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
     }
@@ -97,7 +96,7 @@ public class TaskExecutorServiceTest {
                 .build();
         tasksMap.put(taskOne, taskOne);
         TaskExecutionService.getService().getProducer().send(taskOne.getType(), MAPPER.writeValueAsString(taskOne));
-        sleep(100);
+        Thread.sleep(1000);
         consumeTaskStatus(tasksMap);
         Assert.assertEquals(FAILED, taskOne.getStatus());
         Assert.assertEquals("error handling task", taskOne.getStatusMessage());
@@ -153,7 +152,7 @@ public class TaskExecutorServiceTest {
         tasksMap.put(taskFive, taskFive);
         TaskExecutionService.getService().getProducer().send(taskFive.getType(), MAPPER.writeValueAsString(taskFive));
 
-        sleep(100);
+        Thread.sleep(1000);
         consumeTaskStatus(tasksMap);
         // depending on the number of available cores task picked for execution
         // will be in one of the two state RUNNING or SUBMITTED
@@ -163,7 +162,7 @@ public class TaskExecutorServiceTest {
         Assert.assertTrue(taskFour.getStatus().equals(RUNNING) || taskFour.getStatus().equals(SUBMITTED));
         Assert.assertEquals(SCHEDULED, taskFive.getStatus());
         TestTaskHandler.finishExecution(taskOne.getName());
-        sleep(100);
+        Thread.sleep(1000);
         consumeTaskStatus(tasksMap);
         Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
         Assert.assertTrue(taskFive.getStatus().equals(RUNNING) || taskFive.getStatus().equals(SUBMITTED));
@@ -171,7 +170,7 @@ public class TaskExecutorServiceTest {
         TestTaskHandler.finishExecution(taskThree.getName());
         TestTaskHandler.finishExecution(taskFour.getName());
         TestTaskHandler.finishExecution(taskFive.getName());
-        sleep(100);
+        Thread.sleep(1000);
         consumeTaskStatus(tasksMap);
         Assert.assertEquals(SUCCESSFUL, taskTwo.getStatus());
         Assert.assertEquals(SUCCESSFUL, taskThree.getStatus());
@@ -232,7 +231,7 @@ public class TaskExecutorServiceTest {
                 .setStatus(SCHEDULED)
                 .build();
         TaskExecutionService.getService().getProducer().send(taskFive.getType(), MAPPER.writeValueAsString(taskFive));
-        sleep(100);
+        Thread.sleep(1000);
         Assert.assertTrue(TypeATaskHandler.isHandled(taskOne.getName()));
         Assert.assertFalse(TypeBTaskHandler.isHandled(taskOne.getName()));
         Assert.assertTrue(TypeBTaskHandler.isHandled(taskTwo.getName()));

@@ -21,10 +21,11 @@ public enum ValidationError {
     NAMESPACE_NOT_FOUND(1001, "namespace_not_found", 404),
     NAMESPACE_ALREADY_EXISTS(1002, "namespace_already_exists", 409),
 
-    WORKFLOW_NOT_FOUND(2003, "workflow_not_found", 404),
-    WORKFLOW_ALREADY_EXISTS(2003, "workflow_already_exists", 409),
-    MISSING_TASK_IN_WORKFLOW(2001, "missing_tasks_in_workflow", 400),
-    CYCLIC_DEPENDENCY_IN_WORKFLOW(2003, "cyclic_dependency_in_workflow", 400),
+    WORKFLOW_NOT_FOUND(2001, "workflow_not_found", 404),
+    WORKFLOW_ALREADY_EXISTS(2002, "workflow_already_exists", 409),
+    MISSING_TASK_IN_WORKFLOW(2003, "missing_tasks_in_workflow", 400),
+    MISSING_PARAM_IN_WORKFLOW(2004, "missing_param_in_workflow", 400),
+    CYCLIC_DEPENDENCY_IN_WORKFLOW(2005, "cyclic_dependency_in_workflow", 400),
 
     WORKFLOW_TRIGGER_NOT_FOUND(3001, "workflow_trigger_not_found", 404),
     INVALID_WORKFLOW_TRIGGER(3002, "invalid_workflow_trigger", 400),

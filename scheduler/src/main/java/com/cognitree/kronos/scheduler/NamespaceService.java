@@ -77,7 +77,7 @@ public class NamespaceService implements Service {
     }
 
     public void add(Namespace namespace) throws ServiceException, ValidationException {
-        logger.debug("Received request to add namespace {}", namespace);
+        logger.info("Received request to add namespace {}", namespace);
         try {
             if (namespaceStore.load(namespace) != null) {
                 throw NAMESPACE_ALREADY_EXISTS.createException(namespace.getName());
@@ -90,7 +90,7 @@ public class NamespaceService implements Service {
     }
 
     public void update(Namespace namespace) throws ServiceException, ValidationException {
-        logger.debug("Received request to update namespace to {}", namespace);
+        logger.info("Received request to update namespace to {}", namespace);
         try {
             if (namespaceStore.load(namespace) == null) {
                 throw NAMESPACE_NOT_FOUND.createException(namespace.getName());

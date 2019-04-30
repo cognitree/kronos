@@ -7,17 +7,16 @@ tasks:
       keyA: valA
       keyB: valB
   - name: taskTwo
-    type: typeFailure
+    type: typeSuccess
     properties:
       keyA: valA
-      keyB: valB
-    policies:
-      - type: retry
-        maxRetryCount: 3
+      keyB: ${taskOne.valOne}
+      keyC: ${taskOne.valThree}
+    dependsOn: ["taskOne"]
   - name: taskThree
     type: typeSuccess
     properties:
       keyA: valA
-      keyB: valB
-    dependsOn:
-      - taskTwo
+      keyB: ${taskOne.valTwo}
+      keyC: ${taskOne.valThree}
+    dependsOn: ["taskTwo"]

@@ -43,13 +43,33 @@ import java.util.List;
 import java.util.Map;
 
 import static com.cognitree.kronos.scheduler.ValidationError.CYCLIC_DEPENDENCY_IN_WORKFLOW;
+import static com.cognitree.kronos.scheduler.ValidationError.MISSING_PARAM_IN_WORKFLOW;
 import static com.cognitree.kronos.scheduler.ValidationError.MISSING_TASK_IN_WORKFLOW;
 import static com.cognitree.kronos.scheduler.ValidationError.NAMESPACE_NOT_FOUND;
 import static com.cognitree.kronos.scheduler.ValidationError.WORKFLOW_ALREADY_EXISTS;
 import static com.cognitree.kronos.scheduler.ValidationError.WORKFLOW_NOT_FOUND;
+import static com.cognitree.kronos.scheduler.model.Constants.DYNAMIC_VAR_PREFIX;
+import static com.cognitree.kronos.scheduler.model.Constants.DYNAMIC_VAR_SUFFFIX;
+import static com.cognitree.kronos.scheduler.model.Constants.WORKFLOW_NAMESPACE_PREFIX;
 
 public class WorkflowService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(WorkflowService.class);
+
+    private static final List<Job.Status> ACTIVE_JOB_STATUS = new ArrayList<>();
+    private static final List<Task.Status> ACTIVE_TASK_STATUS = new ArrayList<>();
+
+    static {
+        for (Job.Status status : Job.Status.values()) {
+            if (!status.isFinal()) {
+                ACTIVE_JOB_STATUS.add(status);
+            }
+        }
+        for (Task.Status status : Task.Status.values()) {
+            if (!status.isFinal()) {
+                ACTIVE_TASK_STATUS.add(status);
+            }
+        }
+    }
 
     private WorkflowStore workflowStore;
 
@@ -71,7 +91,7 @@ public class WorkflowService implements Service {
     }
 
     public void add(Workflow workflow) throws ValidationException, ServiceException {
-        logger.debug("Received request to add workflow {}", workflow);
+        logger.info("Received request to add workflow {}", workflow);
         validateNamespace(workflow.getNamespace());
         validate(workflow);
         try {
@@ -106,22 +126,6 @@ public class WorkflowService implements Service {
         } catch (StoreException e) {
             logger.error("unable to get workflow {}", workflowId, e);
             throw new ServiceException(e.getMessage(), e.getCause());
-        }
-    }
-
-    private static final List<Job.Status> ACTIVE_JOB_STATUS = new ArrayList<>();
-    private static final List<Task.Status> ACTIVE_TASK_STATUS = new ArrayList<>();
-
-    static {
-        for (Job.Status status : Job.Status.values()) {
-            if (!status.isFinal()) {
-                ACTIVE_JOB_STATUS.add(status);
-            }
-        }
-        for (Task.Status status : Task.Status.values()) {
-            if (!status.isFinal()) {
-                ACTIVE_TASK_STATUS.add(status);
-            }
         }
     }
 
@@ -184,7 +188,7 @@ public class WorkflowService implements Service {
 
 
     public void update(Workflow workflow) throws ValidationException, ServiceException {
-        logger.debug("Received request to update workflow {}", workflow);
+        logger.info("Received request to update workflow {}", workflow);
         validateNamespace(workflow.getNamespace());
         validate(workflow);
         try {
@@ -200,7 +204,7 @@ public class WorkflowService implements Service {
     }
 
     public void delete(WorkflowId workflowId) throws SchedulerException, ServiceException, ValidationException {
-        logger.debug("Received request to delete workflow {}", workflowId);
+        logger.info("Received request to delete workflow {}", workflowId);
         validateNamespace(workflowId.getNamespace());
         try {
             if (workflowStore.load(workflowId) == null) {
@@ -261,6 +265,31 @@ public class WorkflowService implements Service {
         }
         if (!topologicalSort.isDag()) {
             throw CYCLIC_DEPENDENCY_IN_WORKFLOW.createException();
+        }
+
+        final Map<String, Object> workflowProperties = workflow.getProperties();
+        for (Workflow.WorkflowTask workflowTask : workflowTasks) {
+            validateWorkflowProperties(workflowTask.getName(), workflowTask.getProperties(), workflowProperties);
+        }
+    }
+
+    private void validateWorkflowProperties(String workflowTask, Map<String, Object> taskProperties,
+                                            Map<String, Object> workflowProperties) throws ValidationException {
+        for (Map.Entry<String, Object> entry : taskProperties.entrySet()) {
+            final Object value = entry.getValue();
+            if (value instanceof String &&
+                    ((String) value).startsWith(DYNAMIC_VAR_PREFIX) &&
+                    ((String) value).endsWith(DYNAMIC_VAR_SUFFFIX) &&
+                    ((String) value).contains(WORKFLOW_NAMESPACE_PREFIX)) {
+                String valueToReplace = ((String) value).substring(DYNAMIC_VAR_PREFIX.length(),
+                        ((String) value).length() - DYNAMIC_VAR_SUFFFIX.length()).trim();
+                valueToReplace = valueToReplace.substring(WORKFLOW_NAMESPACE_PREFIX.length());
+                if (!workflowProperties.containsKey(valueToReplace)) {
+                    throw MISSING_PARAM_IN_WORKFLOW.createException(valueToReplace, workflowTask);
+                }
+            } else if (value instanceof Map) {
+                validateWorkflowProperties(workflowTask, (Map<String, Object>) value, workflowProperties);
+            }
         }
     }
 

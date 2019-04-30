@@ -52,6 +52,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.cognitree.kronos.scheduler.model.Job.Status.FAILED;
 import static com.cognitree.kronos.scheduler.model.Job.Status.RUNNING;
@@ -142,19 +143,56 @@ public final class WorkflowSchedulerService implements Service {
         logger.info("Received request to execute workflow {} by trigger {} under namespace {}",
                 workflowName, triggerName, namespace);
         final Workflow workflow = WorkflowService.getService().get(WorkflowId.build(namespace, workflowName));
+        final WorkflowTrigger workflowTrigger = WorkflowTriggerService.getService()
+                .get(WorkflowTriggerId.build(namespace, triggerName, workflowName));
+        // it might happen than user deleted the workflow trigger post scheduling of job by quartz, ignore silently
+        if (workflowTrigger == null) {
+            logger.error("Unable to execute the workflow {} under namespace {}, trigger {} is missing",
+                    workflowName, namespace, triggerName);
+            return;
+        }
         final Job job = JobService.getService().create(workflow.getNamespace(), workflow.getName(), triggerName);
         logger.debug("Executing workflow job {}", job);
         final List<WorkflowTask> workflowTasks = orderWorkflowTasks(workflow.getTasks());
+        final Map<String, Object> updatedWorkflowProperties =
+                overrideWorkflowProperties(workflow.getProperties(), workflowTrigger.getProperties());
         final List<Task> tasks = new ArrayList<>();
         for (WorkflowTask workflowTask : workflowTasks) {
             if (!workflowTask.isEnabled()) {
                 logger.warn("Workflow task {} is disabled from scheduling", workflowTask);
                 continue;
             }
-            tasks.add(TaskService.getService().create(job.getNamespace(), workflowTask, job.getId(), job.getWorkflow()));
+            tasks.add(TaskService.getService().create(job.getNamespace(), workflowTask, job.getId(),
+                    job.getWorkflow(), updatedWorkflowProperties));
         }
         tasks.forEach(task -> TaskSchedulerService.getService().schedule(task));
         JobService.getService().updateStatus(job.getIdentity(), RUNNING);
+    }
+
+    /**
+     * overrides workflow properties from trigger properties.
+     *
+     * @param workflowProperties
+     * @param triggerProperties
+     * @return
+     */
+    private Map<String, Object> overrideWorkflowProperties(Map<String, Object> workflowProperties,
+                                                           Map<String, Object> triggerProperties) {
+        if (workflowProperties == null && triggerProperties == null) {
+            return null;
+        }
+        final HashMap<String, Object> updatedProperties = new HashMap<>();
+        if (workflowProperties != null) {
+            updatedProperties.putAll(workflowProperties);
+        }
+        if (triggerProperties != null) {
+            triggerProperties.forEach((key, value) -> {
+                if (updatedProperties.containsKey(key)) {
+                    updatedProperties.put(key, value);
+                }
+            });
+        }
+        return updatedProperties;
     }
 
     /**
@@ -334,7 +372,7 @@ public final class WorkflowSchedulerService implements Service {
                             triggerName, workflowName, namespace, e);
                 }
             } catch (Exception e) {
-                logger.error("Error retrieving job detail for trigger with key {}", trigger.getJobKey());
+                logger.error("Error retrieving job detail for trigger with key {}", trigger.getJobKey(), e);
             }
         }
     }

@@ -31,8 +31,8 @@ import java.text.ParseException;
 import java.util.List;
 import java.util.UUID;
 
-import static com.cognitree.kronos.scheduler.TestHelper.createWorkflow;
-import static com.cognitree.kronos.scheduler.TestHelper.createWorkflowTrigger;
+import static com.cognitree.kronos.TestUtil.createWorkflow;
+import static com.cognitree.kronos.TestUtil.createWorkflowTrigger;
 
 public class WorkflowSchedulerServiceTest {
 
@@ -51,7 +51,7 @@ public class WorkflowSchedulerServiceTest {
     @Test
     public void testScheduleWorkflow() throws SchedulerException, IOException, ParseException {
         final WorkflowSchedulerService workflowSchedulerService = WorkflowSchedulerService.getService();
-        final Workflow workflow = createWorkflow(UUID.randomUUID().toString(),
+        final Workflow workflow = createWorkflow("workflow.yaml", UUID.randomUUID().toString(),
                 UUID.randomUUID().toString());
         workflowSchedulerService.add(workflow);
         final WorkflowTrigger workflowTrigger = createWorkflowTrigger(UUID.randomUUID().toString(),
@@ -64,7 +64,7 @@ public class WorkflowSchedulerServiceTest {
     @Test
     public void testDeleteWorkflow() throws SchedulerException, IOException {
         final WorkflowSchedulerService workflowSchedulerService = WorkflowSchedulerService.getService();
-        final Workflow workflow = createWorkflow(UUID.randomUUID().toString(), UUID.randomUUID().toString());
+        final Workflow workflow = createWorkflow("workflow.yaml", UUID.randomUUID().toString(), UUID.randomUUID().toString());
         workflowSchedulerService.add(workflow);
         final Scheduler scheduler = workflowSchedulerService.getScheduler();
         Assert.assertTrue(scheduler.checkExists(workflowSchedulerService.getJobKey(workflow)));
@@ -84,7 +84,7 @@ public class WorkflowSchedulerServiceTest {
     @Test
     public void testDeleteWorkflowTrigger() throws SchedulerException, IOException, ParseException {
         final WorkflowSchedulerService workflowSchedulerService = WorkflowSchedulerService.getService();
-        final Workflow workflow = createWorkflow(UUID.randomUUID().toString(),
+        final Workflow workflow = createWorkflow("workflow.yaml", UUID.randomUUID().toString(),
                 UUID.randomUUID().toString());
         workflowSchedulerService.add(workflow);
         final WorkflowTrigger workflowTrigger = createWorkflowTrigger(UUID.randomUUID().toString(),
@@ -99,7 +99,7 @@ public class WorkflowSchedulerServiceTest {
 
     @Test
     public void testResolveWorkflowTasks() throws IOException {
-        final Workflow workflow = createWorkflow(UUID.randomUUID().toString(),
+        final Workflow workflow = createWorkflow("workflow.yaml", UUID.randomUUID().toString(),
                 UUID.randomUUID().toString());
         final List<Workflow.WorkflowTask> workflowTasks =
                 WorkflowSchedulerService.getService().orderWorkflowTasks(workflow.getTasks());

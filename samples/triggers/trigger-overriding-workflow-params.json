@@ -1,0 +1,10 @@
+{
+  "name": "WorkflowTrigger",
+  "schedule": {
+    "type": "simple"
+  },
+  "properties": {
+    "keyOne": "valueOne",
+    "keyTwo": "valueTwo"
+  }
+}

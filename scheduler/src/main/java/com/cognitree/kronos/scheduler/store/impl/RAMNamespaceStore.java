@@ -25,13 +25,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RAMNamespaceStore implements NamespaceStore {
     private static final Logger logger = LoggerFactory.getLogger(RAMNamespaceStore.class);
-    private final Map<NamespaceId, Namespace> namespaces = new HashMap<>();
+
+    private final Map<NamespaceId, Namespace> namespaces = new ConcurrentHashMap<>();
 
     @Override
     public void store(Namespace namespace) throws StoreException {

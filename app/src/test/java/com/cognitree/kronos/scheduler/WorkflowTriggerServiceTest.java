@@ -18,6 +18,8 @@
 package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.executor.ExecutorApp;
+import com.cognitree.kronos.executor.handlers.MockSuccessTaskHandler;
+import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
@@ -25,12 +27,17 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.quartz.Scheduler;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 import static com.cognitree.kronos.TestUtil.createNamespace;
 import static com.cognitree.kronos.TestUtil.createWorkflow;
 import static com.cognitree.kronos.TestUtil.createWorkflowTrigger;
+import static com.cognitree.kronos.TestUtil.scheduleWorkflow;
+import static com.cognitree.kronos.TestUtil.waitForTriggerToComplete;
 
 public class WorkflowTriggerServiceTest {
     private static final SchedulerApp SCHEDULER_APP = new SchedulerApp();
@@ -207,5 +214,68 @@ public class WorkflowTriggerServiceTest {
         workflowTriggerService.delete(workflowTriggerOne);
         final WorkflowTrigger workflowTriggerOneFromDB = workflowTriggerService.get(workflowTriggerOne);
         Assert.assertNull(workflowTriggerOneFromDB);
+    }
+
+    @Test
+    public void testWorkflowTriggerPropertiesOne() throws Exception {
+        HashMap<String, Object> workflowProps = new HashMap<>();
+        workflowProps.put("valOne", 1234);
+        workflowProps.put("valTwo", "abcd");
+
+        HashMap<String, Object> triggerProps = new HashMap<>();
+        triggerProps.put("valOne", 123456);
+        triggerProps.put("valTwo", "abcdef");
+
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow("workflows/workflow-template-with-properties.yaml",
+                workflowProps, triggerProps);
+
+        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
+        waitForTriggerToComplete(workflowTrigger, scheduler);
+        // wait for tasks status to be consumed from queue
+        Thread.sleep(1000);
+
+        TaskService taskService = TaskService.getService();
+        final List<Task> workflowTasks = taskService.get(workflowTrigger.getNamespace());
+        Assert.assertEquals(3, workflowTasks.size());
+        for (Task workflowTask : workflowTasks) {
+            Assert.assertEquals(MockSuccessTaskHandler.CONTEXT, workflowTask.getContext());
+            if (workflowTask.getName().equals("taskTwo")) {
+                Assert.assertEquals(123456, workflowTask.getProperties().get("keyB"));
+            }
+            if (workflowTask.getName().equals("taskThree")) {
+                Assert.assertEquals("abcdef", workflowTask.getProperties().get("keyB"));
+            }
+        }
+    }
+
+    @Test
+    public void testWorkflowTriggerPropertiesTwo() throws Exception {
+        HashMap<String, Object> workflowProps = new HashMap<>();
+        workflowProps.put("valOne", 1234);
+        workflowProps.put("valTwo", "abcd");
+
+        HashMap<String, Object> triggerProps = new HashMap<>();
+        triggerProps.put("valOne", 123456);
+
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow("workflows/workflow-template-with-properties.yaml",
+                workflowProps, triggerProps);
+
+        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
+        waitForTriggerToComplete(workflowTrigger, scheduler);
+        // wait for tasks status to be consumed from queue
+        Thread.sleep(1000);
+
+        TaskService taskService = TaskService.getService();
+        final List<Task> workflowTasks = taskService.get(workflowTrigger.getNamespace());
+        Assert.assertEquals(3, workflowTasks.size());
+        for (Task workflowTask : workflowTasks) {
+            Assert.assertEquals(workflowTask.getContext(), MockSuccessTaskHandler.CONTEXT);
+            if (workflowTask.getName().equals("taskTwo")) {
+                Assert.assertEquals(123456, workflowTask.getProperties().get("keyB"));
+            }
+            if (workflowTask.getName().equals("taskThree")) {
+                Assert.assertEquals("abcd", workflowTask.getProperties().get("keyB"));
+            }
+        }
     }
 }
