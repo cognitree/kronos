@@ -162,7 +162,7 @@ public class TaskService implements Service {
                 valueToReplace = valueToReplace.substring(WORKFLOW_NAMESPACE_PREFIX.length());
                 modifiedTaskProperties.put(entry.getKey(), propertiesToOverride.get(valueToReplace));
             } else if (value instanceof Map) {
-                updateTaskProperties((Map<String, Object>) value, propertiesToOverride);
+                modifiedTaskProperties.put(entry.getKey(), updateTaskProperties((Map<String, Object>) value, propertiesToOverride));
             } else {
                 modifiedTaskProperties.put(entry.getKey(), value);
             }
