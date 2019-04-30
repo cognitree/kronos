@@ -55,7 +55,7 @@
         </init-param>
         <init-param>
             <param-name>allowedMethods</param-name>
-            <param-value>GET,POST,HEAD</param-value>
+            <param-value>GET,POST,HEAD,PUT,DELETE</param-value>
         </init-param>
         <init-param>
             <param-name>allowedHeaders</param-name>
