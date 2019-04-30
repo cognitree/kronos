@@ -129,7 +129,7 @@ public class TaskService implements Service {
         task.setPolicies(workflowTask.getPolicies());
         task.setMaxExecutionTimeInMs(workflowTask.getMaxExecutionTimeInMs());
         task.setDependsOn(workflowTask.getDependsOn());
-        final Map<String, Object> taskProperties = updateTaskProperties(workflowTask.getProperties(), workflowProperties);
+        final Map<String, Object> taskProperties = modifyAndGetTaskProperties(workflowTask.getProperties(), workflowProperties);
         task.setProperties(taskProperties);
         task.setCreatedAt(System.currentTimeMillis());
         try {
@@ -148,8 +148,8 @@ public class TaskService implements Service {
      * @param propertiesToOverride
      * @return
      */
-    private Map<String, Object> updateTaskProperties(Map<String, Object> taskProperties,
-                                                     Map<String, Object> propertiesToOverride) {
+    private Map<String, Object> modifyAndGetTaskProperties(Map<String, Object> taskProperties,
+                                                           Map<String, Object> propertiesToOverride) {
         final HashMap<String, Object> modifiedTaskProperties = new HashMap<>();
         for (Map.Entry<String, Object> entry : taskProperties.entrySet()) {
             final Object value = entry.getValue();
@@ -162,7 +162,7 @@ public class TaskService implements Service {
                 valueToReplace = valueToReplace.substring(WORKFLOW_NAMESPACE_PREFIX.length());
                 modifiedTaskProperties.put(entry.getKey(), propertiesToOverride.get(valueToReplace));
             } else if (value instanceof Map) {
-                modifiedTaskProperties.put(entry.getKey(), updateTaskProperties((Map<String, Object>) value, propertiesToOverride));
+                modifiedTaskProperties.put(entry.getKey(), modifyAndGetTaskProperties((Map<String, Object>) value, propertiesToOverride));
             } else {
                 modifiedTaskProperties.put(entry.getKey(), value);
             }
