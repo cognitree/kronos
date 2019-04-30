@@ -33,6 +33,7 @@ import org.quartz.SchedulerException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static com.cognitree.kronos.TestUtil.createNamespace;
@@ -196,6 +197,8 @@ public class WorkflowServiceTest {
             }
             if (workflowTask.getName().equals("taskThree")) {
                 Assert.assertEquals("abcd", workflowTask.getProperties().get("keyB"));
+                Assert.assertEquals("abcd", ((Map<String, Object>)workflowTask.getProperties().get("keyC")).get("keyA"));
+                Assert.assertEquals("valB", ((Map<String, Object>)workflowTask.getProperties().get("keyC")).get("keyB"));
             }
         }
     }

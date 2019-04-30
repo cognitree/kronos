@@ -387,11 +387,11 @@ final class TaskSchedulerService implements Service {
         if (dependentTaskContext == null || dependentTaskContext.isEmpty()) {
             return;
         }
-        final Map<String, Object> modifiedTaskProperties = updateTaskProperties(task.getProperties(), dependentTaskContext);
+        final Map<String, Object> modifiedTaskProperties = modifyAndGetTaskProperties(task.getProperties(), dependentTaskContext);
         task.setProperties(modifiedTaskProperties);
     }
 
-    private HashMap<String, Object> updateTaskProperties(Map<String, Object> taskProperties,
+    private HashMap<String, Object> modifyAndGetTaskProperties(Map<String, Object> taskProperties,
                                                          Map<String, Object> dependentTaskContext) {
         final HashMap<String, Object> modifiedTaskProperties = new HashMap<>();
         taskProperties.forEach((key, value) -> {
@@ -409,7 +409,7 @@ final class TaskSchedulerService implements Service {
                     modifiedTaskProperties.put(key, null);
                 }
             } else if (value instanceof Map) {
-                modifiedTaskProperties.put(key, updateTaskProperties((Map<String, Object>) value, dependentTaskContext));
+                modifiedTaskProperties.put(key, modifyAndGetTaskProperties((Map<String, Object>) value, dependentTaskContext));
             } else {
                 // copy the remaining key value pair as it is from current task properties
                 modifiedTaskProperties.put(key, value);
