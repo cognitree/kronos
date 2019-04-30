@@ -22,6 +22,7 @@ import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import com.cognitree.kronos.scheduler.model.WorkflowTriggerId;
 import com.cognitree.kronos.scheduler.store.StoreException;
 import com.cognitree.kronos.scheduler.store.WorkflowTriggerStore;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.slf4j.Logger;
@@ -32,11 +33,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_ENABLED;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_END_AT;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_NAME;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_NAMESPACE;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_PROPERTIES;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_SCHEDULE;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_START_AT;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_WORKFLOW_NAME;
@@ -50,7 +53,7 @@ public class StdJDBCWorkflowTriggerStore implements WorkflowTriggerStore {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private static final String INSERT_WORKFLOW_TRIGGER = "INSERT INTO " + TABLE_WORKFLOW_TRIGGERS
-            + " VALUES (?,?,?,?,?,?,?)";
+            + " VALUES (?,?,?,?,?,?,?,?)";
 
     private static final String LOAD_WORKFLOW_TRIGGER = "SELECT * FROM " + TABLE_WORKFLOW_TRIGGERS + " WHERE "
             + COL_NAME + " = ? " + "AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
@@ -62,11 +65,15 @@ public class StdJDBCWorkflowTriggerStore implements WorkflowTriggerStore {
             + " WHERE " + COL_WORKFLOW_NAME + " = ? AND " + COL_ENABLED + " = ? AND " + COL_NAMESPACE + " = ?";
 
     private static final String UPDATE_WORKFLOW_TRIGGER = "UPDATE " + TABLE_WORKFLOW_TRIGGERS + " set " + COL_START_AT
-            + " = ?, " + COL_SCHEDULE + " = ?," + " " + COL_END_AT + " = ?, " + COL_ENABLED
+            + " = ?, " + COL_SCHEDULE + " = ?," + " " + COL_END_AT + " = ?, " + COL_ENABLED + " = ?, " + COL_PROPERTIES
             + " = ? WHERE " + COL_NAME + " = ? AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
 
     private static final String DELETE_WORKFLOW_TRIGGER = "DELETE FROM " + TABLE_WORKFLOW_TRIGGERS + " WHERE "
             + COL_NAME + " = ? " + "AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
+
+    private static final TypeReference<Map<String, Object>> PROPERTIES_TYPE_REF =
+            new TypeReference<Map<String, Object>>() {
+            };
 
     private final BasicDataSource dataSource;
 
@@ -87,6 +94,7 @@ public class StdJDBCWorkflowTriggerStore implements WorkflowTriggerStore {
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(workflowTrigger.getSchedule()));
             JDBCUtil.setLong(preparedStatement, ++paramIndex, workflowTrigger.getEndAt());
             preparedStatement.setBoolean(++paramIndex, workflowTrigger.isEnabled());
+            preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(workflowTrigger.getProperties()));
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error storing workflow trigger {}", workflowTrigger, e);
@@ -188,6 +196,7 @@ public class StdJDBCWorkflowTriggerStore implements WorkflowTriggerStore {
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(workflowTrigger.getSchedule()));
             JDBCUtil.setLong(preparedStatement, ++paramIndex, workflowTrigger.getEndAt());
             preparedStatement.setBoolean(++paramIndex, workflowTrigger.isEnabled());
+            preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(workflowTrigger.getProperties()));
             preparedStatement.setString(++paramIndex, workflowTrigger.getName());
             preparedStatement.setString(++paramIndex, workflowTrigger.getWorkflow());
             preparedStatement.setString(++paramIndex, workflowTrigger.getNamespace());
@@ -224,6 +233,7 @@ public class StdJDBCWorkflowTriggerStore implements WorkflowTriggerStore {
         workflowTrigger.setSchedule(MAPPER.readValue(resultSet.getString(++paramIndex), Schedule.class));
         workflowTrigger.setEndAt(JDBCUtil.getLong(resultSet, ++paramIndex));
         workflowTrigger.setEnabled(resultSet.getBoolean(++paramIndex));
+        workflowTrigger.setProperties(MAPPER.readValue(resultSet.getString(++paramIndex), PROPERTIES_TYPE_REF));
         return workflowTrigger;
     }
 }

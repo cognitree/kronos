@@ -61,7 +61,7 @@ public class JobServiceTest {
         waitForTriggerToComplete(workflowTriggerOne, scheduler);
         waitForTriggerToComplete(workflowTriggerTwo, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(100);
+        Thread.sleep(1000);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTriggerOne.getNamespace());
@@ -83,7 +83,7 @@ public class JobServiceTest {
         waitForTriggerToComplete(workflowTriggerOne, scheduler);
         waitForTriggerToComplete(workflowTriggerTwo, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(100);
+        Thread.sleep(1000);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTriggerOne.getNamespace());
@@ -105,7 +105,7 @@ public class JobServiceTest {
         waitForTriggerToComplete(workflowTriggerOne, scheduler);
         waitForTriggerToComplete(workflowTriggerTwo, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(100);
+        Thread.sleep(1000);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTriggerOne.getNamespace(), workflowTriggerOne.getWorkflow(),
@@ -127,7 +127,7 @@ public class JobServiceTest {
         waitForTriggerToComplete(workflowTriggerOne, scheduler);
         waitForTriggerToComplete(workflowTriggerTwo, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(100);
+        Thread.sleep(1000);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTriggerOne.getNamespace(), workflowTriggerOne.getWorkflow(),
@@ -147,7 +147,7 @@ public class JobServiceTest {
         // wait for the job to be triggered
         waitForTriggerToComplete(workflowTrigger, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(100);
+        Thread.sleep(1000);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
@@ -181,7 +181,7 @@ public class JobServiceTest {
         // wait for the job to be triggered
         waitForTriggerToComplete(workflowTrigger, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(200);
+        Thread.sleep(1000);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
@@ -223,7 +223,7 @@ public class JobServiceTest {
         // wait for the job to be triggered
         waitForTriggerToComplete(workflowTrigger, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(100);
+        Thread.sleep(1000);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
@@ -242,6 +242,7 @@ public class JobServiceTest {
                 case "taskTwo":
                     taskTwo = task;
                     Assert.assertEquals(Task.Status.FAILED, task.getStatus());
+                    Assert.assertEquals(3, task.getRetryCount());
                     break;
                 case "taskThree":
                     Assert.assertEquals(Task.Status.SKIPPED, task.getStatus());
@@ -263,14 +264,14 @@ public class JobServiceTest {
         // wait for both the job to be triggered
         waitForTriggerToComplete(workflowTrigger, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(100);
+        Thread.sleep(1000);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
                 workflowTrigger.getName(), 0, System.currentTimeMillis());
         Assert.assertEquals(1, workflowOneJobs.size());
         final Job workflowOneJob = workflowOneJobs.get(0);
-        Assert.assertEquals(workflowOneJob.getStatus(), Job.Status.SUCCESSFUL);
+        Assert.assertEquals(Job.Status.SUCCESSFUL, workflowOneJob.getStatus());
         jobService.delete(workflowOneJob);
 
         final List<Job> workflowOneJobsPostDelete = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),

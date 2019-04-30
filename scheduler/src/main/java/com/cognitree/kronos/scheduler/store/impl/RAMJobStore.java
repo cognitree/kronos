@@ -28,13 +28,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.cognitree.kronos.scheduler.model.Job.Status;
 
 public class RAMJobStore implements JobStore {
     private static final Logger logger = LoggerFactory.getLogger(RAMJobStore.class);
 
-    private final Map<JobId, Job> jobs = new HashMap<>();
+    private final Map<JobId, Job> jobs = new ConcurrentHashMap<>();
 
     @Override
     public void store(Job job) throws StoreException {

@@ -74,7 +74,7 @@ public final class TaskExecutionService implements Service {
     // used by internal tasks like polling new tasks from queue
     private final ScheduledExecutorService taskConsumerThreadPool = Executors.newSingleThreadScheduledExecutor();
     // used to execute tasks
-    private final ExecutorService taskExecutorThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    private final ExecutorService taskExecutorThreadPool = Executors.newCachedThreadPool();
     private Consumer consumer;
     private Producer producer;
 

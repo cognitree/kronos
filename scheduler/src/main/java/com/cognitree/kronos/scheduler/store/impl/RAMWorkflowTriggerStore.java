@@ -25,13 +25,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RAMWorkflowTriggerStore implements WorkflowTriggerStore {
     private static final Logger logger = LoggerFactory.getLogger(RAMWorkflowTriggerStore.class);
-    private final Map<WorkflowTriggerId, WorkflowTrigger> workflowTriggers = new HashMap<>();
+
+    private final Map<WorkflowTriggerId, WorkflowTrigger> workflowTriggers = new ConcurrentHashMap<>();
 
     @Override
     public void store(WorkflowTrigger workflowTrigger) throws StoreException {

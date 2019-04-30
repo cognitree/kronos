@@ -7,17 +7,14 @@ tasks:
       keyA: valA
       keyB: valB
   - name: taskTwo
-    type: typeFailure
+    type: typeSuccess
     properties:
       keyA: valA
-      keyB: valB
-    policies:
-      - type: retry
-        maxRetryCount: 3
+      keyB: ${ workflow.valOne }
+    dependsOn: ["taskOne"]
   - name: taskThree
     type: typeSuccess
     properties:
       keyA: valA
-      keyB: valB
-    dependsOn:
-      - taskTwo
+      keyB: ${workflow.valTwo}
+    dependsOn: ["taskOne"]

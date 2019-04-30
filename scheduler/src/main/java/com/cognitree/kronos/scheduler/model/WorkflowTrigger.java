@@ -23,6 +23,9 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @JsonSerialize(as = WorkflowTrigger.class)
 @JsonDeserialize(as = WorkflowTrigger.class)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -31,6 +34,12 @@ public class WorkflowTrigger extends WorkflowTriggerId {
     private Schedule schedule;
     private Long endAt;
     private boolean enabled = true;
+    /**
+     * Set of properties to be overridden at a workflow before execution.
+     * Any property present at a workflow level {@link Workflow#getProperties()} will be overridden
+     * before the workflow is sent for execution by the trigger.
+     */
+    private Map<String, Object> properties = new HashMap<>();
 
     public Long getStartAt() {
         return startAt;
@@ -64,6 +73,14 @@ public class WorkflowTrigger extends WorkflowTriggerId {
         this.enabled = enabled;
     }
 
+    public Map<String, Object> getProperties() {
+        return properties;
+    }
+
+    public void setProperties(Map<String, Object> properties) {
+        this.properties = properties;
+    }
+
     @JsonIgnore
     @BsonIgnore
     public WorkflowTriggerId getIdentity() {
@@ -88,6 +105,7 @@ public class WorkflowTrigger extends WorkflowTriggerId {
                 ", schedule=" + schedule +
                 ", endAt=" + endAt +
                 ", enabled=" + enabled +
+                ", properties=" + properties +
                 "} " + super.toString();
     }
 }

@@ -49,7 +49,10 @@ import static com.cognitree.kronos.model.Task.Status.CREATED;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
 import static com.cognitree.kronos.model.Task.Status.SKIPPED;
+import static com.cognitree.kronos.model.Task.Status.UP_FOR_RETRY;
 import static com.cognitree.kronos.model.Task.Status.WAITING;
+import static com.cognitree.kronos.scheduler.model.Constants.DYNAMIC_VAR_PREFIX;
+import static com.cognitree.kronos.scheduler.model.Constants.DYNAMIC_VAR_SUFFFIX;
 import static com.cognitree.kronos.scheduler.model.Messages.FAILED_DEPENDEE_TASK;
 import static com.cognitree.kronos.scheduler.model.Messages.FAILED_TO_RESOLVE_DEPENDENCY;
 import static com.cognitree.kronos.scheduler.model.Messages.SKIPPED_DEPENDEE_TASK;
@@ -68,7 +71,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * from the queue
  * </p>
  */
-public final class TaskSchedulerService implements Service {
+final class TaskSchedulerService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(TaskSchedulerService.class);
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -277,6 +280,7 @@ public final class TaskSchedulerService implements Service {
         switch (status) {
             case CREATED:
                 break;
+            case UP_FOR_RETRY:
             case WAITING:
                 scheduleReadyTasks();
                 break;
@@ -321,8 +325,11 @@ public final class TaskSchedulerService implements Service {
         final List<Task> readyTasks = taskProvider.getReadyTasks();
         for (Task task : readyTasks) {
             try {
-                // update task context from the tasks it depends on before scheduling
-                updateTaskContext(task);
+                // update dynamic task properties from the tasks it depends on before scheduling
+                // only if the task is not being retried
+                if (task.getStatus() != UP_FOR_RETRY) {
+                    updateTaskProperties(task);
+                }
                 producer.send(task.getType(), MAPPER.writeValueAsString(task));
                 updateStatus(task, SCHEDULED, null);
             } catch (Exception e) {
@@ -333,11 +340,22 @@ public final class TaskSchedulerService implements Service {
     }
 
     /**
-     * updates the task properties with the context from the tasks it depends on.
+     * updates the task properties from the context of the tasks it depends on.
+     * A dependent task can refer to the result ( passed as task content) of the task it depends on.
+     * A dependent task can refer to a property available at any level in the hierarchy above it.
+     * <p>
+     * for e.g.
+     * If task C depends on B and B depends on A.
+     * Task C can refer to property of A via {A.keyName}, where keyName is the output of task A set as {@link Task#getContext()}.
      *
      * @param task
      */
-    private void updateTaskContext(Task task) {
+    private void updateTaskProperties(Task task) {
+        final Map<String, Object> dependentTaskContext = getDependentTaskContext(task);
+        updateTaskProperties(task, dependentTaskContext);
+    }
+
+    private Map<String, Object> getDependentTaskContext(Task task) {
         final List<String> dependsOn = task.getDependsOn();
         final Map<String, Object> dependentTaskContext = new LinkedHashMap<>();
         for (String dependentTaskName : dependsOn) {
@@ -349,9 +367,10 @@ public final class TaskSchedulerService implements Service {
                     dependentTask.getContext().forEach((key, value) ->
                             dependentTaskContext.put(dependentTask.getName() + "." + key, value));
                 }
+                dependentTaskContext.putAll(getDependentTaskContext(dependentTask));
             }
         }
-        updateTaskProperties(task, dependentTaskContext);
+        return dependentTaskContext;
     }
 
     /**
@@ -364,8 +383,7 @@ public final class TaskSchedulerService implements Service {
      * @param task
      * @param dependentTaskContext
      */
-    // used in junit test case
-    void updateTaskProperties(Task task, Map<String, Object> dependentTaskContext) {
+    private void updateTaskProperties(Task task, Map<String, Object> dependentTaskContext) {
         if (dependentTaskContext == null || dependentTaskContext.isEmpty()) {
             return;
         }
@@ -377,20 +395,16 @@ public final class TaskSchedulerService implements Service {
                                                          Map<String, Object> dependentTaskContext) {
         final HashMap<String, Object> modifiedTaskProperties = new HashMap<>();
         taskProperties.forEach((key, value) -> {
-            if (value instanceof String && ((String) value).startsWith("${") && ((String) value).endsWith("}")) {
-                final String valueToReplace = ((String) value).substring(2, ((String) value).length() - 1);
+            if (value instanceof String &&
+                    ((String) value).startsWith(DYNAMIC_VAR_PREFIX) &&
+                    ((String) value).endsWith(DYNAMIC_VAR_SUFFFIX)) {
+                final String valueToReplace = ((String) value).substring(DYNAMIC_VAR_PREFIX.length(),
+                        ((String) value).length() - DYNAMIC_VAR_SUFFFIX.length()).trim();
                 if (dependentTaskContext.containsKey(valueToReplace)) {
                     modifiedTaskProperties.put(key, dependentTaskContext.get(valueToReplace));
-                } else if (valueToReplace.startsWith("*") && valueToReplace.length() > 2) {
-                    final String propertyToReplace = valueToReplace.substring(2);
-                    dependentTaskContext.keySet().forEach(contextKey -> {
-                        if (contextKey.substring(contextKey.indexOf(".") + 1).equals(propertyToReplace)) {
-                            modifiedTaskProperties.put(key, dependentTaskContext.get(contextKey));
-                        }
-                    });
                 } else {
                     // no dynamic property found to replace, setting it to null
-                    logger.error("No dynamic property found in dependent task context to replace key: {}," +
+                    logger.warn("No dynamic property found in dependent task context to replace key: {}," +
                             " setting it to null", key);
                     modifiedTaskProperties.put(key, null);
                 }
