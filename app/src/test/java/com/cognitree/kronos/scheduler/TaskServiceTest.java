@@ -42,8 +42,6 @@ public class TaskServiceTest {
     public static void start() throws Exception {
         SCHEDULER_APP.start();
         EXECUTOR_APP.start();
-        // wait for the application to initialize itself
-        Thread.sleep(100);
     }
 
     @AfterClass
@@ -61,7 +59,7 @@ public class TaskServiceTest {
         waitForTriggerToComplete(workflowTriggerOne, scheduler);
         waitForTriggerToComplete(workflowTriggerTwo, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(100);
+        Thread.sleep(1000);
 
         TaskService taskService = TaskService.getService();
         final List<Task> workflowOneTasks = taskService.get(workflowTriggerOne.getNamespace());
@@ -79,7 +77,7 @@ public class TaskServiceTest {
         waitForTriggerToComplete(workflowTriggerOne, scheduler);
         waitForTriggerToComplete(workflowTriggerTwo, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(100);
+        Thread.sleep(1000);
 
         JobService jobService = JobService.getService();
         TaskService taskService = TaskService.getService();
@@ -107,7 +105,7 @@ public class TaskServiceTest {
         waitForTriggerToComplete(workflowTriggerOne, scheduler);
         waitForTriggerToComplete(workflowTriggerTwo, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(100);
+        Thread.sleep(1000);
 
         TaskService taskService = TaskService.getService();
         final List<Task> workflowOneTasks = taskService.get(workflowTriggerOne.getNamespace(), Collections.singletonList(Task.Status.SUCCESSFUL)
@@ -126,7 +124,7 @@ public class TaskServiceTest {
         final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
         waitForTriggerToComplete(workflowTrigger, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(100);
+        Thread.sleep(1000);
 
         TaskService taskService = TaskService.getService();
         final List<Task> workflowOneTasks = taskService.get(workflowTrigger.getNamespace());
@@ -145,7 +143,7 @@ public class TaskServiceTest {
         final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
         waitForTriggerToComplete(workflowTrigger, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(100);
+        Thread.sleep(1000);
 
         TaskService taskService = TaskService.getService();
         final List<Task> workflowTasks = taskService.get(workflowTrigger.getNamespace());

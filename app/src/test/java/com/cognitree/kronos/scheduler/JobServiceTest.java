@@ -43,8 +43,6 @@ public class JobServiceTest {
     public static void start() throws Exception {
         SCHEDULER_APP.start();
         EXECUTOR_APP.start();
-        // wait for the application to initialize itself
-        Thread.sleep(100);
     }
 
     @AfterClass
@@ -63,7 +61,7 @@ public class JobServiceTest {
         waitForTriggerToComplete(workflowTriggerOne, scheduler);
         waitForTriggerToComplete(workflowTriggerTwo, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(100);
+        Thread.sleep(1000);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTriggerOne.getNamespace());
@@ -85,7 +83,7 @@ public class JobServiceTest {
         waitForTriggerToComplete(workflowTriggerOne, scheduler);
         waitForTriggerToComplete(workflowTriggerTwo, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(100);
+        Thread.sleep(1000);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTriggerOne.getNamespace());
@@ -107,7 +105,7 @@ public class JobServiceTest {
         waitForTriggerToComplete(workflowTriggerOne, scheduler);
         waitForTriggerToComplete(workflowTriggerTwo, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(100);
+        Thread.sleep(1000);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTriggerOne.getNamespace(), workflowTriggerOne.getWorkflow(),
@@ -129,7 +127,7 @@ public class JobServiceTest {
         waitForTriggerToComplete(workflowTriggerOne, scheduler);
         waitForTriggerToComplete(workflowTriggerTwo, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(100);
+        Thread.sleep(1000);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTriggerOne.getNamespace(), workflowTriggerOne.getWorkflow(),
@@ -149,7 +147,7 @@ public class JobServiceTest {
         // wait for the job to be triggered
         waitForTriggerToComplete(workflowTrigger, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(100);
+        Thread.sleep(1000);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
@@ -183,7 +181,7 @@ public class JobServiceTest {
         // wait for the job to be triggered
         waitForTriggerToComplete(workflowTrigger, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(100);
+        Thread.sleep(1000);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
@@ -225,7 +223,7 @@ public class JobServiceTest {
         // wait for the job to be triggered
         waitForTriggerToComplete(workflowTrigger, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(500);
+        Thread.sleep(1000);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
@@ -266,7 +264,7 @@ public class JobServiceTest {
         // wait for both the job to be triggered
         waitForTriggerToComplete(workflowTrigger, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(100);
+        Thread.sleep(1000);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
