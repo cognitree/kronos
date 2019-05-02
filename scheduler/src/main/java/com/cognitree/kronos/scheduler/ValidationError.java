@@ -26,6 +26,7 @@ public enum ValidationError {
     MISSING_TASK_IN_WORKFLOW(2003, "missing_tasks_in_workflow", 400),
     MISSING_PARAM_IN_WORKFLOW(2004, "missing_param_in_workflow", 400),
     CYCLIC_DEPENDENCY_IN_WORKFLOW(2005, "cyclic_dependency_in_workflow", 400),
+    DUPLICATE_POLICY_OF_SAME_TYPE(2006, "duplicate_policy_of_same_type", 400),
 
     WORKFLOW_TRIGGER_NOT_FOUND(3001, "workflow_trigger_not_found", 404),
     INVALID_WORKFLOW_TRIGGER(3002, "invalid_workflow_trigger", 400),
