@@ -197,10 +197,18 @@ public class WorkflowServiceTest {
             }
             if (workflowTask.getName().equals("taskThree")) {
                 Assert.assertEquals("abcd", workflowTask.getProperties().get("keyB"));
-                Assert.assertEquals("abcd", ((Map<String, Object>)workflowTask.getProperties().get("keyC")).get("keyA"));
-                Assert.assertEquals("valB", ((Map<String, Object>)workflowTask.getProperties().get("keyC")).get("keyB"));
+                Assert.assertEquals("abcd", ((Map<String, Object>) workflowTask.getProperties().get("keyC")).get("keyA"));
+                Assert.assertEquals("valB", ((Map<String, Object>) workflowTask.getProperties().get("keyC")).get("keyB"));
             }
         }
+    }
+
+
+    @Test(expected = ValidationException.class)
+    public void testDuplicatePolicyOfSameType() throws Exception {
+        scheduleWorkflow("workflows/workflow-template-with-duplicate-policy.yaml",
+                null, null);
+        Assert.fail();
     }
 
     @Test(expected = ValidationException.class)
