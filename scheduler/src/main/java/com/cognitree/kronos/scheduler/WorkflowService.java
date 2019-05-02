@@ -299,14 +299,14 @@ public class WorkflowService implements Service {
     private void validateWorkflowTaskPolicies(String workflowTask, List<Policy> policies) throws ValidationException {
         Map<Policy.Type, List<Policy>> policyTypeMap = new HashMap<>();
         for (Policy policy : policies) {
-            List<Policy> list =
+            List<Policy> policyTypeList =
                     policyTypeMap.computeIfAbsent(policy.getType(), k -> new ArrayList<>());
-            list.add(policy);
+            policyTypeList.add(policy);
         }
         for (Map.Entry<Policy.Type, List<Policy>> entry : policyTypeMap.entrySet()) {
             Policy.Type type = entry.getKey();
-            List<Policy> typePolicies = entry.getValue();
-            if (typePolicies.size() > 1) {
+            List<Policy> policyTypeList = entry.getValue();
+            if (policyTypeList.size() > 1) {
                 throw DUPLICATE_POLICY_OF_SAME_TYPE.createException(workflowTask, type);
             }
         }
