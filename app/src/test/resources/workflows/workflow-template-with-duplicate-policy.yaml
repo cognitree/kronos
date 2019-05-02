@@ -1,0 +1,23 @@
+# name and namespace will be set while creating a workflow
+description: sample workflow
+tasks:
+  - name: taskOne
+    type: typeSuccess
+    properties:
+      keyA: valA
+      keyB: valB
+    policies:
+      - type: retry
+        maxRetryCount: 3
+      - type: retry
+        maxRetryCount: 5
+  - name: taskTwo
+    type: typeSuccess
+    properties:
+      keyA: valA
+      keyB: valB
+  - name: taskThree
+    type: typeSuccess
+    properties:
+      keyA: valA
+      keyB: valB

@@ -23,7 +23,7 @@ import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RetryPolicy extends Policy {
-    private int maxRetryCount;
+    private int maxRetryCount = 1;
 
     public int getMaxRetryCount() {
         return maxRetryCount;

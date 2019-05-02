@@ -19,6 +19,7 @@ package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
+import com.cognitree.kronos.model.Policy;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.scheduler.graph.TopologicalSort;
 import com.cognitree.kronos.scheduler.model.ExecutionCounters;
@@ -43,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.cognitree.kronos.scheduler.ValidationError.CYCLIC_DEPENDENCY_IN_WORKFLOW;
+import static com.cognitree.kronos.scheduler.ValidationError.DUPLICATE_POLICY_OF_SAME_TYPE;
 import static com.cognitree.kronos.scheduler.ValidationError.MISSING_PARAM_IN_WORKFLOW;
 import static com.cognitree.kronos.scheduler.ValidationError.MISSING_TASK_IN_WORKFLOW;
 import static com.cognitree.kronos.scheduler.ValidationError.NAMESPACE_NOT_FOUND;
@@ -270,6 +272,7 @@ public class WorkflowService implements Service {
         final Map<String, Object> workflowProperties = workflow.getProperties();
         for (Workflow.WorkflowTask workflowTask : workflowTasks) {
             validateWorkflowProperties(workflowTask.getName(), workflowTask.getProperties(), workflowProperties);
+            validateWorkflowTaskPolicies(workflowTask.getName(), workflowTask.getPolicies());
         }
     }
 
@@ -289,6 +292,22 @@ public class WorkflowService implements Service {
                 }
             } else if (value instanceof Map) {
                 validateWorkflowProperties(workflowTask, (Map<String, Object>) value, workflowProperties);
+            }
+        }
+    }
+
+    private void validateWorkflowTaskPolicies(String workflowTask, List<Policy> policies) throws ValidationException {
+        Map<Policy.Type, List<Policy>> policyTypeMap = new HashMap<>();
+        for (Policy policy : policies) {
+            List<Policy> list =
+                    policyTypeMap.computeIfAbsent(policy.getType(), k -> new ArrayList<>());
+            list.add(policy);
+        }
+        for (Map.Entry<Policy.Type, List<Policy>> entry : policyTypeMap.entrySet()) {
+            Policy.Type type = entry.getKey();
+            List<Policy> typePolicies = entry.getValue();
+            if (typePolicies.size() > 1) {
+                throw DUPLICATE_POLICY_OF_SAME_TYPE.createException(workflowTask, type);
             }
         }
     }
