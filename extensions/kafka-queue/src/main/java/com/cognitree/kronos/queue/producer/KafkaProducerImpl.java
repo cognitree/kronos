@@ -44,9 +44,15 @@ public class KafkaProducerImpl implements Producer {
 
     @Override
     public void send(String topic, String record) {
-        logger.trace("Received request to send message {} to topic {}.", record, topic);
-        ProducerRecord<String, String> producerRecord =
-                new ProducerRecord<>(topic, record);
+        sendInOrder(topic, record, null);
+    }
+
+    @Override
+    public void sendInOrder(String topic, String record, String orderingKey) {
+        logger.trace("Received request to send message {} to topic {} with orderingKey {}",
+                record, topic, orderingKey);
+        ProducerRecord<String, String> producerRecord = orderingKey == null ?
+                new ProducerRecord<>(topic, record) : new ProducerRecord<>(topic, orderingKey, record);
         kafkaProducer.send(producerRecord, (metadata, exception) -> {
             if (exception != null) {
                 logger.error("Error sending record {} over kafka to topic {}.", record, topic, exception);
