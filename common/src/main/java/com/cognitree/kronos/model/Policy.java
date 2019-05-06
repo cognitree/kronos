@@ -31,12 +31,12 @@ import java.util.Objects;
 public class Policy {
     private Type type;
 
-    public Type getType() {
-        return type;
+    public Policy(Type type) {
+        this.type = type;
     }
 
-    public void setType(Type type) {
-        this.type = type;
+    public Type getType() {
+        return type;
     }
 
     @Override

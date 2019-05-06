@@ -2,6 +2,6 @@
   "name": "WorkflowTrigger",
   "schedule": {
     "type": "fixed",
-    "repeatIntervalInMs": 30000
+    "intervalInMs": 30000
   }
 }
