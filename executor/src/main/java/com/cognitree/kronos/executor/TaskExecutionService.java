@@ -206,10 +206,15 @@ public final class TaskExecutionService implements Service {
             taskUpdate.setStatus(status);
             taskUpdate.setStatusMessage(statusMessage);
             taskUpdate.setContext(context);
-            producer.send(statusQueue, MAPPER.writeValueAsString(taskUpdate));
+            producer.sendInOrder(statusQueue, MAPPER.writeValueAsString(taskUpdate), getOrderingKey(taskUpdate.getTaskId()));
         } catch (IOException e) {
             logger.error("Error adding task status {} to queue", status, e);
         }
+    }
+
+    private String getOrderingKey(TaskId taskId) {
+        return taskId.getNamespace() + taskId.getWorkflow()
+                + taskId.getJob() + taskId.getName();
     }
 
     // used in junit
