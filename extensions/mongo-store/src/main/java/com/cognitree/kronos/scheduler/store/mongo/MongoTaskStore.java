@@ -151,7 +151,9 @@ public class MongoTaskStore extends MongoStore<Task> implements TaskStore {
                         set("statusMessage", task.getStatusMessage()),
                         set("submittedAt", task.getSubmittedAt()),
                         set("completedAt", task.getCompletedAt()),
-                        set("context", task.getContext())));
+                        set("properties", task.getProperties()),
+                        set("context", task.getContext()),
+                        set("retryCount", task.getRetryCount())));
     }
 
     @Override

@@ -17,6 +17,8 @@
 
 package com.cognitree.kronos.scheduler.store.mongo;
 
+import com.cognitree.kronos.model.Policy;
+import com.cognitree.kronos.model.RetryPolicy;
 import com.cognitree.kronos.scheduler.model.CalendarIntervalSchedule;
 import com.cognitree.kronos.scheduler.model.CronSchedule;
 import com.cognitree.kronos.scheduler.model.DailyTimeIntervalSchedule;
@@ -128,7 +130,9 @@ public class MongoStoreService extends StoreService {
                         ClassModel.builder(CronSchedule.class).enableDiscriminator(true).build(),
                         ClassModel.builder(FixedDelaySchedule.class).enableDiscriminator(true).build(),
                         ClassModel.builder(DailyTimeIntervalSchedule.class).enableDiscriminator(true).build(),
-                        ClassModel.builder(CalendarIntervalSchedule.class).enableDiscriminator(true).build())
+                        ClassModel.builder(CalendarIntervalSchedule.class).enableDiscriminator(true).build(),
+                        ClassModel.builder(Policy.class).enableDiscriminator(true).build(),
+                        ClassModel.builder(RetryPolicy.class).enableDiscriminator(true).build())
                 .build();
 
         final CodecRegistry codecRegistry = fromRegistries(com.mongodb.MongoClient.getDefaultCodecRegistry(),

@@ -20,6 +20,8 @@ package com.cognitree.kronos.scheduler.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.bson.codecs.pojo.annotations.BsonCreator;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.quartz.DailyTimeIntervalTrigger;
 import org.quartz.DateBuilder.IntervalUnit;
 
@@ -154,9 +156,10 @@ public class DailyTimeIntervalSchedule extends Schedule {
         private int second;
 
         @JsonCreator
-        public TimeOfDay(@JsonProperty("hour") int hour,
-                         @JsonProperty("minute") int minute,
-                         @JsonProperty("second") int second) {
+        @BsonCreator
+        public TimeOfDay(@BsonProperty("hour") @JsonProperty("hour") int hour,
+                         @BsonProperty("minute") @JsonProperty("minute") int minute,
+                         @BsonProperty("second") @JsonProperty("second") int second) {
             this.hour = hour;
             this.minute = minute;
             this.second = second;
@@ -166,24 +169,12 @@ public class DailyTimeIntervalSchedule extends Schedule {
             return hour;
         }
 
-        public void setHour(int hour) {
-            this.hour = hour;
-        }
-
         public int getMinute() {
             return minute;
         }
 
-        public void setMinute(int minute) {
-            this.minute = minute;
-        }
-
         public int getSecond() {
             return second;
-        }
-
-        public void setSecond(int second) {
-            this.second = second;
         }
 
         @Override
