@@ -36,12 +36,13 @@ public interface StdJDBCConstants {
     String COL_STATUS_MESSAGE = "STATUS_MESSAGE";
     String COL_SUBMITTED_AT = "SUBMITTED_AT";
     String COL_CONTEXT = "CONTEXT";
+    String COL_RETRY_COUNT = "RETRY_COUNT";
     String COL_JOB_ID = "JOB_ID";
     String COL_TASKS = "TASKS";
     String COL_START_AT = "START_AT";
     String COL_SCHEDULE = "SCHEDULE";
     String COL_END_AT = "END_AT";
     String COL_ENABLED = "ENABLED";
-    String COL_TRIGGER_NAME = "trigger_name";
-    String COL_PROPERTIES = "properties";
+    String COL_TRIGGER_NAME = "TRIGGER_NAME";
+    String COL_PROPERTIES = "PROPERTIES";
 }

@@ -43,6 +43,8 @@ import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_CRE
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_JOB_ID;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_NAME;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_NAMESPACE;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_PROPERTIES;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_RETRY_COUNT;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_STATUS;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_STATUS_MESSAGE;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_SUBMITTED_AT;
@@ -56,14 +58,14 @@ public class StdJDBCTaskStore implements TaskStore {
     private static final Logger logger = LoggerFactory.getLogger(StdJDBCTaskStore.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    private static final String INSERT_TASK = "INSERT INTO " + TABLE_TASKS + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    private static final String INSERT_TASK = "INSERT INTO " + TABLE_TASKS + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
     private static final String LOAD_TASK = "SELECT * FROM " + TABLE_TASKS + " WHERE " + COL_NAME + " = ? AND "
             + COL_JOB_ID + " = ? AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
     private static final String LOAD_ALL_TASKS_BY_NAMESPACE = "SELECT * FROM " + TABLE_TASKS + " WHERE "
             + COL_NAMESPACE + " = ?";
-    private static final String LOAD_TASK_BY_STATUS = "SELECT * FROM " + TABLE_TASKS + " WHERE " + COL_STATUS
-            + " IN ($statuses)";
+    private static final String LOAD_TASK_BY_STATUS = "SELECT * FROM " + TABLE_TASKS + " WHERE " + COL_NAMESPACE + " = ? AND "
+            + COL_STATUS + " IN ($statuses)";
     private static final String LOAD_TASK_BY_JOB_ID = "SELECT * FROM " + TABLE_TASKS + " WHERE "
             + COL_JOB_ID + " = ? AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
 
@@ -76,7 +78,7 @@ public class StdJDBCTaskStore implements TaskStore {
 
     private static final String UPDATE_TASK = "UPDATE " + TABLE_TASKS + " SET " + COL_STATUS + " = ?, "
             + COL_STATUS_MESSAGE + " = ?, " + COL_SUBMITTED_AT + " = ?, " + COL_COMPLETED_AT + " = ?, "
-            + COL_CONTEXT + " = ? WHERE " + COL_NAME + " = ? AND " + COL_JOB_ID + " = ? " +
+            + COL_PROPERTIES + " = ?," + COL_CONTEXT + " = ?," + COL_RETRY_COUNT + " = ? WHERE " + COL_NAME + " = ? AND " + COL_JOB_ID + " = ? " +
             "AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
 
     private static final String DELETE_TASK = "DELETE FROM " + TABLE_TASKS + " WHERE " + COL_NAME + " = ? AND "
@@ -107,6 +109,7 @@ public class StdJDBCTaskStore implements TaskStore {
             preparedStatement.setString(++paramIndex, task.getNamespace());
             preparedStatement.setString(++paramIndex, task.getType());
             preparedStatement.setLong(++paramIndex, task.getMaxExecutionTimeInMs());
+            preparedStatement.setInt(++paramIndex, task.getRetryCount());
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(task.getDependsOn()));
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(task.getProperties()));
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(task.getContext()));
@@ -193,6 +196,7 @@ public class StdJDBCTaskStore implements TaskStore {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery)) {
             int paramIndex = 0;
+            preparedStatement.setString(++paramIndex, namespace);
             for (Status status : statuses) {
                 preparedStatement.setString(++paramIndex, status.name());
             }
@@ -266,7 +270,9 @@ public class StdJDBCTaskStore implements TaskStore {
             preparedStatement.setString(++paramIndex, task.getStatusMessage());
             JDBCUtil.setLong(preparedStatement, ++paramIndex, task.getSubmittedAt());
             JDBCUtil.setLong(preparedStatement, ++paramIndex, task.getCompletedAt());
+            preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(task.getProperties()));
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(task.getContext()));
+            preparedStatement.setInt(++paramIndex, task.getRetryCount());
             preparedStatement.setString(++paramIndex, task.getName());
             preparedStatement.setString(++paramIndex, task.getJob());
             preparedStatement.setString(++paramIndex, task.getWorkflow());
@@ -304,6 +310,7 @@ public class StdJDBCTaskStore implements TaskStore {
         task.setNamespace(resultSet.getString(++paramIndex));
         task.setType(resultSet.getString(++paramIndex));
         task.setMaxExecutionTimeInMs(resultSet.getLong(++paramIndex));
+        task.setRetryCount(resultSet.getInt(++paramIndex));
         task.setDependsOn(MAPPER.readValue(resultSet.getString(++paramIndex), DEPENDS_ON_TYPE_REF));
         task.setProperties(MAPPER.readValue(resultSet.getString(++paramIndex), PROPERTIES_TYPE_REF));
         task.setContext(MAPPER.readValue(resultSet.getString(++paramIndex), PROPERTIES_TYPE_REF));

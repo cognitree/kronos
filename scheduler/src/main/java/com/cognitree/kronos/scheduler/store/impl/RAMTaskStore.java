@@ -120,22 +120,15 @@ public class RAMTaskStore implements TaskStore {
             statusMap.put(status, 0);
         }
 
-        try {
-            final List<Job> jobs = JobService.getService().get(namespace, workflowName, createdAfter, createdBefore);
-            for (Task task : tasks.values()) {
-                if (task.getWorkflow().equals(workflowName) && task.getNamespace().equals(namespace)
-                        && task.getCreatedAt() > createdAfter && task.getCreatedAt() < createdBefore) {
-                    for (Job job : jobs) {
-                        if (job.getId().equals(task.getJob())) {
-                            statusMap.put(task.getStatus(), statusMap.get(task.getStatus()) + 1);
-                        }
-                    }
+        for (Task task : tasks.values()) {
+            if (task.getWorkflow().equals(workflowName) && task.getNamespace().equals(namespace)
+                    && task.getCreatedAt() > createdAfter && task.getCreatedAt() < createdBefore) {
+                if (task.getWorkflow().equals(workflowName)) {
+                    statusMap.put(task.getStatus(), statusMap.get(task.getStatus()) + 1);
                 }
             }
-            return statusMap;
-        } catch (ServiceException | ValidationException e) {
-            throw new StoreException(e.getMessage());
         }
+        return statusMap;
     }
 
     @Override

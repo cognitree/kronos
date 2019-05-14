@@ -100,6 +100,17 @@ public class MongoStore<T> {
         }
     }
 
+    public void deleteAll(String database, String collection, Bson filter) throws StoreException {
+        try {
+            getCollection(database, collection).deleteMany(filter);
+        } catch (Exception e) {
+            logger.error("Error deleting document {} from database {}, collection {}",
+                    filter, database, collection, e);
+            throw new StoreException(e);
+        }
+    }
+
+
     public ArrayList<Document> aggregate(String database, String collection, List<Bson> pipelines) throws StoreException {
         try {
             MongoCollection<Document> mongoCollection =
