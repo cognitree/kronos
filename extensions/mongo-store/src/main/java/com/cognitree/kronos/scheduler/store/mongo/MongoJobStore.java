@@ -220,7 +220,7 @@ public class MongoJobStore extends MongoStore<Job> implements JobStore {
     public void deleteByWorkflowName(String namespace, String workflowName) throws StoreException {
         logger.debug("Received request to delete jobs with workflow name {}, namespace {}",
                 workflowName, namespace);
-        deleteOne(namespace, COLLECTION_NAME,
+        deleteAll(namespace, COLLECTION_NAME,
                 and(
                         eq("namespace", namespace),
                         eq("workflow", workflowName)));
