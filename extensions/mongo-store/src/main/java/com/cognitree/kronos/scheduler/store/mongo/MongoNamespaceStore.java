@@ -72,8 +72,8 @@ public class MongoNamespaceStore extends MongoStore<Namespace> implements Namesp
 
     @Override
     public void delete(NamespaceId namespaceId) throws StoreException {
-        logger.debug("Received request to delete job with id {}", namespaceId);
+        logger.debug("Received request to delete namespace with id {}", namespaceId);
         deleteOne(DATABASE_NAME, COLLECTION_NAME, eq("name", namespaceId.getName()));
-        dropDatabase(DATABASE_NAME);
+        dropDatabase(namespaceId.getName());
     }
 }

@@ -212,7 +212,12 @@ public class RAMJobStore implements JobStore {
     @Override
     public void deleteByWorkflowName(String namespace, String workflowName) {
         logger.debug("Received request to delete job with workflow name {} under namespace {}", workflowName, namespace);
-        final List<Job> jobs = loadByWorkflowName(namespace, workflowName, 0, System.currentTimeMillis());
+        final ArrayList<Job> jobs = new ArrayList<>();
+        this.jobs.values().forEach(job -> {
+            if (job.getWorkflow().equals(workflowName) && job.getNamespace().equals(namespace)) {
+                jobs.add(job);
+            }
+        });
         jobs.forEach(this.jobs::remove);
     }
 }

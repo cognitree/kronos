@@ -28,7 +28,7 @@ import java.util.Objects;
         @JsonSubTypes.Type(value = RetryPolicy.class, name = "retry")
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Policy {
+public abstract class Policy {
     private Type type;
 
     public Policy(Type type) {
