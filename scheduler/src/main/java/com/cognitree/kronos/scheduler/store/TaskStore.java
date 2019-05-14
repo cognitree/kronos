@@ -39,4 +39,6 @@ public interface TaskStore extends Store<Task, TaskId> {
 
     Map<Status, Integer> countByStatusForWorkflowName(String namespace, String workflowName,
                                                       long createdAfter, long createdBefore) throws StoreException;
+
+    void deleteByWorkflowName(String namespace, String workflowName) throws StoreException;
 }

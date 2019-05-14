@@ -161,4 +161,14 @@ public class MongoTaskStore extends MongoStore<Task> implements TaskStore {
         logger.debug("Received request to delete task with id {}", taskId);
         deleteOne(taskId.getNamespace(), COLLECTION_NAME, eq("job", taskId.getJob()));
     }
+
+    @Override
+    public void deleteByWorkflowName(String namespace, String workflowName) throws StoreException {
+        logger.debug("Received request to delete task for workflow {} in namespace {}", workflowName, namespace);
+        deleteAll(namespace, COLLECTION_NAME,
+                and(
+                        eq("namespace", namespace),
+                        eq("workflow", workflowName)));
+    }
+
 }

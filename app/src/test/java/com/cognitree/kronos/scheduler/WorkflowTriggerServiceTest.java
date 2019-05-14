@@ -17,19 +17,23 @@
 
 package com.cognitree.kronos.scheduler;
 
-import com.cognitree.kronos.executor.ExecutorApp;
 import com.cognitree.kronos.executor.handlers.MockSuccessTaskHandler;
 import com.cognitree.kronos.model.Task;
+import com.cognitree.kronos.scheduler.model.CalendarIntervalSchedule;
+import com.cognitree.kronos.scheduler.model.DailyTimeIntervalSchedule;
+import com.cognitree.kronos.scheduler.model.FixedDelaySchedule;
 import com.cognitree.kronos.scheduler.model.Namespace;
+import com.cognitree.kronos.scheduler.model.SimpleSchedule;
 import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
+import org.quartz.DateBuilder;
 import org.quartz.Scheduler;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,21 +43,7 @@ import static com.cognitree.kronos.TestUtil.createWorkflowTrigger;
 import static com.cognitree.kronos.TestUtil.scheduleWorkflow;
 import static com.cognitree.kronos.TestUtil.waitForTriggerToComplete;
 
-public class WorkflowTriggerServiceTest {
-    private static final SchedulerApp SCHEDULER_APP = new SchedulerApp();
-    private static final ExecutorApp EXECUTOR_APP = new ExecutorApp();
-
-    @BeforeClass
-    public static void start() throws Exception {
-        SCHEDULER_APP.start();
-        EXECUTOR_APP.start();
-    }
-
-    @AfterClass
-    public static void stop() {
-        SCHEDULER_APP.stop();
-        EXECUTOR_APP.stop();
-    }
+public class WorkflowTriggerServiceTest extends ServiceTest {
 
     @Test(expected = ValidationException.class)
     public void testAddWorkflowTriggerWithoutNamespace() throws Exception {
@@ -107,6 +97,117 @@ public class WorkflowTriggerServiceTest {
         Assert.assertEquals(workflowTriggerTwo, workflowTriggerTwoFromDB);
     }
 
+    @Test
+    public void testAddWorkflowTriggerWithSimpleSchedule() throws Exception {
+        Namespace namespace = createNamespace(UUID.randomUUID().toString());
+        NamespaceService.getService().add(namespace);
+
+        final Workflow workflow = createWorkflow("workflows/workflow-template.yaml",
+                UUID.randomUUID().toString(), namespace.getName());
+        WorkflowService.getService().add(workflow);
+
+        final WorkflowTriggerService workflowTriggerService = WorkflowTriggerService.getService();
+        final WorkflowTrigger simpleWorkflowTrigger = new WorkflowTrigger();
+        simpleWorkflowTrigger.setStartAt(System.currentTimeMillis());
+        simpleWorkflowTrigger.setEndAt(System.currentTimeMillis() + 100);
+        simpleWorkflowTrigger.setEnabled(true);
+        simpleWorkflowTrigger.setWorkflow(workflow.getName());
+        simpleWorkflowTrigger.setNamespace(workflow.getNamespace());
+        simpleWorkflowTrigger.setName(UUID.randomUUID().toString());
+        final SimpleSchedule simpleSchedule = new SimpleSchedule();
+        simpleSchedule.setRepeatCount(4);
+        simpleSchedule.setRepeatForever(false);
+        simpleSchedule.setRepeatIntervalInMs(20000);
+        simpleWorkflowTrigger.setSchedule(simpleSchedule);
+        workflowTriggerService.add(simpleWorkflowTrigger);
+        final WorkflowTrigger workflowTrigger = workflowTriggerService.get(simpleWorkflowTrigger);
+        Assert.assertNotNull(workflowTrigger);
+        Assert.assertEquals(simpleWorkflowTrigger, workflowTrigger);
+    }
+
+    @Test
+    public void testAddWorkflowTriggerWithFixedSchedule() throws Exception {
+        Namespace namespace = createNamespace(UUID.randomUUID().toString());
+        NamespaceService.getService().add(namespace);
+
+        final Workflow workflow = createWorkflow("workflows/workflow-template.yaml",
+                UUID.randomUUID().toString(), namespace.getName());
+        WorkflowService.getService().add(workflow);
+
+        final WorkflowTriggerService workflowTriggerService = WorkflowTriggerService.getService();
+        final WorkflowTrigger fixedWorkflowTrigger = new WorkflowTrigger();
+        fixedWorkflowTrigger.setStartAt(System.currentTimeMillis());
+        fixedWorkflowTrigger.setEndAt(System.currentTimeMillis() + 5000);
+        fixedWorkflowTrigger.setEnabled(true);
+        fixedWorkflowTrigger.setWorkflow(workflow.getName());
+        fixedWorkflowTrigger.setNamespace(workflow.getNamespace());
+        fixedWorkflowTrigger.setName(UUID.randomUUID().toString());
+        final FixedDelaySchedule fixedDelaySchedule = new FixedDelaySchedule();
+        fixedDelaySchedule.setIntervalInMs(4);
+        fixedDelaySchedule.setIntervalInMs(1000);
+        fixedWorkflowTrigger.setSchedule(fixedDelaySchedule);
+        workflowTriggerService.add(fixedWorkflowTrigger);
+        final WorkflowTrigger workflowTrigger = workflowTriggerService.get(fixedWorkflowTrigger);
+        Assert.assertNotNull(workflowTrigger);
+        Assert.assertEquals(fixedWorkflowTrigger, workflowTrigger);
+    }
+
+    @Test
+    public void testAddWorkflowTriggerWithCalendarSchedule() throws Exception {
+        Namespace namespace = createNamespace(UUID.randomUUID().toString());
+        NamespaceService.getService().add(namespace);
+
+        final Workflow workflow = createWorkflow("workflows/workflow-template.yaml",
+                UUID.randomUUID().toString(), namespace.getName());
+        WorkflowService.getService().add(workflow);
+
+        final WorkflowTriggerService workflowTriggerService = WorkflowTriggerService.getService();
+        final WorkflowTrigger calWorkflowTrigger = new WorkflowTrigger();
+        calWorkflowTrigger.setStartAt(System.currentTimeMillis());
+        calWorkflowTrigger.setEndAt(System.currentTimeMillis() + 100);
+        calWorkflowTrigger.setEnabled(true);
+        calWorkflowTrigger.setWorkflow(workflow.getName());
+        calWorkflowTrigger.setNamespace(workflow.getNamespace());
+        calWorkflowTrigger.setName(UUID.randomUUID().toString());
+        final CalendarIntervalSchedule calendarIntervalSchedule = new CalendarIntervalSchedule();
+        calendarIntervalSchedule.setRepeatInterval(3);
+        calendarIntervalSchedule.setRepeatIntervalUnit(DateBuilder.IntervalUnit.MINUTE);
+        calendarIntervalSchedule.setTimezone("UTC");
+        calWorkflowTrigger.setSchedule(calendarIntervalSchedule);
+        workflowTriggerService.add(calWorkflowTrigger);
+        final WorkflowTrigger workflowTrigger = workflowTriggerService.get(calWorkflowTrigger);
+        Assert.assertNotNull(workflowTrigger);
+        Assert.assertEquals(calWorkflowTrigger, workflowTrigger);
+    }
+
+    @Test
+    public void testAddWorkflowTriggerWithDailyTimeSchedule() throws Exception {
+        Namespace namespace = createNamespace(UUID.randomUUID().toString());
+        NamespaceService.getService().add(namespace);
+
+        final Workflow workflow = createWorkflow("workflows/workflow-template.yaml",
+                UUID.randomUUID().toString(), namespace.getName());
+        WorkflowService.getService().add(workflow);
+
+        final WorkflowTriggerService workflowTriggerService = WorkflowTriggerService.getService();
+        final WorkflowTrigger dailyTimeWorkflowTrigger = new WorkflowTrigger();
+        dailyTimeWorkflowTrigger.setStartAt(System.currentTimeMillis());
+        dailyTimeWorkflowTrigger.setEndAt(System.currentTimeMillis() + 100000);
+        dailyTimeWorkflowTrigger.setEnabled(true);
+        dailyTimeWorkflowTrigger.setWorkflow(workflow.getName());
+        dailyTimeWorkflowTrigger.setNamespace(workflow.getNamespace());
+        dailyTimeWorkflowTrigger.setName(UUID.randomUUID().toString());
+        final DailyTimeIntervalSchedule dailyTimeIntervalSchedule = new DailyTimeIntervalSchedule();
+        dailyTimeIntervalSchedule.setRepeatInterval(3);
+        dailyTimeIntervalSchedule.setRepeatIntervalUnit(DateBuilder.IntervalUnit.MINUTE);
+        dailyTimeIntervalSchedule.setRepeatCount(4);
+        dailyTimeIntervalSchedule.setDaysOfWeek(new HashSet<>(Arrays.asList(1, 2, 3, 6)));
+        dailyTimeWorkflowTrigger.setSchedule(dailyTimeIntervalSchedule);
+        workflowTriggerService.add(dailyTimeWorkflowTrigger);
+        final WorkflowTrigger workflowTrigger = workflowTriggerService.get(dailyTimeWorkflowTrigger);
+        Assert.assertNotNull(workflowTrigger);
+        Assert.assertEquals(dailyTimeWorkflowTrigger, workflowTrigger);
+    }
 
     @Test
     public void testGetAllWorkflowTrigger() throws Exception {
