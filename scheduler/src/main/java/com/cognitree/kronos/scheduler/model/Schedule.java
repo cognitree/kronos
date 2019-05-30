@@ -24,7 +24,7 @@ import org.quartz.Trigger;
 
 import java.util.Objects;
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @JsonSubTypes({
         @JsonSubTypes.Type(value = SimpleSchedule.class, name = "simple"),
         @JsonSubTypes.Type(value = CronSchedule.class, name = "cron"),
