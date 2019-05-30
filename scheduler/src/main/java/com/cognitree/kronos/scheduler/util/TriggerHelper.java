@@ -42,9 +42,7 @@ import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
 
 import java.text.ParseException;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
 import static java.util.TimeZone.getTimeZone;
@@ -203,30 +201,15 @@ public class TriggerHelper {
         scheduleBuilder.withInterval(dailyTimeIntervalSchedule.getRepeatInterval(),
                 dailyTimeIntervalSchedule.getRepeatIntervalUnit());
 
-        final TimeOfDay startTimeOfDay = getTimeOfDay(dailyTimeIntervalSchedule.getStartTimeOfDay(),
-                dailyTimeIntervalSchedule.getTimezone());
+        final TimeOfDay startTimeOfDay = getTimeOfDay(dailyTimeIntervalSchedule.getStartTimeOfDay());
         scheduleBuilder.startingDailyAt(startTimeOfDay);
-        final TimeOfDay endTimeOfDay = getTimeOfDay(dailyTimeIntervalSchedule.getEndTimeOfDay(),
-                dailyTimeIntervalSchedule.getTimezone());
+        final TimeOfDay endTimeOfDay = getTimeOfDay(dailyTimeIntervalSchedule.getEndTimeOfDay());
         scheduleBuilder.endingDailyAt(endTimeOfDay);
         return scheduleBuilder;
     }
 
-    /**
-     * convert time of day to a specific timezone
-     */
-    private static TimeOfDay getTimeOfDay(DailyTimeIntervalSchedule.TimeOfDay timeOfDay, String timezoneId) {
-        final Calendar cal = Calendar.getInstance();
-        cal.setTime(new Date());
-        cal.set(Calendar.HOUR_OF_DAY, timeOfDay.getHour());
-        cal.set(Calendar.MINUTE, timeOfDay.getMinute());
-        cal.set(Calendar.SECOND, timeOfDay.getSecond());
-        cal.clear(Calendar.MILLISECOND);
-        final TimeZone timeZone = timezoneId == null || timezoneId.isEmpty()
-                ? TimeZone.getDefault() : TimeZone.getTimeZone(timezoneId);
-        final Calendar timezoneCal = new GregorianCalendar(timeZone);
-        timezoneCal.setTimeInMillis(cal.getTimeInMillis());
-        return new TimeOfDay(timezoneCal.get(Calendar.HOUR), timezoneCal.get(Calendar.MINUTE), timezoneCal.get(Calendar.SECOND));
+    private static TimeOfDay getTimeOfDay(DailyTimeIntervalSchedule.TimeOfDay timeOfDay) {
+        return new TimeOfDay(timeOfDay.getHour(), timeOfDay.getMinute(), timeOfDay.getSecond());
     }
 
     private static ScheduleBuilder buildCalendarTimeScheduleBuilder(CalendarIntervalSchedule calendarIntervalSchedule) {

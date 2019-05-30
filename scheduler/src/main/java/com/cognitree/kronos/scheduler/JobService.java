@@ -315,6 +315,7 @@ public class JobService implements Service {
         logger.info("Received request to delete all jobs with workflow name {} under namespace", workflowName, namespace);
         validateWorkflow(namespace, workflowName);
         try {
+            TaskService.getService().deleteByWorkflowName(namespace, workflowName);
             jobStore.deleteByWorkflowName(namespace, workflowName);
         } catch (StoreException e) {
             logger.error("unable to delete all jobs with workflow name {} under namespace", workflowName, namespace, e);

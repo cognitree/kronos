@@ -20,10 +20,6 @@ package com.cognitree.kronos.scheduler.store.impl;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskId;
-import com.cognitree.kronos.scheduler.JobService;
-import com.cognitree.kronos.scheduler.ServiceException;
-import com.cognitree.kronos.scheduler.ValidationException;
-import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.scheduler.store.StoreException;
 import com.cognitree.kronos.scheduler.store.TaskStore;
 import org.slf4j.Logger;
@@ -148,5 +144,18 @@ public class RAMTaskStore implements TaskStore {
         if (tasks.remove(builtTaskId) == null) {
             throw new StoreException("task with id " + builtTaskId + " does not exists");
         }
+    }
+
+    @Override
+    public void deleteByWorkflowName(String namespace, String workflowName) {
+        logger.debug("Received request to delete task with workflow {} in namespace", workflowName, namespace);
+        final ArrayList<TaskId> tasksToRemove = new ArrayList<>();
+        tasks.forEach((taskId, task) -> {
+            if (taskId.getNamespace().equals(namespace) &&
+                    taskId.getWorkflow().equals(workflowName)) {
+                tasksToRemove.add(taskId);
+            }
+        });
+        tasksToRemove.forEach(tasks::remove);
     }
 }
