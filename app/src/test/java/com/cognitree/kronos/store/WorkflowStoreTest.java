@@ -111,11 +111,11 @@ public class WorkflowStoreTest extends StoreTest {
         workflowStore.update(workflow);
         assertEquals(workflow, workflowStore.load(workflow));
 
-        workflow.setEmailOnFailure(Collections.singletonList("oss@cognitree.com"));
+        workflow.setEmailOnFailure(Collections.singletonList("oss.failure.new@cognitree.com"));
         workflowStore.update(workflow);
         assertEquals(workflow, workflowStore.load(workflow));
 
-        workflow.setEmailOnSuccess(Collections.singletonList("oss@cognitree.com"));
+        workflow.setEmailOnSuccess(Collections.singletonList("oss.success.new@cognitree.com"));
         workflowStore.update(workflow);
         assertEquals(workflow, workflowStore.load(workflow));
 

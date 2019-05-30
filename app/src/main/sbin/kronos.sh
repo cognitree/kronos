@@ -5,10 +5,11 @@ MAIN_CLASS="com.cognitree.kronos.Application"
 APP_NAME=""
 MODE=""
 APP_HOME="$(cd "`dirname "$0"`"/..; pwd)"
-LOG_DIR=$APP_HOME/logs
 STATUS_CHECK_INTERVAL=3
-# required directories
-DIR_LIST="$LOG_DIR"
+HOST=${HOST="localhost"}
+PORT=${PORT=8080}
+HEAP_OPTS=${HEAP_OPTS="-Xmx128m -Xms128m"}
+TIMEZONE=${TIMEZONE="UTC"}
 
 start(){
   echo "starting $APP_NAME"
@@ -27,9 +28,7 @@ start(){
       ARGS="--mode $MODE --host $HOST --port $PORT --resourceBase $APP_HOME/webapp --contextPath / --descriptor $APP_HOME/webapp/WEB-INF/web.xml"
       ;;
   esac
-  java -Duser.timezone=$TIMEZONE $HEAP_OPTS -cp "$APP_HOME/conf:$APP_HOME/lib/*:$APP_HOME/lib/ext/*" $MAIN_CLASS $ARGS >> "$LOG_DIR/$APP_NAME-stdout-`date +%Y%m%d`.log" 2>&1 &
-  echo "$APP_NAME started: pid[`pgrep -f "mode $MODE"`]"
-  echo "application logs available at $LOG_DIR/$APP_NAME-stdout-`date +%Y%m%d`.log"
+  java -Duser.timezone=$TIMEZONE $HEAP_OPTS -cp "$APP_HOME/conf:$APP_HOME/lib/*:$APP_HOME/lib/ext/*" $MAIN_CLASS $ARGS
 }
 
 stop(){
@@ -77,14 +76,6 @@ status(){
   fi
 }
 
-init_dir(){
-  for dir in $DIR_LIST; do
-    if [ ! -d $dir ];then
-      mkdir -v $dir
-    fi
-  done
-}
-
 init_param(){
   case "$1" in
     scheduler)
@@ -102,12 +93,10 @@ init_param(){
 }
 
 # main routine
-source $APP_HOME/sbin/env.sh
 init_param $2
 
 case "$1" in
   start)
-    init_dir
     start
     ;;
   stop)
