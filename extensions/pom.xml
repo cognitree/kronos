@@ -39,6 +39,7 @@
         <module>embedded-hsql-store</module>
         <module>mongo-store</module>
         <module>helm-handler</module>
+        <module>kafka-message-handler</module>
     </modules>
 
     <dependencies>
