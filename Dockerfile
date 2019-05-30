@@ -8,9 +8,8 @@ RUN mkdir -p ${KRONOS_HOME}
 
 RUN apk --update add curl tar bash
 
-COPY app/target/kronos-2.2.3-dist.tar.gz kronos-${KRONOS_VERSION}-dist.tar.gz
-
-RUN tar -xvzf kronos-${KRONOS_VERSION}-dist.tar.gz -C /home \
+RUN curl -L https://github.com/cognitree/kronos/releases/download/v${KRONOS_VERSION}/kronos-${KRONOS_VERSION}-dist.tar.gz -o kronos-${KRONOS_VERSION}-dist.tar.gz \
+  && tar -xvzf kronos-${KRONOS_VERSION}-dist.tar.gz -C /home \
   && rm kronos-${KRONOS_VERSION}-dist.tar.gz
 
 VOLUME /home/kronos-${KRONOS_VERSION}/conf
