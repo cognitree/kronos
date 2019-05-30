@@ -42,6 +42,7 @@ import static com.cognitree.kronos.TestUtil.createWorkflow;
 import static com.cognitree.kronos.TestUtil.createWorkflowTrigger;
 import static com.cognitree.kronos.TestUtil.scheduleWorkflow;
 import static com.cognitree.kronos.TestUtil.waitForTriggerToComplete;
+import static org.quartz.DailyTimeIntervalScheduleBuilder.ALL_DAYS_OF_THE_WEEK;
 
 public class WorkflowTriggerServiceTest extends ServiceTest {
 
@@ -201,7 +202,7 @@ public class WorkflowTriggerServiceTest extends ServiceTest {
         dailyTimeIntervalSchedule.setRepeatInterval(3);
         dailyTimeIntervalSchedule.setRepeatIntervalUnit(DateBuilder.IntervalUnit.MINUTE);
         dailyTimeIntervalSchedule.setRepeatCount(4);
-        dailyTimeIntervalSchedule.setDaysOfWeek(new HashSet<>(Arrays.asList(1, 2, 3, 6)));
+        dailyTimeIntervalSchedule.setDaysOfWeek(ALL_DAYS_OF_THE_WEEK);
         dailyTimeWorkflowTrigger.setSchedule(dailyTimeIntervalSchedule);
         workflowTriggerService.add(dailyTimeWorkflowTrigger);
         final WorkflowTrigger workflowTrigger = workflowTriggerService.get(dailyTimeWorkflowTrigger);
