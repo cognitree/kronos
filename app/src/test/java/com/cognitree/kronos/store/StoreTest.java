@@ -131,10 +131,10 @@ public class StoreTest {
         properties.put("B", "B");
         workflow.setProperties(properties);
         ArrayList<String> emailOnSuccess = new ArrayList<>();
-        emailOnSuccess.add("oss@cognitree.com");
+        emailOnSuccess.add("oss.success@cognitree.com");
         workflow.setEmailOnSuccess(emailOnSuccess);
         ArrayList<String> emailOnFailures = new ArrayList<>();
-        emailOnFailures.add("oss@cognitree.com");
+        emailOnFailures.add("oss.failure@cognitree.com");
         workflow.setEmailOnFailure(emailOnFailures);
         if (storeService.getWorkflowStore().load(workflow) == null) {
             storeService.getWorkflowStore().store(workflow);

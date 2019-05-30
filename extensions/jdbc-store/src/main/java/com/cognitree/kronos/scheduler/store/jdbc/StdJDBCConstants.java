@@ -45,4 +45,6 @@ public interface StdJDBCConstants {
     String COL_ENABLED = "ENABLED";
     String COL_TRIGGER_NAME = "TRIGGER_NAME";
     String COL_PROPERTIES = "PROPERTIES";
+    String COL_EMAIL_ON_SUCCESS = "EMAIL_ON_SUCCESS";
+    String COL_EMAIL_ON_FAILURE = "EMAIL_ON_FAILURE";
 }
