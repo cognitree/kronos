@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.sql.Connection;
 import java.sql.SQLException;
 
 public class StdJDBCStoreService extends StoreService {
@@ -199,6 +200,7 @@ public class StdJDBCStoreService extends StoreService {
     public void stop() {
         logger.info("Stopping JDBC store service");
         try {
+            quartzJobStore.shutdown();
             dataSource.close();
         } catch (SQLException e) {
             logger.error("Error closing data source", e);

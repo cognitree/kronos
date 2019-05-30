@@ -77,6 +77,7 @@ public class EmbeddedHSQLStoreService extends StdJDBCStoreService {
     @Override
     public void stop() {
         super.stop();
-        server.stop();
+        logger.info("Stopping Embedded HSQL store");
+        server.shutdown();
     }
 }

@@ -288,7 +288,7 @@ public final class WorkflowSchedulerService implements Service {
         logger.info("Stopping workflow scheduler service");
         try {
             if (scheduler != null && !scheduler.isShutdown()) {
-                scheduler.shutdown();
+                scheduler.shutdown(true);
             }
         } catch (Exception e) {
             logger.error("Error stopping quartz scheduler...", e);
@@ -362,7 +362,8 @@ public final class WorkflowSchedulerService implements Service {
                 try {
                     WorkflowTriggerId triggerId = WorkflowTriggerId.build(namespace, triggerName, workflowName);
                     WorkflowTrigger workflowTrigger = WorkflowTriggerService.getService().get(triggerId);
-                    if (!shouldReschedule(workflowTrigger)) {
+                    // workflow trigger might be null if a user triggers a explicit delete call
+                    if (workflowTrigger != null && !shouldReschedule(workflowTrigger)) {
                         logger.info("Trigger {} for workflow {} under namespace {} has completed execution, " +
                                 "deleting it from store", triggerName, workflowName, namespace);
                         WorkflowTriggerService.getService().delete(triggerId);
