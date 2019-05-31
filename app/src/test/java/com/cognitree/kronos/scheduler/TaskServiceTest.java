@@ -42,7 +42,7 @@ public class TaskServiceTest extends ServiceTest {
         waitForTriggerToComplete(workflowTriggerOne, scheduler);
         waitForTriggerToComplete(workflowTriggerTwo, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(1000);
+        Thread.sleep(5000);
 
         TaskService taskService = TaskService.getService();
         final List<Task> workflowOneTasks = taskService.get(workflowTriggerOne.getNamespace());
@@ -60,7 +60,7 @@ public class TaskServiceTest extends ServiceTest {
         waitForTriggerToComplete(workflowTriggerOne, scheduler);
         waitForTriggerToComplete(workflowTriggerTwo, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(1000);
+        Thread.sleep(5000);
 
         JobService jobService = JobService.getService();
         TaskService taskService = TaskService.getService();
@@ -88,7 +88,7 @@ public class TaskServiceTest extends ServiceTest {
         waitForTriggerToComplete(workflowTriggerOne, scheduler);
         waitForTriggerToComplete(workflowTriggerTwo, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(1000);
+        Thread.sleep(5000);
 
         TaskService taskService = TaskService.getService();
         final List<Task> workflowOneTasks = taskService.get(workflowTriggerOne.getNamespace(), Collections.singletonList(Task.Status.SUCCESSFUL)
@@ -107,7 +107,7 @@ public class TaskServiceTest extends ServiceTest {
         final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
         waitForTriggerToComplete(workflowTrigger, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(1000);
+        Thread.sleep(5000);
 
         TaskService taskService = TaskService.getService();
         final List<Task> workflowOneTasks = taskService.get(workflowTrigger.getNamespace());
@@ -126,13 +126,13 @@ public class TaskServiceTest extends ServiceTest {
         final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
         waitForTriggerToComplete(workflowTrigger, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(1000);
+        Thread.sleep(5000);
 
         TaskService taskService = TaskService.getService();
         final List<Task> workflowTasks = taskService.get(workflowTrigger.getNamespace());
         Assert.assertEquals(3, workflowTasks.size());
         for (Task workflowTask : workflowTasks) {
-            Assert.assertEquals(workflowTask.getContext(), MockSuccessTaskHandler.CONTEXT);
+            Assert.assertEquals(MockSuccessTaskHandler.CONTEXT, workflowTask.getContext());
             if (workflowTask.getName().equals("taskTwo")) {
                 Assert.assertEquals(1234, workflowTask.getProperties().get("keyB"));
                 Assert.assertNull(workflowTask.getProperties().get("keyC"));

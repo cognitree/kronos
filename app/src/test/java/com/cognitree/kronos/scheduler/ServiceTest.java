@@ -48,6 +48,8 @@ public class ServiceTest {
         cleanupStore(namespaces);
         SCHEDULER_APP.stop();
         EXECUTOR_APP.stop();
+        // cleanup queue
+        TaskSchedulerService.getService().getConsumer().destroy();
     }
 
     private static void cleanupStore(List<Namespace> namespaces) throws Exception {

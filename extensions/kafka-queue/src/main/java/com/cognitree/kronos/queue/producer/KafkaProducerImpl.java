@@ -62,5 +62,10 @@ public class KafkaProducerImpl implements Producer {
 
     @Override
     public void close() {
+        try {
+            kafkaProducer.close();
+        } catch (Exception e) {
+            logger.error("Error closing Kafka producer", e);
+        }
     }
 }

@@ -19,6 +19,7 @@ package com.cognitree.kronos.queue.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -32,6 +33,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A {@link Consumer} implementation using Kafka as queue in backend.
@@ -68,14 +71,17 @@ public class KafkaConsumerImpl implements Consumer {
             createKafkaConsumer(topic);
         }
 
-        while (tasks.size() < size) {
-            final ConsumerRecords<String, String> consumerRecords = topicToKafkaConsumerMap.get(topic)
-                    .poll(Duration.ofMillis(pollTimeoutInMs));
-            if (consumerRecords.isEmpty()) {
-                break;
-            }
-            for (ConsumerRecord<String, String> consumerRecord : consumerRecords) {
-                tasks.add(consumerRecord.value());
+        final KafkaConsumer<String, String> kafkaConsumer = topicToKafkaConsumerMap.get(topic);
+        synchronized (kafkaConsumer) {
+            while (tasks.size() < size) {
+                final ConsumerRecords<String, String> consumerRecords = kafkaConsumer
+                        .poll(Duration.ofMillis(pollTimeoutInMs));
+                if (consumerRecords.isEmpty()) {
+                    break;
+                }
+                for (ConsumerRecord<String, String> consumerRecord : consumerRecords) {
+                    tasks.add(consumerRecord.value());
+                }
             }
         }
 
@@ -96,5 +102,40 @@ public class KafkaConsumerImpl implements Consumer {
 
     @Override
     public void close() {
+        topicToKafkaConsumerMap.forEach((topic, kafkaConsumer) -> {
+            synchronized (kafkaConsumer) {
+                try {
+                    kafkaConsumer.close();
+                } catch (Exception e) {
+                    logger.warn("Error closing Kafka consumer for topic {}", topic, e);
+                }
+            }
+        });
+    }
+
+    @Override
+    public void destroy() {
+        logger.info("Received request to delete created topics and consumer groups from Kafka");
+        AdminClient adminClient = AdminClient.create(kafkaConsumerConfig);
+        Set<String> topics = topicToKafkaConsumerMap.keySet();
+        Set<String> consumerGroups =
+                topics.stream().map(topic -> kafkaConsumerConfig.getProperty(GROUP_ID) + "-" + topic)
+                        .collect(Collectors.toSet());
+        logger.info("Deleting Kafka consumer group {} and topics {}", consumerGroups, topics);
+        try {
+            adminClient.deleteConsumerGroups(consumerGroups);
+        } catch (Exception e) {
+            logger.warn("Error deleting Kafka consumer groups {}", consumerGroups, e);
+        }
+        try {
+            adminClient.deleteTopics(topics);
+        } catch (Exception e) {
+            logger.warn("Error deleting Kafka topics {}", topics, e);
+        }
+        try {
+            adminClient.close();
+        } catch (Exception e) {
+            logger.warn("Error closing Kafka admin client", e);
+        }
     }
 }

@@ -168,7 +168,7 @@ public class WorkflowServiceTest extends ServiceTest {
         final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
         waitForTriggerToComplete(workflowTrigger, scheduler);
         // wait for tasks status to be consumed from queue
-        Thread.sleep(1000);
+        Thread.sleep(5000);
 
         TaskService taskService = TaskService.getService();
         final List<Task> workflowTasks = taskService.get(workflowTrigger.getNamespace());

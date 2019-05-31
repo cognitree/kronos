@@ -448,4 +448,9 @@ final class TaskSchedulerService implements Service {
             updateStatus(task, FAILED, TIMED_OUT);
         }
     }
+
+    //used in junit test
+    Consumer getConsumer(){
+        return consumer;
+    }
 }

@@ -23,8 +23,9 @@ import com.cognitree.kronos.queue.producer.Producer;
 import com.cognitree.kronos.queue.producer.ProducerConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.junit.After;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
@@ -40,8 +41,8 @@ public class QueueTest {
     private static Producer PRODUCER;
     private static Consumer CONSUMER;
 
-    @BeforeClass
-    public static void init() throws Exception {
+    @Before
+    public void init() throws Exception {
         final InputStream queueConfigAsStream =
                 QueueTest.class.getClassLoader().getResourceAsStream("queue.yaml");
         QueueConfig queueConfig = MAPPER.readValue(queueConfigAsStream, QueueConfig.class);
@@ -50,46 +51,53 @@ public class QueueTest {
         Thread.sleep(2000);
     }
 
-    private static void initProducer(ProducerConfig producerConfig) throws Exception {
+    private void initProducer(ProducerConfig producerConfig) throws Exception {
         PRODUCER = (Producer) Class.forName(producerConfig.getProducerClass())
                 .getConstructor()
                 .newInstance();
         PRODUCER.init(producerConfig.getConfig());
     }
 
-    private static void initConsumer(ConsumerConfig consumerConfig) throws Exception {
+    private void initConsumer(ConsumerConfig consumerConfig) throws Exception {
         CONSUMER = (Consumer) Class.forName(consumerConfig.getConsumerClass())
                 .getConstructor()
                 .newInstance();
         CONSUMER.init(consumerConfig.getConfig());
-        for (int i = 0; i < 3; i++) { // for kafka consumer to poll all the messages before we start the test
+        for (int i = 0; i < 2; i++) { // for kafka consumer to poll all the messages before we start the test
             CONSUMER.poll(TOPIC_A);
             CONSUMER.poll(TOPIC_B);
         }
     }
 
+    @After
+    public void destroy() {
+        PRODUCER.close();
+        CONSUMER.close();
+        CONSUMER.destroy();
+    }
+
     @Test
-    public void testProducerAndConsumerSingleTopic() {
+    public void testProducerAndConsumerSingleTopic() throws InterruptedException {
         LinkedList<String> records = new LinkedList<>();
         records.add("record1");
         records.add("record2");
         records.add("record3");
         records.add("record4");
         records.forEach(record -> PRODUCER.send(TOPIC_A, record));
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException ignored) {
-        }
+        Thread.sleep(2000);
 
         List<String> recordsFromConsumer = CONSUMER.poll(TOPIC_A, 4);
-        recordsFromConsumer.addAll(CONSUMER.poll(TOPIC_A));
+        for (int i = 0; i < 2; i++) {
+            recordsFromConsumer.addAll(CONSUMER.poll(TOPIC_A));
+            Thread.sleep(500);
+        }
         Assert.assertTrue("Records sent " + records + " and records consumed" + recordsFromConsumer + " do not match",
                 recordsFromConsumer.size() == records.size() &&
                         recordsFromConsumer.containsAll(records) && records.containsAll(recordsFromConsumer));
     }
 
     @Test
-    public void testProducerAndConsumerMultipleTopic() {
+    public void testProducerAndConsumerMultipleTopic() throws InterruptedException {
         LinkedList<String> recordsForA = new LinkedList<>();
         recordsForA.add("record1");
         recordsForA.add("record2");
@@ -104,54 +112,54 @@ public class QueueTest {
         recordsForB.add("record4");
         recordsForB.forEach(record -> PRODUCER.send(TOPIC_B, record));
 
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException ignored) {
-        }
+        Thread.sleep(500);
 
         List<String> recordsFromConsumerTopicA = CONSUMER.poll(TOPIC_A, 4);
-        recordsFromConsumerTopicA.addAll(CONSUMER.poll(TOPIC_A));
+        for (int i = 0; i < 2; i++) {
+            recordsFromConsumerTopicA.addAll(CONSUMER.poll(TOPIC_A));
+            Thread.sleep(500);
+        }
         Assert.assertTrue("Records sent " + recordsForA + " and records consumed" + recordsFromConsumerTopicA + " do not match",
                 recordsFromConsumerTopicA.size() == recordsForA.size() &&
                         recordsFromConsumerTopicA.containsAll(recordsForA) && recordsForA.containsAll(recordsFromConsumerTopicA));
 
         List<String> recordsFromConsumerTopicB = CONSUMER.poll(TOPIC_B, 4);
-        recordsFromConsumerTopicB.addAll(CONSUMER.poll(TOPIC_B));
+        for (int i = 0; i < 2; i++) {
+            recordsFromConsumerTopicB.addAll(CONSUMER.poll(TOPIC_B));
+            Thread.sleep(500);
+        }
         Assert.assertTrue("Records sent " + recordsForB + " and records consumed" + recordsFromConsumerTopicB + " do not match",
                 recordsFromConsumerTopicB.size() == recordsForB.size() &&
                         recordsFromConsumerTopicB.containsAll(recordsForB) && recordsForB.containsAll(recordsFromConsumerTopicB));
     }
 
     @Test
-    public void testProducerAndConsumerSingleTopicInOrder() {
+    public void testProducerAndConsumerSingleTopicInOrder() throws InterruptedException {
         LinkedList<String> records = new LinkedList<>();
         records.add("record1");
         records.add("record2");
         records.add("record3");
         records.add("record4");
         records.forEach(record -> PRODUCER.sendInOrder(TOPIC_A, record, "orderingKey"));
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException ignored) {
-        }
+        Thread.sleep(2000);
 
         List<String> recordsFromConsumer = CONSUMER.poll(TOPIC_A, 4);
-        recordsFromConsumer.addAll(CONSUMER.poll(TOPIC_A));
-        Assert.assertEquals(recordsFromConsumer, records);
+        for (int i = 0; i < 2; i++) {
+            recordsFromConsumer.addAll(CONSUMER.poll(TOPIC_A));
+            Thread.sleep(500);
+        }
+        Assert.assertEquals(records, recordsFromConsumer);
     }
 
     @Test
-    public void testProducerAndConsumerMultipleTopicInOrder() {
+    public void testProducerAndConsumerMultipleTopicInOrder() throws InterruptedException {
         LinkedList<String> recordsForA = new LinkedList<>();
         recordsForA.add("record1");
         recordsForA.add("record2");
         recordsForA.add("record3");
         recordsForA.add("record4");
         recordsForA.forEach(record -> PRODUCER.sendInOrder(TOPIC_A, record, "orderingKey"));
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException ignored) {
-        }
+        Thread.sleep(2000);
 
         LinkedList<String> recordsForB = new LinkedList<>();
         recordsForB.add("record1");
@@ -161,12 +169,17 @@ public class QueueTest {
         recordsForB.forEach(record -> PRODUCER.sendInOrder(TOPIC_B, record, "orderingKey"));
 
         List<String> recordsFromConsumerTopicA = CONSUMER.poll(TOPIC_A, 4);
-        recordsFromConsumerTopicA.addAll(CONSUMER.poll(TOPIC_A));
-        Assert.assertEquals(recordsFromConsumerTopicA, recordsForA);
+        for (int i = 0; i < 2; i++) {
+            recordsFromConsumerTopicA.addAll(CONSUMER.poll(TOPIC_A));
+            Thread.sleep(500);
+        }
+        Assert.assertEquals(recordsForA, recordsFromConsumerTopicA);
 
         List<String> recordsFromConsumerTopicB = CONSUMER.poll(TOPIC_B, 4);
-        recordsFromConsumerTopicB.addAll(CONSUMER.poll(TOPIC_B));
-        Assert.assertEquals(recordsFromConsumerTopicB, recordsForB);
+        for (int i = 0; i < 2; i++) {
+            recordsFromConsumerTopicB.addAll(CONSUMER.poll(TOPIC_B));
+            Thread.sleep(500);
+        }
+        Assert.assertEquals(recordsForB, recordsFromConsumerTopicB);
     }
-
 }

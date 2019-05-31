@@ -25,8 +25,8 @@ import java.util.List;
 public interface Consumer {
 
     /**
-     * during initialization phase a call is made to initialize consumer using {@link ConsumerConfig#config}.
-     * Any property required by the consumer¸ to instantiate itself should be part of {@link ConsumerConfig#config}.
+     * during initialization phase a call is made to initialize consumer using {@link ConsumerConfig#getConfig()}.
+     * Any property required by the consumer¸ to instantiate itself should be part of {@link ConsumerConfig#getConfig()}.
      *
      * @param consumerConfig configuration used to initialize the consumer.
      */
@@ -50,4 +50,11 @@ public interface Consumer {
     List<String> poll(String topic, int maxSize);
 
     void close();
+
+    /**
+     * deletes all the created consumers and topic from the underlying queue
+     */
+    default void destroy() {
+        // do nothing by default
+    }
 }
