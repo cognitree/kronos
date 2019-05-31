@@ -25,18 +25,11 @@ import static com.cognitree.kronos.scheduler.model.Schedule.Type.cron;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class CronSchedule extends Schedule {
-    private Type type = cron;
     private String cronExpression;
     private String timezone;
 
-    @Override
-    public Type getType() {
-        return type;
-    }
-
-    @Override
-    public void setType(Type type) {
-        this.type = type;
+    public CronSchedule() {
+        super(cron);
     }
 
     public String getCronExpression() {
@@ -61,22 +54,20 @@ public class CronSchedule extends Schedule {
         if (!(o instanceof CronSchedule)) return false;
         if (!super.equals(o)) return false;
         CronSchedule that = (CronSchedule) o;
-        return type == that.type &&
-                Objects.equals(cronExpression, that.cronExpression) &&
+        return Objects.equals(cronExpression, that.cronExpression) &&
                 Objects.equals(timezone, that.timezone);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(super.hashCode(), type, cronExpression, timezone);
+        return Objects.hash(super.hashCode(), cronExpression, timezone);
     }
 
     @Override
     public String toString() {
         return "CronSchedule{" +
-                "type=" + type +
-                ", cronExpression='" + cronExpression + '\'' +
+                "cronExpression='" + cronExpression + '\'' +
                 ", timezone='" + timezone + '\'' +
                 "} " + super.toString();
     }

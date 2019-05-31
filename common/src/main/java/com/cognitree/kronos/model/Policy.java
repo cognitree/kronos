@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import java.util.Objects;
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @JsonSubTypes({
         @JsonSubTypes.Type(value = RetryPolicy.class, name = "retry")
 })
@@ -31,12 +31,12 @@ import java.util.Objects;
 public abstract class Policy {
     private Type type;
 
-    public Type getType() {
-        return type;
+    public Policy(Type type) {
+        this.type = type;
     }
 
-    public void setType(Type type) {
-        this.type = type;
+    public Type getType() {
+        return type;
     }
 
     @Override

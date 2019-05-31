@@ -25,19 +25,12 @@ import static com.cognitree.kronos.scheduler.model.Schedule.Type.simple;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SimpleSchedule extends Schedule {
-    private Type type = simple;
     private boolean repeatForever;
     private long repeatIntervalInMs = 0;
     private int repeatCount = 0;
 
-    @Override
-    public Type getType() {
-        return type;
-    }
-
-    @Override
-    public void setType(Type type) {
-        this.type = type;
+    public SimpleSchedule() {
+        super(simple);
     }
 
     public boolean isRepeatForever() {
@@ -71,21 +64,19 @@ public class SimpleSchedule extends Schedule {
         SimpleSchedule that = (SimpleSchedule) o;
         return repeatForever == that.repeatForever &&
                 repeatIntervalInMs == that.repeatIntervalInMs &&
-                repeatCount == that.repeatCount &&
-                type == that.type;
+                repeatCount == that.repeatCount;
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(type, repeatForever, repeatIntervalInMs, repeatCount);
+        return Objects.hash(repeatForever, repeatIntervalInMs, repeatCount);
     }
 
     @Override
     public String toString() {
         return "SimpleSchedule{" +
-                "type=" + type +
-                ", repeatForever=" + repeatForever +
+                "repeatForever=" + repeatForever +
                 ", repeatIntervalInMs=" + repeatIntervalInMs +
                 ", repeatCount=" + repeatCount +
                 "} " + super.toString();

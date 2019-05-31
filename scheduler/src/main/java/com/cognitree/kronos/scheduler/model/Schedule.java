@@ -24,7 +24,7 @@ import org.quartz.Trigger;
 
 import java.util.Objects;
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @JsonSubTypes({
         @JsonSubTypes.Type(value = SimpleSchedule.class, name = "simple"),
         @JsonSubTypes.Type(value = CronSchedule.class, name = "cron"),
@@ -37,12 +37,12 @@ public abstract class Schedule {
     private Type type;
     private int misfireInstruction = Trigger.MISFIRE_INSTRUCTION_SMART_POLICY;
 
-    public Type getType() {
-        return type;
+    public Schedule(Type type) {
+        this.type = type;
     }
 
-    public void setType(Type type) {
-        this.type = type;
+    public Type getType() {
+        return type;
     }
 
     public int getMisfireInstruction() {

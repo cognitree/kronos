@@ -31,7 +31,13 @@ public class RAMProducer implements Producer {
 
     @Override
     public void send(String topic, String record) {
-        logger.trace("Received request to send message {} on topic {}", record, topic);
+        sendInOrder(topic, record, null);
+    }
+
+    @Override
+    public void sendInOrder(String topic, String record, String orderingKey) {
+        logger.trace("Received request to send message {} on topic {} with orderingKey {}",
+                record, topic, orderingKey);
         RAMQueueFactory.getQueue(topic).add(record);
     }
 

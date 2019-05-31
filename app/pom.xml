@@ -81,6 +81,7 @@
             <artifactId>kafka-queue</artifactId>
             <version>${project.version}</version>
         </dependency>
+
         <dependency>
             <groupId>com.cognitree.kronos.extensions</groupId>
             <artifactId>embedded-hsql-store</artifactId>
@@ -93,6 +94,12 @@
         </dependency>
         <dependency>
             <groupId>com.cognitree.kronos.extensions</groupId>
+            <artifactId>mongo-store</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.cognitree.kronos.extensions</groupId>
             <artifactId>shell-handler</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -103,7 +110,12 @@
         </dependency>
         <dependency>
             <groupId>com.cognitree.kronos.extensions</groupId>
-            <artifactId>mongo-store</artifactId>
+            <artifactId>helm-handler</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cognitree.kronos.extensions</groupId>
+            <artifactId>kafka-message-handler</artifactId>
             <version>${project.version}</version>
         </dependency>
         <!-- extensions end -->

@@ -35,7 +35,6 @@ import static org.quartz.DailyTimeIntervalScheduleBuilder.ALL_DAYS_OF_THE_WEEK;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DailyTimeIntervalSchedule extends Schedule {
-    private Type type = daily_time;
     private int repeatInterval = 1;
     private IntervalUnit repeatIntervalUnit = IntervalUnit.MINUTE;
     private int repeatCount = DailyTimeIntervalTrigger.REPEAT_INDEFINITELY;
@@ -44,14 +43,8 @@ public class DailyTimeIntervalSchedule extends Schedule {
     private String timezone;
     private Set<Integer> daysOfWeek = ALL_DAYS_OF_THE_WEEK;
 
-    @Override
-    public Type getType() {
-        return type;
-    }
-
-    @Override
-    public void setType(Type type) {
-        this.type = type;
+    public DailyTimeIntervalSchedule() {
+        super(daily_time);
     }
 
     public int getRepeatInterval() {
@@ -118,7 +111,6 @@ public class DailyTimeIntervalSchedule extends Schedule {
         DailyTimeIntervalSchedule that = (DailyTimeIntervalSchedule) o;
         return repeatInterval == that.repeatInterval &&
                 repeatCount == that.repeatCount &&
-                type == that.type &&
                 repeatIntervalUnit == that.repeatIntervalUnit &&
                 Objects.equals(startTimeOfDay, that.startTimeOfDay) &&
                 Objects.equals(endTimeOfDay, that.endTimeOfDay) &&
@@ -129,14 +121,13 @@ public class DailyTimeIntervalSchedule extends Schedule {
     @Override
     public int hashCode() {
 
-        return Objects.hash(super.hashCode(), type, repeatInterval, repeatIntervalUnit, repeatCount, startTimeOfDay, endTimeOfDay, timezone, daysOfWeek);
+        return Objects.hash(super.hashCode(), repeatInterval, repeatIntervalUnit, repeatCount, startTimeOfDay, endTimeOfDay, timezone, daysOfWeek);
     }
 
     @Override
     public String toString() {
         return "DailyTimeIntervalSchedule{" +
-                "type=" + type +
-                ", repeatInterval=" + repeatInterval +
+                "repeatInterval=" + repeatInterval +
                 ", repeatIntervalUnit=" + repeatIntervalUnit +
                 ", repeatCount=" + repeatCount +
                 ", startTimeOfDay=" + startTimeOfDay +

@@ -74,7 +74,10 @@ public class MongoWorkflowStore extends MongoStore<Workflow> implements Workflow
                 combine(
                         set("description", workflow.getDescription()),
                         set("tasks", workflow.getTasks()),
-                        set("properties", workflow.getProperties())));
+                        set("properties", workflow.getProperties()),
+                        set("emailOnSuccess", workflow.getEmailOnSuccess()),
+                        set("emailOnFailure", workflow.getEmailOnFailure()))
+        );
     }
 
     @Override

@@ -26,22 +26,16 @@ import static com.cognitree.kronos.scheduler.model.Schedule.Type.calendar;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class CalendarIntervalSchedule extends Schedule {
-    private Type type = calendar;
     private int repeatInterval = 1;
     private IntervalUnit repeatIntervalUnit = IntervalUnit.DAY;
     private String timezone;
     private boolean preserveHourOfDayAcrossDaylightSavings;
     private boolean skipDayIfHourDoesNotExist;
 
-    @Override
-    public Type getType() {
-        return type;
+    public CalendarIntervalSchedule() {
+        super(calendar);
     }
 
-    @Override
-    public void setType(Type type) {
-        this.type = type;
-    }
 
     public int getRepeatInterval() {
         return repeatInterval;
@@ -92,7 +86,6 @@ public class CalendarIntervalSchedule extends Schedule {
         return repeatInterval == that.repeatInterval &&
                 preserveHourOfDayAcrossDaylightSavings == that.preserveHourOfDayAcrossDaylightSavings &&
                 skipDayIfHourDoesNotExist == that.skipDayIfHourDoesNotExist &&
-                type == that.type &&
                 repeatIntervalUnit == that.repeatIntervalUnit &&
                 Objects.equals(timezone, that.timezone);
     }
@@ -100,14 +93,13 @@ public class CalendarIntervalSchedule extends Schedule {
     @Override
     public int hashCode() {
 
-        return Objects.hash(super.hashCode(), type, repeatInterval, repeatIntervalUnit, timezone, preserveHourOfDayAcrossDaylightSavings, skipDayIfHourDoesNotExist);
+        return Objects.hash(super.hashCode(), repeatInterval, repeatIntervalUnit, timezone, preserveHourOfDayAcrossDaylightSavings, skipDayIfHourDoesNotExist);
     }
 
     @Override
     public String toString() {
         return "CalendarIntervalSchedule{" +
-                "type=" + type +
-                ", repeatIntervalUnit=" + repeatIntervalUnit +
+                "repeatIntervalUnit=" + repeatIntervalUnit +
                 ", repeatInterval=" + repeatInterval +
                 ", timezone='" + timezone + '\'' +
                 ", preserveHourOfDayAcrossDaylightSavings=" + preserveHourOfDayAcrossDaylightSavings +

@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.Map;
 
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_DESCRIPTION;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_EMAIL_ON_FAILURE;
+import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_EMAIL_ON_SUCCESS;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_NAME;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_NAMESPACE;
 import static com.cognitree.kronos.scheduler.store.jdbc.StdJDBCConstants.COL_PROPERTIES;
@@ -49,7 +51,7 @@ public class StdJDBCWorkflowStore implements WorkflowStore {
     private static final Logger logger = LoggerFactory.getLogger(StdJDBCWorkflowStore.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    private static final String INSERT_WORKFLOW = "INSERT INTO " + TABLE_WORKFLOWS + " VALUES (?,?,?,?,?)";
+    private static final String INSERT_WORKFLOW = "INSERT INTO " + TABLE_WORKFLOWS + " VALUES (?,?,?,?,?,?,?)";
 
     private static final String LOAD_WORKFLOW = "SELECT * FROM " + TABLE_WORKFLOWS + " WHERE "
             + COL_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
@@ -57,7 +59,8 @@ public class StdJDBCWorkflowStore implements WorkflowStore {
             + COL_NAMESPACE + " = ?";
 
     private static final String UPDATE_WORKFLOW = "UPDATE " + TABLE_WORKFLOWS + " set " + COL_DESCRIPTION + " = ?, " +
-            " " + COL_TASKS + " = ?, " + COL_PROPERTIES + " = ? WHERE " + COL_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
+            " " + COL_TASKS + " = ?, " + COL_PROPERTIES + " = ?, " + COL_EMAIL_ON_SUCCESS + " = ?, " + COL_EMAIL_ON_FAILURE
+            + " = ? WHERE " + COL_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
 
     private static final String DELETE_WORKFLOW = "DELETE FROM " + TABLE_WORKFLOWS + " WHERE "
             + COL_NAME + " = ? " + "AND " + COL_NAMESPACE + " = ?";
@@ -67,6 +70,9 @@ public class StdJDBCWorkflowStore implements WorkflowStore {
             };
     private static final TypeReference<Map<String, Object>> PROPERTIES_TYPE_REF =
             new TypeReference<Map<String, Object>>() {
+            };
+    private static final TypeReference<List<String>> STRING_LIST_TYPE_REF =
+            new TypeReference<List<String>>() {
             };
 
     private final BasicDataSource dataSource;
@@ -86,6 +92,8 @@ public class StdJDBCWorkflowStore implements WorkflowStore {
             preparedStatement.setString(++paramIndex, workflow.getDescription());
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(workflow.getTasks()));
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(workflow.getProperties()));
+            preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(workflow.getEmailOnSuccess()));
+            preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(workflow.getEmailOnFailure()));
             preparedStatement.execute();
         } catch (Exception e) {
             logger.error("Error storing workflow {}", workflow, e);
@@ -140,6 +148,8 @@ public class StdJDBCWorkflowStore implements WorkflowStore {
             preparedStatement.setString(++paramIndex, workflow.getDescription());
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(workflow.getTasks()));
             preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(workflow.getProperties()));
+            preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(workflow.getEmailOnSuccess()));
+            preparedStatement.setString(++paramIndex, MAPPER.writeValueAsString(workflow.getEmailOnFailure()));
             preparedStatement.setString(++paramIndex, workflow.getName());
             preparedStatement.setString(++paramIndex, workflow.getNamespace());
             preparedStatement.execute();
@@ -172,6 +182,8 @@ public class StdJDBCWorkflowStore implements WorkflowStore {
         workflow.setDescription(resultSet.getString(++paramIndex));
         workflow.setTasks(MAPPER.readValue(resultSet.getString(++paramIndex), WORKFLOW_TASK_LIST_TYPE_REF));
         workflow.setProperties(MAPPER.readValue(resultSet.getString(++paramIndex), PROPERTIES_TYPE_REF));
+        workflow.setEmailOnSuccess(MAPPER.readValue(resultSet.getString(++paramIndex), STRING_LIST_TYPE_REF));
+        workflow.setEmailOnFailure(MAPPER.readValue(resultSet.getString(++paramIndex), STRING_LIST_TYPE_REF));
         return workflow;
     }
 }

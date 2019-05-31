@@ -30,12 +30,23 @@ public interface Producer {
     void init(ObjectNode producerConfig);
 
     /**
-     * sends the record to the underlying queue
+     * sends the record to the underlying queue.
+     * Records can be consumed out of order by the Consumer on {@link com.cognitree.kronos.queue.consumer.Consumer#poll(String)}.
      *
      * @param topic  topic name to send data
      * @param record record to send
      */
     void send(String topic, String record);
+
+    /**
+     * sends the record to the underlying queue in-order.
+     * Records should be consumed in-order by the Consumer on {@link com.cognitree.kronos.queue.consumer.Consumer#poll(String)}.
+     *
+     * @param topic       topic name to send data
+     * @param record      record to send
+     * @param orderingKey key to decide how the message is sent for in-order delivery
+     */
+    void sendInOrder(String topic, String record, String orderingKey);
 
     void close();
 }

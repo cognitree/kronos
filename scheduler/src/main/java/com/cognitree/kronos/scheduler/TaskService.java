@@ -352,6 +352,17 @@ public class TaskService implements Service {
         }
     }
 
+    public void deleteByWorkflowName(String namespace, String workflowName) throws ServiceException, ValidationException {
+        logger.info("Received request to delete tasks for workflow {} in namespace {}", workflowName, namespace);
+        validateWorkflow(namespace, workflowName);
+        try {
+            taskStore.deleteByWorkflowName(namespace, workflowName);
+        } catch (StoreException e) {
+            logger.error("unable to delete tasks for workflow {} in namespace {}", workflowName, namespace, e);
+            throw new ServiceException(e.getMessage(), e.getCause());
+        }
+    }
+
     private void validateNamespace(String name) throws ValidationException, ServiceException {
         final Namespace namespace = NamespaceService.getService().get(NamespaceId.build(name));
         if (namespace == null) {

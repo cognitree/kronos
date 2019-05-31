@@ -84,6 +84,9 @@ public class StdJDBCTaskStore implements TaskStore {
     private static final String DELETE_TASK = "DELETE FROM " + TABLE_TASKS + " WHERE " + COL_NAME + " = ? AND "
             + COL_JOB_ID + " = ? AND " + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
 
+    private static final String DELETE_TASK_WITH_WORKFLOW_NAME = "DELETE FROM " + TABLE_TASKS + " WHERE "
+            + COL_WORKFLOW_NAME + " = ? AND " + COL_NAMESPACE + " = ?";
+
     private static final TypeReference<Map<String, Object>> PROPERTIES_TYPE_REF =
             new TypeReference<Map<String, Object>>() {
             };
@@ -297,6 +300,21 @@ public class StdJDBCTaskStore implements TaskStore {
             preparedStatement.executeUpdate();
         } catch (Exception e) {
             logger.error("Error deleting task with id {}", taskId, e);
+            throw new StoreException(e);
+        }
+    }
+
+    @Override
+    public void deleteByWorkflowName(String namespace, String workflowName) throws StoreException {
+        logger.debug("Received request to delete task with workflow {} in namespace {}", workflowName, namespace);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(DELETE_TASK_WITH_WORKFLOW_NAME)) {
+            int paramIndex = 0;
+            preparedStatement.setString(++paramIndex, workflowName);
+            preparedStatement.setString(++paramIndex, namespace);
+            preparedStatement.executeUpdate();
+        } catch (Exception e) {
+            logger.error("Error deleting task with workflow {} in namespace {}", workflowName, namespace, e);
             throw new StoreException(e);
         }
     }

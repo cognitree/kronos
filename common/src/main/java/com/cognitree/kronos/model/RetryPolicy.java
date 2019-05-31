@@ -21,9 +21,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.util.Objects;
 
+import static com.cognitree.kronos.model.Policy.Type.retry;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RetryPolicy extends Policy {
     private int maxRetryCount = 1;
+
+    public RetryPolicy() {
+        super(retry);
+    }
 
     public int getMaxRetryCount() {
         return maxRetryCount;
