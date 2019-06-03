@@ -22,6 +22,7 @@ public class ExecutionCounters {
     private int active;
     private int successful;
     private int failed;
+    private int skipped;
 
     public int getActive() {
         return active;
@@ -55,6 +56,14 @@ public class ExecutionCounters {
         this.failed = failed;
     }
 
+    public int getSkipped() {
+        return skipped;
+    }
+
+    public void setSkipped(int skipped) {
+        this.skipped = skipped;
+    }
+
     @Override
     public String toString() {
         return "ExecutionCounters{" +
@@ -62,6 +71,7 @@ public class ExecutionCounters {
                 ", active=" + active +
                 ", successful=" + successful +
                 ", failed=" + failed +
+                ", skipped=" + skipped +
                 '}';
     }
 }
