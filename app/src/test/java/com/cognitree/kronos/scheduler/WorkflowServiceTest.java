@@ -19,8 +19,10 @@ package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.executor.handlers.MockSuccessTaskHandler;
 import com.cognitree.kronos.model.Task;
+import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.Workflow;
+import com.cognitree.kronos.scheduler.model.WorkflowStatistics;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import org.junit.Assert;
 import org.junit.Test;
@@ -186,6 +188,78 @@ public class WorkflowServiceTest extends ServiceTest {
         }
     }
 
+    @Test
+    public void testGetWorkflowStatistics() throws Exception {
+        final WorkflowTrigger workflowTriggerOne = scheduleWorkflow("workflows/workflow-template.yaml");
+        final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow("workflows/workflow-template-failed-handler.yaml");
+
+        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
+        // wait for both the job to be triggered
+        waitForTriggerToComplete(workflowTriggerOne, scheduler);
+        waitForTriggerToComplete(workflowTriggerTwo, scheduler);
+        // wait for tasks status to be consumed from queue
+        Thread.sleep(5000);
+
+        WorkflowStatistics workflowOneStatistics = WorkflowService.getService()
+                .getStatistics(workflowTriggerOne.getNamespace(), workflowTriggerOne.getWorkflow(),
+                        0, System.currentTimeMillis());
+        Assert.assertEquals(workflowOneStatistics.getJobs().getTotal(), 1);
+        Assert.assertEquals(workflowOneStatistics.getJobs().getActive(), 0);
+        Assert.assertEquals(workflowOneStatistics.getJobs().getFailed(), 0);
+        Assert.assertEquals(workflowOneStatistics.getJobs().getSkipped(), 0);
+        Assert.assertEquals(workflowOneStatistics.getJobs().getSuccessful(), 1);
+
+        Assert.assertEquals(workflowOneStatistics.getTasks().getTotal(), 3);
+        Assert.assertEquals(workflowOneStatistics.getTasks().getActive(), 0);
+        Assert.assertEquals(workflowOneStatistics.getTasks().getFailed(), 0);
+        Assert.assertEquals(workflowOneStatistics.getTasks().getSkipped(), 0);
+        Assert.assertEquals(workflowOneStatistics.getTasks().getSuccessful(), 3);
+
+        WorkflowStatistics workflowOneStatisticsByNs = WorkflowService.getService()
+                .getStatistics(workflowTriggerOne.getNamespace(), 0, System.currentTimeMillis());
+        Assert.assertEquals(workflowOneStatisticsByNs.getJobs().getTotal(), 1);
+        Assert.assertEquals(workflowOneStatisticsByNs.getJobs().getActive(), 0);
+        Assert.assertEquals(workflowOneStatisticsByNs.getJobs().getFailed(), 0);
+        Assert.assertEquals(workflowOneStatisticsByNs.getJobs().getSkipped(), 0);
+        Assert.assertEquals(workflowOneStatisticsByNs.getJobs().getSuccessful(), 1);
+
+        Assert.assertEquals(workflowOneStatisticsByNs.getTasks().getTotal(), 3);
+        Assert.assertEquals(workflowOneStatisticsByNs.getTasks().getActive(), 0);
+        Assert.assertEquals(workflowOneStatisticsByNs.getTasks().getFailed(), 0);
+        Assert.assertEquals(workflowOneStatisticsByNs.getTasks().getSkipped(), 0);
+        Assert.assertEquals(workflowOneStatisticsByNs.getTasks().getSuccessful(), 3);
+
+
+        WorkflowStatistics workflowTwoStatistics = WorkflowService.getService()
+                .getStatistics(workflowTriggerTwo.getNamespace(), workflowTriggerTwo.getWorkflow(),
+                        0, System.currentTimeMillis());
+        Assert.assertEquals(workflowTwoStatistics.getJobs().getTotal(), 1);
+        Assert.assertEquals(workflowTwoStatistics.getJobs().getActive(), 0);
+        Assert.assertEquals(workflowTwoStatistics.getJobs().getFailed(), 1);
+        Assert.assertEquals(workflowTwoStatistics.getJobs().getSkipped(), 0);
+        Assert.assertEquals(workflowTwoStatistics.getJobs().getSuccessful(), 0);
+
+        Assert.assertEquals(workflowTwoStatistics.getTasks().getTotal(), 3);
+        Assert.assertEquals(workflowTwoStatistics.getTasks().getActive(), 0);
+        Assert.assertEquals(workflowTwoStatistics.getTasks().getFailed(), 1);
+        Assert.assertEquals(workflowTwoStatistics.getTasks().getSkipped(), 1);
+        Assert.assertEquals(workflowTwoStatistics.getTasks().getSuccessful(), 1);
+
+        WorkflowStatistics workflowTwoStatisticsByNs = WorkflowService.getService()
+                .getStatistics(workflowTriggerTwo.getNamespace(), 0, System.currentTimeMillis());
+        Assert.assertEquals(workflowTwoStatisticsByNs.getJobs().getTotal(), 1);
+        Assert.assertEquals(workflowTwoStatisticsByNs.getJobs().getActive(), 0);
+        Assert.assertEquals(workflowTwoStatisticsByNs.getJobs().getFailed(), 1);
+        Assert.assertEquals(workflowTwoStatisticsByNs.getJobs().getSkipped(), 0);
+        Assert.assertEquals(workflowTwoStatisticsByNs.getJobs().getSuccessful(), 0);
+
+
+        Assert.assertEquals(workflowTwoStatisticsByNs.getTasks().getTotal(), 3);
+        Assert.assertEquals(workflowTwoStatisticsByNs.getTasks().getActive(), 0);
+        Assert.assertEquals(workflowTwoStatisticsByNs.getTasks().getFailed(), 1);
+        Assert.assertEquals(workflowTwoStatisticsByNs.getTasks().getSkipped(), 1);
+        Assert.assertEquals(workflowTwoStatisticsByNs.getTasks().getSuccessful(), 1);
+    }
 
     @Test(expected = ValidationException.class)
     public void testDuplicatePolicyOfSameType() throws Exception {
