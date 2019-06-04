@@ -26,9 +26,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import hapi.chart.ChartOuterClass.Chart;
 import hapi.release.ReleaseOuterClass.Release;
 import hapi.release.StatusOuterClass.Status.Code;
-import hapi.services.tiller.Tiller.GetReleaseStatusRequest;
-import hapi.services.tiller.Tiller.GetReleaseStatusResponse;
-import hapi.services.tiller.Tiller.InstallReleaseRequest;
+import hapi.services.tiller.Tiller.*;
 import hapi.services.tiller.Tiller.InstallReleaseRequest.Builder;
 import io.fabric8.kubernetes.api.model.batch.Job;
 import io.fabric8.kubernetes.api.model.batch.JobList;
@@ -81,11 +79,13 @@ public class HelmTaskHandler implements TaskHandler {
     private static final String PROP_VALUES_FILE = "valuesFile";
     private static final String PROP_TIMEOUT = "timeout";
     private static final String PROP_MAX_WAIT_TIMEOUT = "maxWaitTimeout";
+    private static final String PROP_IGNORE_JOB_STATUS = "ignoreJobStatus";
 
     private static final ChartType DEFAULT_CHART_TYPE = directory;
     private static final String DEFAULT_RELEASE_PREFIX = "release";
     private static final long DEFAULT_WAIT_TIMEOUT = 600L;
     private static final long DEFAULT_HELM_TIMEOUT = 300L;
+    private static final boolean DEFAULT_IGNORE_JOB_STATUS = false;
     private static final int SLEEP_INTERVAL_IN_SECONDS = 5;
     private static final int MAX_RETRY_COUNT = 3;
     private static final int RETRY_SLEEP_INTERVAL = 5000;
@@ -178,8 +178,9 @@ public class HelmTaskHandler implements TaskHandler {
                 release = releaseManager.install(requestBuilder, chart).get().getRelease();
                 logger.info("Successfully installed release: {} in namespace: {}", releaseName, release.getNamespace());
             }
+            boolean ignoreJobStatus = (boolean) taskProperties.getOrDefault(PROP_IGNORE_JOB_STATUS, DEFAULT_IGNORE_JOB_STATUS);
             waitForReleaseAndJobCompletion(releaseManager, kubernetesClient, releaseName,
-                    release.getNamespace(), waitTimeout);
+                    release.getNamespace(), waitTimeout, ignoreJobStatus);
             logger.info("Successfully completed release: {} in namespace {}", releaseName,
                     release.getNamespace());
             return new TaskResult(true, null, taskResult);
@@ -203,7 +204,8 @@ public class HelmTaskHandler implements TaskHandler {
     }
 
     private void waitForReleaseAndJobCompletion(ReleaseManager releaseManager, KubernetesClient kubernetesClient,
-                                                String releaseName, String namespace, long waitTimeout) throws Exception {
+                                                String releaseName, String namespace, long waitTimeout,
+                                                boolean ignoreJobStatus) throws Exception {
         logger.info("Waiting for release {} in namespace {} to complete.", releaseName, namespace);
 
         boolean deployed = false;
@@ -234,7 +236,12 @@ public class HelmTaskHandler implements TaskHandler {
                             " in namespace " + namespace + " current state is: " + statusCode);
             }
         }
-        waitForJobCompletion(kubernetesClient, releaseName, namespace, waitTimeout);
+        if (ignoreJobStatus) {
+            logger.info("Task is configured to not wait for the completion" +
+                    " of release {} in namespace {}", releaseName, namespace);
+        } else {
+            waitForJobCompletion(kubernetesClient, releaseName, namespace, waitTimeout);
+        }
     }
 
     private Code getHelmReleaseStatus(ReleaseManager releaseManager, String releaseName) throws Exception {
@@ -387,14 +394,14 @@ public class HelmTaskHandler implements TaskHandler {
             case zip:
                 File zipFile = new File(chartPath);
                 ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(zipFile));
-                try (ZipInputStreamChartLoader zipInputStreamChartLoader = new ZipInputStreamChartLoader();) {
+                try (ZipInputStreamChartLoader zipInputStreamChartLoader = new ZipInputStreamChartLoader()) {
                     helmChart = zipInputStreamChartLoader.load(zipInputStream);
                 }
                 break;
             case tape:
                 File tarFile = new File(chartPath);
                 TarInputStream tarInputStream = new TarInputStream(new FileInputStream(tarFile));
-                try (TapeArchiveChartLoader tapeArchiveChartLoader = new TapeArchiveChartLoader();) {
+                try (TapeArchiveChartLoader tapeArchiveChartLoader = new TapeArchiveChartLoader()) {
                     helmChart = tapeArchiveChartLoader.load(tarInputStream);
                 }
                 break;
