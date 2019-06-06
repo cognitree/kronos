@@ -34,9 +34,9 @@ import com.cognitree.kronos.scheduler.store.WorkflowTriggerStore;
 import com.cognitree.kronos.scheduler.store.mongo.codecs.JobStatusCodec;
 import com.cognitree.kronos.scheduler.store.mongo.codecs.TaskStatusCodec;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCredential;
-import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.novemberain.quartz.mongodb.MongoDBJobStore;
@@ -46,8 +46,6 @@ import org.bson.codecs.pojo.ClassModel;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Collections;
 
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -60,10 +58,8 @@ public class MongoStoreService extends StoreService {
 
     private static final Logger logger = LoggerFactory.getLogger(MongoStoreService.class);
 
-    private static final String HOST = "host";
-    private static final String DEFAULT_HOST = "localhost";
-    private static final String PORT = "port";
-    private static final int DEFAULT_PORT = 27017;
+    private static final String CONNECTION_STRING = "connectionString";
+    private static final String DEFAULT_CONNECTION_STRING = "mongodb://localhost:27017";
     private static final String USER = "user";
     private static final String PASSWORD = "password";
     private static final String AUTH_DATABASE = "authDatabase";
@@ -71,8 +67,7 @@ public class MongoStoreService extends StoreService {
     private static final String SCHEDULER_DATABASE = "schedulerDatabase";
     private static final String DEFAULT_QUARTZ_DATABASE = "quartz";
 
-    private String host;
-    private int port;
+    private String connectionString;
     private MongoCredential credential;
     private String quartzDatabase;
     private MongoClient mongoClient;
@@ -96,15 +91,10 @@ public class MongoStoreService extends StoreService {
     }
 
     private void parseConfig() {
-        if (config != null && config.hasNonNull(HOST)) {
-            host = config.get(HOST).asText();
+        if (config != null && config.hasNonNull(CONNECTION_STRING)) {
+            connectionString = config.get(CONNECTION_STRING).asText();
         } else {
-            host = DEFAULT_HOST;
-        }
-        if (config != null && config.hasNonNull(PORT)) {
-            port = Integer.parseInt(config.get(PORT).asText());
-        } else {
-            port = DEFAULT_PORT;
+            connectionString = DEFAULT_CONNECTION_STRING;
         }
         if (config != null && config.hasNonNull(USER) && config.hasNonNull(PASSWORD)) {
             String authDatabase;
@@ -144,7 +134,7 @@ public class MongoStoreService extends StoreService {
 
         MongoClientSettings.Builder clusterSettings = MongoClientSettings.builder()
                 .applyToClusterSettings(builder ->
-                        builder.hosts(Collections.singletonList(new ServerAddress(host, port))))
+                        builder.applyConnectionString(new ConnectionString(connectionString)))
                 .codecRegistry(codecRegistry);
         if (credential != null) {
             clusterSettings.credential(credential);
