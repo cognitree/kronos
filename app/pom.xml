@@ -75,50 +75,6 @@
             <artifactId>commons-cli</artifactId>
             <version>${commons-cli.version}</version>
         </dependency>
-        <!-- extensions start -->
-        <dependency>
-            <groupId>com.cognitree.kronos.extensions</groupId>
-            <artifactId>kafka-queue</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.cognitree.kronos.extensions</groupId>
-            <artifactId>embedded-hsql-store</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.cognitree.kronos.extensions</groupId>
-            <artifactId>jdbc-store</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.cognitree.kronos.extensions</groupId>
-            <artifactId>mongo-store</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.cognitree.kronos.extensions</groupId>
-            <artifactId>shell-handler</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.cognitree.kronos.extensions</groupId>
-            <artifactId>spark-handler</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.cognitree.kronos.extensions</groupId>
-            <artifactId>helm-handler</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.cognitree.kronos.extensions</groupId>
-            <artifactId>kafka-message-handler</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <!-- extensions end -->
         <dependency>
             <groupId>com.cognitree.kronos</groupId>
             <artifactId>scheduler</artifactId>

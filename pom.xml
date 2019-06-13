@@ -98,7 +98,6 @@
         <module>scheduler</module>
         <module>executor</module>
         <module>api</module>
-        <module>extensions</module>
         <module>app</module>
     </modules>
 </project>
