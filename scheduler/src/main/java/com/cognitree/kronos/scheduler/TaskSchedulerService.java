@@ -172,7 +172,7 @@ final class TaskSchedulerService implements Service {
         if (!tasks.isEmpty()) {
             tasks.sort(Comparator.comparing(Task::getCreatedAt));
             tasks.forEach(taskProvider::add);
-            tasks.forEach(this::resolve);
+            tasks.forEach(taskProvider::resolve);
         }
     }
 
@@ -359,7 +359,6 @@ final class TaskSchedulerService implements Service {
         final List<String> dependsOn = task.getDependsOn();
         final Map<String, Object> dependentTaskContext = new LinkedHashMap<>();
         for (String dependentTaskName : dependsOn) {
-            // sort the tasks based on creation time and update the context from the latest task
             TaskId dependentTaskId = TaskId.build(task.getNamespace(), dependentTaskName, task.getJob(), task.getWorkflow());
             Task dependentTask = taskProvider.getTask(dependentTaskId);
             if (dependentTask != null) {
@@ -387,12 +386,13 @@ final class TaskSchedulerService implements Service {
         if (dependentTaskContext == null || dependentTaskContext.isEmpty()) {
             return;
         }
-        final Map<String, Object> modifiedTaskProperties = modifyAndGetTaskProperties(task.getProperties(), dependentTaskContext);
+        final Map<String, Object> modifiedTaskProperties =
+                modifyAndGetTaskProperties(task.getProperties(), dependentTaskContext);
         task.setProperties(modifiedTaskProperties);
     }
 
     private HashMap<String, Object> modifyAndGetTaskProperties(Map<String, Object> taskProperties,
-                                                         Map<String, Object> dependentTaskContext) {
+                                                               Map<String, Object> dependentTaskContext) {
         final HashMap<String, Object> modifiedTaskProperties = new HashMap<>();
         taskProperties.forEach((key, value) -> {
             if (value instanceof String &&
@@ -435,6 +435,11 @@ final class TaskSchedulerService implements Service {
         }
     }
 
+    //used in junit test
+    Consumer getConsumer() {
+        return consumer;
+    }
+
     private class TimeoutTask implements Runnable {
         private final Task task;
 
@@ -447,10 +452,5 @@ final class TaskSchedulerService implements Service {
             logger.info("Task {} has timed out, marking task as failed", task);
             updateStatus(task, FAILED, TIMED_OUT);
         }
-    }
-
-    //used in junit test
-    Consumer getConsumer(){
-        return consumer;
     }
 }

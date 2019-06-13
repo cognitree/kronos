@@ -67,6 +67,10 @@ import static org.quartz.impl.DirectSchedulerFactory.DEFAULT_SCHEDULER_NAME;
 public final class WorkflowSchedulerService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(WorkflowSchedulerService.class);
 
+    private static final String NAMESPACE = "namespace";
+    private static final String WORKFLOW_NAME = "workflowName";
+    private static final String TRIGGER_NAME = "triggerName";
+
     // any CRUD operation on scheduler should be synchronized to avoid issues while pausing and resuming a workflow
     // applicable mostly for fixed delay schedule as it deletes the old trigger and creates a new one for each run.
     private Scheduler scheduler;
@@ -88,7 +92,8 @@ public final class WorkflowSchedulerService implements Service {
         SimpleThreadPool threadPool = new SimpleThreadPool(Runtime.getRuntime().availableProcessors(),
                 Thread.NORM_PRIORITY);
         threadPool.setInstanceName(DEFAULT_SCHEDULER_NAME);
-        DirectSchedulerFactory.getInstance().createScheduler(DEFAULT_SCHEDULER_NAME, DEFAULT_INSTANCE_ID, threadPool, jobStore);
+        DirectSchedulerFactory.getInstance().createScheduler(DEFAULT_SCHEDULER_NAME, DEFAULT_INSTANCE_ID,
+                threadPool, jobStore);
         scheduler = DirectSchedulerFactory.getInstance().getScheduler(DEFAULT_SCHEDULER_NAME);
         scheduler.getListenerManager().addSchedulerListener(new QuartzSchedulerListener());
         // TODO: FIXME service needs to be registered with provider before scheduler is started
@@ -108,8 +113,8 @@ public final class WorkflowSchedulerService implements Service {
 
     private synchronized void addJob(Workflow workflow, boolean replace) throws SchedulerException {
         JobDataMap jobDataMap = new JobDataMap();
-        jobDataMap.put("namespace", workflow.getNamespace());
-        jobDataMap.put("workflowName", workflow.getName());
+        jobDataMap.put(NAMESPACE, workflow.getNamespace());
+        jobDataMap.put(WORKFLOW_NAME, workflow.getName());
         JobDetail jobDetail = newJob(WorkflowSchedulerJob.class)
                 .withIdentity(getJobKey(workflow))
                 .storeDurably()
@@ -121,7 +126,7 @@ public final class WorkflowSchedulerService implements Service {
     synchronized void add(WorkflowTrigger workflowTrigger)
             throws SchedulerException, ParseException {
         JobDataMap jobDataMap = new JobDataMap();
-        jobDataMap.put("triggerName", workflowTrigger.getName());
+        jobDataMap.put(TRIGGER_NAME, workflowTrigger.getName());
         WorkflowId workflowId = WorkflowId.build(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow());
         final Trigger trigger = TriggerHelper.buildTrigger(workflowTrigger, jobDataMap,
                 getTriggerKey(workflowTrigger), getJobKey(workflowId));
@@ -303,9 +308,9 @@ public final class WorkflowSchedulerService implements Service {
         public void execute(JobExecutionContext jobExecutionContext) {
             final JobDataMap jobDataMap = jobExecutionContext.getMergedJobDataMap();
             logger.trace("received request to execute workflow with data map {}", jobDataMap.getWrappedMap());
-            final String namespace = jobDataMap.getString("namespace");
-            final String workflowName = jobDataMap.getString("workflowName");
-            final String triggerName = jobDataMap.getString("triggerName");
+            final String namespace = jobDataMap.getString(NAMESPACE);
+            final String workflowName = jobDataMap.getString(WORKFLOW_NAME);
+            final String triggerName = jobDataMap.getString(TRIGGER_NAME);
             try {
                 WorkflowSchedulerService.getService().execute(workflowName, triggerName, namespace);
             } catch (ServiceException | ValidationException e) {
@@ -340,7 +345,8 @@ public final class WorkflowSchedulerService implements Service {
                     Job job = JobService.getService().get(JobId.build(namespace, jobId, workflow));
                     WorkflowTrigger workflowTrigger = WorkflowTriggerService.getService()
                             .get(WorkflowTriggerId.build(namespace, job.getTrigger(), job.getWorkflow()));
-                    if (workflowTrigger != null && WorkflowSchedulerService.getService().shouldReschedule(workflowTrigger)) {
+                    if (workflowTrigger != null &&
+                            WorkflowSchedulerService.getService().shouldReschedule(workflowTrigger)) {
                         WorkflowSchedulerService.getService().reschedule(workflowTrigger);
                     }
                 }
@@ -355,10 +361,10 @@ public final class WorkflowSchedulerService implements Service {
         public void triggerFinalized(Trigger trigger) {
             try {
                 final JobDataMap workflowDataMap = scheduler.getJobDetail(trigger.getJobKey()).getJobDataMap();
-                final String namespace = workflowDataMap.getString("namespace");
-                final String workflowName = workflowDataMap.getString("workflowName");
+                final String namespace = workflowDataMap.getString(NAMESPACE);
+                final String workflowName = workflowDataMap.getString(WORKFLOW_NAME);
                 final JobDataMap triggerDataMap = trigger.getJobDataMap();
-                final String triggerName = triggerDataMap.getString("triggerName");
+                final String triggerName = triggerDataMap.getString(TRIGGER_NAME);
                 try {
                     WorkflowTriggerId triggerId = WorkflowTriggerId.build(namespace, triggerName, workflowName);
                     WorkflowTrigger workflowTrigger = WorkflowTriggerService.getService().get(triggerId);
