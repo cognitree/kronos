@@ -16,7 +16,7 @@ taskHandlerConfig:
     maxParallelTasks: 4
 ```
 
-Here, A [ShellCommandHandler](src/main/java/com/cognitree/kronos/executor/handlers/ShellCommandHandler.java) is configured for task type `shellCommand`. Tasks of type `shellCommand` will be executed by shell command handler.
+Here, A [ShellCommandHandler](ShellCommandHandler.java) is configured for task type `shellCommand`. Tasks of type `shellCommand` will be executed by shell command handler.
 
 ## Configurable Task Properties
 

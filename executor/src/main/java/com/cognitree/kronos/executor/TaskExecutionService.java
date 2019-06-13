@@ -82,9 +82,9 @@ public final class TaskExecutionService implements Service {
         if (queueConfig.getTaskStatusQueue() == null || queueConfig.getConsumerConfig() == null ||
                 queueConfig.getProducerConfig() == null || executorConfig.getTaskHandlerConfig() == null) {
             logger.error("missing one or more mandatory configuration: " +
-                    "taskStatusQueue/ consumerConfig/ producerConfig/ taskTypeToHandlerConfig");
+                    "taskStatusQueue/ consumerConfig/ producerConfig/ taskHandlerConfig");
             throw new IllegalArgumentException("missing one or more mandatory configuration: " +
-                    "taskStatusQueue/ consumerConfig/ producerConfig/ taskTypeToHandlerConfig");
+                    "taskStatusQueue/ consumerConfig/ producerConfig/ taskHandlerConfig");
         }
         this.consumerConfig = queueConfig.getConsumerConfig();
         this.producerConfig = queueConfig.getProducerConfig();

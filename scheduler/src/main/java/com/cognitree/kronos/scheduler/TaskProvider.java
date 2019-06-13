@@ -38,7 +38,6 @@ import java.util.stream.Stream;
 
 import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.RUNNING;
-import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
 import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
 import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
 import static com.cognitree.kronos.model.Task.Status.UP_FOR_RETRY;
@@ -113,8 +112,11 @@ final class TaskProvider {
         return getTasks(Arrays.asList(UP_FOR_RETRY, WAITING), isReadyForExecution);
     }
 
+    /**
+     * return tasks currently being executed by executor
+     */
     synchronized List<Task> getActiveTasks() {
-        return getTasks(Arrays.asList(SCHEDULED, SUBMITTED, RUNNING));
+        return getTasks(Arrays.asList(SUBMITTED, RUNNING));
     }
 
     synchronized List<Task> getDependentTasks(Task task) {
@@ -197,10 +199,5 @@ final class TaskProvider {
             }
         }
         return tasksToDelete;
-    }
-
-    // used in junit
-    int size() {
-        return graph.nodes().size();
     }
 }
