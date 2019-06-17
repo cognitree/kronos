@@ -20,7 +20,9 @@ package com.cognitree.kronos.scheduler.model;
 public interface Messages {
     String FAILED_TO_RESOLVE_DEPENDENCY = "failed to resolve task dependency";
     String FAILED_DEPENDEE_TASK = FAILED_TO_RESOLVE_DEPENDENCY + ", dependee task has failed";
+    String STOPPED_DEPENDEE_TASK = FAILED_TO_RESOLVE_DEPENDENCY + ", dependee task has been stopped";
     String SKIPPED_DEPENDEE_TASK = FAILED_TO_RESOLVE_DEPENDENCY + ", dependee task has been skipped";
     String TIMED_OUT = "timed out executing task";
     String TASK_SUBMISSION_FAILED = "error submitting task to queue";
+    String STOP_TASK = "received request to stop task";
 }

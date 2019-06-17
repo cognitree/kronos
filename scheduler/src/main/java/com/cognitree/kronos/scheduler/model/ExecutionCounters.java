@@ -18,50 +18,59 @@
 package com.cognitree.kronos.scheduler.model;
 
 public class ExecutionCounters {
-    private int total;
-    private int active;
-    private int successful;
-    private int failed;
-    private int skipped;
+    private Integer total;
+    private Integer active;
+    private Integer successful;
+    private Integer failed;
+    private Integer skipped;
+    private Integer stopped;
 
-    public int getActive() {
+    public Integer getActive() {
         return active;
     }
 
-    public void setActive(int active) {
+    public void setActive(Integer active) {
         this.active = active;
     }
 
-    public int getTotal() {
+    public Integer getTotal() {
         return total;
     }
 
-    public void setTotal(int total) {
+    public void setTotal(Integer total) {
         this.total = total;
     }
 
-    public int getSuccessful() {
+    public Integer getSuccessful() {
         return successful;
     }
 
-    public void setSuccessful(int successful) {
+    public void setSuccessful(Integer successful) {
         this.successful = successful;
     }
 
-    public int getFailed() {
+    public Integer getFailed() {
         return failed;
     }
 
-    public void setFailed(int failed) {
+    public void setFailed(Integer failed) {
         this.failed = failed;
     }
 
-    public int getSkipped() {
+    public Integer getSkipped() {
         return skipped;
     }
 
-    public void setSkipped(int skipped) {
+    public void setSkipped(Integer skipped) {
         this.skipped = skipped;
+    }
+
+    public Integer getStopped() {
+        return stopped;
+    }
+
+    public void setStopped(Integer stopped) {
+        this.stopped = stopped;
     }
 
     @Override
@@ -72,6 +81,7 @@ public class ExecutionCounters {
                 ", successful=" + successful +
                 ", failed=" + failed +
                 ", skipped=" + skipped +
+                ", stopped=" + stopped +
                 '}';
     }
 }

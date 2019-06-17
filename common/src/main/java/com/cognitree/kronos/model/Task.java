@@ -188,7 +188,8 @@ public class Task extends TaskId {
         RUNNING(false),
         SUCCESSFUL(true),
         SKIPPED(true), // a task is marked as skipped it the task it depends on fails.
-        FAILED(true);
+        FAILED(true),
+        STOPPED(true);
 
         private final boolean isFinal;
 
@@ -199,5 +200,9 @@ public class Task extends TaskId {
         public boolean isFinal() {
             return this.isFinal;
         }
+    }
+
+    public enum Action {
+        STOP
     }
 }

@@ -49,6 +49,7 @@ import static com.cognitree.kronos.model.Task.Status.CREATED;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
 import static com.cognitree.kronos.model.Task.Status.SKIPPED;
+import static com.cognitree.kronos.model.Task.Status.STOPPED;
 import static com.cognitree.kronos.model.Task.Status.UP_FOR_RETRY;
 import static com.cognitree.kronos.model.Task.Status.WAITING;
 import static com.cognitree.kronos.scheduler.model.Constants.DYNAMIC_VAR_PREFIX;
@@ -56,6 +57,8 @@ import static com.cognitree.kronos.scheduler.model.Constants.DYNAMIC_VAR_SUFFFIX
 import static com.cognitree.kronos.scheduler.model.Messages.FAILED_DEPENDEE_TASK;
 import static com.cognitree.kronos.scheduler.model.Messages.FAILED_TO_RESOLVE_DEPENDENCY;
 import static com.cognitree.kronos.scheduler.model.Messages.SKIPPED_DEPENDEE_TASK;
+import static com.cognitree.kronos.scheduler.model.Messages.STOPPED_DEPENDEE_TASK;
+import static com.cognitree.kronos.scheduler.model.Messages.STOP_TASK;
 import static com.cognitree.kronos.scheduler.model.Messages.TASK_SUBMISSION_FAILED;
 import static com.cognitree.kronos.scheduler.model.Messages.TIMED_OUT;
 import static java.util.Comparator.comparing;
@@ -162,6 +165,16 @@ final class TaskSchedulerService implements Service {
         ServiceProvider.registerService(this);
     }
 
+    /**
+     * stop a task
+     *
+     * @param taskId id of the task to stop
+     */
+    public void stop(TaskId taskId) {
+        logger.info("Stopping task {}", taskId);
+        updateStatus(taskId, STOPPED, STOP_TASK);
+    }
+
     private void reInitTaskProvider() throws ServiceException, ValidationException {
         logger.info("Initializing task provider from task store");
         final List<Namespace> namespaces = NamespaceService.getService().get();
@@ -260,8 +273,8 @@ final class TaskSchedulerService implements Service {
 
     private void updateStatus(TaskId taskId, Status status, String statusMessage,
                               Map<String, Object> context) {
-        logger.info("Received request to update status of task {} to {} " +
-                "with status message {}", taskId, status, statusMessage);
+        logger.info("Received request to update status of task {} to {} with status message {}",
+                taskId, status, statusMessage);
         final Task task = taskProvider.getTask(taskId);
         if (task == null) {
             logger.error("No task found with id {}", taskId);
@@ -291,6 +304,7 @@ final class TaskSchedulerService implements Service {
                 break;
             case SKIPPED:
             case FAILED:
+            case STOPPED:
                 markDependentTasksAsSkipped(task, status);
                 // do not break
             case SUCCESSFUL:
@@ -310,10 +324,16 @@ final class TaskSchedulerService implements Service {
                 logger.debug("dependent task is already marked as SKIPPED, ignore updating task status");
                 continue;
             }
-            if (parentStatus == FAILED) {
-                updateStatus(dependentTask, SKIPPED, FAILED_DEPENDEE_TASK);
-            } else {
-                updateStatus(dependentTask, SKIPPED, SKIPPED_DEPENDEE_TASK);
+            switch (parentStatus) {
+                case FAILED:
+                    updateStatus(dependentTask, SKIPPED, FAILED_DEPENDEE_TASK);
+                    break;
+                case STOPPED:
+                    updateStatus(dependentTask, SKIPPED, STOPPED_DEPENDEE_TASK);
+                    break;
+                default:
+                    updateStatus(dependentTask, SKIPPED, SKIPPED_DEPENDEE_TASK);
+                    break;
             }
         }
     }

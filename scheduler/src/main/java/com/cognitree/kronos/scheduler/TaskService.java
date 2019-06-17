@@ -50,6 +50,7 @@ import static com.cognitree.kronos.model.Task.Status.CREATED;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.RUNNING;
 import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
+import static com.cognitree.kronos.model.Task.Status.STOPPED;
 import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
 import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
 import static com.cognitree.kronos.model.Task.Status.UP_FOR_RETRY;
@@ -221,6 +222,26 @@ public class TaskService implements Service {
         }
     }
 
+    public void performAction(TaskId taskId, Task.Action action) throws ServiceException, ValidationException {
+        logger.debug("Received request to perform action {} on task {}", taskId, action);
+        validateJob(taskId.getNamespace(), taskId.getJob(), taskId.getWorkflow());
+        try {
+            Task task = taskStore.load(taskId);
+            if (task == null) {
+                throw TASK_NOT_FOUND.createException(taskId.getName(), taskId.getJob(),
+                        taskId.getWorkflow(), taskId.getNamespace());
+            }
+            switch (action) {
+                case STOP:
+                    TaskSchedulerService.getService().stop(taskId);
+                    break;
+            }
+        } catch (StoreException e) {
+            logger.error("No task found with id {}", taskId, e);
+            throw new ServiceException(e.getMessage(), e.getCause());
+        }
+    }
+
     public Map<Status, Integer> countByStatus(String namespace, long createdAfter, long createdBefore)
             throws ServiceException, ValidationException {
         logger.debug("Received request to count tasks by status under namespace {} created between {} to {}",
@@ -283,6 +304,7 @@ public class TaskService implements Service {
                 case SUCCESSFUL:
                 case SKIPPED:
                 case FAILED:
+                case STOPPED:
                     task.setCompletedAt(System.currentTimeMillis());
                     break;
             }
@@ -306,13 +328,15 @@ public class TaskService implements Service {
                 return currentStatus == SCHEDULED;
             case RUNNING:
                 return currentStatus == SUBMITTED;
+            case UP_FOR_RETRY:
+                return currentStatus == RUNNING;
             case SKIPPED:
                 return currentStatus == CREATED || currentStatus == WAITING;
             case SUCCESSFUL:
-            case FAILED:
-                return currentStatus != SUCCESSFUL && currentStatus != FAILED;
-            case UP_FOR_RETRY:
                 return currentStatus == RUNNING;
+            case FAILED:
+            case STOPPED:
+                return currentStatus != SUCCESSFUL && currentStatus != FAILED && currentStatus != STOPPED;
             default:
                 return false;
         }
