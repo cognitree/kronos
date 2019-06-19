@@ -31,7 +31,7 @@ import java.util.Map;
 /**
  * A {@link TaskHandler} implementation to execute shell commands with given arguments.
  */
-public class ShellCommandHandler implements TaskHandler {
+public class ShellCommandHandler extends TaskHandler {
     private static final Logger logger = LoggerFactory.getLogger(ShellCommandHandler.class);
 
     private static final String PROP_CMD = "cmd";
@@ -39,13 +39,13 @@ public class ShellCommandHandler implements TaskHandler {
     private static final String PROPERTY_WORKING_DIR = "workingDir";
     private static final String PROPERTY_LOG_DIR = "logDir";
 
-    @Override
-    public void init(ObjectNode handlerConfig) {
+    public ShellCommandHandler(Task task, ObjectNode handlerConfig) {
+        super(task, handlerConfig);
     }
 
     @Override
-    public TaskResult handle(Task task) {
-        logger.info("received request to handle task {}", task);
+    public TaskResult execute() {
+        logger.info("received request to execute task {}", task);
 
         final Map<String, Object> taskProperties = task.getProperties();
         if (!taskProperties.containsKey(PROP_CMD)) {

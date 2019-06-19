@@ -29,6 +29,7 @@ import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskId;
 import com.cognitree.kronos.model.TaskStatusUpdate;
 import com.cognitree.kronos.queue.QueueService;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,11 +59,15 @@ public final class TaskExecutionService implements Service {
 
     // Task type mapping Info
     private final Map<String, TaskHandlerConfig> taskTypeToHandlerConfig;
-    private final Map<String, TaskHandler> taskTypeToHandlerMap = new HashMap<>();
+
     private final Map<String, Integer> taskTypeToMaxParallelTasksCount = new HashMap<>();
     private final Map<String, Integer> taskTypeToRunningTasksCount = new HashMap<>();
-    // used by internal tasks like polling new tasks from queue
+    private final Map<TaskId, TaskHandler> activeHandlersMap = new HashMap<>();
+
+    // used by internal tasks to poll new tasks from queue
     private final ScheduledExecutorService taskConsumerThreadPool = Executors.newSingleThreadScheduledExecutor();
+    // used by internal tasks to poll new control messages from queue
+    private final ScheduledExecutorService controlMessageConsumerThreadPool = Executors.newSingleThreadScheduledExecutor();
     // used to execute tasks
     private final ExecutorService taskExecutorThreadPool = Executors.newCachedThreadPool();
     private long pollIntervalInMs;
@@ -83,21 +88,15 @@ public final class TaskExecutionService implements Service {
     }
 
     @Override
-    public void init() throws Exception {
+    public void init() {
         logger.info("Initializing task execution service");
-        initTaskHandlersAndExecutors();
+        initTaskHandlerState();
     }
 
-    private void initTaskHandlersAndExecutors() throws Exception {
+    private void initTaskHandlerState() {
         for (Map.Entry<String, TaskHandlerConfig> taskTypeToHandlerConfigEntry : taskTypeToHandlerConfig.entrySet()) {
             final String taskType = taskTypeToHandlerConfigEntry.getKey();
             final TaskHandlerConfig taskHandlerConfig = taskTypeToHandlerConfigEntry.getValue();
-            logger.info("Initializing task handler of type {} with config {}", taskType, taskHandlerConfig);
-            final TaskHandler taskHandler = (TaskHandler) Class.forName(taskHandlerConfig.getHandlerClass())
-                    .newInstance();
-            taskHandler.init(taskHandlerConfig.getConfig());
-            taskTypeToHandlerMap.put(taskType, taskHandler);
-
             int maxParallelTasks = taskHandlerConfig.getMaxParallelTasks();
             maxParallelTasks = maxParallelTasks > 0 ? maxParallelTasks : Runtime.getRuntime().availableProcessors();
             taskTypeToMaxParallelTasksCount.put(taskType, maxParallelTasks);
@@ -109,7 +108,7 @@ public final class TaskExecutionService implements Service {
     public void start() {
         logger.info("Starting task execution service");
         taskConsumerThreadPool.scheduleAtFixedRate(this::consumeTasks, 0, pollIntervalInMs, MILLISECONDS);
-        taskConsumerThreadPool.scheduleAtFixedRate(this::consumeTasks, 0, pollIntervalInMs, MILLISECONDS);
+        controlMessageConsumerThreadPool.scheduleAtFixedRate(this::consumeControlMessages, 0, pollIntervalInMs, MILLISECONDS);
         ServiceProvider.registerService(this);
     }
 
@@ -134,6 +133,19 @@ public final class TaskExecutionService implements Service {
     private void consumeControlMessages() {
         try {
             final List<ControlMessage> controlMessages = QueueService.getService().consumeControlMessage();
+            for (ControlMessage controlMessage : controlMessages) {
+                logger.info("Received request to execute control message {}", controlMessage);
+                TaskId taskId = controlMessage.getTaskId();
+                if (!activeHandlersMap.containsKey(taskId)) {
+                    continue;
+                }
+                switch (controlMessage.getAction()) {
+                    case STOP:
+                        logger.info("Received request to stop task with id {}", taskId);
+                        activeHandlersMap.get(taskId).stop();
+                        break;
+                }
+            }
         } catch (ServiceException e) {
             logger.info("Error consuming control messages", e);
         }
@@ -151,8 +163,9 @@ public final class TaskExecutionService implements Service {
         taskExecutorThreadPool.submit(() -> {
             try {
                 sendTaskUpdate(task, RUNNING);
-                final TaskHandler handler = taskTypeToHandlerMap.get(task.getType());
-                final TaskResult taskResult = handler.handle(task);
+                final TaskHandler taskHandler = createTaskHandler(task);
+                activeHandlersMap.put(task.getIdentity(), taskHandler);
+                final TaskResult taskResult = taskHandler.execute();
                 if (taskResult.isSuccess()) {
                     sendTaskUpdate(task, SUCCESSFUL, taskResult.getMessage(), taskResult.getContext());
                 } else {
@@ -162,11 +175,19 @@ public final class TaskExecutionService implements Service {
                 logger.error("Error executing task {}", task, e);
                 sendTaskUpdate(task, FAILED, e.getMessage());
             } finally {
+                activeHandlersMap.remove(task.getIdentity());
                 synchronized (taskTypeToRunningTasksCount) {
                     taskTypeToRunningTasksCount.put(task.getType(), taskTypeToRunningTasksCount.get(task.getType()) - 1);
                 }
             }
         });
+    }
+
+    private TaskHandler createTaskHandler(Task task) throws Exception {
+        final TaskHandlerConfig taskHandlerConfig = taskTypeToHandlerConfig.get(task.getType());
+        return (TaskHandler) Class.forName(taskHandlerConfig.getHandlerClass())
+                .getConstructor(Task.class, ObjectNode.class)
+                .newInstance(task, taskHandlerConfig.getConfig());
     }
 
     private void sendTaskUpdate(TaskId taskId, Status status) {
@@ -196,6 +217,8 @@ public final class TaskExecutionService implements Service {
         try {
             taskConsumerThreadPool.shutdown();
             taskConsumerThreadPool.awaitTermination(10, SECONDS);
+            controlMessageConsumerThreadPool.shutdown();
+            controlMessageConsumerThreadPool.awaitTermination(10, SECONDS);
             taskExecutorThreadPool.shutdown();
             taskExecutorThreadPool.awaitTermination(10, SECONDS);
         } catch (InterruptedException e) {

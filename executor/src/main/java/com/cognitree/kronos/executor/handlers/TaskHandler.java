@@ -24,21 +24,31 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 /**
  * A handler defines how a task of given type is handled/ executed and is to be implemented and configured for each task type.
  */
-public interface TaskHandler {
+public abstract class TaskHandler {
+
+
+    Task task;
+    ObjectNode handlerConfig;
 
     /**
      * for each configured handler during initialization phase a call is made to initialize handler using
-     * {@link TaskHandlerConfig#config}. Any property required by the handler to instantiate itself
-     * should be part of {@link TaskHandlerConfig#config}.
+     * {@link TaskHandlerConfig#getConfig()}. Any property required by the handler to instantiate itself
+     * should be part of {@link TaskHandlerConfig#getConfig()}.
      *
+     * @param task          task to execute.
      * @param handlerConfig configuration used to initialize the handler.
      */
-    void init(ObjectNode handlerConfig);
+    public TaskHandler(Task task, ObjectNode handlerConfig) {
+        this.task = task;
+        this.handlerConfig = handlerConfig;
+    }
 
     /**
-     * defines how to handle/ execute the task.
-     *
-     * @param task task to handle.
+     * defines how to execute the task.
      */
-    TaskResult handle(Task task);
+    public abstract TaskResult execute();
+
+    public void stop() {
+        // do nothing
+    }
 }

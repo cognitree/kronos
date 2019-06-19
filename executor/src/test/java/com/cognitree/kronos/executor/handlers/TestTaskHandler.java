@@ -27,22 +27,22 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class TestTaskHandler implements TaskHandler {
+public class TestTaskHandler extends TaskHandler {
     private static final Logger logger = LoggerFactory.getLogger(TestTaskHandler.class);
 
     private static final List<String> tasks = Collections.synchronizedList(new ArrayList<>());
+
+    public TestTaskHandler(Task task, ObjectNode handlerConfig) {
+        super(task, handlerConfig);
+    }
 
     public static void finishExecution(String taskId) {
         tasks.add(taskId);
     }
 
     @Override
-    public void init(ObjectNode handlerConfig) {
-    }
-
-    @Override
-    public TaskResult handle(Task task) {
-        logger.info("Received request to handle task {}", task);
+    public TaskResult execute() {
+        logger.info("Received request to execute task {}", task);
 
         while (!tasks.contains(task.getName())) {
             try {

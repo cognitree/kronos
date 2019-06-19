@@ -33,7 +33,7 @@ public class TaskHandlerConfig {
 
     /**
      * Configuration required by the handler to instantiate itself.
-     * This is passed as an arg to the {@link TaskHandler#init(ObjectNode)} method at the time of instantiation.
+     * This is passed as an arg to the constructor of {@link TaskHandler} at the time of instantiation.
      */
     private ObjectNode config;
 

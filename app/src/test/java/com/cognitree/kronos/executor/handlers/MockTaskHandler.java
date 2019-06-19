@@ -27,13 +27,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class MockTaskHandler implements TaskHandler {
+public class MockTaskHandler extends TaskHandler {
     private static final Logger logger = LoggerFactory.getLogger(MockTaskHandler.class);
 
     private static final List<String> tasks = Collections.synchronizedList(new ArrayList<>());
 
-    public static boolean finishExecution(String name, String job, String namespace) {
-        return tasks.add(getTaskId(name, job, namespace));
+    public MockTaskHandler(Task task, ObjectNode handlerConfig) {
+        super(task, handlerConfig);
+    }
+
+    public static void finishExecution(String name, String job, String namespace) {
+        tasks.add(getTaskId(name, job, namespace));
     }
 
     private static String getTaskId(String name, String job, String namespace) {
@@ -41,12 +45,8 @@ public class MockTaskHandler implements TaskHandler {
     }
 
     @Override
-    public void init(ObjectNode handlerConfig) {
-    }
-
-    @Override
-    public TaskResult handle(Task task) {
-        logger.info("Received request to handle task {}", task);
+    public TaskResult execute() {
+        logger.info("Received request to execute task {}", task);
 
         while (!tasks.contains(getTaskId(task.getName(), task.getJob(), task.getNamespace()))) {
             try {

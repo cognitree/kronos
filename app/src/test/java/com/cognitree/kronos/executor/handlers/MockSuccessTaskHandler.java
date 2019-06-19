@@ -26,7 +26,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-public class MockSuccessTaskHandler implements TaskHandler {
+public class MockSuccessTaskHandler extends TaskHandler {
     public static final HashMap<String, Object> CONTEXT = new HashMap<>();
 
     private static final List<String> tasks = Collections.synchronizedList(new ArrayList<>());
@@ -34,6 +34,10 @@ public class MockSuccessTaskHandler implements TaskHandler {
     static {
         CONTEXT.put("valOne", 1234);
         CONTEXT.put("valTwo", "abcd");
+    }
+
+    public MockSuccessTaskHandler(Task task, ObjectNode handlerConfig) {
+        super(task, handlerConfig);
     }
 
     public static boolean isHandled(String name, String job, String namespace) {
@@ -45,12 +49,7 @@ public class MockSuccessTaskHandler implements TaskHandler {
     }
 
     @Override
-    public void init(ObjectNode handlerConfig) {
-
-    }
-
-    @Override
-    public TaskResult handle(Task task) {
+    public TaskResult execute() {
         tasks.add(getTaskId(task.getName(), task.getJob(), task.getNamespace()));
         return new TaskResult(true, null, CONTEXT);
     }
