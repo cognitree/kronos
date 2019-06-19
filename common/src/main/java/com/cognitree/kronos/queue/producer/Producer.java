@@ -19,34 +19,40 @@ package com.cognitree.kronos.queue.producer;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public interface Producer {
+public abstract class Producer {
+
+    final String topic;
+    final ObjectNode producerConfig;
 
     /**
-     * during initialization phase a call is made to initialize producer using {@link ProducerConfig#config}.
-     * Any property required by the producer¸ to instantiate itself should be part of {@link ProducerConfig#config}.
+     * during initialization phase a call is made to initialize producer using {@link ProducerConfig#getConfig()}.
+     * Any property required by the producer¸ to instantiate itself should be part of {@link ProducerConfig#getConfig()}.
      *
      * @param producerConfig configuration used to initialize the producer.
      */
-    void init(ObjectNode producerConfig);
+    public Producer(String topic, ObjectNode producerConfig) {
+        this.topic = topic;
+        this.producerConfig = producerConfig;
+    }
+
+    public abstract void broadcast(String record);
 
     /**
      * sends the record to the underlying queue.
-     * Records can be consumed out of order by the Consumer on {@link com.cognitree.kronos.queue.consumer.Consumer#poll(String)}.
+     * Records can be consumed out of order by the Consumer.
      *
-     * @param topic  topic name to send data
      * @param record record to send
      */
-    void send(String topic, String record);
+    public abstract void send(String record);
 
     /**
      * sends the record to the underlying queue in-order.
-     * Records should be consumed in-order by the Consumer on {@link com.cognitree.kronos.queue.consumer.Consumer#poll(String)}.
+     * Records should be consumed in-order by the Consumer.
      *
-     * @param topic       topic name to send data
      * @param record      record to send
      * @param orderingKey key to decide how the message is sent for in-order delivery
      */
-    void sendInOrder(String topic, String record, String orderingKey);
+    public abstract void sendInOrder(String record, String orderingKey);
 
-    void close();
+    public abstract void close();
 }

@@ -26,21 +26,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class RAMConsumer implements Consumer {
+public class RAMConsumer extends Consumer {
     private static final Logger logger = LoggerFactory.getLogger(RAMConsumer.class);
 
-    @Override
-    public void init(ObjectNode config) {
-        logger.info("Initializing consumer for RAM(in-memory) queue with config {}", config);
+    public RAMConsumer(String topic, ObjectNode config) {
+        super(topic, config);
     }
 
     @Override
-    public List<String> poll(String topic) {
-        return poll(topic, Integer.MAX_VALUE);
+    public List<String> poll() {
+        return poll(Integer.MAX_VALUE);
     }
 
     @Override
-    public List<String> poll(String topic, int size) {
+    public List<String> poll(int size) {
         logger.trace("Received request to poll messages from topic {} with max size {}", topic, size);
         final LinkedBlockingQueue<String> blockingQueue = RAMQueueFactory.getQueue(topic);
         List<String> records = new ArrayList<>();

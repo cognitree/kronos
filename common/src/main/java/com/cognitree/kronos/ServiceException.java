@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.cognitree.kronos.scheduler;
+package com.cognitree.kronos;
 
 public class ServiceException extends Exception {
     public ServiceException(String message) {

@@ -17,6 +17,7 @@
 
 package com.cognitree.kronos.scheduler;
 
+import com.cognitree.kronos.ServiceException;
 import com.cognitree.kronos.scheduler.model.Namespace;
 import org.junit.Assert;
 import org.junit.Test;

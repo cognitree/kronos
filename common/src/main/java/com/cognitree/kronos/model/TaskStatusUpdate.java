@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.util.Map;
 import java.util.Objects;
 
-public class TaskUpdate {
+public class TaskStatusUpdate {
     @JsonSerialize(as = TaskId.class)
     @JsonDeserialize(as = TaskId.class)
     private TaskId taskId;
@@ -67,8 +67,8 @@ public class TaskUpdate {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof TaskUpdate)) return false;
-        TaskUpdate that = (TaskUpdate) o;
+        if (!(o instanceof TaskStatusUpdate)) return false;
+        TaskStatusUpdate that = (TaskStatusUpdate) o;
         return Objects.equals(taskId, that.taskId) &&
                 status == that.status &&
                 Objects.equals(statusMessage, that.statusMessage) &&
@@ -83,7 +83,7 @@ public class TaskUpdate {
 
     @Override
     public String toString() {
-        return "TaskUpdate{" +
+        return "TaskStatusUpdate{" +
                 "taskId=" + taskId +
                 ", status=" + status +
                 ", statusMessage='" + statusMessage + '\'' +

@@ -31,6 +31,7 @@ public class QueueConfig {
     private ConsumerConfig consumerConfig;
     private String taskStatusQueue;
     private String configurationQueue;
+    private String controlQueue;
 
     public ProducerConfig getProducerConfig() {
         return producerConfig;
@@ -64,6 +65,14 @@ public class QueueConfig {
         this.configurationQueue = configurationQueue;
     }
 
+    public String getControlQueue() {
+        return controlQueue;
+    }
+
+    public void setControlQueue(String controlQueue) {
+        this.controlQueue = controlQueue;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -72,13 +81,13 @@ public class QueueConfig {
         return Objects.equals(producerConfig, that.producerConfig) &&
                 Objects.equals(consumerConfig, that.consumerConfig) &&
                 Objects.equals(taskStatusQueue, that.taskStatusQueue) &&
-                Objects.equals(configurationQueue, that.configurationQueue);
+                Objects.equals(configurationQueue, that.configurationQueue) &&
+                Objects.equals(controlQueue, that.controlQueue);
     }
 
     @Override
     public int hashCode() {
-
-        return Objects.hash(producerConfig, consumerConfig, taskStatusQueue, configurationQueue);
+        return Objects.hash(producerConfig, consumerConfig, taskStatusQueue, configurationQueue, controlQueue);
     }
 
     @Override
@@ -88,6 +97,7 @@ public class QueueConfig {
                 ", consumerConfig=" + consumerConfig +
                 ", taskStatusQueue='" + taskStatusQueue + '\'' +
                 ", configurationQueue='" + configurationQueue + '\'' +
+                ", controlQueue='" + controlQueue + '\'' +
                 '}';
     }
 }

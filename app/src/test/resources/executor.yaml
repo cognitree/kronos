@@ -8,3 +8,4 @@ taskHandlerConfig:
   typeMock:
     handlerClass: com.cognitree.kronos.executor.handlers.MockTaskHandler
     maxParallelTasks: 4
+pollIntervalInMs: 100

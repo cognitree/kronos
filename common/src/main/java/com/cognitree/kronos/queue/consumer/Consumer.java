@@ -22,7 +22,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.List;
 
-public interface Consumer {
+public abstract class Consumer {
+
+    final String topic;
+    final ObjectNode consumerConfig;
 
     /**
      * during initialization phase a call is made to initialize consumer using {@link ConsumerConfig#getConfig()}.
@@ -30,31 +33,32 @@ public interface Consumer {
      *
      * @param consumerConfig configuration used to initialize the consumer.
      */
-    void init(ObjectNode consumerConfig);
+    public Consumer(String topic, ObjectNode consumerConfig) {
+        this.topic = topic;
+        this.consumerConfig = consumerConfig;
+    }
 
     /**
      * polls data from the underlying queue
      *
-     * @param topic topic to poll from
      * @return
      */
-    List<String> poll(String topic);
+    public abstract List<String> poll();
 
     /**
      * polls data from the underlying queue
      *
-     * @param topic   topic to poll from
      * @param maxSize maximum number of records to poll
      * @return
      */
-    List<String> poll(String topic, int maxSize);
+    public abstract List<String> poll(int maxSize);
 
-    void close();
+    public abstract void close();
 
     /**
      * deletes all the created consumers and topic from the underlying queue
      */
-    default void destroy() {
+    public void destroy() {
         // do nothing by default
     }
 }

@@ -18,6 +18,7 @@
 package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.Service;
+import com.cognitree.kronos.ServiceException;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.Policy;
 import com.cognitree.kronos.model.Task;

@@ -8,3 +8,4 @@ taskHandlerConfig:
   typeB:
     handlerClass: com.cognitree.kronos.executor.handlers.TypeBTaskHandler
     maxParallelTasks: 4
+pollIntervalInMs: 100

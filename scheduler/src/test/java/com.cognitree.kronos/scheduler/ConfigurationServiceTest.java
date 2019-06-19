@@ -17,6 +17,7 @@
 
 package com.cognitree.kronos.scheduler;
 
+import com.cognitree.kronos.ServiceException;
 import com.cognitree.kronos.queue.RAMQueueFactory;
 import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.Workflow;

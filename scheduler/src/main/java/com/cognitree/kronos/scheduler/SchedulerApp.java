@@ -20,6 +20,7 @@ package com.cognitree.kronos.scheduler;
 import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.queue.QueueConfig;
+import com.cognitree.kronos.queue.QueueService;
 import com.cognitree.kronos.scheduler.store.StoreService;
 import com.cognitree.kronos.scheduler.store.StoreServiceConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,26 +54,28 @@ public class SchedulerApp {
     public void start() throws Exception {
         final InputStream schedulerConfigAsStream =
                 getClass().getClassLoader().getResourceAsStream("scheduler.yaml");
-        SchedulerConfig schedulerConfig = MAPPER.readValue(schedulerConfigAsStream, SchedulerConfig.class);
+        final SchedulerConfig schedulerConfig = MAPPER.readValue(schedulerConfigAsStream, SchedulerConfig.class);
         final InputStream queueConfigAsStream =
                 getClass().getClassLoader().getResourceAsStream("queue.yaml");
-        QueueConfig queueConfig = MAPPER.readValue(queueConfigAsStream, QueueConfig.class);
+        final QueueConfig queueConfig = MAPPER.readValue(queueConfigAsStream, QueueConfig.class);
 
         final StoreServiceConfig storeServiceConfig = schedulerConfig.getStoreServiceConfig();
-        StoreService storeService = (StoreService) Class.forName(storeServiceConfig.getStoreServiceClass())
+        final StoreService storeService = (StoreService) Class.forName(storeServiceConfig.getStoreServiceClass())
                 .getConstructor(ObjectNode.class).newInstance(storeServiceConfig.getConfig());
-        NamespaceService namespaceService = new NamespaceService();
-        TaskService taskService = new TaskService();
-        WorkflowService workflowService = new WorkflowService();
-        JobService jobService = new JobService();
-        WorkflowTriggerService workflowTriggerService = new WorkflowTriggerService();
-        MailService mailService = new MailService(schedulerConfig.getMailConfig());
+        final NamespaceService namespaceService = new NamespaceService();
+        final TaskService taskService = new TaskService();
+        final WorkflowService workflowService = new WorkflowService();
+        final JobService jobService = new JobService();
+        final WorkflowTriggerService workflowTriggerService = new WorkflowTriggerService();
+        final MailService mailService = new MailService(schedulerConfig.getMailConfig());
+        final QueueService queueService = new QueueService(queueConfig);
         // The order between task scheduler and workflow scheduler service is of importance
         // task scheduler service should be started before workflow scheduler service.
         // Workflow scheduler services starts the quartz scheduler which in turn might schedule some tasks
         // based on misfire policies and if the task scheduler service is not initialized that, it will result in NPE.
-        TaskSchedulerService taskSchedulerService = new TaskSchedulerService(queueConfig);
-        WorkflowSchedulerService workflowSchedulerService = new WorkflowSchedulerService();
+        final TaskSchedulerService taskSchedulerService =
+                new TaskSchedulerService(schedulerConfig.getPollIntervalInMs());
+        final WorkflowSchedulerService workflowSchedulerService = new WorkflowSchedulerService();
 
         logger.info("Initializing scheduler app");
         // initialize all service
@@ -83,6 +86,7 @@ public class SchedulerApp {
         jobService.init();
         workflowTriggerService.init();
         mailService.init();
+        queueService.init();
         taskSchedulerService.init();
         workflowSchedulerService.init();
 
@@ -95,6 +99,7 @@ public class SchedulerApp {
         jobService.start();
         workflowTriggerService.start();
         mailService.start();
+        queueService.start();
         taskSchedulerService.start();
         workflowSchedulerService.start();
 
@@ -103,7 +108,8 @@ public class SchedulerApp {
 
     private void startAddOnServices(SchedulerConfig schedulerConfig, QueueConfig queueConfig) throws Exception {
         if (schedulerConfig.isEnableConfigurationService()) {
-            ConfigurationService configurationService = new ConfigurationService(queueConfig);
+            final ConfigurationService configurationService = new ConfigurationService(queueConfig,
+                    schedulerConfig.getPollIntervalInMs());
             configurationService.init();
             configurationService.start();
         }
@@ -118,6 +124,12 @@ public class SchedulerApp {
         }
         if (TaskSchedulerService.getService() != null) {
             TaskSchedulerService.getService().stop();
+        }
+        if (QueueService.getService() != null) {
+            QueueService.getService().stop();
+        }
+        if (MailService.getService() != null) {
+            MailService.getService().stop();
         }
         if (WorkflowTriggerService.getService() != null) {
             WorkflowTriggerService.getService().stop();

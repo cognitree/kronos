@@ -18,6 +18,7 @@
 package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.Service;
+import com.cognitree.kronos.ServiceException;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.Policy;
 import com.cognitree.kronos.model.RetryPolicy;
@@ -230,6 +231,9 @@ public class TaskService implements Service {
             if (task == null) {
                 throw TASK_NOT_FOUND.createException(taskId.getName(), taskId.getJob(),
                         taskId.getWorkflow(), taskId.getNamespace());
+            }
+            if (task.getStatus().isFinal()) {
+                return;
             }
             switch (action) {
                 case STOP:

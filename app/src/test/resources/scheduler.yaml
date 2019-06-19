@@ -1,2 +1,3 @@
 storeServiceConfig:
   storeServiceClass: com.cognitree.kronos.scheduler.store.impl.RAMStoreService
+pollIntervalInMs: 100

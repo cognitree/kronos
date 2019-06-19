@@ -19,6 +19,7 @@ package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.executor.ExecutorApp;
+import com.cognitree.kronos.queue.QueueService;
 import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.store.NamespaceStore;
@@ -49,7 +50,7 @@ public class ServiceTest {
         SCHEDULER_APP.stop();
         EXECUTOR_APP.stop();
         // cleanup queue
-        TaskSchedulerService.getService().getConsumer().destroy();
+        QueueService.getService().destroy();
     }
 
     private static void cleanupStore(List<Namespace> namespaces) throws Exception {

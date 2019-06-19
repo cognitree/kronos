@@ -23,17 +23,23 @@ import com.cognitree.kronos.executor.handlers.TaskHandlerConfig;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
  * defines configurations for executor.
  */
 public class ExecutorConfig {
     /**
-     * Map of task handler configuration, required by the kronos to instantiate and start the handlers ({@link TaskHandler}
+     * Map of task handler configuration, required by the Kronos to instantiate and start the handlers ({@link TaskHandler}
      * <p>
      * Here key is the task type the handler is supposed to handle.
      */
     private Map<String, TaskHandlerConfig> taskHandlerConfig = new HashMap<>();
+
+    /**
+     * time duration between successive poll to queue in millisecond, defaults to 1000ms.
+     */
+    private long pollIntervalInMs = TimeUnit.SECONDS.toMillis(1);
 
     public Map<String, TaskHandlerConfig> getTaskHandlerConfig() {
         return taskHandlerConfig;
@@ -43,24 +49,33 @@ public class ExecutorConfig {
         this.taskHandlerConfig = taskHandlerConfig;
     }
 
+    public long getPollIntervalInMs() {
+        return pollIntervalInMs;
+    }
+
+    public void setPollIntervalInMs(long pollIntervalInMs) {
+        this.pollIntervalInMs = pollIntervalInMs;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof ExecutorConfig)) return false;
         ExecutorConfig that = (ExecutorConfig) o;
-        return Objects.equals(taskHandlerConfig, that.taskHandlerConfig);
+        return pollIntervalInMs == that.pollIntervalInMs &&
+                Objects.equals(taskHandlerConfig, that.taskHandlerConfig);
     }
 
     @Override
     public int hashCode() {
-
-        return Objects.hash(taskHandlerConfig);
+        return Objects.hash(taskHandlerConfig, pollIntervalInMs);
     }
 
     @Override
     public String toString() {
         return "ExecutorConfig{" +
                 "taskHandlerConfig=" + taskHandlerConfig +
+                ", pollIntervalInMs=" + pollIntervalInMs +
                 '}';
     }
 }

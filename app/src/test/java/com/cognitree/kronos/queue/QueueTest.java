@@ -22,6 +22,7 @@ import com.cognitree.kronos.queue.consumer.ConsumerConfig;
 import com.cognitree.kronos.queue.producer.Producer;
 import com.cognitree.kronos.queue.producer.ProducerConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.After;
 import org.junit.Assert;
@@ -38,8 +39,11 @@ public class QueueTest {
     private static final String TOPIC_A = "topicA";
     private static final String TOPIC_B = "topicB";
 
-    private static Producer PRODUCER;
-    private static Consumer CONSUMER;
+    private static Producer topicAProducer;
+    private static Consumer topicAConsumer;
+
+    private static Producer topicBProducer;
+    private static Consumer topicBConsumer;
 
     @Before
     public void init() throws Exception {
@@ -52,28 +56,42 @@ public class QueueTest {
     }
 
     private void initProducer(ProducerConfig producerConfig) throws Exception {
-        PRODUCER = (Producer) Class.forName(producerConfig.getProducerClass())
-                .getConstructor()
-                .newInstance();
-        PRODUCER.init(producerConfig.getConfig());
+        topicAProducer = (Producer) Class.forName(producerConfig.getProducerClass())
+                .getConstructor(String.class, ObjectNode.class)
+                .newInstance(TOPIC_A, producerConfig.getConfig());
+
+        topicBProducer = (Producer) Class.forName(producerConfig.getProducerClass())
+                .getConstructor(String.class, ObjectNode.class)
+                .newInstance(TOPIC_B, producerConfig.getConfig());
+
     }
 
     private void initConsumer(ConsumerConfig consumerConfig) throws Exception {
-        CONSUMER = (Consumer) Class.forName(consumerConfig.getConsumerClass())
-                .getConstructor()
-                .newInstance();
-        CONSUMER.init(consumerConfig.getConfig());
+        topicAConsumer = (Consumer) Class.forName(consumerConfig.getConsumerClass())
+                .getConstructor(String.class, ObjectNode.class)
+                .newInstance(TOPIC_A, consumerConfig.getConfig());
         for (int i = 0; i < 2; i++) { // for kafka consumer to poll all the messages before we start the test
-            CONSUMER.poll(TOPIC_A);
-            CONSUMER.poll(TOPIC_B);
+            topicAConsumer.poll();
+        }
+
+        topicBConsumer = (Consumer) Class.forName(consumerConfig.getConsumerClass())
+                .getConstructor(String.class, ObjectNode.class)
+                .newInstance(TOPIC_B, consumerConfig.getConfig());
+        for (int i = 0; i < 2; i++) { // for kafka consumer to poll all the messages before we start the test
+            topicBConsumer.poll();
         }
     }
 
     @After
     public void destroy() {
-        PRODUCER.close();
-        CONSUMER.close();
-        CONSUMER.destroy();
+        topicAProducer.close();
+        topicBProducer.close();
+
+        topicAConsumer.close();
+        topicBConsumer.close();
+
+        topicAConsumer.destroy();
+        topicBConsumer.destroy();
     }
 
     @Test
@@ -83,12 +101,12 @@ public class QueueTest {
         records.add("record2");
         records.add("record3");
         records.add("record4");
-        records.forEach(record -> PRODUCER.send(TOPIC_A, record));
+        records.forEach(record -> topicAProducer.send(record));
         Thread.sleep(2000);
 
-        List<String> recordsFromConsumer = CONSUMER.poll(TOPIC_A, 4);
+        List<String> recordsFromConsumer = topicAConsumer.poll(4);
         for (int i = 0; i < 2; i++) {
-            recordsFromConsumer.addAll(CONSUMER.poll(TOPIC_A));
+            recordsFromConsumer.addAll(topicAConsumer.poll());
             Thread.sleep(500);
         }
         Assert.assertTrue("Records sent " + records + " and records consumed" + recordsFromConsumer + " do not match",
@@ -103,29 +121,29 @@ public class QueueTest {
         recordsForA.add("record2");
         recordsForA.add("record3");
         recordsForA.add("record4");
-        recordsForA.forEach(record -> PRODUCER.send(TOPIC_A, record));
+        recordsForA.forEach(record -> topicAProducer.send(record));
 
         LinkedList<String> recordsForB = new LinkedList<>();
         recordsForB.add("record1");
         recordsForB.add("record2");
         recordsForB.add("record3");
         recordsForB.add("record4");
-        recordsForB.forEach(record -> PRODUCER.send(TOPIC_B, record));
+        recordsForB.forEach(record -> topicBProducer.send(record));
 
         Thread.sleep(500);
 
-        List<String> recordsFromConsumerTopicA = CONSUMER.poll(TOPIC_A, 4);
+        List<String> recordsFromConsumerTopicA = topicAConsumer.poll(4);
         for (int i = 0; i < 2; i++) {
-            recordsFromConsumerTopicA.addAll(CONSUMER.poll(TOPIC_A));
+            recordsFromConsumerTopicA.addAll(topicAConsumer.poll());
             Thread.sleep(500);
         }
         Assert.assertTrue("Records sent " + recordsForA + " and records consumed" + recordsFromConsumerTopicA + " do not match",
                 recordsFromConsumerTopicA.size() == recordsForA.size() &&
                         recordsFromConsumerTopicA.containsAll(recordsForA) && recordsForA.containsAll(recordsFromConsumerTopicA));
 
-        List<String> recordsFromConsumerTopicB = CONSUMER.poll(TOPIC_B, 4);
+        List<String> recordsFromConsumerTopicB = topicBConsumer.poll(4);
         for (int i = 0; i < 2; i++) {
-            recordsFromConsumerTopicB.addAll(CONSUMER.poll(TOPIC_B));
+            recordsFromConsumerTopicB.addAll(topicBConsumer.poll());
             Thread.sleep(500);
         }
         Assert.assertTrue("Records sent " + recordsForB + " and records consumed" + recordsFromConsumerTopicB + " do not match",
@@ -140,12 +158,12 @@ public class QueueTest {
         records.add("record2");
         records.add("record3");
         records.add("record4");
-        records.forEach(record -> PRODUCER.sendInOrder(TOPIC_A, record, "orderingKey"));
+        records.forEach(record -> topicAProducer.sendInOrder(record, "orderingKey"));
         Thread.sleep(2000);
 
-        List<String> recordsFromConsumer = CONSUMER.poll(TOPIC_A, 4);
+        List<String> recordsFromConsumer = topicAConsumer.poll(4);
         for (int i = 0; i < 2; i++) {
-            recordsFromConsumer.addAll(CONSUMER.poll(TOPIC_A));
+            recordsFromConsumer.addAll(topicAConsumer.poll());
             Thread.sleep(500);
         }
         Assert.assertEquals(records, recordsFromConsumer);
@@ -158,7 +176,7 @@ public class QueueTest {
         recordsForA.add("record2");
         recordsForA.add("record3");
         recordsForA.add("record4");
-        recordsForA.forEach(record -> PRODUCER.sendInOrder(TOPIC_A, record, "orderingKey"));
+        recordsForA.forEach(record -> topicAProducer.sendInOrder(record, "orderingKey"));
         Thread.sleep(2000);
 
         LinkedList<String> recordsForB = new LinkedList<>();
@@ -166,18 +184,18 @@ public class QueueTest {
         recordsForB.add("record2");
         recordsForB.add("record3");
         recordsForB.add("record4");
-        recordsForB.forEach(record -> PRODUCER.sendInOrder(TOPIC_B, record, "orderingKey"));
+        recordsForB.forEach(record -> topicBProducer.sendInOrder(record, "orderingKey"));
 
-        List<String> recordsFromConsumerTopicA = CONSUMER.poll(TOPIC_A, 4);
+        List<String> recordsFromConsumerTopicA = topicAConsumer.poll(4);
         for (int i = 0; i < 2; i++) {
-            recordsFromConsumerTopicA.addAll(CONSUMER.poll(TOPIC_A));
+            recordsFromConsumerTopicA.addAll(topicAConsumer.poll());
             Thread.sleep(500);
         }
         Assert.assertEquals(recordsForA, recordsFromConsumerTopicA);
 
-        List<String> recordsFromConsumerTopicB = CONSUMER.poll(TOPIC_B, 4);
+        List<String> recordsFromConsumerTopicB = topicBConsumer.poll(4);
         for (int i = 0; i < 2; i++) {
-            recordsFromConsumerTopicB.addAll(CONSUMER.poll(TOPIC_B));
+            recordsFromConsumerTopicB.addAll(topicBConsumer.poll());
             Thread.sleep(500);
         }
         Assert.assertEquals(recordsForB, recordsFromConsumerTopicB);

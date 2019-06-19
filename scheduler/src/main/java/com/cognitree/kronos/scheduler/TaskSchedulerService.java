@@ -18,22 +18,20 @@
 package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.Service;
+import com.cognitree.kronos.ServiceException;
 import com.cognitree.kronos.ServiceProvider;
+import com.cognitree.kronos.model.ControlMessage;
 import com.cognitree.kronos.model.Task;
+import com.cognitree.kronos.model.Task.Action;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskId;
-import com.cognitree.kronos.model.TaskUpdate;
-import com.cognitree.kronos.queue.QueueConfig;
-import com.cognitree.kronos.queue.consumer.Consumer;
-import com.cognitree.kronos.queue.consumer.ConsumerConfig;
+import com.cognitree.kronos.model.TaskStatusUpdate;
+import com.cognitree.kronos.queue.QueueService;
 import com.cognitree.kronos.queue.producer.Producer;
-import com.cognitree.kronos.queue.producer.ProducerConfig;
 import com.cognitree.kronos.scheduler.model.Namespace;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -77,7 +75,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 final class TaskSchedulerService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(TaskSchedulerService.class);
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
     // Periodically, tasks older than the specified interval and status of workflow (job)
     // it belongs to in one of the final state are purged from memory to prevent the system from going OOM.
     // task purge interval in hour
@@ -92,28 +89,16 @@ final class TaskSchedulerService implements Service {
         }
     }
 
-    private final ProducerConfig producerConfig;
-    private final ConsumerConfig consumerConfig;
-    private final String statusQueue;
     private final Map<String, ScheduledFuture<?>> taskTimeoutHandlersMap = new HashMap<>();
     // used by internal tasks for printing the dag/ delete stale tasks/ executing timeout tasks
     private final ScheduledExecutorService scheduledExecutorService =
             Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
-    private Producer producer;
-    private Consumer consumer;
+    private final long pollIntervalInMs;
+
     private TaskProvider taskProvider;
 
-    public TaskSchedulerService(QueueConfig queueConfig) {
-        if (queueConfig.getTaskStatusQueue() == null || queueConfig.getConsumerConfig() == null ||
-                queueConfig.getProducerConfig() == null) {
-            logger.error("missing one or more mandatory configuration: " +
-                    "taskStatusQueue/ consumerConfig/ producerConfig");
-            throw new IllegalArgumentException("missing one or more mandatory configuration: " +
-                    "taskStatusQueue/ consumerConfig/ producerConfig");
-        }
-        this.producerConfig = queueConfig.getProducerConfig();
-        this.consumerConfig = queueConfig.getConsumerConfig();
-        this.statusQueue = queueConfig.getTaskStatusQueue();
+    public TaskSchedulerService(long pollIntervalInMs) {
+        this.pollIntervalInMs = pollIntervalInMs;
     }
 
     public static TaskSchedulerService getService() {
@@ -124,24 +109,6 @@ final class TaskSchedulerService implements Service {
     public void init() throws Exception {
         logger.info("Initializing task scheduler service");
         taskProvider = new TaskProvider();
-        initProducer();
-        initConsumer();
-    }
-
-    private void initProducer() throws Exception {
-        logger.info("Initializing producer with config {}", producerConfig);
-        producer = (Producer) Class.forName(producerConfig.getProducerClass())
-                .getConstructor()
-                .newInstance();
-        producer.init(producerConfig.getConfig());
-    }
-
-    private void initConsumer() throws Exception {
-        logger.info("Initializing consumer with config {}", consumerConfig);
-        consumer = (Consumer) Class.forName(consumerConfig.getConsumerClass())
-                .getConstructor()
-                .newInstance();
-        consumer.init(consumerConfig.getConfig());
     }
 
     /**
@@ -170,8 +137,12 @@ final class TaskSchedulerService implements Service {
      *
      * @param taskId id of the task to stop
      */
-    public void stop(TaskId taskId) {
+    public void stop(TaskId taskId) throws ServiceException {
         logger.info("Stopping task {}", taskId);
+        final ControlMessage controlMessage = new ControlMessage();
+        controlMessage.setTaskId(taskId);
+        controlMessage.setAction(Action.STOP);
+        QueueService.getService().send(controlMessage);
         updateStatus(taskId, STOPPED, STOP_TASK);
     }
 
@@ -190,9 +161,8 @@ final class TaskSchedulerService implements Service {
     }
 
     private void startConsumer() {
-        consumeTaskStatus();
-        final long pollInterval = consumerConfig.getPollIntervalInMs();
-        scheduledExecutorService.scheduleAtFixedRate(this::consumeTaskStatus, pollInterval, pollInterval, MILLISECONDS);
+        scheduledExecutorService.scheduleAtFixedRate(this::consumeTaskStatusUpdates, 0,
+                pollIntervalInMs, MILLISECONDS);
     }
 
     /**
@@ -229,16 +199,15 @@ final class TaskSchedulerService implements Service {
         tasks.forEach(this::resolve);
     }
 
-    private void consumeTaskStatus() {
-        final List<String> tasksStatus = consumer.poll(statusQueue);
-        for (String taskStatusAsString : tasksStatus) {
-            try {
-                final TaskUpdate taskUpdate = MAPPER.readValue(taskStatusAsString, TaskUpdate.class);
-                updateStatus(taskUpdate.getTaskId(), taskUpdate.getStatus(),
-                        taskUpdate.getStatusMessage(), taskUpdate.getContext());
-            } catch (IOException e) {
-                logger.error("Error parsing task status message {}", taskStatusAsString, e);
+    private void consumeTaskStatusUpdates() {
+        try {
+            final List<TaskStatusUpdate> taskStatusUpdates = QueueService.getService().consumeTaskUpdates();
+            for (TaskStatusUpdate taskStatusUpdate : taskStatusUpdates) {
+                updateStatus(taskStatusUpdate.getTaskId(), taskStatusUpdate.getStatus(),
+                        taskStatusUpdate.getStatusMessage(), taskStatusUpdate.getContext());
             }
+        } catch (ServiceException e) {
+            logger.error("Error consuming task status updates", e);
         }
     }
 
@@ -350,10 +319,10 @@ final class TaskSchedulerService implements Service {
                 if (task.getStatus() != UP_FOR_RETRY) {
                     updateTaskProperties(task);
                 }
-                producer.send(task.getType(), MAPPER.writeValueAsString(task));
+                QueueService.getService().send(task);
                 updateStatus(task, SCHEDULED, null);
-            } catch (Exception e) {
-                logger.error("Error submitting task {} to queue", task, e);
+            } catch (ServiceException e) {
+                logger.error("Error submitting task {} for execution", task, e);
                 updateStatus(task, FAILED, TASK_SUBMISSION_FAILED);
             }
         }
@@ -441,23 +410,12 @@ final class TaskSchedulerService implements Service {
     @Override
     public void stop() {
         logger.info("Stopping task scheduler service");
-        if (consumer != null) {
-            consumer.close();
-        }
         try {
             scheduledExecutorService.shutdown();
             scheduledExecutorService.awaitTermination(10, SECONDS);
         } catch (InterruptedException e) {
             logger.error("Error stopping thread pool", e);
         }
-        if (producer != null) {
-            producer.close();
-        }
-    }
-
-    //used in junit test
-    Consumer getConsumer() {
-        return consumer;
     }
 
     private class TimeoutTask implements Runnable {

@@ -18,24 +18,20 @@
 package com.cognitree.kronos.executor;
 
 import com.cognitree.kronos.Service;
+import com.cognitree.kronos.ServiceException;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.executor.handlers.TaskHandler;
 import com.cognitree.kronos.executor.handlers.TaskHandlerConfig;
 import com.cognitree.kronos.executor.model.TaskResult;
+import com.cognitree.kronos.model.ControlMessage;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskId;
-import com.cognitree.kronos.model.TaskUpdate;
-import com.cognitree.kronos.queue.QueueConfig;
-import com.cognitree.kronos.queue.consumer.Consumer;
-import com.cognitree.kronos.queue.consumer.ConsumerConfig;
-import com.cognitree.kronos.queue.producer.Producer;
-import com.cognitree.kronos.queue.producer.ProducerConfig;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.cognitree.kronos.model.TaskStatusUpdate;
+import com.cognitree.kronos.queue.QueueService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,12 +56,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public final class TaskExecutionService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(TaskExecutionService.class);
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
-
-    // Task consumer and provider info
-    private final ConsumerConfig consumerConfig;
-    private final ProducerConfig producerConfig;
-    private final String statusQueue;
     // Task type mapping Info
     private final Map<String, TaskHandlerConfig> taskTypeToHandlerConfig;
     private final Map<String, TaskHandler> taskTypeToHandlerMap = new HashMap<>();
@@ -75,21 +65,17 @@ public final class TaskExecutionService implements Service {
     private final ScheduledExecutorService taskConsumerThreadPool = Executors.newSingleThreadScheduledExecutor();
     // used to execute tasks
     private final ExecutorService taskExecutorThreadPool = Executors.newCachedThreadPool();
-    private Consumer consumer;
-    private Producer producer;
+    private long pollIntervalInMs;
 
-    public TaskExecutionService(ExecutorConfig executorConfig, QueueConfig queueConfig) {
-        if (queueConfig.getTaskStatusQueue() == null || queueConfig.getConsumerConfig() == null ||
-                queueConfig.getProducerConfig() == null || executorConfig.getTaskHandlerConfig() == null) {
+    public TaskExecutionService(Map<String, TaskHandlerConfig> taskTypeToHandlerConfig, long pollIntervalInMs) {
+        if (taskTypeToHandlerConfig == null || taskTypeToHandlerConfig.isEmpty()) {
             logger.error("missing one or more mandatory configuration: " +
-                    "taskStatusQueue/ consumerConfig/ producerConfig/ taskHandlerConfig");
+                    "taskHandlerConfig");
             throw new IllegalArgumentException("missing one or more mandatory configuration: " +
-                    "taskStatusQueue/ consumerConfig/ producerConfig/ taskHandlerConfig");
+                    "taskHandlerConfig");
         }
-        this.consumerConfig = queueConfig.getConsumerConfig();
-        this.producerConfig = queueConfig.getProducerConfig();
-        this.statusQueue = queueConfig.getTaskStatusQueue();
-        this.taskTypeToHandlerConfig = executorConfig.getTaskHandlerConfig();
+        this.pollIntervalInMs = pollIntervalInMs;
+        this.taskTypeToHandlerConfig = taskTypeToHandlerConfig;
     }
 
     public static TaskExecutionService getService() {
@@ -98,25 +84,8 @@ public final class TaskExecutionService implements Service {
 
     @Override
     public void init() throws Exception {
-        initConsumer();
-        initProducer();
+        logger.info("Initializing task execution service");
         initTaskHandlersAndExecutors();
-    }
-
-    private void initConsumer() throws Exception {
-        logger.info("Initializing consumer with config {}", consumerConfig);
-        consumer = (Consumer) Class.forName(consumerConfig.getConsumerClass())
-                .getConstructor()
-                .newInstance();
-        consumer.init(consumerConfig.getConfig());
-    }
-
-    private void initProducer() throws Exception {
-        logger.info("Initializing producer with config {}", producerConfig);
-        producer = (Producer) Class.forName(producerConfig.getProducerClass())
-                .getConstructor()
-                .newInstance();
-        producer.init(producerConfig.getConfig());
     }
 
     private void initTaskHandlersAndExecutors() throws Exception {
@@ -138,8 +107,9 @@ public final class TaskExecutionService implements Service {
 
     @Override
     public void start() {
-        final long pollInterval = consumerConfig.getPollIntervalInMs();
-        taskConsumerThreadPool.scheduleAtFixedRate(this::consumeTasks, 0, pollInterval, MILLISECONDS);
+        logger.info("Starting task execution service");
+        taskConsumerThreadPool.scheduleAtFixedRate(this::consumeTasks, 0, pollIntervalInMs, MILLISECONDS);
+        taskConsumerThreadPool.scheduleAtFixedRate(this::consumeTasks, 0, pollIntervalInMs, MILLISECONDS);
         ServiceProvider.registerService(this);
     }
 
@@ -148,17 +118,25 @@ public final class TaskExecutionService implements Service {
             synchronized (taskTypeToRunningTasksCount) {
                 final int tasksToPoll = maxParallelTasks - taskTypeToRunningTasksCount.get(taskType);
                 if (tasksToPoll > 0) {
-                    final List<String> tasks = consumer.poll(taskType, tasksToPoll);
-                    for (String taskAsString : tasks) {
-                        try {
-                            submit(MAPPER.readValue(taskAsString, Task.class));
-                        } catch (IOException e) {
-                            logger.error("Error parsing task message {}", taskAsString, e);
+                    try {
+                        final List<Task> tasks = QueueService.getService().consumeTask(taskType, tasksToPoll);
+                        for (Task task : tasks) {
+                            submit(task);
                         }
+                    } catch (ServiceException e) {
+                        logger.error("Error consuming tasks for execution", e);
                     }
                 }
             }
         });
+    }
+
+    private void consumeControlMessages() {
+        try {
+            final List<ControlMessage> controlMessages = QueueService.getService().consumeControlMessage();
+        } catch (ServiceException e) {
+            logger.info("Error consuming control messages", e);
+        }
     }
 
     /**
@@ -201,38 +179,20 @@ public final class TaskExecutionService implements Service {
 
     private void sendTaskUpdate(TaskId taskId, Status status, String statusMessage, Map<String, Object> context) {
         try {
-            TaskUpdate taskUpdate = new TaskUpdate();
-            taskUpdate.setTaskId(taskId);
-            taskUpdate.setStatus(status);
-            taskUpdate.setStatusMessage(statusMessage);
-            taskUpdate.setContext(context);
-            producer.sendInOrder(statusQueue, MAPPER.writeValueAsString(taskUpdate), getOrderingKey(taskUpdate.getTaskId()));
-        } catch (IOException e) {
+            final TaskStatusUpdate taskStatusUpdate = new TaskStatusUpdate();
+            taskStatusUpdate.setTaskId(taskId);
+            taskStatusUpdate.setStatus(status);
+            taskStatusUpdate.setStatusMessage(statusMessage);
+            taskStatusUpdate.setContext(context);
+            QueueService.getService().send(taskStatusUpdate);
+        } catch (ServiceException e) {
             logger.error("Error adding task status {} to queue", status, e);
         }
-    }
-
-    private String getOrderingKey(TaskId taskId) {
-        return taskId.getNamespace() + taskId.getWorkflow()
-                + taskId.getJob() + taskId.getName();
-    }
-
-    // used in junit
-    Consumer getConsumer() {
-        return consumer;
-    }
-
-    // used in junit
-    Producer getProducer() {
-        return producer;
     }
 
     @Override
     public void stop() {
         logger.info("Stopping task execution service");
-        if (consumer != null) {
-            consumer.close();
-        }
         try {
             taskConsumerThreadPool.shutdown();
             taskConsumerThreadPool.awaitTermination(10, SECONDS);
@@ -240,9 +200,6 @@ public final class TaskExecutionService implements Service {
             taskExecutorThreadPool.awaitTermination(10, SECONDS);
         } catch (InterruptedException e) {
             logger.error("Error stopping executor pool", e);
-        }
-        if (producer != null) {
-            producer.close();
         }
     }
 }
