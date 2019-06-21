@@ -63,7 +63,7 @@ public class MockTaskHandler implements TaskHandler {
     }
 
     @Override
-    public void stop() {
+    public void abort() {
         tasks.add(getTaskId(task.getName(), task.getJob(), task.getNamespace()));
     }
 }

@@ -42,6 +42,7 @@ public class ShellCommandHandler implements TaskHandler {
     private static final String JAVA_IO_TMPDIR = "java.io.tmpdir";
 
     private Task task;
+    private boolean abort = false;
 
     @Override
     public void init(Task task, ObjectNode config) {
@@ -84,6 +85,10 @@ public class ShellCommandHandler implements TaskHandler {
         processBuilder.redirectError(new File(logDir, task.getName() + "_" + task.getJob() + "_stderr.log"));
         processBuilder.redirectOutput(new File(logDir, task.getName() + "_" + task.getJob() + "_stdout.log"));
         try {
+            if (abort) {
+                logger.info("Task has been aborted, skip running");
+                return TaskResult.SUCCESS;
+            }
             Process process = processBuilder.start();
             int exitValue = process.waitFor();
             logger.info("Process exited with code {} for command {}", exitValue, cmdWithArgs);
@@ -99,5 +104,11 @@ public class ShellCommandHandler implements TaskHandler {
 
     private String getProperty(Map<String, Object> properties, String key) {
         return String.valueOf(properties.get(key));
+    }
+
+    @Override
+    public void abort() {
+        logger.info("Received request to abort task {}", task);
+        abort = true;
     }
 }

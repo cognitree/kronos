@@ -165,18 +165,18 @@ public final class TaskExecutionService implements Service {
                     case ABORT:
                         logger.info("Received request to abort task with id {}", task);
                         sendTaskStatusUpdate(task, ABORTING, ABORT_TASK_MESSAGE);
-                        // interrupt the task first and then call the stop method
+                        // interrupt the task first and then call the abort method
                         taskResultFuture.cancel(false);
-                        taskHandlersMap.get(task).stop();
+                        taskHandlersMap.get(task).abort();
                         sendTaskStatusUpdate(task, ABORTED, TASK_ABORTED_MESSAGE);
                         break;
                     case TIME_OUT:
                         logger.info("Received request to time out task with id {}", task);
                         // no need to send back status to scheduler
                         // scheduler marks the task as FAILED on timeout
-                        // interrupt the task first and then call the stop method
+                        // interrupt the task first and then call the abort method
                         taskResultFuture.cancel(false);
-                        taskHandlersMap.get(task).stop();
+                        taskHandlersMap.get(task).abort();
                 }
             }
         }
@@ -279,8 +279,8 @@ public final class TaskExecutionService implements Service {
                 }
             });
             if (!completedTasks.isEmpty()) {
-                logger.debug("Tasks {} completed execution", completedTasks.stream().map(task ->
-                        task.getIdentity()).collect(Collectors.toList()));
+                logger.debug("Tasks {} completed execution", completedTasks.stream().map(Task::getIdentity)
+                        .collect(Collectors.toList()));
             }
             completedTasks.forEach(taskFuturesMap::remove);
             completedTasks.forEach(taskHandlersMap::remove);

@@ -46,9 +46,9 @@ public interface TaskHandler {
     /**
      * called when a task is aborted by user.
      * <p>
-     * The thread executing the task first receives an interrupt signal and then the stop method is called
+     * The thread executing the task first receives an interrupt signal and then the abort method is called
      */
-    default void stop() {
+    default void abort() {
 
     }
 }
