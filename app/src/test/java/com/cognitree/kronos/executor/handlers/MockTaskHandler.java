@@ -54,11 +54,16 @@ public class MockTaskHandler implements TaskHandler {
         while (!tasks.contains(getTaskId(task.getName(), task.getJob(), task.getNamespace()))) {
             try {
                 Thread.sleep(50);
-            } catch (InterruptedException impossible) {
-                // impossible
+            } catch (InterruptedException e) {
+                logger.error("Thread has been interrupted");
             }
         }
         tasks.remove(task.getName());
         return TaskResult.SUCCESS;
+    }
+
+    @Override
+    public void stop() {
+        tasks.add(getTaskId(task.getName(), task.getJob(), task.getNamespace()));
     }
 }

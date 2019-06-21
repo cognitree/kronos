@@ -37,11 +37,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.stream.Collectors;
 
 import static com.cognitree.kronos.model.Messages.ABORT_TASK_MESSAGE;
 import static com.cognitree.kronos.model.Messages.MISSING_TASK_HANDLER_MESSAGE;
@@ -63,15 +66,15 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  */
 public final class TaskExecutionService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(TaskExecutionService.class);
-    private static final int TASK_COMPLETION_POLL_INTERVAL = 100;
+    private static final int TASK_COMPLETION_POLL_INTERVAL_IN_MS = 10;
 
     // Task type mapping Info
     private final Map<String, TaskHandlerConfig> taskTypeToHandlerConfigMap;
 
     private final Map<String, Integer> taskTypeToMaxParallelTasksCount = new HashMap<>();
     private final Map<String, Integer> taskTypeToRunningTasksCount = new HashMap<>();
-    private final Map<Task, TaskHandler> taskHandlersMap = new HashMap<>();
-    private final Map<Task, Future<TaskResult>> taskFuturesMap = new HashMap<>();
+    private final Map<Task, TaskHandler> taskHandlersMap = new ConcurrentHashMap<>();
+    private final Map<Task, Future<TaskResult>> taskFuturesMap = new ConcurrentHashMap<>();
 
     // used by internal tasks to poll new tasks from queue
     private final ScheduledExecutorService taskConsumerThreadPool = Executors.newSingleThreadScheduledExecutor();
@@ -118,7 +121,7 @@ public final class TaskExecutionService implements Service {
         logger.info("Starting task execution service");
         taskConsumerThreadPool.scheduleAtFixedRate(this::consumeTasks, 0, pollIntervalInMs, MILLISECONDS);
         controlMessageConsumerThreadPool.scheduleAtFixedRate(this::consumeControlMessages, 0, pollIntervalInMs, MILLISECONDS);
-        taskCompletionThreadPool.scheduleAtFixedRate(new TaskCompletionChecker(), 0, TASK_COMPLETION_POLL_INTERVAL, MILLISECONDS);
+        taskCompletionThreadPool.scheduleAtFixedRate(new TaskCompletionChecker(), 0, TASK_COMPLETION_POLL_INTERVAL_IN_MS, MILLISECONDS);
         ServiceProvider.registerService(this);
     }
 
@@ -131,7 +134,7 @@ public final class TaskExecutionService implements Service {
                         final List<Task> tasks = QueueService.getService().consumeTask(taskType, maxTasksToPoll);
                         for (Task task : tasks) {
                             submit(task);
-                            sendTaskStatusUpdate(task, RUNNING);
+                            sendTaskStatusUpdate(task, RUNNING, null);
                         }
                     } catch (ServiceException e) {
                         logger.error("Error consuming tasks for execution", e);
@@ -156,17 +159,25 @@ public final class TaskExecutionService implements Service {
             if (!taskFuturesMap.containsKey(task)) {
                 continue;
             }
-            switch (controlMessage.getAction()) {
-                case ABORT:
-                    logger.info("Received request to stop task with id {}", task);
-                    final Future<TaskResult> taskResultFuture = taskFuturesMap.get(task);
-                    if (taskResultFuture != null) {
+            final Future<TaskResult> taskResultFuture = taskFuturesMap.get(task);
+            if (taskResultFuture != null) {
+                switch (controlMessage.getAction()) {
+                    case ABORT:
+                        logger.info("Received request to abort task with id {}", task);
                         sendTaskStatusUpdate(task, ABORTING, ABORT_TASK_MESSAGE);
-                        taskHandlersMap.get(task).stop();
+                        // interrupt the task first and then call the stop method
                         taskResultFuture.cancel(false);
+                        taskHandlersMap.get(task).stop();
                         sendTaskStatusUpdate(task, ABORTED, TASK_ABORTED_MESSAGE);
-                    }
-                    break;
+                        break;
+                    case TIME_OUT:
+                        logger.info("Received request to time out task with id {}", task);
+                        // no need to send back status to scheduler
+                        // scheduler marks the task as FAILED on timeout
+                        // interrupt the task first and then call the stop method
+                        taskResultFuture.cancel(false);
+                        taskHandlersMap.get(task).stop();
+                }
             }
         }
     }
@@ -177,7 +188,7 @@ public final class TaskExecutionService implements Service {
      * @param task task to submit for execution
      */
     private void submit(Task task) {
-        logger.trace("Received task {} for execution from task queue", task);
+        logger.trace("Received task {} for execution from task queue", task.getIdentity());
         final TaskHandler taskHandler;
         try {
             taskHandler = createTaskHandler(task);
@@ -201,10 +212,6 @@ public final class TaskExecutionService implements Service {
                 .newInstance();
         taskHandler.init(task, taskHandlerConfig.getConfig());
         return taskHandler;
-    }
-
-    private void sendTaskStatusUpdate(TaskId taskId, Status status) {
-        sendTaskStatusUpdate(taskId, status, null);
     }
 
     private void sendTaskStatusUpdate(TaskId taskId, Status status, String statusMessage) {
@@ -244,9 +251,9 @@ public final class TaskExecutionService implements Service {
     private class TaskCompletionChecker implements Runnable {
         @Override
         public void run() {
-            ArrayList<Task> completedTasks = new ArrayList<>();
+            final ArrayList<Task> completedTasks = new ArrayList<>();
             taskFuturesMap.forEach((task, future) -> {
-                logger.debug("Checking task {} for completion", task);
+                logger.debug("Checking task {} for completion", task.getIdentity());
                 if (future.isDone()) {
                     try {
                         TaskResult taskResult = future.get();
@@ -256,8 +263,12 @@ public final class TaskExecutionService implements Service {
                             sendTaskStatusUpdate(task, FAILED, taskResult.getMessage(), taskResult.getContext());
                         }
                     } catch (InterruptedException e) {
-                        sendTaskStatusUpdate(task, ABORTED);
+                        logger.error("Thread interrupted waiting for task result for task {}", task.getIdentity(), e);
+                    } catch (CancellationException e) {
+                        logger.info("Task {} has been aborted", task.getIdentity());
+                        // do nothing the task is already marked as aborted
                     } catch (ExecutionException e) {
+                        logger.error("Error executing task {}", task.getIdentity(), e);
                         sendTaskStatusUpdate(task, FAILED, "error executing task: " + e.getMessage());
                     } finally {
                         synchronized (task.getType()) {
@@ -267,6 +278,10 @@ public final class TaskExecutionService implements Service {
                     }
                 }
             });
+            if (!completedTasks.isEmpty()) {
+                logger.debug("Tasks {} completed execution", completedTasks.stream().map(task ->
+                        task.getIdentity()).collect(Collectors.toList()));
+            }
             completedTasks.forEach(taskFuturesMap::remove);
             completedTasks.forEach(taskHandlersMap::remove);
         }

@@ -49,7 +49,7 @@ public class ShellCommandHandler implements TaskHandler {
     }
 
     @Override
-    public TaskResult execute() throws InterruptedException {
+    public TaskResult execute() {
         logger.info("received request to execute task {}", task);
 
         final Map<String, Object> taskProperties = task.getProperties();
@@ -90,7 +90,7 @@ public class ShellCommandHandler implements TaskHandler {
             if (exitValue != 0) {
                 return new TaskResult(false, "process exited with error code " + exitValue);
             }
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             logger.error("Error executing command {}", cmdWithArgs, e);
             return new TaskResult(false, "process exited with exception: " + e.getMessage());
         }

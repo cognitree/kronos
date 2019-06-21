@@ -48,7 +48,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import static com.cognitree.kronos.model.Task.Status.ABORTED;
-import static com.cognitree.kronos.model.Task.Status.ABORTING;
 import static com.cognitree.kronos.model.Task.Status.CREATED;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.RUNNING;
@@ -137,7 +136,7 @@ public class TaskService implements Service {
         try {
             taskStore.store(task);
         } catch (StoreException e) {
-            logger.error("unable to add task {}", task, e);
+            logger.error("unable to add task {}", task.getIdentity(), e);
             throw new ServiceException(e.getMessage(), e.getCause());
         }
         return task;
@@ -164,7 +163,9 @@ public class TaskService implements Service {
                 valueToReplace = valueToReplace.substring(WORKFLOW_NAMESPACE_PREFIX.length());
                 modifiedTaskProperties.put(entry.getKey(), propertiesToOverride.get(valueToReplace));
             } else if (value instanceof Map) {
-                modifiedTaskProperties.put(entry.getKey(), modifyAndGetTaskProperties((Map<String, Object>) value, propertiesToOverride));
+                Map<String, Object> nestedProperties =
+                        modifyAndGetTaskProperties((Map<String, Object>) value, propertiesToOverride);
+                modifiedTaskProperties.put(entry.getKey(), nestedProperties);
             } else {
                 modifiedTaskProperties.put(entry.getKey(), value);
             }
@@ -275,22 +276,25 @@ public class TaskService implements Service {
         }
     }
 
-    void updateStatus(Task task, Status status, String statusMessage, Map<String, Object> context)
+    void updateStatus(TaskId taskId, Status status, String statusMessage, Map<String, Object> context)
             throws ServiceException, ValidationException {
         try {
-            if (taskStore.load(task) == null) {
-                throw TASK_NOT_FOUND.createException(task.getName(), task.getJob(), task.getWorkflow(), task.getNamespace());
+            Task task = taskStore.load(taskId);
+            if (task == null) {
+                throw TASK_NOT_FOUND.createException(taskId.getName(), taskId.getJob(),
+                        taskId.getWorkflow(), taskId.getNamespace());
             }
             validateJob(task.getNamespace(), task.getJob(), task.getWorkflow());
             Status currentStatus = task.getStatus();
             if (!isValidTransition(currentStatus, status)) {
-                logger.error("Invalid state transition for task {} from status {}, to {}", task, currentStatus, status);
+                logger.error("Invalid state transition for task {} from status {}, to {}",
+                        task.getIdentity(), currentStatus, status);
                 throw new ServiceException("Invalid state transition from " + currentStatus + " to " + status);
             }
 
             if (status == FAILED && isRetryEnabled(task)) {
                 logger.info("Resubmit the task {} for retry", task);
-                updateStatus(task, UP_FOR_RETRY, null, context);
+                updateStatus(task.getIdentity(), UP_FOR_RETRY, null, context);
                 return;
             }
 
@@ -316,7 +320,8 @@ public class TaskService implements Service {
             taskStore.update(task);
             notifyListeners(task, currentStatus, status);
         } catch (StoreException e) {
-            logger.error("unable to update task {}", task, e);
+            logger.error("unable to update task {} status to {} with status message {}",
+                    taskId, status, statusMessage, e);
             throw new ServiceException(e.getMessage(), e.getCause());
         }
     }
@@ -340,7 +345,6 @@ public class TaskService implements Service {
             case ABORTING:
                 return currentStatus == RUNNING;
             case ABORTED:
-                return currentStatus == ABORTING;
             case FAILED:
                 return currentStatus != SUCCESSFUL && currentStatus != FAILED && currentStatus != ABORTED;
             default:
@@ -363,7 +367,8 @@ public class TaskService implements Service {
             try {
                 listener.statusChanged(task, from, to);
             } catch (Exception e) {
-                logger.error("error notifying task status change from {}, to {} for task {}", from, to, task, e);
+                logger.error("error notifying task status change from {}, to {} for task {}",
+                        from, to, task.getIdentity(), e);
             }
         });
     }

@@ -40,12 +40,13 @@ public interface TaskHandler {
      * defines how to execute the task.
      *
      * @return
-     * @throws InterruptedException if the task is aborted by user
      */
-    TaskResult execute() throws InterruptedException;
+    TaskResult execute();
 
     /**
-     * called when a task is aborted by user
+     * called when a task is aborted by user.
+     * <p>
+     * The thread executing the task first receives an interrupt signal and then the stop method is called
      */
     default void stop() {
 

@@ -49,6 +49,7 @@ import static com.cognitree.kronos.model.Messages.FAILED_TO_RESOLVE_DEPENDENCY_M
 import static com.cognitree.kronos.model.Messages.SKIPPED_DEPENDEE_TASK_MESSAGE;
 import static com.cognitree.kronos.model.Messages.TASK_SUBMISSION_FAILED_MESSAGE;
 import static com.cognitree.kronos.model.Messages.TIMED_OUT_EXECUTING_TASK_MESSAGE;
+import static com.cognitree.kronos.model.Task.Status.ABORTED;
 import static com.cognitree.kronos.model.Task.Status.CREATED;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
@@ -87,7 +88,7 @@ final class TaskSchedulerService implements Service {
         }
     }
 
-    private final Map<String, ScheduledFuture<?>> taskTimeoutHandlersMap = new HashMap<>();
+    private final Map<TaskId, ScheduledFuture<?>> taskTimeoutHandlersMap = new HashMap<>();
     // used by internal tasks for printing the dag/ delete stale tasks/ executing timeout tasks
     private final ScheduledExecutorService scheduledExecutorService =
             Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
@@ -136,7 +137,7 @@ final class TaskSchedulerService implements Service {
      * @param task task to abort
      */
     public void abort(Task task) throws ServiceException {
-        logger.info("Received request to abort task {}", task);
+        logger.info("Received request to abort task {}", task.getIdentity());
         final ControlMessage controlMessage = new ControlMessage();
         controlMessage.setTask(task);
         controlMessage.setAction(Action.ABORT);
@@ -170,8 +171,8 @@ final class TaskSchedulerService implements Service {
     }
 
     private void createTimeoutTask(Task task) {
-        if (taskTimeoutHandlersMap.containsKey(task.getName())) {
-            logger.debug("Timeout task is already scheduled for task {}", task.getName());
+        if (taskTimeoutHandlersMap.containsKey(task.getIdentity())) {
+            logger.debug("Timeout task is already scheduled for task {}", task.getIdentity());
             return;
         }
 
@@ -183,10 +184,10 @@ final class TaskSchedulerService implements Service {
             // submit timeout task now
             scheduledExecutorService.submit(timeoutTask);
         } else {
-            logger.info("Initializing timeout task for task {}, scheduled at {}", task.getName(), timeoutTaskTime);
+            logger.info("Initializing timeout task for task {}, scheduled at {}", task.getIdentity(), timeoutTaskTime);
             final ScheduledFuture<?> timeoutTaskFuture =
                     scheduledExecutorService.schedule(timeoutTask, timeoutTaskTime - currentTimeMillis, MILLISECONDS);
-            taskTimeoutHandlersMap.put(task.getName(), timeoutTaskFuture);
+            taskTimeoutHandlersMap.put(task.getIdentity(), timeoutTaskFuture);
         }
     }
 
@@ -218,7 +219,7 @@ final class TaskSchedulerService implements Service {
     }
 
     synchronized void schedule(Task task) {
-        logger.info("Received request to schedule task: {}", task);
+        logger.info("Received request to schedule task: {}", task.getIdentity());
         final boolean isAdded = taskProvider.add(task);
         if (isAdded) {
             resolve(task);
@@ -228,10 +229,10 @@ final class TaskSchedulerService implements Service {
     private void resolve(Task task) {
         final boolean isResolved = taskProvider.resolve(task);
         if (isResolved) {
-            updateStatus(task, WAITING, null);
+            updateStatus(task.getIdentity(), WAITING, null);
         } else {
-            logger.error("Unable to resolve dependency for task {}, marking it as {}", task, FAILED);
-            updateStatus(task, FAILED, FAILED_TO_RESOLVE_DEPENDENCY_MESSAGE);
+            logger.error("Unable to resolve dependency for task {}, marking it as {}", task.getIdentity(), FAILED);
+            updateStatus(task.getIdentity(), FAILED, FAILED_TO_RESOLVE_DEPENDENCY_MESSAGE);
         }
     }
 
@@ -249,11 +250,11 @@ final class TaskSchedulerService implements Service {
             return;
         }
         try {
-            TaskService.getService().updateStatus(task, status, statusMessage, context);
+            TaskService.getService().updateStatus(task.getIdentity(), status, statusMessage, context);
             handleTaskStatusChange(task, status);
         } catch (ServiceException | ValidationException e) {
             logger.error("Error updating status of task {} to {} with status message {}",
-                    task, status, statusMessage, e);
+                    task.getIdentity(), status, statusMessage, e);
         }
     }
 
@@ -276,7 +277,7 @@ final class TaskSchedulerService implements Service {
                 markDependentTasksAsSkipped(task, status);
                 // do not break
             case SUCCESSFUL:
-                final ScheduledFuture<?> taskTimeoutFuture = taskTimeoutHandlersMap.remove(task.getName());
+                final ScheduledFuture<?> taskTimeoutFuture = taskTimeoutHandlersMap.remove(task.getIdentity());
                 if (taskTimeoutFuture != null) {
                     taskTimeoutFuture.cancel(false);
                 }
@@ -294,13 +295,13 @@ final class TaskSchedulerService implements Service {
             }
             switch (parentStatus) {
                 case FAILED:
-                    updateStatus(dependentTask, SKIPPED, FAILED_DEPENDEE_TASK_MESSAGE);
+                    updateStatus(dependentTask.getIdentity(), SKIPPED, FAILED_DEPENDEE_TASK_MESSAGE);
                     break;
                 case ABORTED:
-                    updateStatus(dependentTask, SKIPPED, ABORTED_DEPENDEE_TASK_MESSAGE);
+                    updateStatus(dependentTask.getIdentity(), SKIPPED, ABORTED_DEPENDEE_TASK_MESSAGE);
                     break;
                 default:
-                    updateStatus(dependentTask, SKIPPED, SKIPPED_DEPENDEE_TASK_MESSAGE);
+                    updateStatus(dependentTask.getIdentity(), SKIPPED, SKIPPED_DEPENDEE_TASK_MESSAGE);
                     break;
             }
         }
@@ -319,10 +320,10 @@ final class TaskSchedulerService implements Service {
                     updateTaskProperties(task);
                 }
                 QueueService.getService().send(task);
-                updateStatus(task, SCHEDULED, null);
+                updateStatus(task.getIdentity(), SCHEDULED, null);
             } catch (ServiceException e) {
-                logger.error("Error submitting task {} for execution", task, e);
-                updateStatus(task, FAILED, TASK_SUBMISSION_FAILED_MESSAGE);
+                logger.error("Error submitting task {} for execution", task.getIdentity(), e);
+                updateStatus(task.getIdentity(), FAILED, TASK_SUBMISSION_FAILED_MESSAGE);
             }
         }
     }
@@ -420,14 +421,22 @@ final class TaskSchedulerService implements Service {
     private class TimeoutTask implements Runnable {
         private final Task task;
 
-        TimeoutTask(Task task) {
+        private TimeoutTask(Task task) {
             this.task = task;
         }
 
         @Override
         public void run() {
-            logger.info("Task {} has timed out, marking task as failed", task);
-            updateStatus(task, FAILED, TIMED_OUT_EXECUTING_TASK_MESSAGE);
+            logger.info("Task {} has timed out, marking task as failed", task.getIdentity());
+            updateStatus(task.getIdentity(), ABORTED, TIMED_OUT_EXECUTING_TASK_MESSAGE);
+            try {
+                final ControlMessage controlMessage = new ControlMessage();
+                controlMessage.setTask(task);
+                controlMessage.setAction(Action.TIME_OUT);
+                QueueService.getService().send(controlMessage);
+            } catch (ServiceException e) {
+                logger.error("Error sending control message to time out task {}", task.getIdentity(), e);
+            }
         }
     }
 }

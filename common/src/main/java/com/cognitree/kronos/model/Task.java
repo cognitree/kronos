@@ -203,6 +203,6 @@ public class Task extends TaskId {
     }
 
     public enum Action {
-        ABORT
+        ABORT, TIME_OUT
     }
 }

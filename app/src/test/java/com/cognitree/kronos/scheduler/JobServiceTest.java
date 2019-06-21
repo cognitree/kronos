@@ -18,10 +18,9 @@
 package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.executor.handlers.MockFailureTaskHandler;
-import com.cognitree.kronos.executor.handlers.MockTaskHandler;
+import com.cognitree.kronos.model.Messages;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.scheduler.model.Job;
-import com.cognitree.kronos.model.Messages;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import org.junit.Assert;
 import org.junit.Test;
@@ -174,7 +173,6 @@ public class JobServiceTest extends ServiceTest {
         final Job job = workflowOneJobs.get(0);
         final List<Task> tasks = jobService.getTasks(job);
         Assert.assertEquals(3, tasks.size());
-        Task taskThree = null;
         for (Task task : tasks) {
             switch (task.getName()) {
                 case "taskOne":
@@ -184,18 +182,13 @@ public class JobServiceTest extends ServiceTest {
                     Assert.assertEquals(Task.Status.SUCCESSFUL, task.getStatus());
                     break;
                 case "taskThree":
-                    taskThree = task;
-                    Assert.assertEquals(Task.Status.FAILED, task.getStatus());
+                    Assert.assertEquals(Task.Status.ABORTED, task.getStatus());
                     Assert.assertEquals(Messages.TIMED_OUT_EXECUTING_TASK_MESSAGE, task.getStatusMessage());
                     break;
                 default:
                     Assert.fail();
             }
         }
-        Assert.assertNotNull(taskThree);
-        // Right now timed out tasks are not cleaned up on the executor side
-        // thus finishing the task execution manually
-        MockTaskHandler.finishExecution(taskThree.getName(), taskThree.getJob(), taskThree.getNamespace());
     }
 
     @Test
@@ -216,16 +209,15 @@ public class JobServiceTest extends ServiceTest {
         final Job job = workflowOneJobs.get(0);
         final List<Task> tasks = jobService.getTasks(job);
         Assert.assertEquals(3, tasks.size());
-        Task taskTwo = null;
         for (Task task : tasks) {
             switch (task.getName()) {
                 case "taskOne":
                     Assert.assertEquals(Task.Status.SUCCESSFUL, task.getStatus());
                     break;
                 case "taskTwo":
-                    taskTwo = task;
                     Assert.assertEquals(Task.Status.FAILED, task.getStatus());
                     Assert.assertEquals(3, task.getRetryCount());
+                    Assert.assertTrue(MockFailureTaskHandler.isHandled(task.getName(), task.getJob(), task.getNamespace()));
                     break;
                 case "taskThree":
                     Assert.assertEquals(Task.Status.SKIPPED, task.getStatus());
@@ -235,8 +227,6 @@ public class JobServiceTest extends ServiceTest {
                     Assert.fail();
             }
         }
-        Assert.assertNotNull(taskTwo);
-        Assert.assertTrue(MockFailureTaskHandler.isHandled(taskTwo.getName(), taskTwo.getJob(), taskTwo.getNamespace()));
     }
 
     @Test
