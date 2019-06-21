@@ -17,8 +17,8 @@
 
 package com.cognitree.kronos.api;
 
-import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.ServiceException;
+import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.scheduler.TaskService;
 import com.cognitree.kronos.scheduler.ValidationException;
 import io.swagger.annotations.Api;

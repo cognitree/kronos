@@ -20,15 +20,15 @@ package com.cognitree.kronos.model;
 import java.util.Objects;
 
 public class ControlMessage {
-    private TaskId taskId;
+    private Task task;
     private Task.Action action;
 
-    public TaskId getTaskId() {
-        return taskId;
+    public Task getTask() {
+        return task;
     }
 
-    public void setTaskId(TaskId taskId) {
-        this.taskId = taskId;
+    public void setTask(Task task) {
+        this.task = task;
     }
 
     public Task.Action getAction() {
@@ -44,19 +44,19 @@ public class ControlMessage {
         if (this == o) return true;
         if (!(o instanceof ControlMessage)) return false;
         ControlMessage message = (ControlMessage) o;
-        return Objects.equals(taskId, message.taskId) &&
+        return Objects.equals(task, message.task) &&
                 action == message.action;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(taskId, action);
+        return Objects.hash(task, action);
     }
 
     @Override
     public String toString() {
         return "ControlMessage{" +
-                "taskId=" + taskId +
+                "task=" + task +
                 ", action=" + action +
                 '}';
     }

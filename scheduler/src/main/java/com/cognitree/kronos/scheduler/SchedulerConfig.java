@@ -21,7 +21,6 @@ import com.cognitree.kronos.scheduler.store.StoreService;
 import com.cognitree.kronos.scheduler.store.StoreServiceConfig;
 
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 /**
  * defines configurations for scheduler.
@@ -42,11 +41,6 @@ public class SchedulerConfig {
      * enable {@link ConfigurationService} that consumes config updates from a specified queue and processes them
      */
     private boolean enableConfigurationService = false;
-
-    /**
-     * time duration between successive poll to queue in millisecond, defaults to 1000ms.
-     */
-    private long pollIntervalInMs = TimeUnit.SECONDS.toMillis(1);
 
     public StoreServiceConfig getStoreServiceConfig() {
         return storeServiceConfig;
@@ -72,28 +66,19 @@ public class SchedulerConfig {
         this.enableConfigurationService = enableConfigurationService;
     }
 
-    public long getPollIntervalInMs() {
-        return pollIntervalInMs;
-    }
-
-    public void setPollIntervalInMs(long pollIntervalInMs) {
-        this.pollIntervalInMs = pollIntervalInMs;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof SchedulerConfig)) return false;
         SchedulerConfig that = (SchedulerConfig) o;
         return enableConfigurationService == that.enableConfigurationService &&
-                pollIntervalInMs == that.pollIntervalInMs &&
                 Objects.equals(storeServiceConfig, that.storeServiceConfig) &&
                 Objects.equals(mailConfig, that.mailConfig);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(storeServiceConfig, mailConfig, enableConfigurationService, pollIntervalInMs);
+        return Objects.hash(storeServiceConfig, mailConfig, enableConfigurationService);
     }
 
     @Override
@@ -102,7 +87,6 @@ public class SchedulerConfig {
                 "storeServiceConfig=" + storeServiceConfig +
                 ", mailConfig=" + mailConfig +
                 ", enableConfigurationService=" + enableConfigurationService +
-                ", pollIntervalInMs=" + pollIntervalInMs +
                 '}';
     }
 }

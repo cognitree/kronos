@@ -22,11 +22,16 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RAMProducer extends Producer {
+public class RAMProducer implements Producer {
     private static final Logger logger = LoggerFactory.getLogger(RAMProducer.class);
 
-    public RAMProducer(String topic, ObjectNode config) {
-        super(topic, config);
+    private String topic;
+
+    @Override
+    public void init(String topic, ObjectNode config) {
+        logger.info("Initializing producer for RAM(in-memory) queue for topic {} with config {}",
+                topic, config);
+        this.topic = topic;
     }
 
     @Override

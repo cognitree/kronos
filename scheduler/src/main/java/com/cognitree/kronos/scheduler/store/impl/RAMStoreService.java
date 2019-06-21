@@ -17,7 +17,6 @@
 
 package com.cognitree.kronos.scheduler.store.impl;
 
-import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.scheduler.store.JobStore;
 import com.cognitree.kronos.scheduler.store.NamespaceStore;
 import com.cognitree.kronos.scheduler.store.StoreService;

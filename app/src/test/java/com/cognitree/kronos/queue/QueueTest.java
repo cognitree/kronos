@@ -22,7 +22,6 @@ import com.cognitree.kronos.queue.consumer.ConsumerConfig;
 import com.cognitree.kronos.queue.producer.Producer;
 import com.cognitree.kronos.queue.producer.ProducerConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.After;
 import org.junit.Assert;
@@ -57,26 +56,29 @@ public class QueueTest {
 
     private void initProducer(ProducerConfig producerConfig) throws Exception {
         topicAProducer = (Producer) Class.forName(producerConfig.getProducerClass())
-                .getConstructor(String.class, ObjectNode.class)
-                .newInstance(TOPIC_A, producerConfig.getConfig());
+                .getConstructor()
+                .newInstance();
+        topicAProducer.init(TOPIC_A, producerConfig.getConfig());
 
         topicBProducer = (Producer) Class.forName(producerConfig.getProducerClass())
-                .getConstructor(String.class, ObjectNode.class)
-                .newInstance(TOPIC_B, producerConfig.getConfig());
-
+                .getConstructor()
+                .newInstance();
+        topicBProducer.init(TOPIC_B, producerConfig.getConfig());
     }
 
     private void initConsumer(ConsumerConfig consumerConfig) throws Exception {
         topicAConsumer = (Consumer) Class.forName(consumerConfig.getConsumerClass())
-                .getConstructor(String.class, ObjectNode.class)
-                .newInstance(TOPIC_A, consumerConfig.getConfig());
+                .getConstructor()
+                .newInstance();
+        topicAConsumer.init(TOPIC_A, consumerConfig.getConfig());
         for (int i = 0; i < 2; i++) { // for kafka consumer to poll all the messages before we start the test
             topicAConsumer.poll();
         }
 
         topicBConsumer = (Consumer) Class.forName(consumerConfig.getConsumerClass())
-                .getConstructor(String.class, ObjectNode.class)
-                .newInstance(TOPIC_B, consumerConfig.getConfig());
+                .getConstructor()
+                .newInstance();
+        topicBConsumer.init(TOPIC_B, consumerConfig.getConfig());
         for (int i = 0; i < 2; i++) { // for kafka consumer to poll all the messages before we start the test
             topicBConsumer.poll();
         }

@@ -23,7 +23,7 @@ public class ExecutionCounters {
     private int successful;
     private int failed;
     private int skipped;
-    private int stopped;
+    private int aborted;
 
     public int getActive() {
         return active;
@@ -65,12 +65,12 @@ public class ExecutionCounters {
         this.skipped = skipped;
     }
 
-    public int getStopped() {
-        return stopped;
+    public int getAborted() {
+        return aborted;
     }
 
-    public void setStopped(int stopped) {
-        this.stopped = stopped;
+    public void setAborted(int aborted) {
+        this.aborted = aborted;
     }
 
     @Override
@@ -81,7 +81,7 @@ public class ExecutionCounters {
                 ", successful=" + successful +
                 ", failed=" + failed +
                 ", skipped=" + skipped +
-                ", stopped=" + stopped +
+                ", aborted=" + aborted +
                 '}';
     }
 }

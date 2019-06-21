@@ -25,12 +25,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class MockFailureTaskHandler extends TaskHandler {
+public class MockFailureTaskHandler implements TaskHandler {
     private static final List<String> tasks = Collections.synchronizedList(new ArrayList<>());
 
-    public MockFailureTaskHandler(Task task, ObjectNode handlerConfig) {
-        super(task, handlerConfig);
-    }
+    private Task task;
 
     public static boolean isHandled(String name, String job, String namespace) {
         return tasks.contains(getTaskId(name, job, namespace));
@@ -38,6 +36,11 @@ public class MockFailureTaskHandler extends TaskHandler {
 
     private static String getTaskId(String name, String job, String namespace) {
         return name + job + namespace;
+    }
+
+    @Override
+    public void init(Task task, ObjectNode config) {
+        this.task = task;
     }
 
     @Override

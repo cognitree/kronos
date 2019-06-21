@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
@@ -31,20 +32,24 @@ import java.util.Map;
 /**
  * A {@link TaskHandler} implementation to execute shell commands with given arguments.
  */
-public class ShellCommandHandler extends TaskHandler {
+public class ShellCommandHandler implements TaskHandler {
     private static final Logger logger = LoggerFactory.getLogger(ShellCommandHandler.class);
 
     private static final String PROP_CMD = "cmd";
     private static final String PROP_ARGS = "args";
     private static final String PROPERTY_WORKING_DIR = "workingDir";
     private static final String PROPERTY_LOG_DIR = "logDir";
+    private static final String JAVA_IO_TMPDIR = "java.io.tmpdir";
 
-    public ShellCommandHandler(Task task, ObjectNode handlerConfig) {
-        super(task, handlerConfig);
+    private Task task;
+
+    @Override
+    public void init(Task task, ObjectNode config) {
+        this.task = task;
     }
 
     @Override
-    public TaskResult execute() {
+    public TaskResult execute() throws InterruptedException {
         logger.info("received request to execute task {}", task);
 
         final Map<String, Object> taskProperties = task.getProperties();
@@ -68,7 +73,7 @@ public class ShellCommandHandler extends TaskHandler {
         if (taskProperties.containsKey(PROPERTY_LOG_DIR)) {
             logDirPath = getProperty(taskProperties, PROPERTY_LOG_DIR);
         } else {
-            logDirPath = System.getProperty("java.io.tmpdir");
+            logDirPath = System.getProperty(JAVA_IO_TMPDIR);
         }
         File logDir = new File(logDirPath);
         // create log directory is does not exist
@@ -85,7 +90,7 @@ public class ShellCommandHandler extends TaskHandler {
             if (exitValue != 0) {
                 return new TaskResult(false, "process exited with error code " + exitValue);
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             logger.error("Error executing command {}", cmdWithArgs, e);
             return new TaskResult(false, "process exited with exception: " + e.getMessage());
         }

@@ -21,6 +21,7 @@ import com.cognitree.kronos.queue.consumer.ConsumerConfig;
 import com.cognitree.kronos.queue.producer.ProducerConfig;
 
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
  * defines configuration required by the application to create producer and consumer to exchange message between
@@ -31,7 +32,11 @@ public class QueueConfig {
     private ConsumerConfig consumerConfig;
     private String taskStatusQueue;
     private String configurationQueue;
-    private String controlQueue;
+    private String controlMessageQueue;
+    /**
+     * time duration between successive poll to queue in millisecond, defaults to 1000ms.
+     */
+    private long pollIntervalInMs = TimeUnit.SECONDS.toMillis(1);
 
     public ProducerConfig getProducerConfig() {
         return producerConfig;
@@ -65,12 +70,20 @@ public class QueueConfig {
         this.configurationQueue = configurationQueue;
     }
 
-    public String getControlQueue() {
-        return controlQueue;
+    public String getControlMessageQueue() {
+        return controlMessageQueue;
     }
 
-    public void setControlQueue(String controlQueue) {
-        this.controlQueue = controlQueue;
+    public void setControlMessageQueue(String controlMessageQueue) {
+        this.controlMessageQueue = controlMessageQueue;
+    }
+
+    public long getPollIntervalInMs() {
+        return pollIntervalInMs;
+    }
+
+    public void setPollIntervalInMs(long pollIntervalInMs) {
+        this.pollIntervalInMs = pollIntervalInMs;
     }
 
     @Override
@@ -78,16 +91,17 @@ public class QueueConfig {
         if (this == o) return true;
         if (!(o instanceof QueueConfig)) return false;
         QueueConfig that = (QueueConfig) o;
-        return Objects.equals(producerConfig, that.producerConfig) &&
+        return pollIntervalInMs == that.pollIntervalInMs &&
+                Objects.equals(producerConfig, that.producerConfig) &&
                 Objects.equals(consumerConfig, that.consumerConfig) &&
                 Objects.equals(taskStatusQueue, that.taskStatusQueue) &&
                 Objects.equals(configurationQueue, that.configurationQueue) &&
-                Objects.equals(controlQueue, that.controlQueue);
+                Objects.equals(controlMessageQueue, that.controlMessageQueue);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(producerConfig, consumerConfig, taskStatusQueue, configurationQueue, controlQueue);
+        return Objects.hash(producerConfig, consumerConfig, taskStatusQueue, configurationQueue, controlMessageQueue, pollIntervalInMs);
     }
 
     @Override
@@ -97,7 +111,8 @@ public class QueueConfig {
                 ", consumerConfig=" + consumerConfig +
                 ", taskStatusQueue='" + taskStatusQueue + '\'' +
                 ", configurationQueue='" + configurationQueue + '\'' +
-                ", controlQueue='" + controlQueue + '\'' +
+                ", controlMessageQueue='" + controlMessageQueue + '\'' +
+                ", pollIntervalInMs=" + pollIntervalInMs +
                 '}';
     }
 }

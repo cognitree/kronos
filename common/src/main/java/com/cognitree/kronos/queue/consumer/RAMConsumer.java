@@ -26,11 +26,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class RAMConsumer extends Consumer {
+public class RAMConsumer implements Consumer {
     private static final Logger logger = LoggerFactory.getLogger(RAMConsumer.class);
 
-    public RAMConsumer(String topic, ObjectNode config) {
-        super(topic, config);
+    private String topic;
+
+    @Override
+    public void init(String topic, ObjectNode config) {
+        this.topic = topic;
     }
 
     @Override

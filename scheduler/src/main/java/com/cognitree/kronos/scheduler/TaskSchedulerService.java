@@ -43,22 +43,20 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 
+import static com.cognitree.kronos.model.Messages.ABORTED_DEPENDEE_TASK_MESSAGE;
+import static com.cognitree.kronos.model.Messages.FAILED_DEPENDEE_TASK_MESSAGE;
+import static com.cognitree.kronos.model.Messages.FAILED_TO_RESOLVE_DEPENDENCY_MESSAGE;
+import static com.cognitree.kronos.model.Messages.SKIPPED_DEPENDEE_TASK_MESSAGE;
+import static com.cognitree.kronos.model.Messages.TASK_SUBMISSION_FAILED_MESSAGE;
+import static com.cognitree.kronos.model.Messages.TIMED_OUT_EXECUTING_TASK_MESSAGE;
 import static com.cognitree.kronos.model.Task.Status.CREATED;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
 import static com.cognitree.kronos.model.Task.Status.SKIPPED;
-import static com.cognitree.kronos.model.Task.Status.STOPPED;
 import static com.cognitree.kronos.model.Task.Status.UP_FOR_RETRY;
 import static com.cognitree.kronos.model.Task.Status.WAITING;
 import static com.cognitree.kronos.scheduler.model.Constants.DYNAMIC_VAR_PREFIX;
 import static com.cognitree.kronos.scheduler.model.Constants.DYNAMIC_VAR_SUFFFIX;
-import static com.cognitree.kronos.scheduler.model.Messages.FAILED_DEPENDEE_TASK;
-import static com.cognitree.kronos.scheduler.model.Messages.FAILED_TO_RESOLVE_DEPENDENCY;
-import static com.cognitree.kronos.scheduler.model.Messages.SKIPPED_DEPENDEE_TASK;
-import static com.cognitree.kronos.scheduler.model.Messages.STOPPED_DEPENDEE_TASK;
-import static com.cognitree.kronos.scheduler.model.Messages.STOP_TASK;
-import static com.cognitree.kronos.scheduler.model.Messages.TASK_SUBMISSION_FAILED;
-import static com.cognitree.kronos.scheduler.model.Messages.TIMED_OUT;
 import static java.util.Comparator.comparing;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -106,7 +104,7 @@ final class TaskSchedulerService implements Service {
     }
 
     @Override
-    public void init() throws Exception {
+    public void init() {
         logger.info("Initializing task scheduler service");
         taskProvider = new TaskProvider();
     }
@@ -133,17 +131,16 @@ final class TaskSchedulerService implements Service {
     }
 
     /**
-     * stop a task
+     * abort a task
      *
-     * @param taskId id of the task to stop
+     * @param task task to abort
      */
-    public void stop(TaskId taskId) throws ServiceException {
-        logger.info("Stopping task {}", taskId);
+    public void abort(Task task) throws ServiceException {
+        logger.info("Received request to abort task {}", task);
         final ControlMessage controlMessage = new ControlMessage();
-        controlMessage.setTaskId(taskId);
-        controlMessage.setAction(Action.STOP);
+        controlMessage.setTask(task);
+        controlMessage.setAction(Action.ABORT);
         QueueService.getService().send(controlMessage);
-        updateStatus(taskId, STOPPED, STOP_TASK);
     }
 
     private void reInitTaskProvider() throws ServiceException, ValidationException {
@@ -200,14 +197,16 @@ final class TaskSchedulerService implements Service {
     }
 
     private void consumeTaskStatusUpdates() {
+        final List<TaskStatusUpdate> taskStatusUpdates;
         try {
-            final List<TaskStatusUpdate> taskStatusUpdates = QueueService.getService().consumeTaskUpdates();
-            for (TaskStatusUpdate taskStatusUpdate : taskStatusUpdates) {
-                updateStatus(taskStatusUpdate.getTaskId(), taskStatusUpdate.getStatus(),
-                        taskStatusUpdate.getStatusMessage(), taskStatusUpdate.getContext());
-            }
+            taskStatusUpdates = QueueService.getService().consumeTaskUpdates();
         } catch (ServiceException e) {
             logger.error("Error consuming task status updates", e);
+            return;
+        }
+        for (TaskStatusUpdate taskStatusUpdate : taskStatusUpdates) {
+            updateStatus(taskStatusUpdate.getTaskId(), taskStatusUpdate.getStatus(),
+                    taskStatusUpdate.getStatusMessage(), taskStatusUpdate.getContext());
         }
     }
 
@@ -232,7 +231,7 @@ final class TaskSchedulerService implements Service {
             updateStatus(task, WAITING, null);
         } else {
             logger.error("Unable to resolve dependency for task {}, marking it as {}", task, FAILED);
-            updateStatus(task, FAILED, FAILED_TO_RESOLVE_DEPENDENCY);
+            updateStatus(task, FAILED, FAILED_TO_RESOLVE_DEPENDENCY_MESSAGE);
         }
     }
 
@@ -268,12 +267,12 @@ final class TaskSchedulerService implements Service {
                 break;
             case SCHEDULED:
                 break;
-            case SUBMITTED:
+            case RUNNING:
                 createTimeoutTask(task);
                 break;
             case SKIPPED:
             case FAILED:
-            case STOPPED:
+            case ABORTED:
                 markDependentTasksAsSkipped(task, status);
                 // do not break
             case SUCCESSFUL:
@@ -295,13 +294,13 @@ final class TaskSchedulerService implements Service {
             }
             switch (parentStatus) {
                 case FAILED:
-                    updateStatus(dependentTask, SKIPPED, FAILED_DEPENDEE_TASK);
+                    updateStatus(dependentTask, SKIPPED, FAILED_DEPENDEE_TASK_MESSAGE);
                     break;
-                case STOPPED:
-                    updateStatus(dependentTask, SKIPPED, STOPPED_DEPENDEE_TASK);
+                case ABORTED:
+                    updateStatus(dependentTask, SKIPPED, ABORTED_DEPENDEE_TASK_MESSAGE);
                     break;
                 default:
-                    updateStatus(dependentTask, SKIPPED, SKIPPED_DEPENDEE_TASK);
+                    updateStatus(dependentTask, SKIPPED, SKIPPED_DEPENDEE_TASK_MESSAGE);
                     break;
             }
         }
@@ -323,7 +322,7 @@ final class TaskSchedulerService implements Service {
                 updateStatus(task, SCHEDULED, null);
             } catch (ServiceException e) {
                 logger.error("Error submitting task {} for execution", task, e);
-                updateStatus(task, FAILED, TASK_SUBMISSION_FAILED);
+                updateStatus(task, FAILED, TASK_SUBMISSION_FAILED_MESSAGE);
             }
         }
     }
@@ -428,7 +427,7 @@ final class TaskSchedulerService implements Service {
         @Override
         public void run() {
             logger.info("Task {} has timed out, marking task as failed", task);
-            updateStatus(task, FAILED, TIMED_OUT);
+            updateStatus(task, FAILED, TIMED_OUT_EXECUTING_TASK_MESSAGE);
         }
     }
 }

@@ -59,7 +59,7 @@ public class QueueService implements Service {
         this.consumerConfig = queueConfig.getConsumerConfig();
         this.producerConfig = queueConfig.getProducerConfig();
         this.taskStatusQueue = queueConfig.getTaskStatusQueue();
-        this.controlQueue = queueConfig.getControlQueue();
+        this.controlQueue = queueConfig.getControlMessageQueue();
     }
 
     public static QueueService getService() {
@@ -117,11 +117,11 @@ public class QueueService implements Service {
         }
     }
 
-    public List<Task> consumeTask(String type, int tasksToPoll) throws ServiceException {
+    public List<Task> consumeTask(String type, int maxTasksToPoll) throws ServiceException {
         if (!consumers.containsKey(type)) {
             createConsumer(type, type);
         }
-        final List<String> records = consumers.get(type).poll(tasksToPoll);
+        final List<String> records = consumers.get(type).poll(maxTasksToPoll);
         if (records.isEmpty()) {
             return Collections.emptyList();
         }
@@ -155,7 +155,7 @@ public class QueueService implements Service {
         return taskStatusUpdates;
     }
 
-    public List<ControlMessage> consumeControlMessage() throws ServiceException {
+    public List<ControlMessage> consumeControlMessages() throws ServiceException {
         if (!consumers.containsKey(controlQueue)) {
             createConsumer(controlQueue, UUID.randomUUID().toString());
         }
@@ -180,8 +180,9 @@ public class QueueService implements Service {
         if (!producers.containsKey(topic)) {
             try {
                 final Producer producer = (Producer) Class.forName(producerConfig.getProducerClass())
-                        .getConstructor(String.class, ObjectNode.class)
-                        .newInstance(topic, producerConfig.getConfig());
+                        .getConstructor()
+                        .newInstance();
+                producer.init(topic, producerConfig.getConfig());
                 producers.put(topic, producer);
             } catch (InstantiationException | InvocationTargetException | NoSuchMethodException |
                     IllegalAccessException | ClassNotFoundException e) {
@@ -201,8 +202,9 @@ public class QueueService implements Service {
                 // a record should be consumed by only one consumer if they share the same consumer key
                 consumerConfig.put(CONSUMER_KEY, consumerKey);
                 final Consumer consumer = (Consumer) Class.forName(this.consumerConfig.getConsumerClass())
-                        .getConstructor(String.class, ObjectNode.class)
-                        .newInstance(topic, consumerConfig);
+                        .getConstructor()
+                        .newInstance();
+                consumer.init(topic, consumerConfig);
                 consumers.put(topic, consumer);
             } catch (InstantiationException | InvocationTargetException | NoSuchMethodException |
                     IllegalAccessException | ClassNotFoundException e) {

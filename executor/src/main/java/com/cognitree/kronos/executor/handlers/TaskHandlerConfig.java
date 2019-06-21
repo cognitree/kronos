@@ -17,6 +17,7 @@
 
 package com.cognitree.kronos.executor.handlers;
 
+import com.cognitree.kronos.model.Task;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Objects;
@@ -33,7 +34,7 @@ public class TaskHandlerConfig {
 
     /**
      * Configuration required by the handler to instantiate itself.
-     * This is passed as an arg to the constructor of {@link TaskHandler} at the time of instantiation.
+     * This is passed as an arg to the {@link TaskHandler#init(Task, ObjectNode)} method at the time of instantiation.
      */
     private ObjectNode config;
 

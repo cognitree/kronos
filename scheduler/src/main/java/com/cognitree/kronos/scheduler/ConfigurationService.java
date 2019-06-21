@@ -29,7 +29,6 @@ import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import com.cognitree.kronos.scheduler.model.events.ConfigUpdate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,9 +56,9 @@ public class ConfigurationService implements Service {
     private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
 
     private Consumer configurationConsumer;
-    private long configurationPollInterval;
+    private long pollIntervalInMs;
 
-    ConfigurationService(QueueConfig queueConfig, long configurationPollInterval) {
+    ConfigurationService(QueueConfig queueConfig) {
         if (queueConfig.getConfigurationQueue() == null || queueConfig.getConsumerConfig() == null) {
             logger.error("missing one or more mandatory configuration: configurationQueue/ consumerConfig ");
             throw new IllegalArgumentException("missing one or more mandatory configuration: " +
@@ -67,7 +66,7 @@ public class ConfigurationService implements Service {
         }
         this.consumerConfig = queueConfig.getConsumerConfig();
         this.configurationQueue = queueConfig.getConfigurationQueue();
-        this.configurationPollInterval = configurationPollInterval;
+        this.pollIntervalInMs = queueConfig.getPollIntervalInMs();
     }
 
     public static ConfigurationService getService() {
@@ -84,7 +83,8 @@ public class ConfigurationService implements Service {
     public void start() {
         logger.info("start: Starting configuration service");
         ServiceProvider.registerService(this);
-        scheduledExecutorService.scheduleAtFixedRate(this::failSafeProcessUpdates, configurationPollInterval, configurationPollInterval, MILLISECONDS);
+        scheduledExecutorService.scheduleAtFixedRate(this::failSafeProcessUpdates,
+                pollIntervalInMs, pollIntervalInMs, MILLISECONDS);
     }
 
     @Override
@@ -95,8 +95,9 @@ public class ConfigurationService implements Service {
     private void initConsumer() throws Exception {
         logger.info("Initializing configuration consumer with config {}", consumerConfig);
         configurationConsumer = (Consumer) Class.forName(consumerConfig.getConsumerClass())
-                .getConstructor(String.class, ObjectNode.class)
-                .newInstance(configurationQueue, consumerConfig.getConfig());
+                .getConstructor()
+                .newInstance();
+        configurationConsumer.init(configurationQueue, consumerConfig.getConfig());
     }
 
     /**
@@ -127,7 +128,8 @@ public class ConfigurationService implements Service {
                 logger.error("processUpdates: unable to parse the config update received: " + configUpdateAsString, e);
             } catch (UnsupportedOperationException | ServiceException | ValidationException | SchedulerException e) {
                 // Do not throw the exception but continue to process other updates
-                logger.error("processUpdates: error occurred in processing the config update received: " + configUpdateAsString, e);
+                logger.error("processUpdates: error occurred in processing the config update received: {}",
+                        configUpdateAsString, e);
             }
         }
     }

@@ -54,8 +54,8 @@ public class ExecutorApp {
                 getClass().getClassLoader().getResourceAsStream("queue.yaml");
         final QueueConfig queueConfig = MAPPER.readValue(queueConfigAsStream, QueueConfig.class);
         final QueueService queueService = new QueueService(queueConfig);
-        final TaskExecutionService taskExecutionService = new TaskExecutionService(executorConfig.getTaskHandlerConfig(),
-                executorConfig.getPollIntervalInMs());
+        final TaskExecutionService taskExecutionService =
+                new TaskExecutionService(executorConfig.getTaskHandlerConfig(), queueConfig.getPollIntervalInMs());
         logger.info("Initializing executor app");
         queueService.init();
         taskExecutionService.init();

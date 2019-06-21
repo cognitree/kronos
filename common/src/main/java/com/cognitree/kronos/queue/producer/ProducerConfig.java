@@ -33,7 +33,7 @@ public class ProducerConfig {
 
     /**
      * Configuration to be passed to producer to instantiate itself.
-     * This will be passed as an arg to constructor of {@link Producer} at the time of instantiation.
+     * This will be passed as an arg to {@link Producer#init(String, ObjectNode)} at the time of instantiation.
      */
     private ObjectNode config;
 

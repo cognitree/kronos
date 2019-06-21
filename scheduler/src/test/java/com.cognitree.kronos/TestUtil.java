@@ -44,6 +44,7 @@ public class TestUtil {
     private static final ObjectMapper YAML_MAPPER = new ObjectMapper(new YAMLFactory());
 
     private static final CronSchedule SCHEDULE = new CronSchedule();
+
     static {
         SCHEDULE.setCronExpression("0/2 * * * * ?");
     }

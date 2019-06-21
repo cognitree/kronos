@@ -19,10 +19,7 @@ package com.cognitree.kronos.queue.producer;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public abstract class Producer {
-
-    final String topic;
-    final ObjectNode producerConfig;
+public interface Producer {
 
     /**
      * during initialization phase a call is made to initialize producer using {@link ProducerConfig#getConfig()}.
@@ -30,12 +27,9 @@ public abstract class Producer {
      *
      * @param producerConfig configuration used to initialize the producer.
      */
-    public Producer(String topic, ObjectNode producerConfig) {
-        this.topic = topic;
-        this.producerConfig = producerConfig;
-    }
+    void init(String topic, ObjectNode producerConfig);
 
-    public abstract void broadcast(String record);
+    void broadcast(String record);
 
     /**
      * sends the record to the underlying queue.
@@ -43,7 +37,7 @@ public abstract class Producer {
      *
      * @param record record to send
      */
-    public abstract void send(String record);
+    void send(String record);
 
     /**
      * sends the record to the underlying queue in-order.
@@ -52,7 +46,7 @@ public abstract class Producer {
      * @param record      record to send
      * @param orderingKey key to decide how the message is sent for in-order delivery
      */
-    public abstract void sendInOrder(String record, String orderingKey);
+    void sendInOrder(String record, String orderingKey);
 
-    public abstract void close();
+    void close();
 }

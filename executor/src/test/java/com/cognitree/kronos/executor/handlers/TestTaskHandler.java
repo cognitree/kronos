@@ -27,17 +27,20 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class TestTaskHandler extends TaskHandler {
+public class TestTaskHandler implements TaskHandler {
     private static final Logger logger = LoggerFactory.getLogger(TestTaskHandler.class);
 
     private static final List<String> tasks = Collections.synchronizedList(new ArrayList<>());
 
-    public TestTaskHandler(Task task, ObjectNode handlerConfig) {
-        super(task, handlerConfig);
+    private Task task;
+
+    public static void finishExecution(String taskName) {
+        tasks.add(taskName);
     }
 
-    public static void finishExecution(String taskId) {
-        tasks.add(taskId);
+    @Override
+    public void init(Task task, ObjectNode config) {
+        this.task = task;
     }
 
     @Override
@@ -47,8 +50,7 @@ public class TestTaskHandler extends TaskHandler {
         while (!tasks.contains(task.getName())) {
             try {
                 Thread.sleep(50);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            } catch (InterruptedException ignored) {
             }
         }
         tasks.remove(task.getName());

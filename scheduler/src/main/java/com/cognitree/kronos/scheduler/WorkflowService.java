@@ -183,7 +183,7 @@ public class WorkflowService implements Service {
         taskExecutionCounters.setSuccessful(taskStatusMap.getOrDefault(Task.Status.SUCCESSFUL, 0));
         taskExecutionCounters.setFailed(taskStatusMap.getOrDefault(Task.Status.FAILED, 0));
         taskExecutionCounters.setSkipped(taskStatusMap.getOrDefault(Task.Status.SKIPPED, 0));
-        taskExecutionCounters.setStopped(taskStatusMap.getOrDefault(Task.Status.STOPPED, 0));
+        taskExecutionCounters.setAborted(taskStatusMap.getOrDefault(Task.Status.ABORTED, 0));
         workflowStatistics.setTasks(taskExecutionCounters);
 
         workflowStatistics.setFrom(createdAfter);

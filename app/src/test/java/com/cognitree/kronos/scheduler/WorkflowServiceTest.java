@@ -17,8 +17,8 @@
 
 package com.cognitree.kronos.scheduler;
 
-import com.cognitree.kronos.executor.handlers.MockSuccessTaskHandler;
 import com.cognitree.kronos.ServiceException;
+import com.cognitree.kronos.executor.handlers.MockSuccessTaskHandler;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.Workflow;
@@ -176,7 +176,7 @@ public class WorkflowServiceTest extends ServiceTest {
         final List<Task> workflowTasks = taskService.get(workflowTrigger.getNamespace());
         Assert.assertEquals(3, workflowTasks.size());
         for (Task workflowTask : workflowTasks) {
-            Assert.assertEquals(workflowTask.getContext(), MockSuccessTaskHandler.CONTEXT);
+            Assert.assertEquals(MockSuccessTaskHandler.CONTEXT, workflowTask.getContext());
             if (workflowTask.getName().equals("taskTwo")) {
                 Assert.assertEquals(1234, workflowTask.getProperties().get("keyB"));
             }

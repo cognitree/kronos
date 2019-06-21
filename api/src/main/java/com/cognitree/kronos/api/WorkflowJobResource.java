@@ -17,10 +17,10 @@
 
 package com.cognitree.kronos.api;
 
+import com.cognitree.kronos.ServiceException;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.response.JobResponse;
 import com.cognitree.kronos.scheduler.JobService;
-import com.cognitree.kronos.ServiceException;
 import com.cognitree.kronos.scheduler.ValidationException;
 import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.scheduler.model.Job.Status;

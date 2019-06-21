@@ -37,7 +37,6 @@ import java.util.UUID;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.RUNNING;
 import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
-import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
 import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
 
 public class TaskExecutorServiceTest {
@@ -72,9 +71,7 @@ public class TaskExecutorServiceTest {
         QueueService.getService().send(taskOne);
         Thread.sleep(1000);
         consumeTaskStatus(tasksMap);
-        // depending on the number of available cores task picked for execution
-        // will be in one of the two state RUNNING or SUBMITTED
-        Assert.assertTrue(taskOne.getStatus().equals(RUNNING) || taskOne.getStatus().equals(SUBMITTED));
+        Assert.assertEquals(RUNNING, taskOne.getStatus());
         TestTaskHandler.finishExecution(taskOne.getName());
         Thread.sleep(1000);
         consumeTaskStatus(tasksMap);
@@ -152,18 +149,16 @@ public class TaskExecutorServiceTest {
 
         Thread.sleep(1000);
         consumeTaskStatus(tasksMap);
-        // depending on the number of available cores task picked for execution
-        // will be in one of the two state RUNNING or SUBMITTED
-        Assert.assertTrue(taskOne.getStatus().equals(RUNNING) || taskOne.getStatus().equals(SUBMITTED));
-        Assert.assertTrue(taskTwo.getStatus().equals(RUNNING) || taskTwo.getStatus().equals(SUBMITTED));
-        Assert.assertTrue(taskThree.getStatus().equals(RUNNING) || taskThree.getStatus().equals(SUBMITTED));
-        Assert.assertTrue(taskFour.getStatus().equals(RUNNING) || taskFour.getStatus().equals(SUBMITTED));
+        Assert.assertEquals(RUNNING, taskOne.getStatus());
+        Assert.assertEquals(RUNNING, taskTwo.getStatus());
+        Assert.assertEquals(RUNNING, taskThree.getStatus());
+        Assert.assertEquals(RUNNING, taskFour.getStatus());
         Assert.assertEquals(SCHEDULED, taskFive.getStatus());
         TestTaskHandler.finishExecution(taskOne.getName());
         Thread.sleep(1000);
         consumeTaskStatus(tasksMap);
         Assert.assertEquals(SUCCESSFUL, taskOne.getStatus());
-        Assert.assertTrue(taskFive.getStatus().equals(RUNNING) || taskFive.getStatus().equals(SUBMITTED));
+        Assert.assertEquals(RUNNING, taskFive.getStatus());
         TestTaskHandler.finishExecution(taskTwo.getName());
         TestTaskHandler.finishExecution(taskThree.getName());
         TestTaskHandler.finishExecution(taskFour.getName());

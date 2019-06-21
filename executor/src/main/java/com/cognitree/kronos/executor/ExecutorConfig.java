@@ -23,7 +23,6 @@ import com.cognitree.kronos.executor.handlers.TaskHandlerConfig;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 /**
  * defines configurations for executor.
@@ -36,11 +35,6 @@ public class ExecutorConfig {
      */
     private Map<String, TaskHandlerConfig> taskHandlerConfig = new HashMap<>();
 
-    /**
-     * time duration between successive poll to queue in millisecond, defaults to 1000ms.
-     */
-    private long pollIntervalInMs = TimeUnit.SECONDS.toMillis(1);
-
     public Map<String, TaskHandlerConfig> getTaskHandlerConfig() {
         return taskHandlerConfig;
     }
@@ -49,33 +43,23 @@ public class ExecutorConfig {
         this.taskHandlerConfig = taskHandlerConfig;
     }
 
-    public long getPollIntervalInMs() {
-        return pollIntervalInMs;
-    }
-
-    public void setPollIntervalInMs(long pollIntervalInMs) {
-        this.pollIntervalInMs = pollIntervalInMs;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof ExecutorConfig)) return false;
         ExecutorConfig that = (ExecutorConfig) o;
-        return pollIntervalInMs == that.pollIntervalInMs &&
-                Objects.equals(taskHandlerConfig, that.taskHandlerConfig);
+        return Objects.equals(taskHandlerConfig, that.taskHandlerConfig);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(taskHandlerConfig, pollIntervalInMs);
+        return Objects.hash(taskHandlerConfig);
     }
 
     @Override
     public String toString() {
         return "ExecutorConfig{" +
                 "taskHandlerConfig=" + taskHandlerConfig +
-                ", pollIntervalInMs=" + pollIntervalInMs +
                 '}';
     }
 }

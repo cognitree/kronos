@@ -74,7 +74,7 @@ public class SchedulerApp {
         // Workflow scheduler services starts the quartz scheduler which in turn might schedule some tasks
         // based on misfire policies and if the task scheduler service is not initialized that, it will result in NPE.
         final TaskSchedulerService taskSchedulerService =
-                new TaskSchedulerService(schedulerConfig.getPollIntervalInMs());
+                new TaskSchedulerService(queueConfig.getPollIntervalInMs());
         final WorkflowSchedulerService workflowSchedulerService = new WorkflowSchedulerService();
 
         logger.info("Initializing scheduler app");
@@ -108,8 +108,7 @@ public class SchedulerApp {
 
     private void startAddOnServices(SchedulerConfig schedulerConfig, QueueConfig queueConfig) throws Exception {
         if (schedulerConfig.isEnableConfigurationService()) {
-            final ConfigurationService configurationService = new ConfigurationService(queueConfig,
-                    schedulerConfig.getPollIntervalInMs());
+            final ConfigurationService configurationService = new ConfigurationService(queueConfig);
             configurationService.init();
             configurationService.start();
         }

@@ -47,12 +47,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import static com.cognitree.kronos.model.Task.Status.ABORTED;
+import static com.cognitree.kronos.model.Task.Status.ABORTING;
 import static com.cognitree.kronos.model.Task.Status.CREATED;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.RUNNING;
 import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
-import static com.cognitree.kronos.model.Task.Status.STOPPED;
-import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
 import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
 import static com.cognitree.kronos.model.Task.Status.UP_FOR_RETRY;
 import static com.cognitree.kronos.model.Task.Status.WAITING;
@@ -226,23 +226,24 @@ public class TaskService implements Service {
     public void performAction(TaskId taskId, Task.Action action) throws ServiceException, ValidationException {
         logger.debug("Received request to perform action {} on task {}", taskId, action);
         validateJob(taskId.getNamespace(), taskId.getJob(), taskId.getWorkflow());
+        final Task task;
         try {
-            Task task = taskStore.load(taskId);
-            if (task == null) {
-                throw TASK_NOT_FOUND.createException(taskId.getName(), taskId.getJob(),
-                        taskId.getWorkflow(), taskId.getNamespace());
-            }
-            if (task.getStatus().isFinal()) {
-                return;
-            }
-            switch (action) {
-                case STOP:
-                    TaskSchedulerService.getService().stop(taskId);
-                    break;
-            }
+            task = taskStore.load(taskId);
         } catch (StoreException e) {
             logger.error("No task found with id {}", taskId, e);
             throw new ServiceException(e.getMessage(), e.getCause());
+        }
+        if (task == null) {
+            throw TASK_NOT_FOUND.createException(taskId.getName(), taskId.getJob(),
+                    taskId.getWorkflow(), taskId.getNamespace());
+        }
+        if (task.getStatus().isFinal()) {
+            return;
+        }
+        switch (action) {
+            case ABORT:
+                TaskSchedulerService.getService().abort(task);
+                break;
         }
     }
 
@@ -300,7 +301,7 @@ public class TaskService implements Service {
                 case UP_FOR_RETRY:
                     task.setRetryCount(task.getRetryCount() + 1);
                     break;
-                case SUBMITTED:
+                case RUNNING:
                     if (task.getSubmittedAt() == null) { // TODO fix me: support for retry
                         task.setSubmittedAt(System.currentTimeMillis());
                     }
@@ -308,7 +309,7 @@ public class TaskService implements Service {
                 case SUCCESSFUL:
                 case SKIPPED:
                 case FAILED:
-                case STOPPED:
+                case ABORTED:
                     task.setCompletedAt(System.currentTimeMillis());
                     break;
             }
@@ -328,19 +329,20 @@ public class TaskService implements Service {
                 return currentStatus == CREATED;
             case SCHEDULED:
                 return currentStatus == WAITING || currentStatus == UP_FOR_RETRY;
-            case SUBMITTED:
-                return currentStatus == SCHEDULED;
             case RUNNING:
-                return currentStatus == SUBMITTED;
+                return currentStatus == SCHEDULED;
             case UP_FOR_RETRY:
                 return currentStatus == RUNNING;
             case SKIPPED:
                 return currentStatus == CREATED || currentStatus == WAITING;
             case SUCCESSFUL:
                 return currentStatus == RUNNING;
+            case ABORTING:
+                return currentStatus == RUNNING;
+            case ABORTED:
+                return currentStatus == ABORTING;
             case FAILED:
-            case STOPPED:
-                return currentStatus != SUCCESSFUL && currentStatus != FAILED && currentStatus != STOPPED;
+                return currentStatus != SUCCESSFUL && currentStatus != FAILED && currentStatus != ABORTED;
             default:
                 return false;
         }

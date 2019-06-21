@@ -25,15 +25,18 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class TypeBTaskHandler extends TaskHandler {
+public class TypeBTaskHandler implements TaskHandler {
     private static final Set<String> handledTasks = Collections.synchronizedSet(new HashSet<>());
 
-    public TypeBTaskHandler(Task task, ObjectNode handlerConfig) {
-        super(task, handlerConfig);
-    }
+    private Task task;
 
     public static boolean isHandled(String taskId) {
         return handledTasks.contains(taskId);
+    }
+
+    @Override
+    public void init(Task task, ObjectNode config) {
+        this.task = task;
     }
 
     @Override

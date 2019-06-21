@@ -21,7 +21,7 @@ import com.cognitree.kronos.executor.handlers.MockFailureTaskHandler;
 import com.cognitree.kronos.executor.handlers.MockTaskHandler;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.scheduler.model.Job;
-import com.cognitree.kronos.scheduler.model.Messages;
+import com.cognitree.kronos.model.Messages;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import org.junit.Assert;
 import org.junit.Test;
@@ -186,7 +186,7 @@ public class JobServiceTest extends ServiceTest {
                 case "taskThree":
                     taskThree = task;
                     Assert.assertEquals(Task.Status.FAILED, task.getStatus());
-                    Assert.assertEquals(Messages.TIMED_OUT, task.getStatusMessage());
+                    Assert.assertEquals(Messages.TIMED_OUT_EXECUTING_TASK_MESSAGE, task.getStatusMessage());
                     break;
                 default:
                     Assert.fail();
@@ -229,7 +229,7 @@ public class JobServiceTest extends ServiceTest {
                     break;
                 case "taskThree":
                     Assert.assertEquals(Task.Status.SKIPPED, task.getStatus());
-                    Assert.assertEquals(Messages.FAILED_DEPENDEE_TASK, task.getStatusMessage());
+                    Assert.assertEquals(Messages.FAILED_DEPENDEE_TASK_MESSAGE, task.getStatusMessage());
                     break;
                 default:
                     Assert.fail();
