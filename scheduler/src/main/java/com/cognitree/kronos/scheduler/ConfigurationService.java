@@ -49,8 +49,7 @@ public class ConfigurationService implements Service {
 
     private static final ObjectReader READER = new ObjectMapper().reader().forType(ConfigUpdate.class);
 
-    // used in junit
-    final String configurationQueue;
+    private final String configurationQueue;
 
     private final ConsumerConfig consumerConfig;
     private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
