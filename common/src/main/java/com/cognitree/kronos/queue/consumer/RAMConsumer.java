@@ -30,10 +30,13 @@ public class RAMConsumer implements Consumer {
     private static final Logger logger = LoggerFactory.getLogger(RAMConsumer.class);
 
     private String topic;
+    private LinkedBlockingQueue<String> blockingQueue;
 
     @Override
     public void init(String topic, ObjectNode config) {
+        logger.info("Initializing consumer for RAM(in-memory) queue on topic {} with config {}", topic, config);
         this.topic = topic;
+        blockingQueue = RAMQueueFactory.getQueue(topic);
     }
 
     @Override
@@ -43,9 +46,8 @@ public class RAMConsumer implements Consumer {
 
     @Override
     public List<String> poll(int size) {
-        logger.trace("Received request to poll messages from topic {} with max size {}", topic, size);
-        final LinkedBlockingQueue<String> blockingQueue = RAMQueueFactory.getQueue(topic);
-        List<String> records = new ArrayList<>();
+        logger.trace("Received request to poll {} message from topic {}", size, topic);
+        final List<String> records = new ArrayList<>();
         while (!blockingQueue.isEmpty() && records.size() < size)
             records.add(blockingQueue.poll());
         return records;

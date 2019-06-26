@@ -125,7 +125,7 @@ public class Workflow extends WorkflowId {
         private Map<String, Object> properties = new HashMap<>();
         private List<Policy> policies = new ArrayList<>();
 
-        private long maxExecutionTimeInMs = TimeUnit.DAYS.toMillis(1);
+        private long maxExecutionTimeInMs = -1;
         private boolean enabled = true;
 
         public String getName() {

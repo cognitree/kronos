@@ -22,16 +22,19 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.LinkedBlockingQueue;
+
 public class RAMProducer implements Producer {
     private static final Logger logger = LoggerFactory.getLogger(RAMProducer.class);
 
     private String topic;
+    private LinkedBlockingQueue<String> blockingQueue;
 
     @Override
     public void init(String topic, ObjectNode config) {
-        logger.info("Initializing producer for RAM(in-memory) queue for topic {} with config {}",
-                topic, config);
+        logger.info("Initializing producer for RAM(in-memory) queue for topic {} with config {}", topic, config);
         this.topic = topic;
+        blockingQueue = RAMQueueFactory.getQueue(topic);
     }
 
     @Override
@@ -46,9 +49,9 @@ public class RAMProducer implements Producer {
 
     @Override
     public void sendInOrder(String record, String orderingKey) {
-        logger.trace("Received request to send message {} on topic {} with orderingKey {}",
-                record, topic, orderingKey);
-        RAMQueueFactory.getQueue(topic).add(record);
+        logger.trace("Received request to send message {} with orderingKey {} on topic {}",
+                record, orderingKey, topic);
+        blockingQueue.add(record);
     }
 
     @Override

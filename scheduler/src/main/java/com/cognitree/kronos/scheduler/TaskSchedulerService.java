@@ -171,6 +171,11 @@ final class TaskSchedulerService implements Service {
     }
 
     private void createTimeoutTask(Task task) {
+        if (task.getMaxExecutionTimeInMs() == -1) {
+            logger.debug("Timeout is set to {} for task {}, skip creating timeout task",
+                    task.getMaxExecutionTimeInMs(), task.getIdentity());
+            return;
+        }
         if (taskTimeoutHandlersMap.containsKey(task.getIdentity())) {
             logger.debug("Timeout task is already scheduled for task {}", task.getIdentity());
             return;
