@@ -23,13 +23,12 @@ import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import org.junit.Assert;
 import org.junit.Test;
-import org.quartz.Scheduler;
 
 import java.util.Collections;
 import java.util.List;
 
 import static com.cognitree.kronos.TestUtil.scheduleWorkflow;
-import static com.cognitree.kronos.TestUtil.waitForTriggerToComplete;
+import static com.cognitree.kronos.TestUtil.waitForJobsToTriggerAndComplete;
 
 public class TaskServiceTest extends ServiceTest {
 
@@ -38,11 +37,8 @@ public class TaskServiceTest extends ServiceTest {
         final WorkflowTrigger workflowTriggerOne = scheduleWorkflow("workflows/workflow-template.yaml");
         final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow("workflows/workflow-template.yaml");
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        waitForTriggerToComplete(workflowTriggerOne, scheduler);
-        waitForTriggerToComplete(workflowTriggerTwo, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForJobsToTriggerAndComplete(workflowTriggerOne);
+        waitForJobsToTriggerAndComplete(workflowTriggerTwo);
 
         TaskService taskService = TaskService.getService();
         final List<Task> workflowOneTasks = taskService.get(workflowTriggerOne.getNamespace());
@@ -56,11 +52,8 @@ public class TaskServiceTest extends ServiceTest {
         final WorkflowTrigger workflowTriggerOne = scheduleWorkflow("workflows/workflow-template.yaml");
         final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow("workflows/workflow-template.yaml");
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        waitForTriggerToComplete(workflowTriggerOne, scheduler);
-        waitForTriggerToComplete(workflowTriggerTwo, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForJobsToTriggerAndComplete(workflowTriggerOne);
+        waitForJobsToTriggerAndComplete(workflowTriggerTwo);
 
         JobService jobService = JobService.getService();
         TaskService taskService = TaskService.getService();
@@ -84,11 +77,8 @@ public class TaskServiceTest extends ServiceTest {
         final WorkflowTrigger workflowTriggerOne = scheduleWorkflow("workflows/workflow-template.yaml");
         final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow("workflows/workflow-template.yaml");
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        waitForTriggerToComplete(workflowTriggerOne, scheduler);
-        waitForTriggerToComplete(workflowTriggerTwo, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForJobsToTriggerAndComplete(workflowTriggerOne);
+        waitForJobsToTriggerAndComplete(workflowTriggerTwo);
 
         TaskService taskService = TaskService.getService();
         final List<Task> workflowOneTasks = taskService.get(workflowTriggerOne.getNamespace(), Collections.singletonList(Task.Status.SUCCESSFUL)
@@ -104,10 +94,7 @@ public class TaskServiceTest extends ServiceTest {
     public void testDeleteTask() throws Exception {
         final WorkflowTrigger workflowTrigger = scheduleWorkflow("workflows/workflow-template.yaml");
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        waitForTriggerToComplete(workflowTrigger, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForJobsToTriggerAndComplete(workflowTrigger);
 
         TaskService taskService = TaskService.getService();
         final List<Task> workflowOneTasks = taskService.get(workflowTrigger.getNamespace());
@@ -123,10 +110,7 @@ public class TaskServiceTest extends ServiceTest {
     public void testTaskWithContextFromDependee() throws Exception {
         final WorkflowTrigger workflowTrigger = scheduleWorkflow("workflows/workflow-template-with-task-context.yaml");
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        waitForTriggerToComplete(workflowTrigger, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForJobsToTriggerAndComplete(workflowTrigger);
 
         TaskService taskService = TaskService.getService();
         final List<Task> workflowTasks = taskService.get(workflowTrigger.getNamespace());

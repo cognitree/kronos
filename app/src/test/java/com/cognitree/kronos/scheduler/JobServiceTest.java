@@ -24,12 +24,11 @@ import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import org.junit.Assert;
 import org.junit.Test;
-import org.quartz.Scheduler;
 
 import java.util.List;
 
 import static com.cognitree.kronos.TestUtil.scheduleWorkflow;
-import static com.cognitree.kronos.TestUtil.waitForTriggerToComplete;
+import static com.cognitree.kronos.TestUtil.waitForJobsToTriggerAndComplete;
 
 public class JobServiceTest extends ServiceTest {
 
@@ -38,12 +37,8 @@ public class JobServiceTest extends ServiceTest {
         final WorkflowTrigger workflowTriggerOne = scheduleWorkflow("workflows/workflow-template.yaml");
         final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow("workflows/workflow-template.yaml");
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        // wait for both the job to be triggered
-        waitForTriggerToComplete(workflowTriggerOne, scheduler);
-        waitForTriggerToComplete(workflowTriggerTwo, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForJobsToTriggerAndComplete(workflowTriggerOne);
+        waitForJobsToTriggerAndComplete(workflowTriggerTwo);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTriggerOne.getNamespace());
@@ -60,12 +55,8 @@ public class JobServiceTest extends ServiceTest {
         final WorkflowTrigger workflowTriggerOne = scheduleWorkflow("workflows/workflow-template.yaml");
         final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow("workflows/workflow-template.yaml");
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        // wait for both the job to be triggered
-        waitForTriggerToComplete(workflowTriggerOne, scheduler);
-        waitForTriggerToComplete(workflowTriggerTwo, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForJobsToTriggerAndComplete(workflowTriggerOne);
+        waitForJobsToTriggerAndComplete(workflowTriggerTwo);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTriggerOne.getNamespace());
@@ -82,12 +73,8 @@ public class JobServiceTest extends ServiceTest {
         final WorkflowTrigger workflowTriggerOne = scheduleWorkflow("workflows/workflow-template.yaml");
         final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow("workflows/workflow-template.yaml");
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        // wait for both the job to be triggered
-        waitForTriggerToComplete(workflowTriggerOne, scheduler);
-        waitForTriggerToComplete(workflowTriggerTwo, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForJobsToTriggerAndComplete(workflowTriggerOne);
+        waitForJobsToTriggerAndComplete(workflowTriggerTwo);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTriggerOne.getNamespace(), workflowTriggerOne.getWorkflow(),
@@ -104,12 +91,8 @@ public class JobServiceTest extends ServiceTest {
         final WorkflowTrigger workflowTriggerOne = scheduleWorkflow("workflows/workflow-template.yaml");
         final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow("workflows/workflow-template.yaml");
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        // wait for both the job to be triggered
-        waitForTriggerToComplete(workflowTriggerOne, scheduler);
-        waitForTriggerToComplete(workflowTriggerTwo, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForJobsToTriggerAndComplete(workflowTriggerOne);
+        waitForJobsToTriggerAndComplete(workflowTriggerTwo);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTriggerOne.getNamespace(), workflowTriggerOne.getWorkflow(),
@@ -125,11 +108,7 @@ public class JobServiceTest extends ServiceTest {
     public void testGetJobTasks() throws Exception {
         final WorkflowTrigger workflowTrigger = scheduleWorkflow("workflows/workflow-template.yaml");
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        // wait for the job to be triggered
-        waitForTriggerToComplete(workflowTrigger, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForJobsToTriggerAndComplete(workflowTrigger);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
@@ -159,11 +138,7 @@ public class JobServiceTest extends ServiceTest {
     public void testGetJobTasksFailedDueToTimeout() throws Exception {
         final WorkflowTrigger workflowTrigger = scheduleWorkflow("workflows/workflow-template-timeout-tasks.yaml");
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        // wait for the job to be triggered
-        waitForTriggerToComplete(workflowTrigger, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForJobsToTriggerAndComplete(workflowTrigger);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
@@ -195,11 +170,7 @@ public class JobServiceTest extends ServiceTest {
     public void testGetJobTasksFailedDueToHandler() throws Exception {
         final WorkflowTrigger workflowTrigger = scheduleWorkflow("workflows/workflow-template-failed-handler.yaml");
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        // wait for the job to be triggered
-        waitForTriggerToComplete(workflowTrigger, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForJobsToTriggerAndComplete(workflowTrigger);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
@@ -233,11 +204,7 @@ public class JobServiceTest extends ServiceTest {
     public void testDeleteJob() throws Exception {
         final WorkflowTrigger workflowTrigger = scheduleWorkflow("workflows/workflow-template.yaml");
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        // wait for both the job to be triggered
-        waitForTriggerToComplete(workflowTrigger, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForJobsToTriggerAndComplete(workflowTrigger);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),

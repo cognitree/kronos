@@ -29,7 +29,6 @@ import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import org.junit.Assert;
 import org.junit.Test;
 import org.quartz.DateBuilder;
-import org.quartz.Scheduler;
 
 import java.util.HashMap;
 import java.util.List;
@@ -39,7 +38,7 @@ import static com.cognitree.kronos.TestUtil.createNamespace;
 import static com.cognitree.kronos.TestUtil.createWorkflow;
 import static com.cognitree.kronos.TestUtil.createWorkflowTrigger;
 import static com.cognitree.kronos.TestUtil.scheduleWorkflow;
-import static com.cognitree.kronos.TestUtil.waitForTriggerToComplete;
+import static com.cognitree.kronos.TestUtil.waitForJobsToTriggerAndComplete;
 import static org.quartz.DailyTimeIntervalScheduleBuilder.ALL_DAYS_OF_THE_WEEK;
 
 public class WorkflowTriggerServiceTest extends ServiceTest {
@@ -329,10 +328,7 @@ public class WorkflowTriggerServiceTest extends ServiceTest {
         final WorkflowTrigger workflowTrigger = scheduleWorkflow("workflows/workflow-template-with-properties.yaml",
                 workflowProps, triggerProps);
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        waitForTriggerToComplete(workflowTrigger, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForJobsToTriggerAndComplete(workflowTrigger);
 
         TaskService taskService = TaskService.getService();
         final List<Task> workflowTasks = taskService.get(workflowTrigger.getNamespace());
@@ -360,10 +356,7 @@ public class WorkflowTriggerServiceTest extends ServiceTest {
         final WorkflowTrigger workflowTrigger = scheduleWorkflow("workflows/workflow-template-with-properties.yaml",
                 workflowProps, triggerProps);
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        waitForTriggerToComplete(workflowTrigger, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForJobsToTriggerAndComplete(workflowTrigger);
 
         TaskService taskService = TaskService.getService();
         final List<Task> workflowTasks = taskService.get(workflowTrigger.getNamespace());
