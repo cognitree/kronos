@@ -34,16 +34,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class QueueService implements Service {
-    private static final Logger logger = LoggerFactory.getLogger(QueueService.class);
+    public static final String EXECUTOR_QUEUE = "executor-queue";
+    public static final String SCHEDULER_QUEUE = "scheduler-queue";
 
+    private static final Logger logger = LoggerFactory.getLogger(QueueService.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final String CONSUMER_KEY = "consumerKey";
 
@@ -52,18 +53,20 @@ public class QueueService implements Service {
     private final String taskStatusQueue;
     private final String controlQueue;
 
-    private final HashMap<String, Consumer> consumers = new HashMap<>();
-    private final HashMap<String, Producer> producers = new HashMap<>();
+    private final ConcurrentHashMap<String, Consumer> consumers = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Producer> producers = new ConcurrentHashMap<>();
+    private String serviceName;
 
-    public QueueService(QueueConfig queueConfig) {
+    public QueueService(QueueConfig queueConfig, String serviceName) {
         this.consumerConfig = queueConfig.getConsumerConfig();
         this.producerConfig = queueConfig.getProducerConfig();
         this.taskStatusQueue = queueConfig.getTaskStatusQueue();
         this.controlQueue = queueConfig.getControlMessageQueue();
+        this.serviceName = serviceName;
     }
 
-    public static QueueService getService() {
-        return (QueueService) ServiceProvider.getService(QueueService.class.getSimpleName());
+    public static QueueService getService(String serviceName) {
+        return (QueueService) ServiceProvider.getService(serviceName);
     }
 
     @Override
@@ -118,6 +121,7 @@ public class QueueService implements Service {
     }
 
     public List<Task> consumeTask(String type, int maxTasksToPoll) throws ServiceException {
+        logger.debug("Received request to consume {} tasks of type {}", maxTasksToPoll, type);
         if (!consumers.containsKey(type)) {
             createConsumer(type, type);
         }
@@ -136,7 +140,8 @@ public class QueueService implements Service {
         return tasks;
     }
 
-    public List<TaskStatusUpdate> consumeTaskUpdates() throws ServiceException {
+    public List<TaskStatusUpdate> consumeTaskStatusUpdates() throws ServiceException {
+        logger.debug("Received request to consume task status update");
         if (!consumers.containsKey(taskStatusQueue)) {
             createConsumer(taskStatusQueue, taskStatusQueue);
         }
@@ -156,6 +161,7 @@ public class QueueService implements Service {
     }
 
     public List<ControlMessage> consumeControlMessages() throws ServiceException {
+        logger.debug("Received request to consume control message");
         if (!consumers.containsKey(controlQueue)) {
             createConsumer(controlQueue, UUID.randomUUID().toString());
         }
@@ -176,16 +182,15 @@ public class QueueService implements Service {
     }
 
     private synchronized void createProducer(String topic) throws ServiceException {
-        logger.info("Initializing producer with config {}", producerConfig);
         if (!producers.containsKey(topic)) {
+            logger.info("Creating producer with for topic {}", topic);
             try {
                 final Producer producer = (Producer) Class.forName(producerConfig.getProducerClass())
                         .getConstructor()
                         .newInstance();
                 producer.init(topic, producerConfig.getConfig());
                 producers.put(topic, producer);
-            } catch (InstantiationException | InvocationTargetException | NoSuchMethodException |
-                    IllegalAccessException | ClassNotFoundException e) {
+            } catch (Exception e) {
                 logger.error("Error creating producer for topic {}", topic, e);
                 throw new ServiceException("Error creating producer for topic " + topic, e.getCause());
             }
@@ -193,8 +198,8 @@ public class QueueService implements Service {
     }
 
     private synchronized void createConsumer(String topic, String consumerKey) throws ServiceException {
-        logger.info("Initializing consumer with config {}", consumerConfig);
         if (!consumers.containsKey(topic)) {
+            logger.info("Creating consumer for topic {} with consumer key {}", topic, consumerKey);
             try {
                 final ObjectNode consumerConfig = this.consumerConfig.getConfig() == null ? MAPPER.createObjectNode()
                         : this.consumerConfig.getConfig().deepCopy();
@@ -206,8 +211,7 @@ public class QueueService implements Service {
                         .newInstance();
                 consumer.init(topic, consumerConfig);
                 consumers.put(topic, consumer);
-            } catch (InstantiationException | InvocationTargetException | NoSuchMethodException |
-                    IllegalAccessException | ClassNotFoundException e) {
+            } catch (Exception e) {
                 logger.error("Error creating consumer for topic {}", topic, e);
                 throw new ServiceException("Error creating consumer for topic " + topic, e.getCause());
             }
@@ -224,5 +228,10 @@ public class QueueService implements Service {
     public void destroy() {
         logger.info("Destroying queue service");
         consumers.forEach((s, consumer) -> consumer.destroy());
+    }
+
+    @Override
+    public String getName() {
+        return serviceName;
     }
 }

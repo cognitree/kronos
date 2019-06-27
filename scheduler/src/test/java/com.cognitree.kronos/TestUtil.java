@@ -117,7 +117,7 @@ public class TestUtil {
     }
 
     public static void waitForJobsToTriggerAndComplete(WorkflowTrigger workflowTrigger) throws Exception {
-        int maxCount = 50;
+        int maxCount = 120;
         while (maxCount > 0) {
             final List<Job> jobs = JobService.getService().get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
                     workflowTrigger.getName(), 0, System.currentTimeMillis());
@@ -127,11 +127,8 @@ public class TestUtil {
                     break;
                 }
             }
-            Thread.sleep(100);
+            Thread.sleep(1000);
             maxCount--;
-        }
-        if (maxCount < 0) {
-            Assert.fail("failed while waiting for trigger to complete");
         }
     }
 }

@@ -26,6 +26,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 
+import static com.cognitree.kronos.queue.QueueService.EXECUTOR_QUEUE;
+
 /**
  * starts the executor app by reading configurations from classpath.
  */
@@ -53,7 +55,7 @@ public class ExecutorApp {
         final InputStream queueConfigAsStream =
                 getClass().getClassLoader().getResourceAsStream("queue.yaml");
         final QueueConfig queueConfig = MAPPER.readValue(queueConfigAsStream, QueueConfig.class);
-        final QueueService queueService = new QueueService(queueConfig);
+        final QueueService queueService = new QueueService(queueConfig, EXECUTOR_QUEUE);
         final TaskExecutionService taskExecutionService =
                 new TaskExecutionService(executorConfig.getTaskHandlerConfig(), queueConfig.getPollIntervalInMs());
         logger.info("Initializing executor app");
@@ -69,8 +71,8 @@ public class ExecutorApp {
         if (TaskExecutionService.getService() != null) {
             TaskExecutionService.getService().stop();
         }
-        if (QueueService.getService() != null) {
-            QueueService.getService().stop();
+        if (QueueService.getService(EXECUTOR_QUEUE) != null) {
+            QueueService.getService(EXECUTOR_QUEUE).stop();
         }
     }
 }

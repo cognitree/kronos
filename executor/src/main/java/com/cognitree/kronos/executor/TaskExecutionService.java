@@ -54,6 +54,7 @@ import static com.cognitree.kronos.model.Task.Status.ABORTING;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.RUNNING;
 import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
+import static com.cognitree.kronos.queue.QueueService.EXECUTOR_QUEUE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -131,10 +132,10 @@ public final class TaskExecutionService implements Service {
                 final int maxTasksToPoll = maxParallelTasks - taskTypeToRunningTasksCount.get(taskType);
                 if (maxTasksToPoll > 0) {
                     try {
-                        final List<Task> tasks = QueueService.getService().consumeTask(taskType, maxTasksToPoll);
+                        final List<Task> tasks = QueueService.getService(EXECUTOR_QUEUE).consumeTask(taskType, maxTasksToPoll);
                         for (Task task : tasks) {
-                            submit(task);
                             sendTaskStatusUpdate(task, RUNNING, null);
+                            submit(task);
                         }
                     } catch (ServiceException e) {
                         logger.error("Error consuming tasks for execution", e);
@@ -147,7 +148,7 @@ public final class TaskExecutionService implements Service {
     private void consumeControlMessages() {
         final List<ControlMessage> controlMessages;
         try {
-            controlMessages = QueueService.getService().consumeControlMessages();
+            controlMessages = QueueService.getService(EXECUTOR_QUEUE).consumeControlMessages();
         } catch (ServiceException e) {
             logger.error("Error consuming control messages", e);
             return;
@@ -225,7 +226,7 @@ public final class TaskExecutionService implements Service {
             taskStatusUpdate.setStatus(status);
             taskStatusUpdate.setStatusMessage(statusMessage);
             taskStatusUpdate.setContext(context);
-            QueueService.getService().send(taskStatusUpdate);
+            QueueService.getService(EXECUTOR_QUEUE).send(taskStatusUpdate);
         } catch (ServiceException e) {
             logger.error("Error adding task status {} to queue", status, e);
         }

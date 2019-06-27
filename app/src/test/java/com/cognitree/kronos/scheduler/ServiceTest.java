@@ -17,21 +17,28 @@
 
 package com.cognitree.kronos.scheduler;
 
+import com.cognitree.kronos.ServiceException;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.executor.ExecutorApp;
+import com.cognitree.kronos.executor.ExecutorConfig;
+import com.cognitree.kronos.executor.TaskExecutionService;
 import com.cognitree.kronos.queue.QueueService;
 import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.store.NamespaceStore;
 import com.cognitree.kronos.scheduler.store.StoreService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
+import java.io.InputStream;
 import java.util.List;
 
 public class ServiceTest {
     private static final SchedulerApp SCHEDULER_APP = new SchedulerApp();
     private static final ExecutorApp EXECUTOR_APP = new ExecutorApp();
+    private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
 
     private static List<Namespace> existingNamespaces;
 
@@ -40,6 +47,24 @@ public class ServiceTest {
         SCHEDULER_APP.start();
         EXECUTOR_APP.start();
         existingNamespaces = NamespaceService.getService().get();
+        createTopics();
+    }
+
+    private static void createTopics() throws ServiceException, java.io.IOException {
+        // initial call so that the topics are created
+        QueueService.getService(QueueService.SCHEDULER_QUEUE).consumeTaskStatusUpdates();
+        QueueService.getService(QueueService.SCHEDULER_QUEUE).consumeControlMessages();
+        final InputStream executorConfigAsStream =
+                ServiceTest.class.getClassLoader().getResourceAsStream("executor.yaml");
+        ExecutorConfig executorConfig = MAPPER.readValue(executorConfigAsStream, ExecutorConfig.class);
+        executorConfig.getTaskHandlerConfig().forEach((type, taskHandlerConfig) -> {
+            try {
+                QueueService.getService(QueueService.EXECUTOR_QUEUE)
+                        .consumeTask(type, 0);
+            } catch (ServiceException e) {
+                // do nothing
+            }
+        });
     }
 
     @AfterClass
@@ -50,7 +75,8 @@ public class ServiceTest {
         SCHEDULER_APP.stop();
         EXECUTOR_APP.stop();
         // cleanup queue
-        QueueService.getService().destroy();
+        QueueService.getService(QueueService.SCHEDULER_QUEUE).destroy();
+        QueueService.getService(QueueService.EXECUTOR_QUEUE).destroy();
     }
 
     private static void cleanupStore(List<Namespace> namespaces) throws Exception {

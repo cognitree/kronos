@@ -196,62 +196,62 @@ public class WorkflowServiceTest extends ServiceTest {
         WorkflowStatistics workflowOneStatistics = WorkflowService.getService()
                 .getStatistics(workflowTriggerOne.getNamespace(), workflowTriggerOne.getWorkflow(),
                         0, System.currentTimeMillis());
-        Assert.assertEquals(workflowOneStatistics.getJobs().getTotal(), 1);
-        Assert.assertEquals(workflowOneStatistics.getJobs().getActive(), 0);
-        Assert.assertEquals(workflowOneStatistics.getJobs().getFailed(), 0);
-        Assert.assertEquals(workflowOneStatistics.getJobs().getSkipped(), 0);
+        Assert.assertEquals(1, workflowOneStatistics.getJobs().getTotal());
+        Assert.assertEquals(0, workflowOneStatistics.getJobs().getActive());
+        Assert.assertEquals(0, workflowOneStatistics.getJobs().getFailed());
+        Assert.assertEquals(0, workflowOneStatistics.getJobs().getSkipped());
         Assert.assertEquals(workflowOneStatistics.getJobs().getSuccessful(), 1);
 
-        Assert.assertEquals(workflowOneStatistics.getTasks().getTotal(), 3);
-        Assert.assertEquals(workflowOneStatistics.getTasks().getActive(), 0);
-        Assert.assertEquals(workflowOneStatistics.getTasks().getFailed(), 0);
-        Assert.assertEquals(workflowOneStatistics.getTasks().getSkipped(), 0);
-        Assert.assertEquals(workflowOneStatistics.getTasks().getSuccessful(), 3);
+        Assert.assertEquals(3, workflowOneStatistics.getTasks().getTotal());
+        Assert.assertEquals(0, workflowOneStatistics.getTasks().getActive());
+        Assert.assertEquals(0, workflowOneStatistics.getTasks().getFailed());
+        Assert.assertEquals(0, workflowOneStatistics.getTasks().getSkipped());
+        Assert.assertEquals(3, workflowOneStatistics.getTasks().getSuccessful());
 
         WorkflowStatistics workflowOneStatisticsByNs = WorkflowService.getService()
                 .getStatistics(workflowTriggerOne.getNamespace(), 0, System.currentTimeMillis());
-        Assert.assertEquals(workflowOneStatisticsByNs.getJobs().getTotal(), 1);
-        Assert.assertEquals(workflowOneStatisticsByNs.getJobs().getActive(), 0);
-        Assert.assertEquals(workflowOneStatisticsByNs.getJobs().getFailed(), 0);
-        Assert.assertEquals(workflowOneStatisticsByNs.getJobs().getSkipped(), 0);
-        Assert.assertEquals(workflowOneStatisticsByNs.getJobs().getSuccessful(), 1);
+        Assert.assertEquals(1, workflowOneStatisticsByNs.getJobs().getTotal());
+        Assert.assertEquals(0, workflowOneStatisticsByNs.getJobs().getActive());
+        Assert.assertEquals(0, workflowOneStatisticsByNs.getJobs().getFailed());
+        Assert.assertEquals(0, workflowOneStatisticsByNs.getJobs().getSkipped());
+        Assert.assertEquals(1, workflowOneStatisticsByNs.getJobs().getSuccessful());
 
-        Assert.assertEquals(workflowOneStatisticsByNs.getTasks().getTotal(), 3);
-        Assert.assertEquals(workflowOneStatisticsByNs.getTasks().getActive(), 0);
-        Assert.assertEquals(workflowOneStatisticsByNs.getTasks().getFailed(), 0);
-        Assert.assertEquals(workflowOneStatisticsByNs.getTasks().getSkipped(), 0);
-        Assert.assertEquals(workflowOneStatisticsByNs.getTasks().getSuccessful(), 3);
+        Assert.assertEquals(3, workflowOneStatisticsByNs.getTasks().getTotal());
+        Assert.assertEquals(0, workflowOneStatisticsByNs.getTasks().getActive());
+        Assert.assertEquals(0, workflowOneStatisticsByNs.getTasks().getFailed());
+        Assert.assertEquals(0, workflowOneStatisticsByNs.getTasks().getSkipped());
+        Assert.assertEquals(3, workflowOneStatisticsByNs.getTasks().getSuccessful());
 
 
         WorkflowStatistics workflowTwoStatistics = WorkflowService.getService()
                 .getStatistics(workflowTriggerTwo.getNamespace(), workflowTriggerTwo.getWorkflow(),
                         0, System.currentTimeMillis());
-        Assert.assertEquals(workflowTwoStatistics.getJobs().getTotal(), 1);
-        Assert.assertEquals(workflowTwoStatistics.getJobs().getActive(), 0);
-        Assert.assertEquals(workflowTwoStatistics.getJobs().getFailed(), 1);
-        Assert.assertEquals(workflowTwoStatistics.getJobs().getSkipped(), 0);
-        Assert.assertEquals(workflowTwoStatistics.getJobs().getSuccessful(), 0);
+        Assert.assertEquals(1, workflowTwoStatistics.getJobs().getTotal());
+        Assert.assertEquals(0, workflowTwoStatistics.getJobs().getActive());
+        Assert.assertEquals(1, workflowTwoStatistics.getJobs().getFailed());
+        Assert.assertEquals(0, workflowTwoStatistics.getJobs().getSkipped());
+        Assert.assertEquals(0, workflowTwoStatistics.getJobs().getSuccessful());
 
-        Assert.assertEquals(workflowTwoStatistics.getTasks().getTotal(), 3);
-        Assert.assertEquals(workflowTwoStatistics.getTasks().getActive(), 0);
-        Assert.assertEquals(workflowTwoStatistics.getTasks().getFailed(), 1);
-        Assert.assertEquals(workflowTwoStatistics.getTasks().getSkipped(), 1);
-        Assert.assertEquals(workflowTwoStatistics.getTasks().getSuccessful(), 1);
+        Assert.assertEquals(3, workflowTwoStatistics.getTasks().getTotal());
+        Assert.assertEquals(0, workflowTwoStatistics.getTasks().getActive());
+        Assert.assertEquals(1, workflowTwoStatistics.getTasks().getFailed());
+        Assert.assertEquals(1, workflowTwoStatistics.getTasks().getSkipped());
+        Assert.assertEquals(1, workflowTwoStatistics.getTasks().getSuccessful());
 
         WorkflowStatistics workflowTwoStatisticsByNs = WorkflowService.getService()
                 .getStatistics(workflowTriggerTwo.getNamespace(), 0, System.currentTimeMillis());
-        Assert.assertEquals(workflowTwoStatisticsByNs.getJobs().getTotal(), 1);
-        Assert.assertEquals(workflowTwoStatisticsByNs.getJobs().getActive(), 0);
-        Assert.assertEquals(workflowTwoStatisticsByNs.getJobs().getFailed(), 1);
-        Assert.assertEquals(workflowTwoStatisticsByNs.getJobs().getSkipped(), 0);
-        Assert.assertEquals(workflowTwoStatisticsByNs.getJobs().getSuccessful(), 0);
+        Assert.assertEquals(1, workflowTwoStatisticsByNs.getJobs().getTotal());
+        Assert.assertEquals(0, workflowTwoStatisticsByNs.getJobs().getActive());
+        Assert.assertEquals(1, workflowTwoStatisticsByNs.getJobs().getFailed());
+        Assert.assertEquals(0, workflowTwoStatisticsByNs.getJobs().getSkipped());
+        Assert.assertEquals(0, workflowTwoStatisticsByNs.getJobs().getSuccessful());
 
 
-        Assert.assertEquals(workflowTwoStatisticsByNs.getTasks().getTotal(), 3);
-        Assert.assertEquals(workflowTwoStatisticsByNs.getTasks().getActive(), 0);
-        Assert.assertEquals(workflowTwoStatisticsByNs.getTasks().getFailed(), 1);
-        Assert.assertEquals(workflowTwoStatisticsByNs.getTasks().getSkipped(), 1);
-        Assert.assertEquals(workflowTwoStatisticsByNs.getTasks().getSuccessful(), 1);
+        Assert.assertEquals(3, workflowTwoStatisticsByNs.getTasks().getTotal());
+        Assert.assertEquals(0, workflowTwoStatisticsByNs.getTasks().getActive());
+        Assert.assertEquals(1, workflowTwoStatisticsByNs.getTasks().getFailed());
+        Assert.assertEquals(1, workflowTwoStatisticsByNs.getTasks().getSkipped());
+        Assert.assertEquals(1, workflowTwoStatisticsByNs.getTasks().getSuccessful());
     }
 
     @Test(expected = ValidationException.class)

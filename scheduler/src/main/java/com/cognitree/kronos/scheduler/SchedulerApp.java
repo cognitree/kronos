@@ -31,6 +31,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 
+import static com.cognitree.kronos.queue.QueueService.SCHEDULER_QUEUE;
+
 /**
  * starts the scheduler app by reading configurations from classpath.
  */
@@ -68,7 +70,7 @@ public class SchedulerApp {
         final JobService jobService = new JobService();
         final WorkflowTriggerService workflowTriggerService = new WorkflowTriggerService();
         final MailService mailService = new MailService(schedulerConfig.getMailConfig());
-        final QueueService queueService = new QueueService(queueConfig);
+        final QueueService queueService = new QueueService(queueConfig, SCHEDULER_QUEUE);
         // The order between task scheduler and workflow scheduler service is of importance
         // task scheduler service should be started before workflow scheduler service.
         // Workflow scheduler services starts the quartz scheduler which in turn might schedule some tasks
@@ -124,8 +126,8 @@ public class SchedulerApp {
         if (TaskSchedulerService.getService() != null) {
             TaskSchedulerService.getService().stop();
         }
-        if (QueueService.getService() != null) {
-            QueueService.getService().stop();
+        if (QueueService.getService(SCHEDULER_QUEUE) != null) {
+            QueueService.getService(SCHEDULER_QUEUE).stop();
         }
         if (MailService.getService() != null) {
             MailService.getService().stop();

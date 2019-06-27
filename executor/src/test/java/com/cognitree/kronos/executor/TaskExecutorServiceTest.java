@@ -38,6 +38,7 @@ import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.RUNNING;
 import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
 import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
+import static com.cognitree.kronos.queue.QueueService.EXECUTOR_QUEUE;
 
 public class TaskExecutorServiceTest {
 
@@ -68,7 +69,7 @@ public class TaskExecutorServiceTest {
                 .setStatus(SCHEDULED)
                 .build();
         tasksMap.put(taskOne, taskOne);
-        QueueService.getService().send(taskOne);
+        QueueService.getService(EXECUTOR_QUEUE).send(taskOne);
         Thread.sleep(1000);
         consumeTaskStatus(tasksMap);
         Assert.assertEquals(RUNNING, taskOne.getStatus());
@@ -90,7 +91,7 @@ public class TaskExecutorServiceTest {
                 .setStatus(SCHEDULED)
                 .build();
         tasksMap.put(taskOne, taskOne);
-        QueueService.getService().send(taskOne);
+        QueueService.getService(EXECUTOR_QUEUE).send(taskOne);
         Thread.sleep(1000);
         consumeTaskStatus(tasksMap);
         Assert.assertEquals(FAILED, taskOne.getStatus());
@@ -109,7 +110,7 @@ public class TaskExecutorServiceTest {
                 .setStatus(SCHEDULED)
                 .build();
         tasksMap.put(taskOne, taskOne);
-        QueueService.getService().send(taskOne);
+        QueueService.getService(EXECUTOR_QUEUE).send(taskOne);
 
         Task taskTwo = MockTaskBuilder.getTaskBuilder()
                 .setJob(jobId)
@@ -118,7 +119,7 @@ public class TaskExecutorServiceTest {
                 .setStatus(SCHEDULED)
                 .build();
         tasksMap.put(taskTwo, taskTwo);
-        QueueService.getService().send(taskTwo);
+        QueueService.getService(EXECUTOR_QUEUE).send(taskTwo);
 
         Task taskThree = MockTaskBuilder.getTaskBuilder()
                 .setJob(jobId)
@@ -127,7 +128,7 @@ public class TaskExecutorServiceTest {
                 .setStatus(SCHEDULED)
                 .build();
         tasksMap.put(taskThree, taskThree);
-        QueueService.getService().send(taskThree);
+        QueueService.getService(EXECUTOR_QUEUE).send(taskThree);
 
         Task taskFour = MockTaskBuilder.getTaskBuilder()
                 .setJob(jobId)
@@ -136,7 +137,7 @@ public class TaskExecutorServiceTest {
                 .setStatus(SCHEDULED)
                 .build();
         tasksMap.put(taskFour, taskFour);
-        QueueService.getService().send(taskFour);
+        QueueService.getService(EXECUTOR_QUEUE).send(taskFour);
 
         Task taskFive = MockTaskBuilder.getTaskBuilder()
                 .setJob(jobId)
@@ -145,7 +146,7 @@ public class TaskExecutorServiceTest {
                 .setStatus(SCHEDULED)
                 .build();
         tasksMap.put(taskFive, taskFive);
-        QueueService.getService().send(taskFive);
+        QueueService.getService(EXECUTOR_QUEUE).send(taskFive);
 
         Thread.sleep(1000);
         consumeTaskStatus(tasksMap);
@@ -172,7 +173,7 @@ public class TaskExecutorServiceTest {
     }
 
     private void consumeTaskStatus(HashMap<TaskId, Task> tasksMap) throws ServiceException {
-        final List<TaskStatusUpdate> taskStatusUpdates = QueueService.getService().consumeTaskUpdates();
+        final List<TaskStatusUpdate> taskStatusUpdates = QueueService.getService(EXECUTOR_QUEUE).consumeTaskStatusUpdates();
         taskStatusUpdates.forEach(taskUpdate -> {
             final Task task = tasksMap.get(taskUpdate.getTaskId());
             task.setStatus(taskUpdate.getStatus());
@@ -190,35 +191,35 @@ public class TaskExecutorServiceTest {
                 .setType(TASK_TYPE_A)
                 .setStatus(SCHEDULED)
                 .build();
-        QueueService.getService().send(taskOne);
+        QueueService.getService(EXECUTOR_QUEUE).send(taskOne);
         Task taskTwo = MockTaskBuilder.getTaskBuilder()
                 .setJob(jobId)
                 .setNamespace(namespace)
                 .setType(TASK_TYPE_B)
                 .setStatus(SCHEDULED)
                 .build();
-        QueueService.getService().send(taskTwo);
+        QueueService.getService(EXECUTOR_QUEUE).send(taskTwo);
         Task taskThree = MockTaskBuilder.getTaskBuilder()
                 .setJob(jobId)
                 .setNamespace(namespace)
                 .setType(TASK_TYPE_A)
                 .setStatus(SCHEDULED)
                 .build();
-        QueueService.getService().send(taskThree);
+        QueueService.getService(EXECUTOR_QUEUE).send(taskThree);
         Task taskFour = MockTaskBuilder.getTaskBuilder()
                 .setJob(jobId)
                 .setNamespace(namespace)
                 .setType(TASK_TYPE_A)
                 .setStatus(SCHEDULED)
                 .build();
-        QueueService.getService().send(taskFour);
+        QueueService.getService(EXECUTOR_QUEUE).send(taskFour);
         Task taskFive = MockTaskBuilder.getTaskBuilder()
                 .setJob(jobId)
                 .setNamespace(namespace)
                 .setType(TASK_TYPE_B)
                 .setStatus(SCHEDULED)
                 .build();
-        QueueService.getService().send(taskFive);
+        QueueService.getService(EXECUTOR_QUEUE).send(taskFive);
         Thread.sleep(1000);
         Assert.assertTrue(TypeATaskHandler.isHandled(taskOne.getName()));
         Assert.assertFalse(TypeBTaskHandler.isHandled(taskOne.getName()));

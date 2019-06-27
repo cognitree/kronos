@@ -56,6 +56,7 @@ import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
 import static com.cognitree.kronos.model.Task.Status.SKIPPED;
 import static com.cognitree.kronos.model.Task.Status.UP_FOR_RETRY;
 import static com.cognitree.kronos.model.Task.Status.WAITING;
+import static com.cognitree.kronos.queue.QueueService.SCHEDULER_QUEUE;
 import static com.cognitree.kronos.scheduler.model.Constants.DYNAMIC_VAR_PREFIX;
 import static com.cognitree.kronos.scheduler.model.Constants.DYNAMIC_VAR_SUFFFIX;
 import static java.util.Comparator.comparing;
@@ -141,7 +142,7 @@ final class TaskSchedulerService implements Service {
         final ControlMessage controlMessage = new ControlMessage();
         controlMessage.setTask(task);
         controlMessage.setAction(Action.ABORT);
-        QueueService.getService().send(controlMessage);
+        QueueService.getService(SCHEDULER_QUEUE).send(controlMessage);
     }
 
     private void reInitTaskProvider() throws ServiceException, ValidationException {
@@ -205,7 +206,7 @@ final class TaskSchedulerService implements Service {
     private void consumeTaskStatusUpdates() {
         final List<TaskStatusUpdate> taskStatusUpdates;
         try {
-            taskStatusUpdates = QueueService.getService().consumeTaskUpdates();
+            taskStatusUpdates = QueueService.getService(SCHEDULER_QUEUE).consumeTaskStatusUpdates();
         } catch (ServiceException e) {
             logger.error("Error consuming task status updates", e);
             return;
@@ -318,13 +319,14 @@ final class TaskSchedulerService implements Service {
     private synchronized void scheduleReadyTasks() {
         final List<Task> readyTasks = taskProvider.getReadyTasks();
         for (Task task : readyTasks) {
+            logger.info("Scheduling task {} for execution", task);
             try {
                 // update dynamic task properties from the tasks it depends on before scheduling
                 // only if the task is not being retried
                 if (task.getStatus() != UP_FOR_RETRY) {
                     updateTaskProperties(task);
                 }
-                QueueService.getService().send(task);
+                QueueService.getService(SCHEDULER_QUEUE).send(task);
                 updateStatus(task.getIdentity(), SCHEDULED, null);
             } catch (ServiceException e) {
                 logger.error("Error submitting task {} for execution", task.getIdentity(), e);
@@ -438,7 +440,7 @@ final class TaskSchedulerService implements Service {
                 final ControlMessage controlMessage = new ControlMessage();
                 controlMessage.setTask(task);
                 controlMessage.setAction(Action.TIME_OUT);
-                QueueService.getService().send(controlMessage);
+                QueueService.getService(SCHEDULER_QUEUE).send(controlMessage);
             } catch (ServiceException e) {
                 logger.error("Error sending control message to time out task {}", task.getIdentity(), e);
             }
