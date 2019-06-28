@@ -103,8 +103,8 @@ public class TaskServiceTest extends ServiceTest {
 
         List<Job> jobs = JobService.getService().get(workflowTrigger.getNamespace());
         Assert.assertFalse(jobs.isEmpty());
-        TaskService.getService().performAction(TaskId.build(workflowTrigger.getNamespace(),
-                UUID.randomUUID().toString(), jobs.get(0).getId(), workflowTrigger.getWorkflow()), Action.ABORT);
+        TaskService.getService().abortTask(TaskId.build(workflowTrigger.getNamespace(),
+                UUID.randomUUID().toString(), jobs.get(0).getId(), workflowTrigger.getWorkflow()));
     }
 
     @Test
@@ -117,7 +117,7 @@ public class TaskServiceTest extends ServiceTest {
         final List<Task> workflowTasks = taskService.get(workflowTrigger.getNamespace());
         Assert.assertEquals(2, workflowTasks.size());
         Task task = workflowTasks.stream().filter(t -> t.getName().equals("taskOne")).findFirst().get();
-        TaskService.getService().performAction(task, Action.ABORT);
+        TaskService.getService().abortTask(task);
 
         waitForJobsToTriggerAndComplete(workflowTrigger);
         List<Task> tasks = taskService.get(workflowTrigger.getNamespace());
@@ -125,7 +125,7 @@ public class TaskServiceTest extends ServiceTest {
             switch (tsk.getName()) {
                 case "taskOne":
                     Assert.assertEquals(Task.Status.ABORTED, tsk.getStatus());
-                    Assert.assertTrue(MockAbortTaskHandler.isHandled(task.getIdentity()));
+                    Assert.assertTrue(MockAbortTaskHandler.isHandled(tsk.getIdentity()));
                     break;
                 case "taskTwo":
                     Assert.assertEquals(Task.Status.SKIPPED, tsk.getStatus());

@@ -48,6 +48,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static com.cognitree.kronos.model.Task.Status.ABORTED;
+import static com.cognitree.kronos.model.Task.Status.ABORTING;
 import static com.cognitree.kronos.model.Task.Status.CREATED;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.RUNNING;
@@ -224,8 +225,8 @@ public class TaskService implements Service {
         }
     }
 
-    public void performAction(TaskId taskId, Task.Action action) throws ServiceException, ValidationException {
-        logger.debug("Received request to perform action {} on task {}", taskId, action);
+    public void abortTask(TaskId taskId) throws ServiceException, ValidationException {
+        logger.debug("Received request to abort task {}", taskId);
         validateJob(taskId.getNamespace(), taskId.getJob(), taskId.getWorkflow());
         final Task task;
         try {
@@ -238,14 +239,11 @@ public class TaskService implements Service {
             throw TASK_NOT_FOUND.createException(taskId.getName(), taskId.getJob(),
                     taskId.getWorkflow(), taskId.getNamespace());
         }
-        if (task.getStatus().isFinal()) {
+        if (task.getStatus().isFinal() || task.getStatus().equals(ABORTING)) {
+            logger.warn("Task {} is either in its final state or already is being aborted", task.getIdentity());
             return;
         }
-        switch (action) {
-            case ABORT:
-                TaskSchedulerService.getService().abort(task);
-                break;
-        }
+        TaskSchedulerService.getService().abort(task);
     }
 
     public Map<Status, Integer> countByStatus(String namespace, long createdAfter, long createdBefore)

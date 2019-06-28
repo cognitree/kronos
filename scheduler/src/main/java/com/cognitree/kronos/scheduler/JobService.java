@@ -301,6 +301,29 @@ public class JobService implements Service {
         });
     }
 
+    public void abortJob(JobId jobId) throws ServiceException, ValidationException {
+        logger.debug("Received request to abort job {}", jobId);
+        validateWorkflow(jobId.getNamespace(), jobId.getWorkflow());
+        final Job job;
+        try {
+            job = jobStore.load(jobId);
+        } catch (StoreException e) {
+            logger.error("No job found with id {}", jobId, e);
+            throw new ServiceException(e.getMessage(), e.getCause());
+        }
+        if (job == null) {
+            throw JOB_NOT_FOUND.createException(jobId.getId(), jobId.getWorkflow(), jobId.getNamespace());
+        }
+        if (job.getStatus().isFinal()) {
+            return;
+        }
+        final List<Task> tasks =
+                TaskService.getService().get(jobId.getNamespace(), jobId.getId(), job.getWorkflow());
+        for (Task task : tasks) {
+            TaskService.getService().abortTask(task);
+        }
+    }
+
     public void delete(JobId jobId) throws ServiceException, ValidationException {
         logger.info("Received request to delete job {}", jobId);
         validateWorkflow(jobId.getNamespace(), jobId.getWorkflow());

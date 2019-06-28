@@ -303,8 +303,9 @@ final class TaskSchedulerService implements Service {
 
     private void markDependentTasksAsSkipped(Task task, Status parentStatus) {
         for (Task dependentTask : taskProvider.getDependentTasks(task)) {
-            if (dependentTask.getStatus() == SKIPPED) {
-                logger.debug("dependent task is already marked as SKIPPED, ignore updating task status");
+            if (dependentTask.getStatus().isFinal()) {
+                logger.debug("dependent task is already in its final state {}, ignore updating task status to SKIPPED",
+                        dependentTask.getStatus());
                 continue;
             }
             switch (parentStatus) {

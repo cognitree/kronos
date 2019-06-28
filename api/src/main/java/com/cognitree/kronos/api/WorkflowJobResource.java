@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -134,6 +135,28 @@ public class WorkflowJobResource {
         final List<Task> tasks = JobService.getService().getTasks(job);
         return Response.status(OK).entity(JobResponse.create(job, tasks)).build();
     }
+
+    @POST
+    @Path("/{id}")
+    @ApiOperation(value = "Execute an action on a job. Supported actions - abort")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response performAction(@ApiParam(value = "workflow name", required = true)
+                                  @PathParam("workflow") String workflow,
+                                  @ApiParam(value = "job id", required = true)
+                                  @PathParam("id") String job,
+                                  @ApiParam(value = "action", allowableValues = "abort")
+                                  @QueryParam("action") String action,
+                                  @HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
+        logger.info("Received request to perform action {} on job {}, workflow {}",
+                action, job, workflow);
+        if (action.equals("abort")) {
+            JobService.getService().abortJob(Job.build(namespace, job, workflow));
+            return Response.status(Response.Status.OK).build();
+        } else {
+            return Response.status(Response.Status.BAD_REQUEST).entity("invalid action " + action).build();
+        }
+    }
+
 
     private long timeInMillisBeforeDays(int numberOfDays) {
         final long currentTimeMillis = System.currentTimeMillis();

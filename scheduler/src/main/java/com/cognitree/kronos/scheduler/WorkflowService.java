@@ -23,7 +23,8 @@ import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.Policy;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.scheduler.graph.TopologicalSort;
-import com.cognitree.kronos.scheduler.model.ExecutionCounters;
+import com.cognitree.kronos.scheduler.model.JobExecutionCounters;
+import com.cognitree.kronos.scheduler.model.TaskExecutionCounters;
 import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.NamespaceId;
@@ -158,7 +159,7 @@ public class WorkflowService implements Service {
     private WorkflowStatistics getWorkflowStatistics(Map<Job.Status, Integer> jobStatusMap, Map<Task.Status, Integer> taskStatusMap,
                                                      long createdAfter, long createdBefore) {
         WorkflowStatistics workflowStatistics = new WorkflowStatistics();
-        ExecutionCounters jobExecutionCounters = new ExecutionCounters();
+        JobExecutionCounters jobExecutionCounters = new JobExecutionCounters();
         jobExecutionCounters.setTotal(jobStatusMap.values().stream().mapToInt(Integer::intValue).sum());
         int activeJobs = 0;
         for (Job.Status status : ACTIVE_JOB_STATUS) {
@@ -171,7 +172,7 @@ public class WorkflowService implements Service {
         jobExecutionCounters.setFailed(jobStatusMap.getOrDefault(Job.Status.FAILED, 0));
         workflowStatistics.setJobs(jobExecutionCounters);
 
-        ExecutionCounters taskExecutionCounters = new ExecutionCounters();
+        TaskExecutionCounters taskExecutionCounters = new TaskExecutionCounters();
         taskExecutionCounters.setTotal(taskStatusMap.values().stream().mapToInt(Integer::intValue).sum());
         int activeTasks = 0;
         for (Task.Status status : ACTIVE_TASK_STATUS) {

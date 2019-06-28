@@ -18,24 +18,24 @@
 package com.cognitree.kronos.scheduler.model;
 
 public class WorkflowStatistics {
-    private ExecutionCounters jobs;
-    private ExecutionCounters tasks;
+    private JobExecutionCounters jobs;
+    private TaskExecutionCounters tasks;
     private long from;
     private long to;
 
-    public ExecutionCounters getJobs() {
+    public JobExecutionCounters getJobs() {
         return jobs;
     }
 
-    public void setJobs(ExecutionCounters jobs) {
+    public void setJobs(JobExecutionCounters jobs) {
         this.jobs = jobs;
     }
 
-    public ExecutionCounters getTasks() {
+    public TaskExecutionCounters getTasks() {
         return tasks;
     }
 
-    public void setTasks(ExecutionCounters tasks) {
+    public void setTasks(TaskExecutionCounters tasks) {
         this.tasks = tasks;
     }
 

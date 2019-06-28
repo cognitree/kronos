@@ -22,15 +22,19 @@ import com.cognitree.kronos.executor.handlers.MockFailureTaskHandler;
 import com.cognitree.kronos.executor.handlers.MockSuccessTaskHandler;
 import com.cognitree.kronos.model.Messages;
 import com.cognitree.kronos.model.Task;
+import com.cognitree.kronos.model.TaskId;
 import com.cognitree.kronos.scheduler.model.Job;
+import com.cognitree.kronos.scheduler.model.JobId;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static com.cognitree.kronos.TestUtil.scheduleWorkflow;
 import static com.cognitree.kronos.TestUtil.waitForJobsToTriggerAndComplete;
+import static com.cognitree.kronos.TestUtil.waitForTriggerToComplete;
 
 public class JobServiceTest extends ServiceTest {
 
@@ -208,6 +212,47 @@ public class JobServiceTest extends ServiceTest {
             }
         }
     }
+
+    @Test(expected = ValidationException.class)
+    public void testAbortJobNotFound() throws Exception {
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
+        waitForJobsToTriggerAndComplete(workflowTrigger);
+
+        List<Job> jobs = JobService.getService().get(workflowTrigger.getNamespace());
+        Assert.assertFalse(jobs.isEmpty());
+        JobService.getService().abortJob(JobId.build(workflowTrigger.getNamespace(),
+                UUID.randomUUID().toString(), workflowTrigger.getWorkflow()));
+    }
+
+    @Test
+    public void testAbortJob() throws Exception {
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow(WORKFLOW_TEMPLATE_ABORT_TASKS_YAML);
+
+        waitForTriggerToComplete(workflowTrigger, WorkflowSchedulerService.getService().getScheduler());
+
+        List<Job> jobs = JobService.getService().get(workflowTrigger.getNamespace());
+        JobService.getService().abortJob(jobs.get(0).getIdentity());
+
+        waitForJobsToTriggerAndComplete(workflowTrigger);
+        List<Task> tasks = TaskService.getService().get(workflowTrigger.getNamespace());
+        for (Task tsk : tasks) {
+            switch (tsk.getName()) {
+                case "taskOne":
+                    Assert.assertEquals(Task.Status.ABORTED, tsk.getStatus());
+                    Assert.assertTrue(MockAbortTaskHandler.isHandled(tsk.getIdentity()));
+                    break;
+                case "taskTwo":
+                    Assert.assertEquals(Task.Status.ABORTED, tsk.getStatus());
+                    break;
+                default:
+                    Assert.fail();
+            }
+        }
+
+        Assert.assertEquals(Job.Status.FAILED,
+                JobService.getService().get(workflowTrigger.getNamespace()).get(0).getStatus());
+    }
+
 
     @Test
     public void testDeleteJob() throws Exception {

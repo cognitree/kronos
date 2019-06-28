@@ -17,13 +17,11 @@
 
 package com.cognitree.kronos.scheduler.model;
 
-public class ExecutionCounters {
+public class JobExecutionCounters {
     private int total;
     private int active;
     private int successful;
     private int failed;
-    private int skipped;
-    private int aborted;
 
     public int getActive() {
         return active;
@@ -57,31 +55,13 @@ public class ExecutionCounters {
         this.failed = failed;
     }
 
-    public int getSkipped() {
-        return skipped;
-    }
-
-    public void setSkipped(int skipped) {
-        this.skipped = skipped;
-    }
-
-    public int getAborted() {
-        return aborted;
-    }
-
-    public void setAborted(int aborted) {
-        this.aborted = aborted;
-    }
-
     @Override
     public String toString() {
-        return "ExecutionCounters{" +
+        return "TaskExecutionCounters{" +
                 "total=" + total +
                 ", active=" + active +
                 ", successful=" + successful +
                 ", failed=" + failed +
-                ", skipped=" + skipped +
-                ", aborted=" + aborted +
                 '}';
     }
 }
