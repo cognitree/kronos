@@ -21,6 +21,7 @@ import com.cognitree.kronos.Service;
 import com.cognitree.kronos.ServiceException;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.ControlMessage;
+import com.cognitree.kronos.model.Messages;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Action;
 import com.cognitree.kronos.model.Task.Status;
@@ -139,6 +140,13 @@ final class TaskSchedulerService implements Service {
      */
     public void abort(Task task) throws ServiceException {
         logger.info("Received request to abort task {}", task.getIdentity());
+
+        if (task.getStatus().equals(CREATED) || task.getStatus().equals(WAITING)) {
+            // task is not yet scheduled mark the task as ABORTED
+            updateStatus(task.getIdentity(), ABORTED, Messages.TASK_ABORTED_MESSAGE);
+            return;
+        }
+
         final ControlMessage controlMessage = new ControlMessage();
         controlMessage.setTask(task);
         controlMessage.setAction(Action.ABORT);

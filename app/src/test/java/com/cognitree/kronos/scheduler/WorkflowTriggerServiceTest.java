@@ -68,7 +68,7 @@ public class WorkflowTriggerServiceTest extends ServiceTest {
         Namespace namespaceOne = createNamespace(UUID.randomUUID().toString());
         NamespaceService.getService().add(namespaceOne);
 
-        final Workflow workflowOne = createWorkflow("workflows/workflow-template.yaml",
+        final Workflow workflowOne = createWorkflow(WORKFLOW_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), namespaceOne.getName());
         WorkflowService.getService().add(workflowOne);
 
@@ -83,7 +83,7 @@ public class WorkflowTriggerServiceTest extends ServiceTest {
         Namespace namespaceTwo = createNamespace(UUID.randomUUID().toString());
         NamespaceService.getService().add(namespaceTwo);
 
-        final Workflow workflowTwo = createWorkflow("workflows/workflow-template.yaml",
+        final Workflow workflowTwo = createWorkflow(WORKFLOW_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), namespaceTwo.getName());
         WorkflowService.getService().add(workflowTwo);
 
@@ -100,7 +100,7 @@ public class WorkflowTriggerServiceTest extends ServiceTest {
         Namespace namespace = createNamespace(UUID.randomUUID().toString());
         NamespaceService.getService().add(namespace);
 
-        final Workflow workflow = createWorkflow("workflows/workflow-template.yaml",
+        final Workflow workflow = createWorkflow(WORKFLOW_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), namespace.getName());
         WorkflowService.getService().add(workflow);
 
@@ -128,7 +128,7 @@ public class WorkflowTriggerServiceTest extends ServiceTest {
         Namespace namespace = createNamespace(UUID.randomUUID().toString());
         NamespaceService.getService().add(namespace);
 
-        final Workflow workflow = createWorkflow("workflows/workflow-template.yaml",
+        final Workflow workflow = createWorkflow(WORKFLOW_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), namespace.getName());
         WorkflowService.getService().add(workflow);
 
@@ -155,7 +155,7 @@ public class WorkflowTriggerServiceTest extends ServiceTest {
         Namespace namespace = createNamespace(UUID.randomUUID().toString());
         NamespaceService.getService().add(namespace);
 
-        final Workflow workflow = createWorkflow("workflows/workflow-template.yaml",
+        final Workflow workflow = createWorkflow(WORKFLOW_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), namespace.getName());
         WorkflowService.getService().add(workflow);
 
@@ -183,7 +183,7 @@ public class WorkflowTriggerServiceTest extends ServiceTest {
         Namespace namespace = createNamespace(UUID.randomUUID().toString());
         NamespaceService.getService().add(namespace);
 
-        final Workflow workflow = createWorkflow("workflows/workflow-template.yaml",
+        final Workflow workflow = createWorkflow(WORKFLOW_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), namespace.getName());
         WorkflowService.getService().add(workflow);
 
@@ -212,7 +212,7 @@ public class WorkflowTriggerServiceTest extends ServiceTest {
         Namespace namespaceOne = createNamespace(UUID.randomUUID().toString());
         NamespaceService.getService().add(namespaceOne);
 
-        final Workflow workflowOne = createWorkflow("workflows/workflow-template.yaml",
+        final Workflow workflowOne = createWorkflow(WORKFLOW_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), namespaceOne.getName());
         WorkflowService.getService().add(workflowOne);
 
@@ -228,7 +228,7 @@ public class WorkflowTriggerServiceTest extends ServiceTest {
         Namespace namespaceTwo = createNamespace(UUID.randomUUID().toString());
         NamespaceService.getService().add(namespaceTwo);
 
-        final Workflow workflowTwo = createWorkflow("workflows/workflow-template.yaml",
+        final Workflow workflowTwo = createWorkflow(WORKFLOW_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), namespaceTwo.getName());
         WorkflowService.getService().add(workflowTwo);
 
@@ -248,7 +248,7 @@ public class WorkflowTriggerServiceTest extends ServiceTest {
         Namespace namespaceOne = createNamespace(UUID.randomUUID().toString());
         NamespaceService.getService().add(namespaceOne);
 
-        final Workflow workflowOne = createWorkflow("workflows/workflow-template.yaml",
+        final Workflow workflowOne = createWorkflow(WORKFLOW_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), namespaceOne.getName());
         WorkflowService.getService().add(workflowOne);
 
@@ -264,7 +264,7 @@ public class WorkflowTriggerServiceTest extends ServiceTest {
         Namespace namespaceTwo = createNamespace(UUID.randomUUID().toString());
         NamespaceService.getService().add(namespaceTwo);
 
-        final Workflow workflowTwo = createWorkflow("workflows/workflow-template.yaml",
+        final Workflow workflowTwo = createWorkflow(WORKFLOW_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), namespaceTwo.getName());
         WorkflowService.getService().add(workflowTwo);
 
@@ -284,7 +284,7 @@ public class WorkflowTriggerServiceTest extends ServiceTest {
         Namespace namespaceOne = createNamespace(UUID.randomUUID().toString());
         NamespaceService.getService().add(namespaceOne);
 
-        final Workflow workflowOne = createWorkflow("workflows/workflow-template.yaml",
+        final Workflow workflowOne = createWorkflow(WORKFLOW_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), namespaceOne.getName());
         WorkflowService.getService().add(workflowOne);
 
@@ -301,7 +301,7 @@ public class WorkflowTriggerServiceTest extends ServiceTest {
         Namespace namespaceOne = createNamespace(UUID.randomUUID().toString());
         NamespaceService.getService().add(namespaceOne);
 
-        final Workflow workflowOne = createWorkflow("workflows/workflow-template.yaml",
+        final Workflow workflowOne = createWorkflow(WORKFLOW_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), namespaceOne.getName());
         WorkflowService.getService().add(workflowOne);
 
@@ -325,7 +325,7 @@ public class WorkflowTriggerServiceTest extends ServiceTest {
         triggerProps.put("valOne", 123456);
         triggerProps.put("valTwo", "abcdef");
 
-        final WorkflowTrigger workflowTrigger = scheduleWorkflow("workflows/workflow-template-with-properties.yaml",
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow(WORKFLOW_TEMPLATE_WITH_PROPERTIES_YAML,
                 workflowProps, triggerProps);
 
         waitForJobsToTriggerAndComplete(workflowTrigger);
@@ -353,7 +353,7 @@ public class WorkflowTriggerServiceTest extends ServiceTest {
         HashMap<String, Object> triggerProps = new HashMap<>();
         triggerProps.put("valOne", 123456);
 
-        final WorkflowTrigger workflowTrigger = scheduleWorkflow("workflows/workflow-template-with-properties.yaml",
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow(WORKFLOW_TEMPLATE_WITH_PROPERTIES_YAML,
                 workflowProps, triggerProps);
 
         waitForJobsToTriggerAndComplete(workflowTrigger);

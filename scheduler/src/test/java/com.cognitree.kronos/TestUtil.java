@@ -31,6 +31,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.Assert;
 import org.quartz.CronExpression;
+import org.quartz.Scheduler;
+import org.quartz.TriggerKey;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -129,6 +131,20 @@ public class TestUtil {
             }
             Thread.sleep(1000);
             maxCount--;
+        }
+    }
+
+    public static void waitForTriggerToComplete(WorkflowTrigger workflowTrigger, Scheduler scheduler) throws Exception {
+        // wait for both the job to be triggered
+        TriggerKey workflowOneTriggerKey = new TriggerKey(workflowTrigger.getName(),
+                workflowTrigger.getWorkflow() + ":" + workflowTrigger.getNamespace());
+        int maxCount = 50;
+        while (maxCount > 0 && scheduler.checkExists(workflowOneTriggerKey)) {
+            Thread.sleep(100);
+            maxCount--;
+        }
+        if (maxCount < 0) {
+            Assert.fail("failed while waiting for trigger to complete");
         }
     }
 }

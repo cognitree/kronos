@@ -133,10 +133,7 @@ public final class TaskExecutionService implements Service {
                 if (maxTasksToPoll > 0) {
                     try {
                         final List<Task> tasks = QueueService.getService(EXECUTOR_QUEUE).consumeTask(taskType, maxTasksToPoll);
-                        for (Task task : tasks) {
-                            sendTaskStatusUpdate(task, RUNNING, null);
-                            submit(task);
-                        }
+                        tasks.forEach(this::submit);
                     } catch (ServiceException e) {
                         logger.error("Error consuming tasks for execution", e);
                     }
@@ -189,7 +186,7 @@ public final class TaskExecutionService implements Service {
      * @param task task to submit for execution
      */
     private void submit(Task task) {
-        logger.trace("Received task {} for execution from task queue", task.getIdentity());
+        logger.info("Received request to submit task for execution: {}", task.getIdentity());
         final TaskHandler taskHandler;
         try {
             taskHandler = createTaskHandler(task);
@@ -200,7 +197,11 @@ public final class TaskExecutionService implements Service {
             return;
         }
         taskTypeToRunningTasksCount.put(task.getType(), taskTypeToRunningTasksCount.get(task.getType()) + 1);
-        final Future<TaskResult> taskResultFuture = taskExecutorThreadPool.submit(taskHandler::execute);
+        final Future<TaskResult> taskResultFuture = taskExecutorThreadPool.submit(() -> {
+            logger.debug("Executing task {}", task.getIdentity());
+            sendTaskStatusUpdate(task, RUNNING, null);
+            return taskHandler.execute();
+        });
         taskHandlersMap.put(task, taskHandler);
         taskFuturesMap.put(task, taskResultFuture);
     }

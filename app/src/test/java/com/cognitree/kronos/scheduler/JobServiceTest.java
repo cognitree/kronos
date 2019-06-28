@@ -17,7 +17,9 @@
 
 package com.cognitree.kronos.scheduler;
 
+import com.cognitree.kronos.executor.handlers.MockAbortTaskHandler;
 import com.cognitree.kronos.executor.handlers.MockFailureTaskHandler;
+import com.cognitree.kronos.executor.handlers.MockSuccessTaskHandler;
 import com.cognitree.kronos.model.Messages;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.scheduler.model.Job;
@@ -34,8 +36,8 @@ public class JobServiceTest extends ServiceTest {
 
     @Test
     public void testGetAllJobsByNamespace() throws Exception {
-        final WorkflowTrigger workflowTriggerOne = scheduleWorkflow("workflows/workflow-template.yaml");
-        final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow("workflows/workflow-template.yaml");
+        final WorkflowTrigger workflowTriggerOne = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
+        final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
 
         waitForJobsToTriggerAndComplete(workflowTriggerOne);
         waitForJobsToTriggerAndComplete(workflowTriggerTwo);
@@ -52,8 +54,8 @@ public class JobServiceTest extends ServiceTest {
 
     @Test
     public void testGetAllJobsCreatedInLastNDays() throws Exception {
-        final WorkflowTrigger workflowTriggerOne = scheduleWorkflow("workflows/workflow-template.yaml");
-        final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow("workflows/workflow-template.yaml");
+        final WorkflowTrigger workflowTriggerOne = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
+        final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
 
         waitForJobsToTriggerAndComplete(workflowTriggerOne);
         waitForJobsToTriggerAndComplete(workflowTriggerTwo);
@@ -70,8 +72,8 @@ public class JobServiceTest extends ServiceTest {
 
     @Test
     public void testGetAllJobsByWorkflow() throws Exception {
-        final WorkflowTrigger workflowTriggerOne = scheduleWorkflow("workflows/workflow-template.yaml");
-        final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow("workflows/workflow-template.yaml");
+        final WorkflowTrigger workflowTriggerOne = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
+        final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
 
         waitForJobsToTriggerAndComplete(workflowTriggerOne);
         waitForJobsToTriggerAndComplete(workflowTriggerTwo);
@@ -88,8 +90,8 @@ public class JobServiceTest extends ServiceTest {
 
     @Test
     public void testGetAllJobsByWorkflowAndTrigger() throws Exception {
-        final WorkflowTrigger workflowTriggerOne = scheduleWorkflow("workflows/workflow-template.yaml");
-        final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow("workflows/workflow-template.yaml");
+        final WorkflowTrigger workflowTriggerOne = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
+        final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
 
         waitForJobsToTriggerAndComplete(workflowTriggerOne);
         waitForJobsToTriggerAndComplete(workflowTriggerTwo);
@@ -106,7 +108,7 @@ public class JobServiceTest extends ServiceTest {
 
     @Test
     public void testGetJobTasks() throws Exception {
-        final WorkflowTrigger workflowTrigger = scheduleWorkflow("workflows/workflow-template.yaml");
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
 
         waitForJobsToTriggerAndComplete(workflowTrigger);
 
@@ -121,12 +123,15 @@ public class JobServiceTest extends ServiceTest {
             switch (task.getName()) {
                 case "taskOne":
                     Assert.assertEquals(Task.Status.SUCCESSFUL, task.getStatus());
+                    Assert.assertTrue(MockSuccessTaskHandler.isHandled(task.getIdentity()));
                     break;
                 case "taskTwo":
                     Assert.assertEquals(Task.Status.SUCCESSFUL, task.getStatus());
+                    Assert.assertTrue(MockSuccessTaskHandler.isHandled(task.getIdentity()));
                     break;
                 case "taskThree":
                     Assert.assertEquals(Task.Status.SUCCESSFUL, task.getStatus());
+                    Assert.assertTrue(MockSuccessTaskHandler.isHandled(task.getIdentity()));
                     break;
                 default:
                     Assert.fail();
@@ -136,7 +141,7 @@ public class JobServiceTest extends ServiceTest {
 
     @Test
     public void testGetJobTasksFailedDueToTimeout() throws Exception {
-        final WorkflowTrigger workflowTrigger = scheduleWorkflow("workflows/workflow-template-timeout-tasks.yaml");
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow(WORKFLOW_TEMPLATE_TIMEOUT_TASKS_YAML);
 
         waitForJobsToTriggerAndComplete(workflowTrigger);
 
@@ -152,13 +157,16 @@ public class JobServiceTest extends ServiceTest {
             switch (task.getName()) {
                 case "taskOne":
                     Assert.assertEquals(Task.Status.SUCCESSFUL, task.getStatus());
+                    Assert.assertTrue(MockSuccessTaskHandler.isHandled(task.getIdentity()));
                     break;
                 case "taskTwo":
                     Assert.assertEquals(Task.Status.SUCCESSFUL, task.getStatus());
+                    Assert.assertTrue(MockSuccessTaskHandler.isHandled(task.getIdentity()));
                     break;
                 case "taskThree":
                     Assert.assertEquals(Task.Status.ABORTED, task.getStatus());
                     Assert.assertEquals(Messages.TIMED_OUT_EXECUTING_TASK_MESSAGE, task.getStatusMessage());
+                    Assert.assertTrue(MockAbortTaskHandler.isHandled(task.getIdentity()));
                     break;
                 default:
                     Assert.fail();
@@ -168,7 +176,7 @@ public class JobServiceTest extends ServiceTest {
 
     @Test
     public void testGetJobTasksFailedDueToHandler() throws Exception {
-        final WorkflowTrigger workflowTrigger = scheduleWorkflow("workflows/workflow-template-failed-handler.yaml");
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow(WORKFLOW_TEMPLATE_FAILED_HANDLER_YAML);
 
         waitForJobsToTriggerAndComplete(workflowTrigger);
 
@@ -184,11 +192,12 @@ public class JobServiceTest extends ServiceTest {
             switch (task.getName()) {
                 case "taskOne":
                     Assert.assertEquals(Task.Status.SUCCESSFUL, task.getStatus());
+                    Assert.assertTrue(MockSuccessTaskHandler.isHandled(task.getIdentity()));
                     break;
                 case "taskTwo":
                     Assert.assertEquals(Task.Status.FAILED, task.getStatus());
                     Assert.assertEquals(3, task.getRetryCount());
-                    Assert.assertTrue(MockFailureTaskHandler.isHandled(task.getName(), task.getJob(), task.getNamespace()));
+                    Assert.assertTrue(MockFailureTaskHandler.isHandled(task.getIdentity()));
                     break;
                 case "taskThree":
                     Assert.assertEquals(Task.Status.SKIPPED, task.getStatus());
@@ -202,7 +211,7 @@ public class JobServiceTest extends ServiceTest {
 
     @Test
     public void testDeleteJob() throws Exception {
-        final WorkflowTrigger workflowTrigger = scheduleWorkflow("workflows/workflow-template.yaml");
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
 
         waitForJobsToTriggerAndComplete(workflowTrigger);
 

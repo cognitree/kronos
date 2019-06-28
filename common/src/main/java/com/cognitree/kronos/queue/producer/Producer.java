@@ -25,9 +25,10 @@ public interface Producer {
      * during initialization phase a call is made to initialize producer using {@link ProducerConfig#getConfig()}.
      * Any property required by the producer¸ to instantiate itself should be part of {@link ProducerConfig#getConfig()}.
      *
-     * @param producerConfig configuration used to initialize the producer.
+     * @param topic  topic to create the producer
+     * @param config configuration used to initialize the producer.
      */
-    void init(String topic, ObjectNode producerConfig);
+    void init(String topic, ObjectNode config);
 
     void broadcast(String record);
 

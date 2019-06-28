@@ -44,7 +44,7 @@ public class WorkflowServiceTest extends ServiceTest {
     @Test(expected = ValidationException.class)
     public void testAddWorkflowWithoutNamespace() throws ValidationException, ServiceException, IOException {
         final WorkflowService workflowService = WorkflowService.getService();
-        final Workflow workflow = createWorkflow("workflows/workflow-template.yaml",
+        final Workflow workflow = createWorkflow(WORKFLOW_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), UUID.randomUUID().toString());
         workflowService.add(workflow);
         Assert.fail();
@@ -52,7 +52,7 @@ public class WorkflowServiceTest extends ServiceTest {
 
     @Test(expected = ValidationException.class)
     public void testAddInValidWorkflowMissingTasks() throws Exception {
-        Workflow invalidWorkflow = createWorkflow("workflows/invalid-workflow-missing-tasks-template.yaml",
+        Workflow invalidWorkflow = createWorkflow(INVALID_WORKFLOW_MISSING_TASKS_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), UUID.randomUUID().toString());
         WorkflowService.getService().add(invalidWorkflow);
         Assert.fail();
@@ -60,7 +60,7 @@ public class WorkflowServiceTest extends ServiceTest {
 
     @Test(expected = ValidationException.class)
     public void testAddInValidWorkflowDisabledTaskDependency() throws Exception {
-        Workflow invalidWorkflow = createWorkflow("workflows/invalid-workflow-disabled-tasks-template.yaml",
+        Workflow invalidWorkflow = createWorkflow(INVALID_WORKFLOW_DISABLED_TASKS_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), UUID.randomUUID().toString());
         WorkflowService.getService().add(invalidWorkflow);
         Assert.fail();
@@ -72,7 +72,7 @@ public class WorkflowServiceTest extends ServiceTest {
         NamespaceService.getService().add(namespaceOne);
 
         final WorkflowService workflowService = WorkflowService.getService();
-        final Workflow workflowOne = createWorkflow("workflows/workflow-template.yaml",
+        final Workflow workflowOne = createWorkflow(WORKFLOW_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), namespaceOne.getName());
         workflowService.add(workflowOne);
 
@@ -80,7 +80,7 @@ public class WorkflowServiceTest extends ServiceTest {
         Assert.assertNotNull(workflowOneFromDB);
         Assert.assertEquals(workflowOne, workflowOneFromDB);
 
-        final Workflow workflowTwo = createWorkflow("workflows/workflow-template.yaml",
+        final Workflow workflowTwo = createWorkflow(WORKFLOW_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), namespaceOne.getName());
         workflowService.add(workflowTwo);
 
@@ -91,7 +91,7 @@ public class WorkflowServiceTest extends ServiceTest {
         Namespace namespaceTwo = createNamespace(UUID.randomUUID().toString());
         NamespaceService.getService().add(namespaceTwo);
 
-        final Workflow workflowThree = createWorkflow("workflows/workflow-template.yaml",
+        final Workflow workflowThree = createWorkflow(WORKFLOW_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), namespaceTwo.getName());
         workflowService.add(workflowThree);
 
@@ -114,7 +114,7 @@ public class WorkflowServiceTest extends ServiceTest {
         final NamespaceService namespaceService = NamespaceService.getService();
         final Namespace namespace = createNamespace(UUID.randomUUID().toString());
         namespaceService.add(namespace);
-        final Workflow workflow = createWorkflow("workflows/workflow-template.yaml",
+        final Workflow workflow = createWorkflow(WORKFLOW_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), namespace.getName());
         WorkflowService.getService().add(workflow);
         WorkflowService.getService().add(workflow);
@@ -122,18 +122,16 @@ public class WorkflowServiceTest extends ServiceTest {
     }
 
     @Test
-    public void testUpdateWorkflow() throws ServiceException, ValidationException, SchedulerException, IOException {
+    public void testUpdateWorkflow() throws ServiceException, ValidationException, IOException {
         final NamespaceService namespaceService = NamespaceService.getService();
         final Namespace namespace = createNamespace(UUID.randomUUID().toString());
         namespaceService.add(namespace);
 
         final WorkflowService workflowService = WorkflowService.getService();
-        final Workflow workflow = createWorkflow("workflows/workflow-template.yaml",
-                UUID.randomUUID().toString(), namespace.getName());
+        final Workflow workflow = createWorkflow(WORKFLOW_TEMPLATE_YAML, UUID.randomUUID().toString(), namespace.getName());
         workflowService.add(workflow);
 
-        final Workflow updatedWorkflow = createWorkflow("workflows/workflow-template.yaml",
-                workflow.getName(), namespace.getName());
+        final Workflow updatedWorkflow = createWorkflow(WORKFLOW_TEMPLATE_YAML, workflow.getName(), namespace.getName());
         Workflow.WorkflowTask workflowTaskFour = new Workflow.WorkflowTask();
         workflowTaskFour.setName("taskFour");
         workflowTaskFour.setType("typeSuccess");
@@ -149,8 +147,7 @@ public class WorkflowServiceTest extends ServiceTest {
         final NamespaceService namespaceService = NamespaceService.getService();
         final Namespace namespace = createNamespace(UUID.randomUUID().toString());
         namespaceService.add(namespace);
-        final Workflow workflow = createWorkflow("workflows/workflow-template.yaml",
-                UUID.randomUUID().toString(), namespace.getName());
+        final Workflow workflow = createWorkflow(WORKFLOW_TEMPLATE_YAML, UUID.randomUUID().toString(), namespace.getName());
         WorkflowService.getService().add(workflow);
         final WorkflowService workflowService = WorkflowService.getService();
         workflowService.delete(workflow);
@@ -163,7 +160,7 @@ public class WorkflowServiceTest extends ServiceTest {
         workflowProps.put("valOne", 1234);
         workflowProps.put("valTwo", "abcd");
 
-        final WorkflowTrigger workflowTrigger = scheduleWorkflow("workflows/workflow-template-with-properties.yaml",
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow(WORKFLOW_TEMPLATE_WITH_PROPERTIES_YAML,
                 workflowProps, null);
 
         waitForJobsToTriggerAndComplete(workflowTrigger);
@@ -187,8 +184,8 @@ public class WorkflowServiceTest extends ServiceTest {
 
     @Test
     public void testGetWorkflowStatistics() throws Exception {
-        final WorkflowTrigger workflowTriggerOne = scheduleWorkflow("workflows/workflow-template.yaml");
-        final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow("workflows/workflow-template-failed-handler.yaml");
+        final WorkflowTrigger workflowTriggerOne = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
+        final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow(WORKFLOW_TEMPLATE_FAILED_HANDLER_YAML);
 
         waitForJobsToTriggerAndComplete(workflowTriggerOne);
         waitForJobsToTriggerAndComplete(workflowTriggerTwo);
@@ -256,8 +253,7 @@ public class WorkflowServiceTest extends ServiceTest {
 
     @Test(expected = ValidationException.class)
     public void testDuplicatePolicyOfSameType() throws Exception {
-        scheduleWorkflow("workflows/workflow-template-with-duplicate-policy.yaml",
-                null, null);
+        scheduleWorkflow(WORKFLOW_TEMPLATE_WITH_DUPLICATE_POLICY_YAML, null, null);
         Assert.fail();
     }
 
@@ -265,7 +261,7 @@ public class WorkflowServiceTest extends ServiceTest {
     public void testMissingWorkflowPropertiesShouldFail() throws Exception {
         HashMap<String, Object> workflowProps = new HashMap<>();
         workflowProps.put("valOne", 1234);
-        scheduleWorkflow("workflows/workflow-template-with-properties.yaml", workflowProps, null);
+        scheduleWorkflow(WORKFLOW_TEMPLATE_WITH_PROPERTIES_YAML, workflowProps, null);
         Assert.fail();
     }
 }

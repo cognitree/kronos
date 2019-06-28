@@ -81,6 +81,7 @@ public class QueueService implements Service {
     }
 
     public void send(Task task) throws ServiceException {
+        logger.debug("Received request to send task {}", task.getIdentity());
         final String type = task.getType();
         if (!producers.containsKey(type)) {
             createProducer(type);
@@ -93,6 +94,7 @@ public class QueueService implements Service {
     }
 
     public void send(TaskStatusUpdate taskStatusUpdate) throws ServiceException {
+        logger.debug("Received request to send task status update {}", taskStatusUpdate);
         if (!producers.containsKey(taskStatusQueue)) {
             createProducer(taskStatusQueue);
         }
@@ -110,6 +112,7 @@ public class QueueService implements Service {
     }
 
     public void send(ControlMessage controlMessage) throws ServiceException {
+        logger.debug("Received request to send task control message {}", controlMessage);
         if (!producers.containsKey(controlQueue)) {
             createProducer(controlQueue);
         }

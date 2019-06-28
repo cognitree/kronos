@@ -117,8 +117,10 @@ public class ConfigurationService implements Service {
     private void processUpdates() {
         final List<String> configUpdates = configurationConsumer.poll();
         for (String configUpdateAsString : configUpdates) {
-            if (configUpdateAsString.trim().isEmpty())
-                logger.trace("processUpdates: quietly skipping over empty config update...");
+            if (configUpdateAsString == null || configUpdateAsString.trim().isEmpty()) {
+                logger.trace("processUpdates: quietly skipping over null/ empty config update...");
+                continue;
+            }
             try {
                 final ConfigUpdate configUpdate = READER.readValue(configUpdateAsString.trim());
                 processUpdate(configUpdate);

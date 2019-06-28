@@ -28,9 +28,10 @@ public interface Consumer {
      * during initialization phase a call is made to initialize consumer using {@link ConsumerConfig#getConfig()}.
      * Any property required by the consumer¸ to instantiate itself should be part of {@link ConsumerConfig#getConfig()}.
      *
-     * @param consumerConfig configuration used to initialize the consumer.
+     * @param topic  topic to create the consumer
+     * @param config configuration used to initialize the consumer.
      */
-    void init(String topic, ObjectNode consumerConfig);
+    void init(String topic, ObjectNode config);
 
     /**
      * polls data from the underlying queue

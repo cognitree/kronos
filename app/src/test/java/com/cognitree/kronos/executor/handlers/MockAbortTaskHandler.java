@@ -28,12 +28,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class MockTaskHandler implements TaskHandler {
-    private static final Logger logger = LoggerFactory.getLogger(MockTaskHandler.class);
+public class MockAbortTaskHandler implements TaskHandler {
+    private static final Logger logger = LoggerFactory.getLogger(MockAbortTaskHandler.class);
 
     private static final List<TaskId> tasks = Collections.synchronizedList(new ArrayList<>());
-
+    private boolean abort = false;
     private Task task;
+
+    public static boolean isHandled(TaskId taskId) {
+        return tasks.contains(taskId);
+    }
 
     @Override
     public void init(Task task, ObjectNode config) {
@@ -43,20 +47,19 @@ public class MockTaskHandler implements TaskHandler {
     @Override
     public TaskResult execute() {
         logger.info("Received request to execute task {}", task);
-
-        while (!tasks.contains(task)) {
+        tasks.add(task);
+        while (!abort) {
             try {
                 Thread.sleep(50);
             } catch (InterruptedException e) {
                 logger.error("Thread has been interrupted");
             }
         }
-        tasks.remove(task);
         return TaskResult.SUCCESS;
     }
 
     @Override
     public void abort() {
-        tasks.add(task);
+        abort = true;
     }
 }

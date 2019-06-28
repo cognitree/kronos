@@ -19,7 +19,10 @@ package com.cognitree.kronos.executor.handlers;
 
 import com.cognitree.kronos.executor.model.TaskResult;
 import com.cognitree.kronos.model.Task;
+import com.cognitree.kronos.model.TaskId;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,8 +31,9 @@ import java.util.List;
 
 public class MockSuccessTaskHandler implements TaskHandler {
     public static final HashMap<String, Object> CONTEXT = new HashMap<>();
+    private static final Logger logger = LoggerFactory.getLogger(MockSuccessTaskHandler.class);
 
-    private static final List<String> tasks = Collections.synchronizedList(new ArrayList<>());
+    private static final List<TaskId> tasks = Collections.synchronizedList(new ArrayList<>());
 
     static {
         CONTEXT.put("valOne", 1234);
@@ -38,12 +42,8 @@ public class MockSuccessTaskHandler implements TaskHandler {
 
     private Task task;
 
-    public static boolean isHandled(String name, String job, String namespace) {
-        return tasks.contains(getTaskId(name, job, namespace));
-    }
-
-    private static String getTaskId(String name, String job, String namespace) {
-        return name + job + namespace;
+    public static boolean isHandled(TaskId taskId) {
+        return tasks.contains(taskId);
     }
 
     @Override
@@ -53,7 +53,8 @@ public class MockSuccessTaskHandler implements TaskHandler {
 
     @Override
     public TaskResult execute() {
-        tasks.add(getTaskId(task.getName(), task.getJob(), task.getNamespace()));
+        logger.info("Received request to execute task {}", task);
+        tasks.add(task.getIdentity());
         return new TaskResult(true, null, new HashMap<>(CONTEXT));
     }
 }
