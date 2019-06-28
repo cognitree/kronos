@@ -24,6 +24,7 @@ import com.cognitree.kronos.executor.handlers.TaskHandler;
 import com.cognitree.kronos.executor.handlers.TaskHandlerConfig;
 import com.cognitree.kronos.executor.model.TaskResult;
 import com.cognitree.kronos.model.ControlMessage;
+import com.cognitree.kronos.model.Messages;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskId;
@@ -46,11 +47,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Collectors;
 
-import static com.cognitree.kronos.model.Messages.ABORT_TASK_MESSAGE;
 import static com.cognitree.kronos.model.Messages.MISSING_TASK_HANDLER_MESSAGE;
 import static com.cognitree.kronos.model.Messages.TASK_ABORTED_MESSAGE;
+import static com.cognitree.kronos.model.Messages.TIMED_OUT_EXECUTING_TASK_MESSAGE;
 import static com.cognitree.kronos.model.Task.Status.ABORTED;
-import static com.cognitree.kronos.model.Task.Status.ABORTING;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.RUNNING;
 import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
@@ -67,7 +67,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  */
 public final class TaskExecutionService implements Service {
     private static final Logger logger = LoggerFactory.getLogger(TaskExecutionService.class);
-    private static final int TASK_COMPLETION_POLL_INTERVAL_IN_MS = 10;
 
     // Task type mapping Info
     private final Map<String, TaskHandlerConfig> taskTypeToHandlerConfigMap;
@@ -83,6 +82,7 @@ public final class TaskExecutionService implements Service {
     private final ScheduledExecutorService controlMessageConsumerThreadPool = Executors.newSingleThreadScheduledExecutor();
     // used by internal tasks to check task execution status
     private final ScheduledExecutorService taskCompletionThreadPool = Executors.newSingleThreadScheduledExecutor();
+
     // used to execute tasks
     private final ExecutorService taskExecutorThreadPool = Executors.newCachedThreadPool();
     private long pollIntervalInMs;
@@ -122,7 +122,7 @@ public final class TaskExecutionService implements Service {
         logger.info("Starting task execution service");
         taskConsumerThreadPool.scheduleAtFixedRate(this::consumeTasks, 0, pollIntervalInMs, MILLISECONDS);
         controlMessageConsumerThreadPool.scheduleAtFixedRate(this::consumeControlMessages, 0, pollIntervalInMs, MILLISECONDS);
-        taskCompletionThreadPool.scheduleAtFixedRate(new TaskCompletionChecker(), 0, TASK_COMPLETION_POLL_INTERVAL_IN_MS, MILLISECONDS);
+        taskCompletionThreadPool.scheduleAtFixedRate(new TaskCompletionChecker(), 0, pollIntervalInMs, MILLISECONDS);
         ServiceProvider.registerService(this);
     }
 
@@ -153,7 +153,7 @@ public final class TaskExecutionService implements Service {
 
         for (ControlMessage controlMessage : controlMessages) {
             logger.info("Received request to execute control message {}", controlMessage);
-            final TaskId task = controlMessage.getTask();
+            final Task task = controlMessage.getTask();
             if (!taskFuturesMap.containsKey(task)) {
                 continue;
             }
@@ -161,20 +161,18 @@ public final class TaskExecutionService implements Service {
             if (taskResultFuture != null) {
                 switch (controlMessage.getAction()) {
                     case ABORT:
-                        logger.info("Received request to abort task with id {}", task);
-                        sendTaskStatusUpdate(task, ABORTING, ABORT_TASK_MESSAGE);
+                        logger.info("Received request to abort task with id {}", task.getIdentity());
                         // interrupt the task first and then call the abort method
-                        taskResultFuture.cancel(false);
+                        taskResultFuture.cancel(true);
                         taskHandlersMap.get(task).abort();
                         sendTaskStatusUpdate(task, ABORTED, TASK_ABORTED_MESSAGE);
                         break;
                     case TIME_OUT:
-                        logger.info("Received request to time out task with id {}", task);
-                        // no need to send back status to scheduler
-                        // scheduler marks the task as FAILED on timeout
+                        logger.info("Received request to time out task with id {}", task.getIdentity());
                         // interrupt the task first and then call the abort method
-                        taskResultFuture.cancel(false);
+                        taskResultFuture.cancel(true);
                         taskHandlersMap.get(task).abort();
+                        sendTaskStatusUpdate(task, ABORTED, TIMED_OUT_EXECUTING_TASK_MESSAGE);
                 }
             }
         }
@@ -189,7 +187,11 @@ public final class TaskExecutionService implements Service {
         logger.info("Received request to submit task for execution: {}", task.getIdentity());
         final TaskHandler taskHandler;
         try {
-            taskHandler = createTaskHandler(task);
+            final TaskHandlerConfig taskHandlerConfig = taskTypeToHandlerConfigMap.get(task.getType());
+            taskHandler = (TaskHandler) Class.forName(taskHandlerConfig.getHandlerClass())
+                    .getConstructor()
+                    .newInstance();
+            taskHandler.init(task, taskHandlerConfig.getConfig());
         } catch (InstantiationException | InvocationTargetException | NoSuchMethodException
                 | IllegalAccessException | ClassNotFoundException e) {
             logger.error("Error initializing handler for task {}", task, e);
@@ -204,16 +206,6 @@ public final class TaskExecutionService implements Service {
         });
         taskHandlersMap.put(task, taskHandler);
         taskFuturesMap.put(task, taskResultFuture);
-    }
-
-    private TaskHandler createTaskHandler(Task task) throws ClassNotFoundException, NoSuchMethodException,
-            IllegalAccessException, InvocationTargetException, InstantiationException {
-        final TaskHandlerConfig taskHandlerConfig = taskTypeToHandlerConfigMap.get(task.getType());
-        TaskHandler taskHandler = (TaskHandler) Class.forName(taskHandlerConfig.getHandlerClass())
-                .getConstructor()
-                .newInstance();
-        taskHandler.init(task, taskHandlerConfig.getConfig());
-        return taskHandler;
     }
 
     private void sendTaskStatusUpdate(TaskId taskId, Status status, String statusMessage) {

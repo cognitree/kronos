@@ -48,7 +48,7 @@ import static com.cognitree.kronos.model.Messages.ABORTED_DEPENDEE_TASK_MESSAGE;
 import static com.cognitree.kronos.model.Messages.FAILED_DEPENDEE_TASK_MESSAGE;
 import static com.cognitree.kronos.model.Messages.FAILED_TO_RESOLVE_DEPENDENCY_MESSAGE;
 import static com.cognitree.kronos.model.Messages.SKIPPED_DEPENDEE_TASK_MESSAGE;
-import static com.cognitree.kronos.model.Messages.TASK_SUBMISSION_FAILED_MESSAGE;
+import static com.cognitree.kronos.model.Messages.TASK_SCHEDULING_FAILED_MESSAGE;
 import static com.cognitree.kronos.model.Messages.TIMED_OUT_EXECUTING_TASK_MESSAGE;
 import static com.cognitree.kronos.model.Task.Status.ABORTED;
 import static com.cognitree.kronos.model.Task.Status.CREATED;
@@ -96,7 +96,7 @@ final class TaskSchedulerService implements Service {
             Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
     private final long pollIntervalInMs;
 
-    private TaskProvider taskProvider;
+    private final TaskProvider taskProvider = new TaskProvider();;
 
     public TaskSchedulerService(long pollIntervalInMs) {
         this.pollIntervalInMs = pollIntervalInMs;
@@ -109,7 +109,6 @@ final class TaskSchedulerService implements Service {
     @Override
     public void init() {
         logger.info("Initializing task scheduler service");
-        taskProvider = new TaskProvider();
     }
 
     /**
@@ -181,8 +180,7 @@ final class TaskSchedulerService implements Service {
 
     private void createTimeoutTask(Task task) {
         if (task.getMaxExecutionTimeInMs() == -1) {
-            logger.debug("Timeout is set to {} for task {}, skip creating timeout task",
-                    task.getMaxExecutionTimeInMs(), task.getIdentity());
+            logger.debug("Timeout is set to -1 for task {}, skip creating timeout task", task.getIdentity());
             return;
         }
         if (taskTimeoutHandlersMap.containsKey(task.getIdentity())) {
@@ -264,8 +262,10 @@ final class TaskSchedulerService implements Service {
             return;
         }
         try {
-            TaskService.getService().updateStatus(task.getIdentity(), status, statusMessage, context);
-            handleTaskStatusChange(task, status);
+            boolean statusUpdated = TaskService.getService().updateStatus(task.getIdentity(), status, statusMessage, context);
+            if(statusUpdated) {
+                handleTaskStatusChange(task, status);
+            }
         } catch (ServiceException | ValidationException e) {
             logger.error("Error updating status of task {} to {} with status message {}",
                     task.getIdentity(), status, statusMessage, e);
@@ -338,8 +338,8 @@ final class TaskSchedulerService implements Service {
                 QueueService.getService(SCHEDULER_QUEUE).send(task);
                 updateStatus(task.getIdentity(), SCHEDULED, null);
             } catch (ServiceException e) {
-                logger.error("Error submitting task {} for execution", task.getIdentity(), e);
-                updateStatus(task.getIdentity(), FAILED, TASK_SUBMISSION_FAILED_MESSAGE);
+                logger.error("Error scheduling task {} for execution", task.getIdentity(), e);
+                updateStatus(task.getIdentity(), FAILED, TASK_SCHEDULING_FAILED_MESSAGE);
             }
         }
     }
@@ -443,7 +443,7 @@ final class TaskSchedulerService implements Service {
 
         @Override
         public void run() {
-            logger.info("Task {} has timed out, marking task as failed", task.getIdentity());
+            logger.info("Task {} has timed out, marking task as aborted", task.getIdentity());
             updateStatus(task.getIdentity(), ABORTED, TIMED_OUT_EXECUTING_TASK_MESSAGE);
             try {
                 final ControlMessage controlMessage = new ControlMessage();

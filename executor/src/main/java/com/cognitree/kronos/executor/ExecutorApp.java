@@ -51,10 +51,11 @@ public class ExecutorApp {
     public void start() throws Exception {
         final InputStream executorConfigAsStream =
                 getClass().getClassLoader().getResourceAsStream("executor.yaml");
-        ExecutorConfig executorConfig = MAPPER.readValue(executorConfigAsStream, ExecutorConfig.class);
+        final ExecutorConfig executorConfig = MAPPER.readValue(executorConfigAsStream, ExecutorConfig.class);
         final InputStream queueConfigAsStream =
                 getClass().getClassLoader().getResourceAsStream("queue.yaml");
         final QueueConfig queueConfig = MAPPER.readValue(queueConfigAsStream, QueueConfig.class);
+
         final QueueService queueService = new QueueService(queueConfig, EXECUTOR_QUEUE);
         final TaskExecutionService taskExecutionService =
                 new TaskExecutionService(executorConfig.getTaskHandlerConfig(), queueConfig.getPollIntervalInMs());

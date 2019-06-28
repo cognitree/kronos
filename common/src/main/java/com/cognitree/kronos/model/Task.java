@@ -185,7 +185,6 @@ public class Task extends TaskId {
         UP_FOR_RETRY(false),
         SCHEDULED(false),
         RUNNING(false),
-        ABORTING(false),
         SUCCESSFUL(true),
         SKIPPED(true), // a task is marked as skipped it the task it depends on fails.
         FAILED(true),

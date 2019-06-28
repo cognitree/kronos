@@ -45,6 +45,7 @@ public class QueueServiceTest {
     private static final String SERVICE_NAME = "queue-service";
     private static final String TASK_TYPE_A = "typeA";
     private static final String TASK_TYPE_B = "typeB";
+    private static final int WAIT_FOR_NEXT_POLL = 2000;
 
     private static QueueService QUEUE_SERVICE;
 
@@ -69,6 +70,11 @@ public class QueueServiceTest {
         QUEUE_SERVICE.destroy();
     }
 
+    /**
+     * Test unordered messages
+     *
+     * @throws ServiceException
+     */
     @Test
     public void testSendAndConsumeTask() throws ServiceException {
         Task taskAOne = createTask(TASK_TYPE_A);
@@ -92,8 +98,7 @@ public class QueueServiceTest {
 
         List<Task> tasksBConsumed = getTasks(TASK_TYPE_B, 3);
         Assert.assertTrue("Records sent " + tasksB + " and records consumed" + tasksBConsumed + " do not match",
-                tasksBConsumed.size() == tasksB.size() &&
-                        tasksBConsumed.containsAll(tasksB) && tasksB.containsAll(tasksBConsumed));
+                tasksBConsumed.size() == tasksB.size() && tasksBConsumed.containsAll(tasksB));
 
         ArrayList<Task> tasksA = new ArrayList<>();
         tasksA.add(taskAOne);
@@ -102,10 +107,14 @@ public class QueueServiceTest {
 
         List<Task> tasksAConsumed = getTasks(TASK_TYPE_A, 3);
         Assert.assertTrue("Records sent " + tasksA + " and records consumed" + tasksAConsumed + " do not match",
-                tasksAConsumed.size() == tasksA.size() &&
-                        tasksAConsumed.containsAll(tasksA) && tasksA.containsAll(tasksAConsumed));
+                tasksAConsumed.size() == tasksA.size() && tasksAConsumed.containsAll(tasksA));
     }
 
+    /**
+     * Test ordered messages
+     *
+     * @throws ServiceException
+     */
     @Test
     public void testSendAndConsumeTaskStatusUpdates() throws ServiceException {
         Task task = createTask(TASK_TYPE_A);
@@ -142,8 +151,7 @@ public class QueueServiceTest {
         Assert.assertFalse(controlMessagesConsumed.isEmpty());
 
         Assert.assertTrue("Records sent " + controlMessages + " and records consumed" + controlMessagesConsumed + " do not match",
-                controlMessagesConsumed.size() == controlMessages.size() &&
-                        controlMessagesConsumed.containsAll(controlMessages) && controlMessages.containsAll(controlMessagesConsumed));
+                controlMessagesConsumed.size() == controlMessages.size() && controlMessagesConsumed.containsAll(controlMessages));
     }
 
     private List<ControlMessage> getControlMessages() throws ServiceException {
@@ -155,7 +163,7 @@ public class QueueServiceTest {
             }
             try {
                 count--;
-                Thread.sleep(2000);
+                Thread.sleep(WAIT_FOR_NEXT_POLL);
             } catch (InterruptedException e) {
                 //
             }
@@ -173,7 +181,7 @@ public class QueueServiceTest {
             }
             try {
                 count--;
-                Thread.sleep(2000);
+                Thread.sleep(WAIT_FOR_NEXT_POLL);
             } catch (InterruptedException e) {
                 //
             }
@@ -190,7 +198,7 @@ public class QueueServiceTest {
             }
             try {
                 count--;
-                Thread.sleep(2000);
+                Thread.sleep(WAIT_FOR_NEXT_POLL);
             } catch (InterruptedException e) {
                 //
             }

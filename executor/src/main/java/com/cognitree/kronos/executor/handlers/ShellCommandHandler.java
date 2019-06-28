@@ -87,7 +87,7 @@ public class ShellCommandHandler implements TaskHandler {
         try {
             if (abort) {
                 logger.info("Task has been aborted, skip running");
-                return TaskResult.SUCCESS;
+                return new TaskResult(false, "task has been aborted");
             }
             Process process = processBuilder.start();
             int exitValue = process.waitFor();

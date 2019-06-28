@@ -36,7 +36,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.cognitree.kronos.model.Task.Status.ABORTING;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.RUNNING;
 import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
@@ -116,7 +115,7 @@ final class TaskProvider {
      * return tasks currently being executed by executor
      */
     synchronized List<Task> getActiveTasks() {
-        return getTasks(Arrays.asList(RUNNING, ABORTING));
+        return getTasks(Collections.singletonList(RUNNING));
     }
 
     synchronized List<Task> getDependentTasks(Task task) {

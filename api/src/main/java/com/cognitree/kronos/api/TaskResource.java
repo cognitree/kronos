@@ -36,6 +36,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import static com.cognitree.kronos.model.Task.Action.ABORT;
+
 @Path("/workflows/{workflow}/jobs/{job}/tasks")
 @Api(value = "tasks", description = "manage runtime instance of workflow - tasks")
 public class TaskResource {
@@ -51,12 +53,13 @@ public class TaskResource {
                                   @PathParam("job") String job,
                                   @ApiParam(value = "task name", required = true)
                                   @PathParam("task") String task,
-                                  @ApiParam(value = "action", allowableValues = "abort")
+                                  @ApiParam(value = "action", allowableValues = "abort", required = true)
                                   @QueryParam("action") String action,
                                   @HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
         logger.info("Received request to perform action {} on task {} part of job {}, workflow {}",
                 action, task, job, workflow);
-        if (action.equals("abort")) {
+        Task.Action taskAction = Task.Action.valueOf(action.toUpperCase());
+        if (taskAction == ABORT) {
             TaskService.getService().abortTask(Task.build(namespace, task, job, workflow));
             return Response.status(Response.Status.OK).build();
         } else {

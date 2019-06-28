@@ -58,11 +58,11 @@ public class QueueService implements Service {
     private String serviceName;
 
     public QueueService(QueueConfig queueConfig, String serviceName) {
+        this.serviceName = serviceName;
         this.consumerConfig = queueConfig.getConsumerConfig();
         this.producerConfig = queueConfig.getProducerConfig();
         this.taskStatusQueue = queueConfig.getTaskStatusQueue();
         this.controlQueue = queueConfig.getControlMessageQueue();
-        this.serviceName = serviceName;
     }
 
     public static QueueService getService(String serviceName) {
@@ -71,15 +71,20 @@ public class QueueService implements Service {
 
     @Override
     public void init() {
-        logger.info("Initializing queue service");
+        logger.info("Initializing queue service {}", serviceName);
         ServiceProvider.registerService(this);
     }
 
     @Override
     public void start() {
-        logger.info("Starting queue service");
+        logger.info("Starting queue service {}", serviceName);
     }
 
+    /**
+     * Send task (not necessarily ordered)
+     * @param task
+     * @throws ServiceException
+     */
     public void send(Task task) throws ServiceException {
         logger.debug("Received request to send task {}", task.getIdentity());
         final String type = task.getType();
@@ -93,6 +98,12 @@ public class QueueService implements Service {
         }
     }
 
+    /**
+     * Send the task status in an ordered manner.
+     *
+     * @param taskStatusUpdate
+     * @throws ServiceException
+     */
     public void send(TaskStatusUpdate taskStatusUpdate) throws ServiceException {
         logger.debug("Received request to send task status update {}", taskStatusUpdate);
         if (!producers.containsKey(taskStatusQueue)) {
@@ -111,6 +122,12 @@ public class QueueService implements Service {
                 + taskId.getJob() + taskId.getName();
     }
 
+    /**
+     * Broadcast control messages
+     *
+     * @param controlMessage
+     * @throws ServiceException
+     */
     public void send(ControlMessage controlMessage) throws ServiceException {
         logger.debug("Received request to send task control message {}", controlMessage);
         if (!producers.containsKey(controlQueue)) {
@@ -223,13 +240,13 @@ public class QueueService implements Service {
 
     @Override
     public void stop() {
-        logger.info("Stopping queue service");
+        logger.info("Stopping queue service {}", serviceName);
         producers.forEach((s, producer) -> producer.close());
         consumers.forEach((s, consumer) -> consumer.close());
     }
 
     public void destroy() {
-        logger.info("Destroying queue service");
+        logger.info("Destroying queue service {}", serviceName);
         consumers.forEach((s, consumer) -> consumer.destroy());
     }
 

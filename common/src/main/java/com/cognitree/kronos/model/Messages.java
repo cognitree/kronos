@@ -23,8 +23,7 @@ public interface Messages {
     String ABORTED_DEPENDEE_TASK_MESSAGE = FAILED_TO_RESOLVE_DEPENDENCY_MESSAGE + ", dependee task has been aborted";
     String SKIPPED_DEPENDEE_TASK_MESSAGE = FAILED_TO_RESOLVE_DEPENDENCY_MESSAGE + ", dependee task has been skipped";
     String TIMED_OUT_EXECUTING_TASK_MESSAGE = "timed out executing task";
-    String TASK_SUBMISSION_FAILED_MESSAGE = "error submitting task to queue";
-    String ABORT_TASK_MESSAGE = "received request to abort task";
+    String TASK_SCHEDULING_FAILED_MESSAGE = "error scheduling task for execution";
     String TASK_ABORTED_MESSAGE = "task has been aborted";
     String MISSING_TASK_HANDLER_MESSAGE = "failed to resolve handler for the task";
 }

@@ -22,7 +22,6 @@ import com.cognitree.kronos.executor.handlers.MockFailureTaskHandler;
 import com.cognitree.kronos.executor.handlers.MockSuccessTaskHandler;
 import com.cognitree.kronos.model.Messages;
 import com.cognitree.kronos.model.Task;
-import com.cognitree.kronos.model.TaskId;
 import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.scheduler.model.JobId;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;

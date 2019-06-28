@@ -48,7 +48,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import static com.cognitree.kronos.model.Task.Status.ABORTED;
-import static com.cognitree.kronos.model.Task.Status.ABORTING;
 import static com.cognitree.kronos.model.Task.Status.CREATED;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.RUNNING;
@@ -239,8 +238,8 @@ public class TaskService implements Service {
             throw TASK_NOT_FOUND.createException(taskId.getName(), taskId.getJob(),
                     taskId.getWorkflow(), taskId.getNamespace());
         }
-        if (task.getStatus().isFinal() || task.getStatus().equals(ABORTING)) {
-            logger.warn("Task {} is either in its final state or already is being aborted", task.getIdentity());
+        if (task.getStatus().isFinal()) {
+            logger.warn("Task {} is already in its final state {}", task.getIdentity(), task.getStatus());
             return;
         }
         TaskSchedulerService.getService().abort(task);
@@ -274,7 +273,7 @@ public class TaskService implements Service {
         }
     }
 
-    void updateStatus(TaskId taskId, Status status, String statusMessage, Map<String, Object> context)
+    boolean updateStatus(TaskId taskId, Status status, String statusMessage, Map<String, Object> context)
             throws ServiceException, ValidationException {
         try {
             final Task task = taskStore.load(taskId);
@@ -282,18 +281,19 @@ public class TaskService implements Service {
                 throw TASK_NOT_FOUND.createException(taskId.getName(), taskId.getJob(),
                         taskId.getWorkflow(), taskId.getNamespace());
             }
-            validateJob(task.getNamespace(), task.getJob(), task.getWorkflow());
             Status currentStatus = task.getStatus();
+            if(status == currentStatus) {
+                logger.warn("Desired state transition is same as current state {}. Ignoring state transition", currentStatus);
+                return false;
+            }
             if (!isValidTransition(currentStatus, status)) {
                 logger.error("Invalid state transition for task {} from status {}, to {}",
                         task.getIdentity(), currentStatus, status);
                 throw new ServiceException("Invalid state transition from " + currentStatus + " to " + status);
             }
-
             if (status == FAILED && isRetryEnabled(task)) {
                 logger.info("Resubmit the task {} for retry", task);
-                updateStatus(task.getIdentity(), UP_FOR_RETRY, null, context);
-                return;
+                return updateStatus(task.getIdentity(), UP_FOR_RETRY, null, context);
             }
 
             task.setStatus(status);
@@ -304,7 +304,7 @@ public class TaskService implements Service {
                     task.setRetryCount(task.getRetryCount() + 1);
                     break;
                 case RUNNING:
-                    if (task.getSubmittedAt() == null) { // TODO fix me: support for retry
+                    if (task.getSubmittedAt() == null) {
                         task.setSubmittedAt(System.currentTimeMillis());
                     }
                     break;
@@ -322,6 +322,7 @@ public class TaskService implements Service {
                     taskId, status, statusMessage, e);
             throw new ServiceException(e.getMessage(), e.getCause());
         }
+        return true;
     }
 
     private boolean isValidTransition(Status currentStatus, Status desiredStatus) {
@@ -339,8 +340,6 @@ public class TaskService implements Service {
             case SKIPPED:
                 return currentStatus == CREATED || currentStatus == WAITING;
             case SUCCESSFUL:
-                return currentStatus == RUNNING;
-            case ABORTING:
                 return currentStatus == RUNNING;
             case ABORTED:
             case FAILED:

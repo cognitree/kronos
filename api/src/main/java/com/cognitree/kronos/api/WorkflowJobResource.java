@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.cognitree.kronos.model.Task.Action.ABORT;
 import static java.util.Comparator.comparing;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -144,12 +145,13 @@ public class WorkflowJobResource {
                                   @PathParam("workflow") String workflow,
                                   @ApiParam(value = "job id", required = true)
                                   @PathParam("id") String job,
-                                  @ApiParam(value = "action", allowableValues = "abort")
+                                  @ApiParam(value = "action", allowableValues = "abort", required = true)
                                   @QueryParam("action") String action,
                                   @HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
         logger.info("Received request to perform action {} on job {}, workflow {}",
                 action, job, workflow);
-        if (action.equals("abort")) {
+        Task.Action taskAction = Task.Action.valueOf(action.toUpperCase());
+        if (taskAction == ABORT) {
             JobService.getService().abortJob(Job.build(namespace, job, workflow));
             return Response.status(Response.Status.OK).build();
         } else {
