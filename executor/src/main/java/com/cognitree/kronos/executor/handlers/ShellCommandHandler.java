@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
@@ -38,14 +39,19 @@ public class ShellCommandHandler implements TaskHandler {
     private static final String PROP_ARGS = "args";
     private static final String PROPERTY_WORKING_DIR = "workingDir";
     private static final String PROPERTY_LOG_DIR = "logDir";
+    private static final String JAVA_IO_TMPDIR = "java.io.tmpdir";
+
+    private Task task;
+    private boolean abort = false;
 
     @Override
-    public void init(ObjectNode handlerConfig) {
+    public void init(Task task, ObjectNode config) {
+        this.task = task;
     }
 
     @Override
-    public TaskResult handle(Task task) {
-        logger.info("received request to handle task {}", task);
+    public TaskResult execute() {
+        logger.info("received request to execute task {}", task);
 
         final Map<String, Object> taskProperties = task.getProperties();
         if (!taskProperties.containsKey(PROP_CMD)) {
@@ -68,7 +74,7 @@ public class ShellCommandHandler implements TaskHandler {
         if (taskProperties.containsKey(PROPERTY_LOG_DIR)) {
             logDirPath = getProperty(taskProperties, PROPERTY_LOG_DIR);
         } else {
-            logDirPath = System.getProperty("java.io.tmpdir");
+            logDirPath = System.getProperty(JAVA_IO_TMPDIR);
         }
         File logDir = new File(logDirPath);
         // create log directory is does not exist
@@ -79,13 +85,17 @@ public class ShellCommandHandler implements TaskHandler {
         processBuilder.redirectError(new File(logDir, task.getName() + "_" + task.getJob() + "_stderr.log"));
         processBuilder.redirectOutput(new File(logDir, task.getName() + "_" + task.getJob() + "_stdout.log"));
         try {
+            if (abort) {
+                logger.info("Task has been aborted, skip running");
+                return new TaskResult(false, "task has been aborted");
+            }
             Process process = processBuilder.start();
             int exitValue = process.waitFor();
             logger.info("Process exited with code {} for command {}", exitValue, cmdWithArgs);
             if (exitValue != 0) {
                 return new TaskResult(false, "process exited with error code " + exitValue);
             }
-        } catch (Exception e) {
+        } catch (IOException | InterruptedException e) {
             logger.error("Error executing command {}", cmdWithArgs, e);
             return new TaskResult(false, "process exited with exception: " + e.getMessage());
         }
@@ -94,5 +104,11 @@ public class ShellCommandHandler implements TaskHandler {
 
     private String getProperty(Map<String, Object> properties, String key) {
         return String.valueOf(properties.get(key));
+    }
+
+    @Override
+    public void abort() {
+        logger.info("Received request to abort task {}", task);
+        abort = true;
     }
 }

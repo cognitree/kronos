@@ -19,31 +19,34 @@ package com.cognitree.kronos.executor.handlers;
 
 import com.cognitree.kronos.executor.model.TaskResult;
 import com.cognitree.kronos.model.Task;
+import com.cognitree.kronos.model.TaskId;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class MockFailureTaskHandler implements TaskHandler {
-    private static final List<String> tasks = Collections.synchronizedList(new ArrayList<>());
+    private static final Logger logger = LoggerFactory.getLogger(MockFailureTaskHandler.class);
+    private static final List<TaskId> tasks = Collections.synchronizedList(new ArrayList<>());
 
-    public static boolean isHandled(String name, String job, String namespace) {
-        return tasks.contains(getTaskId(name, job, namespace));
-    }
+    private Task task;
 
-    private static String getTaskId(String name, String job, String namespace) {
-        return name + job + namespace;
-    }
-
-    @Override
-    public void init(ObjectNode handlerConfig) {
-
+    public static boolean isHandled(TaskId taskId) {
+        return tasks.contains(taskId);
     }
 
     @Override
-    public TaskResult handle(Task task) {
-        tasks.add(getTaskId(task.getName(), task.getJob(), task.getNamespace()));
+    public void init(Task task, ObjectNode config) {
+        this.task = task;
+    }
+
+    @Override
+    public TaskResult execute() {
+        logger.info("Received request to execute task {}", task);
+        tasks.add(task.getIdentity());
         return new TaskResult(false);
     }
 }

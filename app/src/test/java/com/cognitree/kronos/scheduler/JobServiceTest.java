@@ -17,34 +17,33 @@
 
 package com.cognitree.kronos.scheduler;
 
+import com.cognitree.kronos.executor.handlers.MockAbortTaskHandler;
 import com.cognitree.kronos.executor.handlers.MockFailureTaskHandler;
-import com.cognitree.kronos.executor.handlers.MockTaskHandler;
+import com.cognitree.kronos.executor.handlers.MockSuccessTaskHandler;
+import com.cognitree.kronos.model.Messages;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.scheduler.model.Job;
-import com.cognitree.kronos.scheduler.model.Messages;
+import com.cognitree.kronos.scheduler.model.JobId;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import org.junit.Assert;
 import org.junit.Test;
-import org.quartz.Scheduler;
 
 import java.util.List;
+import java.util.UUID;
 
 import static com.cognitree.kronos.TestUtil.scheduleWorkflow;
+import static com.cognitree.kronos.TestUtil.waitForJobsToTriggerAndComplete;
 import static com.cognitree.kronos.TestUtil.waitForTriggerToComplete;
 
 public class JobServiceTest extends ServiceTest {
 
     @Test
     public void testGetAllJobsByNamespace() throws Exception {
-        final WorkflowTrigger workflowTriggerOne = scheduleWorkflow("workflows/workflow-template.yaml");
-        final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow("workflows/workflow-template.yaml");
+        final WorkflowTrigger workflowTriggerOne = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
+        final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        // wait for both the job to be triggered
-        waitForTriggerToComplete(workflowTriggerOne, scheduler);
-        waitForTriggerToComplete(workflowTriggerTwo, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForJobsToTriggerAndComplete(workflowTriggerOne);
+        waitForJobsToTriggerAndComplete(workflowTriggerTwo);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTriggerOne.getNamespace());
@@ -58,15 +57,11 @@ public class JobServiceTest extends ServiceTest {
 
     @Test
     public void testGetAllJobsCreatedInLastNDays() throws Exception {
-        final WorkflowTrigger workflowTriggerOne = scheduleWorkflow("workflows/workflow-template.yaml");
-        final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow("workflows/workflow-template.yaml");
+        final WorkflowTrigger workflowTriggerOne = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
+        final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        // wait for both the job to be triggered
-        waitForTriggerToComplete(workflowTriggerOne, scheduler);
-        waitForTriggerToComplete(workflowTriggerTwo, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForJobsToTriggerAndComplete(workflowTriggerOne);
+        waitForJobsToTriggerAndComplete(workflowTriggerTwo);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTriggerOne.getNamespace());
@@ -80,15 +75,11 @@ public class JobServiceTest extends ServiceTest {
 
     @Test
     public void testGetAllJobsByWorkflow() throws Exception {
-        final WorkflowTrigger workflowTriggerOne = scheduleWorkflow("workflows/workflow-template.yaml");
-        final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow("workflows/workflow-template.yaml");
+        final WorkflowTrigger workflowTriggerOne = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
+        final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        // wait for both the job to be triggered
-        waitForTriggerToComplete(workflowTriggerOne, scheduler);
-        waitForTriggerToComplete(workflowTriggerTwo, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForJobsToTriggerAndComplete(workflowTriggerOne);
+        waitForJobsToTriggerAndComplete(workflowTriggerTwo);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTriggerOne.getNamespace(), workflowTriggerOne.getWorkflow(),
@@ -102,15 +93,11 @@ public class JobServiceTest extends ServiceTest {
 
     @Test
     public void testGetAllJobsByWorkflowAndTrigger() throws Exception {
-        final WorkflowTrigger workflowTriggerOne = scheduleWorkflow("workflows/workflow-template.yaml");
-        final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow("workflows/workflow-template.yaml");
+        final WorkflowTrigger workflowTriggerOne = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
+        final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        // wait for both the job to be triggered
-        waitForTriggerToComplete(workflowTriggerOne, scheduler);
-        waitForTriggerToComplete(workflowTriggerTwo, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForJobsToTriggerAndComplete(workflowTriggerOne);
+        waitForJobsToTriggerAndComplete(workflowTriggerTwo);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTriggerOne.getNamespace(), workflowTriggerOne.getWorkflow(),
@@ -124,13 +111,9 @@ public class JobServiceTest extends ServiceTest {
 
     @Test
     public void testGetJobTasks() throws Exception {
-        final WorkflowTrigger workflowTrigger = scheduleWorkflow("workflows/workflow-template.yaml");
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        // wait for the job to be triggered
-        waitForTriggerToComplete(workflowTrigger, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForJobsToTriggerAndComplete(workflowTrigger);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
@@ -143,12 +126,15 @@ public class JobServiceTest extends ServiceTest {
             switch (task.getName()) {
                 case "taskOne":
                     Assert.assertEquals(Task.Status.SUCCESSFUL, task.getStatus());
+                    Assert.assertTrue(MockSuccessTaskHandler.isHandled(task.getIdentity()));
                     break;
                 case "taskTwo":
                     Assert.assertEquals(Task.Status.SUCCESSFUL, task.getStatus());
+                    Assert.assertTrue(MockSuccessTaskHandler.isHandled(task.getIdentity()));
                     break;
                 case "taskThree":
                     Assert.assertEquals(Task.Status.SUCCESSFUL, task.getStatus());
+                    Assert.assertTrue(MockSuccessTaskHandler.isHandled(task.getIdentity()));
                     break;
                 default:
                     Assert.fail();
@@ -158,13 +144,9 @@ public class JobServiceTest extends ServiceTest {
 
     @Test
     public void testGetJobTasksFailedDueToTimeout() throws Exception {
-        final WorkflowTrigger workflowTrigger = scheduleWorkflow("workflows/workflow-template-timeout-tasks.yaml");
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow(WORKFLOW_TEMPLATE_TIMEOUT_TASKS_YAML);
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        // wait for the job to be triggered
-        waitForTriggerToComplete(workflowTrigger, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForJobsToTriggerAndComplete(workflowTrigger);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
@@ -174,39 +156,32 @@ public class JobServiceTest extends ServiceTest {
         final Job job = workflowOneJobs.get(0);
         final List<Task> tasks = jobService.getTasks(job);
         Assert.assertEquals(3, tasks.size());
-        Task taskThree = null;
         for (Task task : tasks) {
             switch (task.getName()) {
                 case "taskOne":
                     Assert.assertEquals(Task.Status.SUCCESSFUL, task.getStatus());
+                    Assert.assertTrue(MockSuccessTaskHandler.isHandled(task.getIdentity()));
                     break;
                 case "taskTwo":
                     Assert.assertEquals(Task.Status.SUCCESSFUL, task.getStatus());
+                    Assert.assertTrue(MockSuccessTaskHandler.isHandled(task.getIdentity()));
                     break;
                 case "taskThree":
-                    taskThree = task;
-                    Assert.assertEquals(Task.Status.FAILED, task.getStatus());
-                    Assert.assertEquals(Messages.TIMED_OUT, task.getStatusMessage());
+                    Assert.assertEquals(Task.Status.ABORTED, task.getStatus());
+                    Assert.assertEquals(Messages.TIMED_OUT_EXECUTING_TASK_MESSAGE, task.getStatusMessage());
+                    Assert.assertTrue(MockAbortTaskHandler.isHandled(task.getIdentity()));
                     break;
                 default:
                     Assert.fail();
             }
         }
-        Assert.assertNotNull(taskThree);
-        // Right now timed out tasks are not cleaned up on the executor side
-        // thus finishing the task execution manually
-        MockTaskHandler.finishExecution(taskThree.getName(), taskThree.getJob(), taskThree.getNamespace());
     }
 
     @Test
     public void testGetJobTasksFailedDueToHandler() throws Exception {
-        final WorkflowTrigger workflowTrigger = scheduleWorkflow("workflows/workflow-template-failed-handler.yaml");
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow(WORKFLOW_TEMPLATE_FAILED_HANDLER_YAML);
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        // wait for the job to be triggered
-        waitForTriggerToComplete(workflowTrigger, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForJobsToTriggerAndComplete(workflowTrigger);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
@@ -216,38 +191,73 @@ public class JobServiceTest extends ServiceTest {
         final Job job = workflowOneJobs.get(0);
         final List<Task> tasks = jobService.getTasks(job);
         Assert.assertEquals(3, tasks.size());
-        Task taskTwo = null;
         for (Task task : tasks) {
             switch (task.getName()) {
                 case "taskOne":
                     Assert.assertEquals(Task.Status.SUCCESSFUL, task.getStatus());
+                    Assert.assertTrue(MockSuccessTaskHandler.isHandled(task.getIdentity()));
                     break;
                 case "taskTwo":
-                    taskTwo = task;
                     Assert.assertEquals(Task.Status.FAILED, task.getStatus());
                     Assert.assertEquals(3, task.getRetryCount());
+                    Assert.assertTrue(MockFailureTaskHandler.isHandled(task.getIdentity()));
                     break;
                 case "taskThree":
                     Assert.assertEquals(Task.Status.SKIPPED, task.getStatus());
-                    Assert.assertEquals(Messages.FAILED_DEPENDEE_TASK, task.getStatusMessage());
+                    Assert.assertEquals(Messages.FAILED_DEPENDEE_TASK_MESSAGE, task.getStatusMessage());
                     break;
                 default:
                     Assert.fail();
             }
         }
-        Assert.assertNotNull(taskTwo);
-        Assert.assertTrue(MockFailureTaskHandler.isHandled(taskTwo.getName(), taskTwo.getJob(), taskTwo.getNamespace()));
+    }
+
+    @Test(expected = ValidationException.class)
+    public void testAbortJobNotFound() throws Exception {
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
+        waitForJobsToTriggerAndComplete(workflowTrigger);
+
+        List<Job> jobs = JobService.getService().get(workflowTrigger.getNamespace());
+        Assert.assertFalse(jobs.isEmpty());
+        JobService.getService().abortJob(JobId.build(workflowTrigger.getNamespace(),
+                UUID.randomUUID().toString(), workflowTrigger.getWorkflow()));
     }
 
     @Test
-    public void testDeleteJob() throws Exception {
-        final WorkflowTrigger workflowTrigger = scheduleWorkflow("workflows/workflow-template.yaml");
+    public void testAbortJob() throws Exception {
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow(WORKFLOW_TEMPLATE_ABORT_TASKS_YAML);
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        // wait for both the job to be triggered
-        waitForTriggerToComplete(workflowTrigger, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForTriggerToComplete(workflowTrigger, WorkflowSchedulerService.getService().getScheduler());
+
+        List<Job> jobs = JobService.getService().get(workflowTrigger.getNamespace());
+        JobService.getService().abortJob(jobs.get(0).getIdentity());
+
+        waitForJobsToTriggerAndComplete(workflowTrigger);
+        List<Task> tasks = TaskService.getService().get(workflowTrigger.getNamespace());
+        for (Task tsk : tasks) {
+            switch (tsk.getName()) {
+                case "taskOne":
+                    Assert.assertEquals(Task.Status.ABORTED, tsk.getStatus());
+                    Assert.assertTrue(MockAbortTaskHandler.isHandled(tsk.getIdentity()));
+                    break;
+                case "taskTwo":
+                    Assert.assertEquals(Task.Status.ABORTED, tsk.getStatus());
+                    break;
+                default:
+                    Assert.fail();
+            }
+        }
+
+        Assert.assertEquals(Job.Status.FAILED,
+                JobService.getService().get(workflowTrigger.getNamespace()).get(0).getStatus());
+    }
+
+
+    @Test
+    public void testDeleteJob() throws Exception {
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
+
+        waitForJobsToTriggerAndComplete(workflowTrigger);
 
         JobService jobService = JobService.getService();
         final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),

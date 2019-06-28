@@ -29,21 +29,23 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class RAMConsumer implements Consumer {
     private static final Logger logger = LoggerFactory.getLogger(RAMConsumer.class);
 
+    private LinkedBlockingQueue<String> blockingQueue;
+
     @Override
-    public void init(ObjectNode config) {
-        logger.info("Initializing consumer for RAM(in-memory) queue with config {}", config);
+    public void init(String topic, ObjectNode config) {
+        logger.info("Initializing consumer for RAM(in-memory) queue on topic {} with config {}", topic, config);
+        blockingQueue = RAMQueueFactory.getQueue(topic);
     }
 
     @Override
-    public List<String> poll(String topic) {
-        return poll(topic, Integer.MAX_VALUE);
+    public List<String> poll() {
+        return poll(Integer.MAX_VALUE);
     }
 
     @Override
-    public List<String> poll(String topic, int size) {
-        logger.trace("Received request to poll messages from topic {} with max size {}", topic, size);
-        final LinkedBlockingQueue<String> blockingQueue = RAMQueueFactory.getQueue(topic);
-        List<String> records = new ArrayList<>();
+    public List<String> poll(int size) {
+        logger.trace("Received request to poll {} message", size);
+        final List<String> records = new ArrayList<>();
         while (!blockingQueue.isEmpty() && records.size() < size)
             records.add(blockingQueue.poll());
         return records;

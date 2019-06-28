@@ -28,17 +28,27 @@ public interface TaskHandler {
 
     /**
      * for each configured handler during initialization phase a call is made to initialize handler using
-     * {@link TaskHandlerConfig#config}. Any property required by the handler to instantiate itself
-     * should be part of {@link TaskHandlerConfig#config}.
+     * {@link TaskHandlerConfig#getConfig()}. Any property required by the handler to instantiate itself
+     * should be part of {@link TaskHandlerConfig#getConfig()}.
      *
-     * @param handlerConfig configuration used to initialize the handler.
+     * @param task   task to execute.
+     * @param config configuration used to initialize the handler.
      */
-    void init(ObjectNode handlerConfig);
+    void init(Task task, ObjectNode config);
 
     /**
-     * defines how to handle/ execute the task.
+     * defines how to execute the task.
      *
-     * @param task task to handle.
+     * @return
      */
-    TaskResult handle(Task task);
+    TaskResult execute();
+
+    /**
+     * called when a task is aborted by user.
+     * <p>
+     * The thread executing the task first receives an interrupt signal and then the abort method is called
+     */
+    default void abort() {
+
+    }
 }

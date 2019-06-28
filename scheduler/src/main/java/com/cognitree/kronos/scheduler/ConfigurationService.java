@@ -18,14 +18,15 @@
 package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.Service;
+import com.cognitree.kronos.ServiceException;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.queue.QueueConfig;
 import com.cognitree.kronos.queue.consumer.Consumer;
 import com.cognitree.kronos.queue.consumer.ConsumerConfig;
-import com.cognitree.kronos.scheduler.model.events.ConfigUpdate;
 import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
+import com.cognitree.kronos.scheduler.model.events.ConfigUpdate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import org.quartz.SchedulerException;
@@ -41,28 +42,20 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * A service that consumes config updates from a specified queue and processes them.
- *
  */
 public class ConfigurationService implements Service {
 
     private static final Logger logger = LoggerFactory.getLogger(ConfigurationService.class);
 
-    public static ConfigurationService getService() {
-        return (ConfigurationService) ServiceProvider.getService(ConfigurationService.class.getSimpleName());
-    }
+    private static final ObjectReader READER = new ObjectMapper().reader().forType(ConfigUpdate.class);
+
+    private final String configurationQueue;
 
     private final ConsumerConfig consumerConfig;
-    // used in junit test case
-    final String configurationQueue;
+    private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
 
-    private Consumer consumer;
-    private long pollInterval;
-
-    private static final ObjectReader READER = new ObjectMapper()
-            .reader().forType(ConfigUpdate.class);
-
-    private final ScheduledExecutorService scheduledExecutorService =
-            Executors.newScheduledThreadPool(1);
+    private Consumer configurationConsumer;
+    private long pollIntervalInMs;
 
     ConfigurationService(QueueConfig queueConfig) {
         if (queueConfig.getConfigurationQueue() == null || queueConfig.getConsumerConfig() == null) {
@@ -72,6 +65,11 @@ public class ConfigurationService implements Service {
         }
         this.consumerConfig = queueConfig.getConsumerConfig();
         this.configurationQueue = queueConfig.getConfigurationQueue();
+        this.pollIntervalInMs = queueConfig.getPollIntervalInMs();
+    }
+
+    public static ConfigurationService getService() {
+        return (ConfigurationService) ServiceProvider.getService(ConfigurationService.class.getSimpleName());
     }
 
     @Override
@@ -84,7 +82,8 @@ public class ConfigurationService implements Service {
     public void start() {
         logger.info("start: Starting configuration service");
         ServiceProvider.registerService(this);
-        scheduledExecutorService.scheduleAtFixedRate(this::failSafeProcessUpdates, pollInterval, pollInterval, MILLISECONDS);
+        scheduledExecutorService.scheduleAtFixedRate(this::failSafeProcessUpdates,
+                pollIntervalInMs, pollIntervalInMs, MILLISECONDS);
     }
 
     @Override
@@ -93,12 +92,11 @@ public class ConfigurationService implements Service {
     }
 
     private void initConsumer() throws Exception {
-        logger.info("Initializing consumer with config {}", consumerConfig);
-        consumer = (Consumer) Class.forName(consumerConfig.getConsumerClass())
+        logger.info("Initializing configuration consumer with config {}", consumerConfig);
+        configurationConsumer = (Consumer) Class.forName(consumerConfig.getConsumerClass())
                 .getConstructor()
                 .newInstance();
-        consumer.init(consumerConfig.getConfig());
-        pollInterval = consumerConfig.getPollIntervalInMs();
+        configurationConsumer.init(configurationQueue, consumerConfig.getConfig());
     }
 
     /**
@@ -117,19 +115,22 @@ public class ConfigurationService implements Service {
      * Poll, parse and process updates from the configured queue.
      */
     private void processUpdates() {
-        final List<String> configUpdates = consumer.poll(configurationQueue);
+        final List<String> configUpdates = configurationConsumer.poll();
         for (String configUpdateAsString : configUpdates) {
-            if (configUpdateAsString.trim().isEmpty())
-                logger.trace("processUpdates: quietly skipping over empty config update...");
+            if (configUpdateAsString == null || configUpdateAsString.trim().isEmpty()) {
+                logger.trace("processUpdates: quietly skipping over null/ empty config update...");
+                continue;
+            }
             try {
-                ConfigUpdate configUpdate = READER.readValue(configUpdateAsString.trim());
+                final ConfigUpdate configUpdate = READER.readValue(configUpdateAsString.trim());
                 processUpdate(configUpdate);
             } catch (IOException e) {
                 // Do not throw the exception but continue to process other updates
                 logger.error("processUpdates: unable to parse the config update received: " + configUpdateAsString, e);
             } catch (UnsupportedOperationException | ServiceException | ValidationException | SchedulerException e) {
                 // Do not throw the exception but continue to process other updates
-                logger.error("processUpdates: error occurred in processing the config update received: " + configUpdateAsString, e);
+                logger.error("processUpdates: error occurred in processing the config update received: {}",
+                        configUpdateAsString, e);
             }
         }
     }
