@@ -47,7 +47,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.cognitree.kronos.model.Task.Action.ABORT;
 import static java.util.Comparator.comparing;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -58,6 +57,7 @@ import static javax.ws.rs.core.Response.Status.OK;
 public class WorkflowJobResource {
     private static final Logger logger = LoggerFactory.getLogger(WorkflowJobResource.class);
     private static final String DEFAULT_DAYS = "10";
+    private static final String ABORT_ACTION = "abort";
 
     @GET
     @ApiOperation(value = "Get all running or executed jobs for a workflow", response = Job.class, responseContainer = "List",
@@ -145,13 +145,12 @@ public class WorkflowJobResource {
                                   @PathParam("workflow") String workflow,
                                   @ApiParam(value = "job id", required = true)
                                   @PathParam("id") String job,
-                                  @ApiParam(value = "action", allowableValues = "abort", required = true)
+                                  @ApiParam(value = "action", allowableValues = ABORT_ACTION, required = true)
                                   @QueryParam("action") String action,
                                   @HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
         logger.info("Received request to perform action {} on job {}, workflow {}",
                 action, job, workflow);
-        Task.Action taskAction = Task.Action.valueOf(action.toUpperCase());
-        if (taskAction == ABORT) {
+        if (ABORT_ACTION.equals(action)) {
             JobService.getService().abortJob(Job.build(namespace, job, workflow));
             return Response.status(Response.Status.OK).build();
         } else {

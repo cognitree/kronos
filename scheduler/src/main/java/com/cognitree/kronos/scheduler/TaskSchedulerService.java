@@ -96,7 +96,7 @@ final class TaskSchedulerService implements Service {
             Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
     private final long pollIntervalInMs;
 
-    private final TaskProvider taskProvider = new TaskProvider();;
+    private final TaskProvider taskProvider = new TaskProvider();
 
     public TaskSchedulerService(long pollIntervalInMs) {
         this.pollIntervalInMs = pollIntervalInMs;
@@ -119,6 +119,7 @@ final class TaskSchedulerService implements Service {
      * 2) Subscribe for task status update
      * 3) Initialize configured timeout policies
      * 4) Initialize timeout task for all the active tasks
+     * 5) Schedule tasks ready for execution
      * </pre>
      */
     @Override
@@ -130,6 +131,7 @@ final class TaskSchedulerService implements Service {
         resolveCreatedTasks();
         scheduledExecutorService.scheduleAtFixedRate(this::deleteStaleTasks, TASK_PURGE_INTERVAL, TASK_PURGE_INTERVAL, HOURS);
         ServiceProvider.registerService(this);
+        scheduleReadyTasks();
     }
 
     /**
@@ -262,11 +264,11 @@ final class TaskSchedulerService implements Service {
             return;
         }
         try {
-            boolean statusUpdated = TaskService.getService().updateStatus(task.getIdentity(), status, statusMessage, context);
-            if(statusUpdated) {
+            boolean statusUpdated = TaskService.getService().updateStatus(task, status, statusMessage, context);
+            if (statusUpdated) {
                 handleTaskStatusChange(task, status);
             }
-        } catch (ServiceException | ValidationException e) {
+        } catch (ServiceException e) {
             logger.error("Error updating status of task {} to {} with status message {}",
                     task.getIdentity(), status, statusMessage, e);
         }

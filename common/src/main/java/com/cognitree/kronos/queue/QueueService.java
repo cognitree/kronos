@@ -82,6 +82,7 @@ public class QueueService implements Service {
 
     /**
      * Send task (not necessarily ordered)
+     *
      * @param task
      * @throws ServiceException
      */
@@ -183,7 +184,7 @@ public class QueueService implements Service {
     public List<ControlMessage> consumeControlMessages() throws ServiceException {
         logger.debug("Received request to consume control message");
         if (!consumers.containsKey(controlQueue)) {
-            createConsumer(controlQueue, UUID.randomUUID().toString());
+            createConsumer(controlQueue, "controlMessage-" + UUID.randomUUID().toString());
         }
         final List<String> records = consumers.get(controlQueue).poll();
         if (records.isEmpty()) {

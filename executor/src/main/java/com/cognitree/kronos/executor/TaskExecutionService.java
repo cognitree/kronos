@@ -24,7 +24,6 @@ import com.cognitree.kronos.executor.handlers.TaskHandler;
 import com.cognitree.kronos.executor.handlers.TaskHandlerConfig;
 import com.cognitree.kronos.executor.model.TaskResult;
 import com.cognitree.kronos.model.ControlMessage;
-import com.cognitree.kronos.model.Messages;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.Task.Status;
 import com.cognitree.kronos.model.TaskId;

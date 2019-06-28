@@ -273,14 +273,9 @@ public class TaskService implements Service {
         }
     }
 
-    boolean updateStatus(TaskId taskId, Status status, String statusMessage, Map<String, Object> context)
-            throws ServiceException, ValidationException {
+    boolean updateStatus(Task task, Status status, String statusMessage, Map<String, Object> context)
+            throws ServiceException {
         try {
-            final Task task = taskStore.load(taskId);
-            if (task == null) {
-                throw TASK_NOT_FOUND.createException(taskId.getName(), taskId.getJob(),
-                        taskId.getWorkflow(), taskId.getNamespace());
-            }
             Status currentStatus = task.getStatus();
             if(status == currentStatus) {
                 logger.warn("Desired state transition is same as current state {}. Ignoring state transition", currentStatus);
@@ -293,7 +288,7 @@ public class TaskService implements Service {
             }
             if (status == FAILED && isRetryEnabled(task)) {
                 logger.info("Resubmit the task {} for retry", task);
-                return updateStatus(task.getIdentity(), UP_FOR_RETRY, null, context);
+                return updateStatus(task, UP_FOR_RETRY, null, context);
             }
 
             task.setStatus(status);
@@ -319,7 +314,7 @@ public class TaskService implements Service {
             notifyListeners(task, currentStatus, status);
         } catch (StoreException e) {
             logger.error("unable to update task {} status to {} with status message {}",
-                    taskId, status, statusMessage, e);
+                    task.getIdentity(), status, statusMessage, e);
             throw new ServiceException(e.getMessage(), e.getCause());
         }
         return true;
