@@ -53,8 +53,10 @@ import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.RUNNING;
 import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
 import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
+import static com.cognitree.kronos.model.Task.Status.TIMED_OUT;
 import static com.cognitree.kronos.model.Task.Status.UP_FOR_RETRY;
 import static com.cognitree.kronos.model.Task.Status.WAITING;
+import static com.cognitree.kronos.scheduler.ValidationError.CANNOT_ABORT_TASK_IN_SCHEDULED_STATE;
 import static com.cognitree.kronos.scheduler.ValidationError.JOB_NOT_FOUND;
 import static com.cognitree.kronos.scheduler.ValidationError.NAMESPACE_NOT_FOUND;
 import static com.cognitree.kronos.scheduler.ValidationError.TASK_NOT_FOUND;
@@ -231,7 +233,7 @@ public class TaskService implements Service {
         try {
             task = taskStore.load(taskId);
         } catch (StoreException e) {
-            logger.error("No task found with id {}", taskId, e);
+            logger.error("Error retrieving task from store with id {}", taskId, e);
             throw new ServiceException(e.getMessage(), e.getCause());
         }
         if (task == null) {
@@ -241,6 +243,9 @@ public class TaskService implements Service {
         if (task.getStatus().isFinal()) {
             logger.warn("Task {} is already in its final state {}", task.getIdentity(), task.getStatus());
             return;
+        }
+        if (task.getStatus() == SCHEDULED) {
+            throw CANNOT_ABORT_TASK_IN_SCHEDULED_STATE.createException();
         }
         TaskSchedulerService.getService().abort(task);
     }
@@ -277,7 +282,7 @@ public class TaskService implements Service {
             throws ServiceException {
         try {
             Status currentStatus = task.getStatus();
-            if(status == currentStatus) {
+            if (status == currentStatus) {
                 logger.warn("Desired state transition is same as current state {}. Ignoring state transition", currentStatus);
                 return false;
             }
@@ -286,7 +291,7 @@ public class TaskService implements Service {
                         task.getIdentity(), currentStatus, status);
                 throw new ServiceException("Invalid state transition from " + currentStatus + " to " + status);
             }
-            if (status == FAILED && isRetryEnabled(task)) {
+            if ((status == FAILED || status == TIMED_OUT) && isRetryEnabled(task, status)) {
                 logger.info("Resubmit the task {} for retry", task);
                 return updateStatus(task, UP_FOR_RETRY, null, context);
             }
@@ -299,9 +304,7 @@ public class TaskService implements Service {
                     task.setRetryCount(task.getRetryCount() + 1);
                     break;
                 case RUNNING:
-                    if (task.getSubmittedAt() == null) {
-                        task.setSubmittedAt(System.currentTimeMillis());
-                    }
+                    task.setSubmittedAt(System.currentTimeMillis());
                     break;
                 case SUCCESSFUL:
                 case SKIPPED:
@@ -331,9 +334,10 @@ public class TaskService implements Service {
             case RUNNING:
                 return currentStatus == SCHEDULED;
             case UP_FOR_RETRY:
-                return currentStatus == RUNNING;
+                return currentStatus == RUNNING || currentStatus == TIMED_OUT; // for retry scenario
             case SKIPPED:
                 return currentStatus == CREATED || currentStatus == WAITING;
+            case TIMED_OUT:
             case SUCCESSFUL:
                 return currentStatus == RUNNING;
             case ABORTED:
@@ -344,12 +348,25 @@ public class TaskService implements Service {
         }
     }
 
-    private boolean isRetryEnabled(Task task) {
+    /**
+     * check if retry is enabled for on status {@param status} for task {@param task}
+     *
+     * @param task
+     * @param status
+     * @return
+     */
+    private boolean isRetryEnabled(Task task, Status status) {
         /* Also ensure that the retry count is less than max retry count */
-        Optional<Policy> retryPolicyOpt = task.getPolicies().stream().filter(t -> t.getType() == Policy.Type.retry).findFirst();
+        Optional<Policy> retryPolicyOpt = task.getPolicies().stream()
+                .filter(t -> t.getType() == Policy.Type.retry).findFirst();
         if (retryPolicyOpt.isPresent()) {
-            int maxRetryCount = ((RetryPolicy) retryPolicyOpt.get()).getMaxRetryCount();
-            return maxRetryCount > task.getRetryCount();
+            RetryPolicy retryPolicy = (RetryPolicy) retryPolicyOpt.get();
+            if ((status == FAILED && retryPolicy.isRetryOnFailure())
+                    || (status == TIMED_OUT && retryPolicy.isRetryOnTimeout())) {
+                int maxRetryCount = retryPolicy.getMaxRetryCount();
+                return maxRetryCount > task.getRetryCount();
+            }
+            return false;
         }
         return false;
     }

@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -47,9 +48,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Collectors;
 
 import static com.cognitree.kronos.model.Messages.MISSING_TASK_HANDLER_MESSAGE;
-import static com.cognitree.kronos.model.Messages.TASK_ABORTED_MESSAGE;
-import static com.cognitree.kronos.model.Messages.TIMED_OUT_EXECUTING_TASK_MESSAGE;
-import static com.cognitree.kronos.model.Task.Status.ABORTED;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.RUNNING;
 import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
@@ -72,8 +70,8 @@ public final class TaskExecutionService implements Service {
 
     private final Map<String, Integer> taskTypeToMaxParallelTasksCount = new HashMap<>();
     private final Map<String, Integer> taskTypeToRunningTasksCount = new HashMap<>();
-    private final Map<Task, TaskHandler> taskHandlersMap = new ConcurrentHashMap<>();
-    private final Map<Task, Future<TaskResult>> taskFuturesMap = new ConcurrentHashMap<>();
+    private final Map<TaskExecutionId, TaskHandler> taskHandlersMap = new ConcurrentHashMap<>();
+    private final Map<TaskExecutionId, Future<TaskResult>> taskFuturesMap = new ConcurrentHashMap<>();
 
     // used by internal tasks to poll new tasks from queue
     private final ScheduledExecutorService taskConsumerThreadPool = Executors.newSingleThreadScheduledExecutor();
@@ -153,25 +151,20 @@ public final class TaskExecutionService implements Service {
         for (ControlMessage controlMessage : controlMessages) {
             logger.info("Received request to execute control message {}", controlMessage);
             final Task task = controlMessage.getTask();
-            if (!taskFuturesMap.containsKey(task)) {
+            final TaskExecutionId taskExecutionId = new TaskExecutionId(task, task.getRetryCount());
+            if (!taskFuturesMap.containsKey(taskExecutionId)) {
                 continue;
             }
-            final Future<TaskResult> taskResultFuture = taskFuturesMap.get(task);
+            final Future<TaskResult> taskResultFuture = taskFuturesMap.get(taskExecutionId);
             if (taskResultFuture != null) {
                 switch (controlMessage.getAction()) {
                     case ABORT:
-                        logger.info("Received request to abort task with id {}", task.getIdentity());
-                        // interrupt the task first and then call the abort method
-                        taskResultFuture.cancel(true);
-                        taskHandlersMap.get(task).abort();
-                        sendTaskStatusUpdate(task, ABORTED, TASK_ABORTED_MESSAGE);
-                        break;
                     case TIME_OUT:
-                        logger.info("Received request to time out task with id {}", task.getIdentity());
+                        logger.info("Received request to {} task with id {}",
+                                controlMessage.getAction(), task.getIdentity());
                         // interrupt the task first and then call the abort method
                         taskResultFuture.cancel(true);
-                        taskHandlersMap.get(task).abort();
-                        sendTaskStatusUpdate(task, ABORTED, TIMED_OUT_EXECUTING_TASK_MESSAGE);
+                        taskHandlersMap.get(taskExecutionId).abort();
                 }
             }
         }
@@ -203,8 +196,9 @@ public final class TaskExecutionService implements Service {
             sendTaskStatusUpdate(task, RUNNING, null);
             return taskHandler.execute();
         });
-        taskHandlersMap.put(task, taskHandler);
-        taskFuturesMap.put(task, taskResultFuture);
+        final TaskExecutionId taskExecutionId = new TaskExecutionId(task, task.getRetryCount());
+        taskHandlersMap.put(taskExecutionId, taskHandler);
+        taskFuturesMap.put(taskExecutionId, taskResultFuture);
     }
 
     private void sendTaskStatusUpdate(TaskId taskId, Status status, String statusMessage) {
@@ -244,8 +238,9 @@ public final class TaskExecutionService implements Service {
     private class TaskCompletionChecker implements Runnable {
         @Override
         public void run() {
-            final ArrayList<Task> completedTasks = new ArrayList<>();
-            taskFuturesMap.forEach((task, future) -> {
+            final ArrayList<TaskExecutionId> completedTasks = new ArrayList<>();
+            taskFuturesMap.forEach((taskHandler, future) -> {
+                Task task = taskHandler.getTask();
                 logger.debug("Checking task {} for completion", task.getIdentity());
                 if (future.isDone()) {
                     try {
@@ -267,16 +262,48 @@ public final class TaskExecutionService implements Service {
                         synchronized (task.getType()) {
                             taskTypeToRunningTasksCount.put(task.getType(), taskTypeToRunningTasksCount.get(task.getType()) - 1);
                         }
-                        completedTasks.add(task);
+                        completedTasks.add(taskHandler);
                     }
                 }
             });
             if (!completedTasks.isEmpty()) {
-                logger.debug("Tasks {} completed execution", completedTasks.stream().map(Task::getIdentity)
+                logger.debug("Tasks {} completed execution", completedTasks.stream().map(t -> t.getTask().getIdentity())
                         .collect(Collectors.toList()));
             }
             completedTasks.forEach(taskFuturesMap::remove);
             completedTasks.forEach(taskHandlersMap::remove);
+        }
+    }
+
+    private class TaskExecutionId {
+        private final Task task;
+        private final int executionId;
+
+        private TaskExecutionId(Task task, int executionId) {
+            this.task = task;
+            this.executionId = executionId;
+        }
+
+        public Task getTask() {
+            return task;
+        }
+
+        public int getExecutionId() {
+            return executionId;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof TaskExecutionId)) return false;
+            TaskExecutionId taskExecutionId = (TaskExecutionId) o;
+            return executionId == taskExecutionId.executionId &&
+                    Objects.equals(task, taskExecutionId.task);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(task, executionId);
         }
     }
 }

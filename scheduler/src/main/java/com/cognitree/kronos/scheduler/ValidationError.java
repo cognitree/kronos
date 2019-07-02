@@ -33,8 +33,10 @@ public enum ValidationError {
     WORKFLOW_TRIGGER_ALREADY_EXISTS(3003, "workflow_trigger_already_exists", 409),
 
     JOB_NOT_FOUND(4001, "job_not_found", 404),
+    CANNOT_ABORT_JOB_WITH_SCHEDULED_TASK(4002, "cannot_abort_job_with_scheduled_task", 400),
 
-    TASK_NOT_FOUND(5001, "task_not_found", 404);
+    TASK_NOT_FOUND(5001, "task_not_found", 404),
+    CANNOT_ABORT_TASK_IN_SCHEDULED_STATE(5002, "cannot_abort_task_in_scheduled_state", 400);
 
     private int errorCode;
     private String errorMsg;

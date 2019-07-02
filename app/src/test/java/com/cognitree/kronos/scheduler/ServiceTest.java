@@ -38,6 +38,7 @@ import java.util.List;
 public class ServiceTest {
     static final String WORKFLOW_TEMPLATE_YAML = "workflows/workflow-template.yaml";
     static final String WORKFLOW_TEMPLATE_TIMEOUT_TASKS_YAML = "workflows/workflow-template-timeout-tasks.yaml";
+    static final String WORKFLOW_TEMPLATE_TIMEOUT_TASKS_WITH_RETRY_YAML = "workflows/workflow-template-timeout-tasks-with-retry.yaml";
     static final String WORKFLOW_TEMPLATE_FAILED_HANDLER_YAML = "workflows/workflow-template-failed-handler.yaml";
     static final String INVALID_WORKFLOW_MISSING_TASKS_TEMPLATE_YAML = "workflows/invalid-workflow-missing-tasks-template.yaml";
     static final String INVALID_WORKFLOW_DISABLED_TASKS_TEMPLATE_YAML = "workflows/invalid-workflow-disabled-tasks-template.yaml";

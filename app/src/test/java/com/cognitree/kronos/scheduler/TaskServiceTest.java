@@ -17,6 +17,7 @@
 
 package com.cognitree.kronos.scheduler;
 
+import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.executor.handlers.MockAbortTaskHandler;
 import com.cognitree.kronos.executor.handlers.MockSuccessTaskHandler;
 import com.cognitree.kronos.model.Messages;
@@ -24,6 +25,7 @@ import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.model.TaskId;
 import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
+import com.cognitree.kronos.scheduler.store.StoreService;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -104,6 +106,21 @@ public class TaskServiceTest extends ServiceTest {
         Assert.assertFalse(jobs.isEmpty());
         TaskService.getService().abortTask(TaskId.build(workflowTrigger.getNamespace(),
                 UUID.randomUUID().toString(), jobs.get(0).getId(), workflowTrigger.getWorkflow()));
+    }
+
+    @Test(expected = ValidationException.class)
+    public void testAbortTasksInScheduledState() throws Exception {
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
+        waitForJobsToTriggerAndComplete(workflowTrigger);
+
+        List<Job> jobs = JobService.getService().get(workflowTrigger.getNamespace());
+        Assert.assertFalse(jobs.isEmpty());
+        StoreService storeService = (StoreService) ServiceProvider.getService(StoreService.class.getSimpleName());
+        List<Task> tasks = TaskService.getService().get(workflowTrigger.getNamespace());
+        Task task = tasks.get(0);
+        task.setStatus(Task.Status.SCHEDULED);
+        storeService.getTaskStore().update(task);
+        TaskService.getService().abortTask(task.getIdentity());
     }
 
     @Test
