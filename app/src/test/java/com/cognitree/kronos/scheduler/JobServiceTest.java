@@ -37,6 +37,8 @@ import java.util.UUID;
 import static com.cognitree.kronos.TestUtil.scheduleWorkflow;
 import static com.cognitree.kronos.TestUtil.waitForJobsToTriggerAndComplete;
 import static com.cognitree.kronos.TestUtil.waitForTriggerToComplete;
+import static com.cognitree.kronos.model.Task.Status.ABORTED;
+import static com.cognitree.kronos.model.Task.Status.SKIPPED;
 
 public class JobServiceTest extends ServiceTest {
 
@@ -241,7 +243,7 @@ public class JobServiceTest extends ServiceTest {
                     Assert.assertTrue(MockFailureTaskHandler.isHandled(task.getIdentity()));
                     break;
                 case "taskThree":
-                    Assert.assertEquals(Task.Status.SKIPPED, task.getStatus());
+                    Assert.assertEquals(SKIPPED, task.getStatus());
                     Assert.assertEquals(Messages.FAILED_DEPENDEE_TASK_MESSAGE, task.getStatusMessage());
                     break;
                 default:
@@ -275,11 +277,12 @@ public class JobServiceTest extends ServiceTest {
         for (Task tsk : tasks) {
             switch (tsk.getName()) {
                 case "taskOne":
-                    Assert.assertEquals(Task.Status.ABORTED, tsk.getStatus());
+                    Assert.assertEquals(ABORTED, tsk.getStatus());
                     Assert.assertTrue(MockAbortTaskHandler.isHandled(tsk.getIdentity()));
                     break;
                 case "taskTwo":
-                    Assert.assertEquals(Task.Status.ABORTED, tsk.getStatus());
+                    Assert.assertTrue((tsk.getStatus() == ABORTED) ||
+                            (tsk.getStatus() == SKIPPED));
                     break;
                 default:
                     Assert.fail();
