@@ -36,6 +36,7 @@ import java.util.UUID;
 
 import static com.cognitree.kronos.TestUtil.scheduleWorkflow;
 import static com.cognitree.kronos.TestUtil.waitForJobsToTriggerAndComplete;
+import static com.cognitree.kronos.TestUtil.waitForTaskToBeRunning;
 import static com.cognitree.kronos.TestUtil.waitForTriggerToComplete;
 import static com.cognitree.kronos.model.Task.Status.ABORTED;
 import static com.cognitree.kronos.model.Task.Status.SKIPPED;
@@ -268,6 +269,10 @@ public class JobServiceTest extends ServiceTest {
         final WorkflowTrigger workflowTrigger = scheduleWorkflow(WORKFLOW_TEMPLATE_ABORT_TASKS_YAML);
 
         waitForTriggerToComplete(workflowTrigger, WorkflowSchedulerService.getService().getScheduler());
+
+        Task taskOne = TaskService.getService().get(workflowTrigger.getNamespace())
+                .stream().filter(task -> task.getName().equals("taskOne")).findFirst().get();
+        waitForTaskToBeRunning(taskOne);
 
         List<Job> jobs = JobService.getService().get(workflowTrigger.getNamespace());
         JobService.getService().abortJob(jobs.get(0).getIdentity());

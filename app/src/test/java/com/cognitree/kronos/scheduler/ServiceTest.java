@@ -36,20 +36,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ServiceTest {
-    static final String WORKFLOW_TEMPLATE_YAML = "workflows/workflow-template.yaml";
-    static final String WORKFLOW_TEMPLATE_TIMEOUT_TASKS_YAML = "workflows/workflow-template-timeout-tasks.yaml";
-    static final String WORKFLOW_TEMPLATE_TIMEOUT_TASKS_WITH_RETRY_YAML = "workflows/workflow-template-timeout-tasks-with-retry.yaml";
-    static final String WORKFLOW_TEMPLATE_FAILED_HANDLER_YAML = "workflows/workflow-template-failed-handler.yaml";
-    static final String INVALID_WORKFLOW_MISSING_TASKS_TEMPLATE_YAML = "workflows/invalid-workflow-missing-tasks-template.yaml";
-    static final String INVALID_WORKFLOW_DISABLED_TASKS_TEMPLATE_YAML = "workflows/invalid-workflow-disabled-tasks-template.yaml";
-    static final String WORKFLOW_TEMPLATE_ABORT_TASKS_YAML = "workflows/workflow-template-abort-tasks.yaml";
-    static final String WORKFLOW_TEMPLATE_WITH_TASK_CONTEXT_YAML = "workflows/workflow-template-with-task-context.yaml";
-    static final String WORKFLOW_TEMPLATE_WITH_PROPERTIES_YAML = "workflows/workflow-template-with-properties.yaml";
-    static final String WORKFLOW_TEMPLATE_WITH_DUPLICATE_POLICY_YAML = "workflows/workflow-template-with-duplicate-policy.yaml";
+    protected static final SchedulerApp SCHEDULER_APP = new SchedulerApp();
+    protected static final ExecutorApp EXECUTOR_APP = new ExecutorApp();
+    protected static final String WORKFLOW_TEMPLATE_YAML = "workflows/workflow-template.yaml";
+    protected static final String WORKFLOW_TEMPLATE_TIMEOUT_TASKS_YAML = "workflows/workflow-template-timeout-tasks.yaml";
+    protected static final String WORKFLOW_TEMPLATE_TIMEOUT_TASKS_WITH_RETRY_YAML = "workflows/workflow-template-timeout-tasks-with-retry.yaml";
+    protected static final String WORKFLOW_TEMPLATE_FAILED_HANDLER_YAML = "workflows/workflow-template-failed-handler.yaml";
+    protected static final String INVALID_WORKFLOW_MISSING_TASKS_TEMPLATE_YAML = "workflows/invalid-workflow-missing-tasks-template.yaml";
+    protected static final String INVALID_WORKFLOW_DISABLED_TASKS_TEMPLATE_YAML = "workflows/invalid-workflow-disabled-tasks-template.yaml";
+    protected static final String WORKFLOW_TEMPLATE_ABORT_TASKS_YAML = "workflows/workflow-template-abort-tasks.yaml";
+    protected static final String WORKFLOW_TEMPLATE_WITH_TASK_CONTEXT_YAML = "workflows/workflow-template-with-task-context.yaml";
+    protected static final String WORKFLOW_TEMPLATE_WITH_PROPERTIES_YAML = "workflows/workflow-template-with-properties.yaml";
+    protected static final String WORKFLOW_TEMPLATE_WITH_DUPLICATE_POLICY_YAML = "workflows/workflow-template-with-duplicate-policy.yaml";
 
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
-    private static final SchedulerApp SCHEDULER_APP = new SchedulerApp();
-    private static final ExecutorApp EXECUTOR_APP = new ExecutorApp();
     private static final List<Namespace> EXISTING_NAMESPACE = new ArrayList<>();
 
     @BeforeClass
@@ -70,7 +70,7 @@ public class ServiceTest {
         executorConfig.getTaskHandlerConfig().forEach((type, taskHandlerConfig) -> {
             try {
                 QueueService.getService(QueueService.EXECUTOR_QUEUE)
-                        .consumeTask(type, 0);
+                        .consumeTasks(type, 0);
             } catch (ServiceException e) {
                 // do nothing
             }

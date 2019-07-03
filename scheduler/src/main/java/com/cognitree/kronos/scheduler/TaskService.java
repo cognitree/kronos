@@ -304,6 +304,8 @@ public class TaskService implements Service {
                     task.setRetryCount(task.getRetryCount() + 1);
                     break;
                 case RUNNING:
+                    // reset the submitted time on retry
+                    // timeout task is created from submitted time and needs to be updated
                     task.setSubmittedAt(System.currentTimeMillis());
                     break;
                 case SUCCESSFUL:
@@ -349,20 +351,20 @@ public class TaskService implements Service {
     }
 
     /**
-     * check if retry is enabled for on status {@param status} for task {@param task}
+     * check if retry is enabled on status {@param desiredStatus} for task {@param task}
      *
      * @param task
-     * @param status
+     * @param desiredStatus
      * @return
      */
-    private boolean isRetryEnabled(Task task, Status status) {
+    private boolean isRetryEnabled(Task task, Status desiredStatus) {
         /* Also ensure that the retry count is less than max retry count */
         Optional<Policy> retryPolicyOpt = task.getPolicies().stream()
                 .filter(t -> t.getType() == Policy.Type.retry).findFirst();
         if (retryPolicyOpt.isPresent()) {
             RetryPolicy retryPolicy = (RetryPolicy) retryPolicyOpt.get();
-            if ((status == FAILED && retryPolicy.isRetryOnFailure())
-                    || (status == TIMED_OUT && retryPolicy.isRetryOnTimeout())) {
+            if ((desiredStatus == FAILED && retryPolicy.isRetryOnFailure())
+                    || (desiredStatus == TIMED_OUT && retryPolicy.isRetryOnTimeout())) {
                 int maxRetryCount = retryPolicy.getMaxRetryCount();
                 return maxRetryCount > task.getRetryCount();
             }

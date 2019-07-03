@@ -70,8 +70,8 @@ public final class TaskExecutionService implements Service {
 
     private final Map<String, Integer> taskTypeToMaxParallelTasksCount = new HashMap<>();
     private final Map<String, Integer> taskTypeToRunningTasksCount = new HashMap<>();
-    private final Map<TaskExecutionId, TaskHandler> taskHandlersMap = new ConcurrentHashMap<>();
-    private final Map<TaskExecutionId, Future<TaskResult>> taskFuturesMap = new ConcurrentHashMap<>();
+    private final Map<TaskExecutionContext, TaskHandler> taskHandlersMap = new ConcurrentHashMap<>();
+    private final Map<TaskExecutionContext, Future<TaskResult>> taskFuturesMap = new ConcurrentHashMap<>();
 
     // used by internal tasks to poll new tasks from queue
     private final ScheduledExecutorService taskConsumerThreadPool = Executors.newSingleThreadScheduledExecutor();
@@ -129,7 +129,7 @@ public final class TaskExecutionService implements Service {
                 final int maxTasksToPoll = maxParallelTasks - taskTypeToRunningTasksCount.get(taskType);
                 if (maxTasksToPoll > 0) {
                     try {
-                        final List<Task> tasks = QueueService.getService(EXECUTOR_QUEUE).consumeTask(taskType, maxTasksToPoll);
+                        final List<Task> tasks = QueueService.getService(EXECUTOR_QUEUE).consumeTasks(taskType, maxTasksToPoll);
                         tasks.forEach(this::submit);
                     } catch (ServiceException e) {
                         logger.error("Error consuming tasks for execution", e);
@@ -151,11 +151,11 @@ public final class TaskExecutionService implements Service {
         for (ControlMessage controlMessage : controlMessages) {
             logger.info("Received request to execute control message {}", controlMessage);
             final Task task = controlMessage.getTask();
-            final TaskExecutionId taskExecutionId = new TaskExecutionId(task, task.getRetryCount());
-            if (!taskFuturesMap.containsKey(taskExecutionId)) {
+            final TaskExecutionContext taskExecutionContext = new TaskExecutionContext(task, task.getRetryCount());
+            if (!taskFuturesMap.containsKey(taskExecutionContext)) {
                 continue;
             }
-            final Future<TaskResult> taskResultFuture = taskFuturesMap.get(taskExecutionId);
+            final Future<TaskResult> taskResultFuture = taskFuturesMap.get(taskExecutionContext);
             if (taskResultFuture != null) {
                 switch (controlMessage.getAction()) {
                     case ABORT:
@@ -164,7 +164,7 @@ public final class TaskExecutionService implements Service {
                                 controlMessage.getAction(), task.getIdentity());
                         // interrupt the task first and then call the abort method
                         taskResultFuture.cancel(true);
-                        taskHandlersMap.get(taskExecutionId).abort();
+                        taskHandlersMap.get(taskExecutionContext).abort();
                 }
             }
         }
@@ -196,9 +196,9 @@ public final class TaskExecutionService implements Service {
             sendTaskStatusUpdate(task, RUNNING, null);
             return taskHandler.execute();
         });
-        final TaskExecutionId taskExecutionId = new TaskExecutionId(task, task.getRetryCount());
-        taskHandlersMap.put(taskExecutionId, taskHandler);
-        taskFuturesMap.put(taskExecutionId, taskResultFuture);
+        final TaskExecutionContext taskExecutionContext = new TaskExecutionContext(task, task.getRetryCount());
+        taskHandlersMap.put(taskExecutionContext, taskHandler);
+        taskFuturesMap.put(taskExecutionContext, taskResultFuture);
     }
 
     private void sendTaskStatusUpdate(TaskId taskId, Status status, String statusMessage) {
@@ -238,9 +238,9 @@ public final class TaskExecutionService implements Service {
     private class TaskCompletionChecker implements Runnable {
         @Override
         public void run() {
-            final ArrayList<TaskExecutionId> completedTasks = new ArrayList<>();
-            taskFuturesMap.forEach((taskHandler, future) -> {
-                Task task = taskHandler.getTask();
+            final ArrayList<TaskExecutionContext> completedTasks = new ArrayList<>();
+            taskFuturesMap.forEach((taskExecutionContext, future) -> {
+                final Task task = taskExecutionContext.getTask();
                 logger.debug("Checking task {} for completion", task.getIdentity());
                 if (future.isDone()) {
                     try {
@@ -262,7 +262,7 @@ public final class TaskExecutionService implements Service {
                         synchronized (task.getType()) {
                             taskTypeToRunningTasksCount.put(task.getType(), taskTypeToRunningTasksCount.get(task.getType()) - 1);
                         }
-                        completedTasks.add(taskHandler);
+                        completedTasks.add(taskExecutionContext);
                     }
                 }
             });
@@ -275,11 +275,16 @@ public final class TaskExecutionService implements Service {
         }
     }
 
-    private class TaskExecutionId {
+    /**
+     * We use this wrapper class to uniquely identify the different instance of task sent for execution on retry.
+     * <p>
+     * Same task (having same TaskId) will be sent for execution in case of retry.
+     */
+    private class TaskExecutionContext {
         private final Task task;
         private final int executionId;
 
-        private TaskExecutionId(Task task, int executionId) {
+        private TaskExecutionContext(Task task, int executionId) {
             this.task = task;
             this.executionId = executionId;
         }
@@ -295,10 +300,10 @@ public final class TaskExecutionService implements Service {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof TaskExecutionId)) return false;
-            TaskExecutionId taskExecutionId = (TaskExecutionId) o;
-            return executionId == taskExecutionId.executionId &&
-                    Objects.equals(task, taskExecutionId.task);
+            if (!(o instanceof TaskExecutionContext)) return false;
+            TaskExecutionContext taskExecutionContext = (TaskExecutionContext) o;
+            return executionId == taskExecutionContext.executionId &&
+                    Objects.equals(task, taskExecutionContext.task);
         }
 
         @Override

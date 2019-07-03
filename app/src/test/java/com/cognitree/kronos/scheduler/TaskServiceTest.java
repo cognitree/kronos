@@ -35,6 +35,7 @@ import java.util.UUID;
 
 import static com.cognitree.kronos.TestUtil.scheduleWorkflow;
 import static com.cognitree.kronos.TestUtil.waitForJobsToTriggerAndComplete;
+import static com.cognitree.kronos.TestUtil.waitForTaskToBeRunning;
 import static com.cognitree.kronos.TestUtil.waitForTriggerToComplete;
 
 public class TaskServiceTest extends ServiceTest {
@@ -133,6 +134,7 @@ public class TaskServiceTest extends ServiceTest {
         final List<Task> workflowTasks = taskService.get(workflowTrigger.getNamespace());
         Assert.assertEquals(2, workflowTasks.size());
         Task task = workflowTasks.stream().filter(t -> t.getName().equals("taskOne")).findFirst().get();
+        waitForTaskToBeRunning(task);
         TaskService.getService().abortTask(task);
 
         waitForJobsToTriggerAndComplete(workflowTrigger);
