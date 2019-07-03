@@ -22,7 +22,6 @@ import com.cognitree.kronos.ServiceProvider;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
- *
  * There must be only one implementation of this service registered with the {@link ServiceProvider} by calling
  * {@link ServiceProvider#registerService(Service)}.
  */
@@ -41,9 +40,23 @@ public abstract class StoreService implements Service {
     }
 
     public abstract NamespaceStore getNamespaceStore();
+
     public abstract WorkflowStore getWorkflowStore();
+
     public abstract WorkflowTriggerStore getWorkflowTriggerStore();
+
     public abstract JobStore getJobStore();
+
     public abstract TaskStore getTaskStore();
+
     public abstract org.quartz.spi.JobStore getQuartzJobStore();
+
+    /**
+     * return true is store is persistent, false if the store is in memory store
+     *
+     * @return
+     */
+    public boolean isPersistent() {
+        return true;
+    }
 }

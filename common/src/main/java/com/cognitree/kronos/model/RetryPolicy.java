@@ -26,6 +26,8 @@ import static com.cognitree.kronos.model.Policy.Type.retry;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RetryPolicy extends Policy {
     private int maxRetryCount = 1;
+    private boolean retryOnFailure = true;
+    private boolean retryOnTimeout = false;
 
     public RetryPolicy() {
         super(retry);
@@ -39,24 +41,44 @@ public class RetryPolicy extends Policy {
         this.maxRetryCount = maxRetryCount;
     }
 
+    public boolean isRetryOnFailure() {
+        return retryOnFailure;
+    }
+
+    public void setRetryOnFailure(boolean retryOnFailure) {
+        this.retryOnFailure = retryOnFailure;
+    }
+
+    public boolean isRetryOnTimeout() {
+        return retryOnTimeout;
+    }
+
+    public void setRetryOnTimeout(boolean retryOnTimeout) {
+        this.retryOnTimeout = retryOnTimeout;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof RetryPolicy)) return false;
         if (!super.equals(o)) return false;
         RetryPolicy that = (RetryPolicy) o;
-        return maxRetryCount == that.maxRetryCount;
+        return maxRetryCount == that.maxRetryCount &&
+                retryOnFailure == that.retryOnFailure &&
+                retryOnTimeout == that.retryOnTimeout;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), maxRetryCount);
+        return Objects.hash(super.hashCode(), maxRetryCount, retryOnFailure, retryOnTimeout);
     }
 
     @Override
     public String toString() {
         return "RetryPolicy{" +
                 "maxRetryCount=" + maxRetryCount +
+                ", retryOnFailure=" + retryOnFailure +
+                ", retryOnTimeout=" + retryOnTimeout +
                 "} " + super.toString();
     }
 }
