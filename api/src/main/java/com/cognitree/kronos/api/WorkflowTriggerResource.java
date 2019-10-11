@@ -167,7 +167,7 @@ public class WorkflowTriggerResource {
                                           @HeaderParam("namespace") String namespace)
             throws ServiceException, ValidationException, SchedulerException {
         logger.info("Received request to update workflow trigger {} for workflow {} under namespace {} set enable to {}",
-                triggerName, workflowName, namespace);
+                triggerName, workflowName, namespace, enable);
         if (namespace == null || namespace.isEmpty()) {
             return Response.status(BAD_REQUEST).entity("missing namespace header").build();
         }

@@ -123,15 +123,15 @@ public class TaskService implements Service {
                 workflowTask, jobId, workflowName, namespace);
         validateJob(namespace, jobId, workflowName);
         Task task = new Task();
-        task.setName(UUID.randomUUID().toString());
         task.setJob(jobId);
         task.setWorkflow(workflowName);
-        task.setName(workflowTask.getName());
+        task.setName(workflowTask.getName() != null ? workflowTask.getName() : UUID.randomUUID().toString());
         task.setNamespace(namespace);
         task.setType(workflowTask.getType());
         task.setPolicies(workflowTask.getPolicies());
         task.setMaxExecutionTimeInMs(workflowTask.getMaxExecutionTimeInMs());
         task.setDependsOn(workflowTask.getDependsOn());
+        task.setCondition(workflowTask.getCondition());
         final Map<String, Object> taskProperties = modifyAndGetTaskProperties(workflowTask.getProperties(), workflowProperties);
         task.setProperties(taskProperties);
         task.setCreatedAt(System.currentTimeMillis());

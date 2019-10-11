@@ -120,12 +120,21 @@ public class Workflow extends WorkflowId {
 
         private String name;
         private String type;
+        private String condition;
         private List<String> dependsOn = new ArrayList<>();
         private Map<String, Object> properties = new HashMap<>();
         private List<Policy> policies = new ArrayList<>();
 
         private long maxExecutionTimeInMs = -1;
         private boolean enabled = true;
+
+        public String getCondition() {
+            return condition;
+        }
+
+        public void setCondition(String condition) {
+            this.condition = condition;
+        }
 
         public String getName() {
             return name;
@@ -186,12 +195,13 @@ public class Workflow extends WorkflowId {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof WorkflowTask)) return false;
+            if (o == null || getClass() != o.getClass()) return false;
             WorkflowTask that = (WorkflowTask) o;
             return maxExecutionTimeInMs == that.maxExecutionTimeInMs &&
                     enabled == that.enabled &&
                     Objects.equals(name, that.name) &&
                     Objects.equals(type, that.type) &&
+                    Objects.equals(condition, that.condition) &&
                     Objects.equals(dependsOn, that.dependsOn) &&
                     Objects.equals(properties, that.properties) &&
                     Objects.equals(policies, that.policies);
@@ -199,7 +209,7 @@ public class Workflow extends WorkflowId {
 
         @Override
         public int hashCode() {
-            return Objects.hash(name, type, dependsOn, properties, policies, maxExecutionTimeInMs, enabled);
+            return Objects.hash(name, type, condition, dependsOn, properties, policies, maxExecutionTimeInMs, enabled);
         }
 
         @Override
@@ -207,6 +217,7 @@ public class Workflow extends WorkflowId {
             return "WorkflowTask{" +
                     "name='" + name + '\'' +
                     ", type='" + type + '\'' +
+                    ", condition='" + condition + '\'' +
                     ", dependsOn=" + dependsOn +
                     ", properties=" + properties +
                     ", policies=" + policies +

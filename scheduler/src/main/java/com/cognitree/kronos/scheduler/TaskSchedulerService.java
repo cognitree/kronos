@@ -30,6 +30,7 @@ import com.cognitree.kronos.model.TaskStatusUpdate;
 import com.cognitree.kronos.queue.QueueService;
 import com.cognitree.kronos.queue.producer.Producer;
 import com.cognitree.kronos.scheduler.model.Namespace;
+import org.graalvm.polyglot.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,12 +45,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 
-import static com.cognitree.kronos.model.Messages.ABORTED_DEPENDEE_TASK_MESSAGE;
-import static com.cognitree.kronos.model.Messages.FAILED_DEPENDEE_TASK_MESSAGE;
-import static com.cognitree.kronos.model.Messages.FAILED_TO_RESOLVE_DEPENDENCY_MESSAGE;
-import static com.cognitree.kronos.model.Messages.SKIPPED_DEPENDEE_TASK_MESSAGE;
-import static com.cognitree.kronos.model.Messages.TASK_SCHEDULING_FAILED_MESSAGE;
-import static com.cognitree.kronos.model.Messages.TIMED_OUT_EXECUTING_TASK_MESSAGE;
+import static com.cognitree.kronos.model.Messages.*;
 import static com.cognitree.kronos.model.Task.Status.ABORTED;
 import static com.cognitree.kronos.model.Task.Status.CREATED;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
@@ -82,6 +78,8 @@ final class TaskSchedulerService implements Service {
     // task purge interval in hour
     private static final int TASK_PURGE_INTERVAL = 1;
     private static final List<Status> NON_FINAL_TASK_STATUS_LIST = new ArrayList<>();
+    private static final String CONDITION_LANG_ID = "js";
+    private static final String CONTEXT_VAR = "context";
 
     static {
         for (Status status : Status.values()) {
@@ -249,6 +247,41 @@ final class TaskSchedulerService implements Service {
         }
     }
 
+    /**
+     *Evaluates the condition of the task if there exists a condition and dependsOn
+     * @return True if condtion is satisfied else false
+     */
+    private boolean evaluateCondition(Task task) {
+        final List<String> dependsOn = task.getDependsOn();
+        if (dependsOn != null && task.getCondition() != null) {
+            Map<String, Object> contextMap = new HashMap<>();
+            for (String dependentTaskName : dependsOn) {
+                TaskId dependentTaskId = TaskId.build(task.getNamespace(), dependentTaskName, task.getJob(),
+                        task.getWorkflow());
+                Task dependentTask = taskProvider.getTask(dependentTaskId);
+                if (dependentTask != null) {
+                    Map<String, Object> dependentTaskContext = dependentTask.getContext();
+                    for (String key : dependentTaskContext.keySet()) {
+                        contextMap.put(dependentTaskName + "." + key, dependentTaskContext.get(key));
+                    }
+                }
+            }
+            try (Context context = Context.newBuilder()
+                    .allowAllAccess(true)
+                    .build()) {
+                context.getBindings(CONDITION_LANG_ID).putMember(CONTEXT_VAR, contextMap);
+                boolean valid = context.eval(CONDITION_LANG_ID, task.getCondition()).asBoolean();
+                if (!valid) {
+                    return false;
+                }
+            } catch (Exception e){
+                logger.error("Failed to evaluate the condition",e);
+                return false;
+            }
+        }
+        return true;
+    }
+
     private void updateStatus(TaskId taskId, Status status, String statusMessage) {
         updateStatus(taskId, status, statusMessage, null);
     }
@@ -330,13 +363,17 @@ final class TaskSchedulerService implements Service {
         for (Task task : readyTasks) {
             logger.info("Scheduling task {} for execution", task);
             try {
-                // update dynamic task properties from the tasks it depends on before scheduling
-                // only if the task is not being retried
-                if (task.getStatus() != UP_FOR_RETRY) {
-                    updateTaskProperties(task);
+                if (evaluateCondition(task)) {
+                    // update dynamic task properties from the tasks it depends on before scheduling
+                    // only if the task is not being retried
+                    if (task.getStatus() != UP_FOR_RETRY) {
+                        updateTaskProperties(task);
+                    }
+                    QueueService.getService(SCHEDULER_QUEUE).send(task);
+                    updateStatus(task.getIdentity(), SCHEDULED, null);
+                } else {
+                    updateStatus(task.getIdentity(), SKIPPED, TASK_SKIPPED_CONDITION_FAILS);
                 }
-                QueueService.getService(SCHEDULER_QUEUE).send(task);
-                updateStatus(task.getIdentity(), SCHEDULED, null);
             } catch (ServiceException e) {
                 logger.error("Error scheduling task {} for execution", task.getIdentity(), e);
                 updateStatus(task.getIdentity(), FAILED, TASK_SCHEDULING_FAILED_MESSAGE);

@@ -48,6 +48,15 @@ public class Task extends TaskId {
     private Long submittedAt;
     private Long completedAt;
     private int retryCount = 0;
+    private String condition;
+
+    public String getCondition() {
+        return condition;
+    }
+
+    public void setCondition(String condition) {
+        this.condition = condition;
+    }
 
     public String getType() {
         return type;
@@ -176,7 +185,8 @@ public class Task extends TaskId {
                 ", submittedAt=" + submittedAt +
                 ", completedAt=" + completedAt +
                 ", retryCount=" + retryCount +
-                "} " + super.toString();
+                ", condition='" + condition + '\'' +
+                '}';
     }
 
     public enum Status {

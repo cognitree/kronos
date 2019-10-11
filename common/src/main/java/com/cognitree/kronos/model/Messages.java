@@ -26,4 +26,5 @@ public interface Messages {
     String TASK_SCHEDULING_FAILED_MESSAGE = "error scheduling task for execution";
     String TASK_ABORTED_MESSAGE = "task has been aborted";
     String MISSING_TASK_HANDLER_MESSAGE = "failed to resolve handler for the task";
+    String TASK_SKIPPED_CONDITION_FAILS = "Unable to validate the condition";
 }
