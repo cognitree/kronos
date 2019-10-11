@@ -50,13 +50,6 @@ public class Task extends TaskId {
     private int retryCount = 0;
     private String condition;
 
-    public String getCondition() {
-        return condition;
-    }
-
-    public void setCondition(String condition) {
-        this.condition = condition;
-    }
 
     public String getType() {
         return type;
@@ -154,6 +147,14 @@ public class Task extends TaskId {
         this.retryCount = retryCount;
     }
 
+    public String getCondition() {
+        return condition;
+    }
+
+    public void setCondition(String condition) {
+        this.condition = condition;
+    }
+
     @JsonIgnore
     @BsonIgnore
     public TaskId getIdentity() {
@@ -186,7 +187,7 @@ public class Task extends TaskId {
                 ", completedAt=" + completedAt +
                 ", retryCount=" + retryCount +
                 ", condition='" + condition + '\'' +
-                '}';
+                "}" + super.toString();
     }
 
     public enum Status {

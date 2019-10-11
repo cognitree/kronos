@@ -18,7 +18,7 @@
 
 <!-- This web.xml file is not required when using Servlet 3.0 container,
      see implementation details http://jersey.java.net/nonav/documentation/latest/jax-rs.html -->
-<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="3.0" xmlns="http://java.sun.com/xml/ns/javaee"
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.5" xmlns="http://java.sun.com/xml/ns/javaee"
          xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
     <welcome-file-list>
         <welcome-file>index.html</welcome-file>
@@ -29,7 +29,6 @@
         <init-param>
             <param-name>jersey.config.server.provider.packages</param-name>
             <param-value>
-                io.swagger.jaxrs.json,
                 io.swagger.jaxrs.listing,
                 com.cognitree.kronos
             </param-value>
@@ -45,10 +44,6 @@
     <servlet>
         <servlet-name>SwaggerServlet</servlet-name>
         <servlet-class>io.swagger.jersey.config.JerseyJaxrsConfig</servlet-class>
-        <init-param>
-            <param-name>/</param-name>
-            <param-value>http://localhost:8080/</param-value>
-        </init-param>
         <load-on-startup>2</load-on-startup>
     </servlet>
     <filter>

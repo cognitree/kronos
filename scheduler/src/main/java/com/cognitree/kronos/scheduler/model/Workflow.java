@@ -24,11 +24,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @JsonSerialize(as = Workflow.class)
 @JsonDeserialize(as = Workflow.class)
@@ -128,14 +124,6 @@ public class Workflow extends WorkflowId {
         private long maxExecutionTimeInMs = -1;
         private boolean enabled = true;
 
-        public String getCondition() {
-            return condition;
-        }
-
-        public void setCondition(String condition) {
-            this.condition = condition;
-        }
-
         public String getName() {
             return name;
         }
@@ -150,6 +138,14 @@ public class Workflow extends WorkflowId {
 
         public void setType(String type) {
             this.type = type;
+        }
+
+        public String getCondition() {
+            return condition;
+        }
+
+        public void setCondition(String condition) {
+            this.condition = condition;
         }
 
         public List<String> getDependsOn() {
