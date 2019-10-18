@@ -35,7 +35,6 @@
         <simple-java-mail.version>5.0.3</simple-java-mail.version>
         <velocity.version>1.7</velocity.version>
         <graalvm.version>19.2.0.1</graalvm.version>
-        <graalvm.truffle.version>19.2.0.1</graalvm.truffle.version>
     </properties>
 
     <dependencies>
@@ -68,11 +67,6 @@
             <groupId>org.graalvm.js</groupId>
             <artifactId>js</artifactId>
             <version>${graalvm.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.graalvm.truffle</groupId>
-            <artifactId>truffle-api</artifactId>
-            <version>${graalvm.truffle.version}</version>
         </dependency>
     </dependencies>
 
