@@ -1,0 +1,34 @@
+tasks:
+  - name: A
+    type: typeSuccess
+    properties:
+      keyA: valA
+      keyB: valB
+  - name: B
+    type: typeFailure
+    properties:
+      keyA: valA
+      keyB: valB
+    dependsOn:
+      - A
+  - name: C
+    type: typeSuccess
+    properties:
+      keyA: valA
+      keyB: valB
+    dependsOn:
+      - B
+  - name: D
+    type: typeSuccess
+    properties:
+      keyA: valA
+      keyB: valB
+    dependsOn:
+       - A
+  - name: E
+    type: typeSuccess
+    properties:
+      keyA: valA
+      keyB: valB
+    dependsOn:
+      - D

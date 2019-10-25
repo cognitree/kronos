@@ -48,10 +48,12 @@ public class ServiceTest {
     protected static final String WORKFLOW_TEMPLATE_WITH_TASK_CONTEXT_YAML = "workflows/workflow-template-with-task-context.yaml";
     protected static final String WORKFLOW_TEMPLATE_WITH_PROPERTIES_YAML = "workflows/workflow-template-with-properties.yaml";
     protected static final String WORKFLOW_TEMPLATE_WITH_DUPLICATE_POLICY_YAML = "workflows/workflow-template-with-duplicate-policy.yaml";
+    protected static final String WORKFLOW_TEMPLATE_FAILED_PARALLEL_BRANCH_YAML = "workflows/workflow-template-failed-parallel-branch.yaml";
 
     protected static final String CONDITION_WORKFLOW_TEMPLATE_SUCCESS_YAML = "workflows/condition-workflow-template-success.yaml";
     protected static final String CONDITION_WORKFLOW_TEMPLATE_FAILURE_LASTCONDITION_YAML = "workflows/condition-workflow-template-failure-last-task.yaml";
     protected static final String CONDITION_WORKFLOW_TEMPLATE_FAILURE_SECONDCONDITION_YAML = "workflows/condition-workflow-template-failure-second-task";
+    protected static final String CONDITION_WORKFLOW_TEMPLATE_FAILED_PARALLEL_BRANCH_YAML = "workflows/condition-workflow-template-failed-parallel-branch.yaml";
 
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
     private static final List<Namespace> EXISTING_NAMESPACE = new ArrayList<>();
