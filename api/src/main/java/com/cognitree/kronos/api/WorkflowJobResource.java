@@ -43,6 +43,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -133,7 +134,19 @@ public class WorkflowJobResource {
             logger.error("No job exists with id {}", jobId);
             return Response.status(NOT_FOUND).build();
         }
-        final List<Task> tasks = JobService.getService().getTasks(job);
+        final List<Task> tasks = JobService.getService().getTasks(job).stream()
+                .sorted((task1, task2) -> {
+                    int diff = task1.getStatus().getOrder() - task2.getStatus().getOrder();
+                    if (diff == 0){
+                        if (task1.getCompletedAt() != null && task2.getCompletedAt() != null){
+                            return task1.getCompletedAt().compareTo(task2.getCompletedAt());
+                        }else {
+                            return task1.getCreatedAt().compareTo(task2.getCreatedAt());
+                        }
+                    }else {
+                        return diff;
+                    }
+                }).collect(Collectors.toList());
         return Response.status(OK).entity(JobResponse.create(job, tasks)).build();
     }
 
