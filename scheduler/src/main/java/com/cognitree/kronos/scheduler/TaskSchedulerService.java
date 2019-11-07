@@ -62,7 +62,7 @@ final class TaskSchedulerService implements Service {
     private static final int TASK_PURGE_INTERVAL = 1;
     private static final List<Status> NON_FINAL_TASK_STATUS_LIST = new ArrayList<>();
     private static final String CONDITION_LANG_ID = "js";
-    private static final String CONTEXT_VAR = "context";
+    private static final String WORKFLOW = "workflow";
 
     static {
         for (Status status : Status.values()) {
@@ -250,7 +250,7 @@ final class TaskSchedulerService implements Service {
             try (Context context = Context.newBuilder()
                     .allowAllAccess(true)
                     .build()) {
-                context.getBindings(CONDITION_LANG_ID).putMember("workflow", workflowProperties);
+                context.getBindings(CONDITION_LANG_ID).putMember(WORKFLOW, workflowProperties);
                 for (String dependentTaskName : dependsOn) {
                     TaskId dependentTaskId = TaskId.build(task.getNamespace(), dependentTaskName, task.getJob(),
                             task.getWorkflow());
@@ -299,7 +299,6 @@ final class TaskSchedulerService implements Service {
     private void handleTaskStatusChange(Task task) {
         switch (task.getStatus()) {
             case CREATED:
-                break;
             case SCHEDULED:
                 break;
             case RUNNING:
