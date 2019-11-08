@@ -10,7 +10,7 @@ tasks:
     type: typeSuccess
     dependsOn:
       - taskOne
-    condition: context.get('taskOne.valOne') == 1234 && context.get('taskOne.valTwo') != 'abcd'
+    condition: taskOne.get("valOne") == 1234 && taskOne.get("valTwo") != 'abcd'
     properties:
       keyA: valA
       keyB: valB
@@ -19,7 +19,7 @@ tasks:
     dependsOn:
       - taskTwo
       - taskOne
-    condition: context.get('taskOne.valOne')+context.get('taskTwo.valOne') == 2468 || context.get('taskOne.valTwo') == context.get('taskTwo.valTwo')
+    condition: taskOne.get("valOne") + taskTwo.get("valOne") == 2468 || taskOne.get("valTwo") == taskTwo.get("valTwo")
     properties:
       keyA: valA
       keyB: valB
