@@ -7,13 +7,18 @@ tasks:
       keyA: valA
       keyB: valB
   - name: taskTwo
+    type: typeMockRetry
+    properties:
+      keyA: valA
+      keyB: valB
+    policies:
+      - type: retry
+        maxRetryCount: 3
+        retryOnTimeout: true
+    maxExecutionTimeInMs: 100
+  - name: taskThree
     type: typeSuccess
     properties:
       keyA: valA
       keyB: valB
-  - name: taskThree
-    type: typeMockAbort
-    properties:
-      keyA: valA
-      keyB: valB
-    maxExecutionTimeInMs: 100
+    dependsOn: ["taskTwo"]

@@ -2,12 +2,12 @@
 description: sample workflow
 tasks:
   - name: taskOne
-    type: typeMock
+    type: typeMockAbort
     properties:
       keyA: valA
       keyB: valB
   - name: taskTwo
-    type: typeMock
+    type: typeMockAbort
     properties:
       keyA: valA
       keyB: valB

@@ -88,6 +88,11 @@ public class RAMStoreService extends StoreService {
     }
 
     @Override
+    public boolean isPersistent() {
+        return false;
+    }
+
+    @Override
     public void stop() {
         logger.info("Stopping RAM store service");
     }

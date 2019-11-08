@@ -188,6 +188,7 @@ public class Task extends TaskId {
         SUCCESSFUL(true),
         SKIPPED(true), // a task is marked as skipped it the task it depends on fails.
         FAILED(true),
+        TIMED_OUT(true),
         ABORTED(true);
 
         private final boolean isFinal;
