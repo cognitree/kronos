@@ -29,7 +29,7 @@ import java.util.Objects;
  */
 public class ExecutorConfig {
     /**
-     * Map of task handler configuration, required by the kronos to instantiate and start the handlers ({@link TaskHandler}
+     * Map of task handler configuration, required by the Kronos to instantiate and start the handlers ({@link TaskHandler}
      * <p>
      * Here key is the task type the handler is supposed to handle.
      */
@@ -53,7 +53,6 @@ public class ExecutorConfig {
 
     @Override
     public int hashCode() {
-
         return Objects.hash(taskHandlerConfig);
     }
 

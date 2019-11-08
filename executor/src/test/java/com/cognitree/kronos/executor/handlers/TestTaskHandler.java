@@ -32,23 +32,25 @@ public class TestTaskHandler implements TaskHandler {
 
     private static final List<String> tasks = Collections.synchronizedList(new ArrayList<>());
 
-    public static void finishExecution(String taskId) {
-        tasks.add(taskId);
+    private Task task;
+
+    public static void finishExecution(String taskName) {
+        tasks.add(taskName);
     }
 
     @Override
-    public void init(ObjectNode handlerConfig) {
+    public void init(Task task, ObjectNode config) {
+        this.task = task;
     }
 
     @Override
-    public TaskResult handle(Task task) {
-        logger.info("Received request to handle task {}", task);
+    public TaskResult execute() {
+        logger.info("Received request to execute task {}", task);
 
         while (!tasks.contains(task.getName())) {
             try {
                 Thread.sleep(50);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            } catch (InterruptedException ignored) {
             }
         }
         tasks.remove(task.getName());

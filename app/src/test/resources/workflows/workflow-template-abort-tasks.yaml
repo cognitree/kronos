@@ -1,0 +1,14 @@
+# name and namespace will be set while creating a workflow
+description: sample workflow
+tasks:
+  - name: taskOne
+    type: typeMock
+    properties:
+      keyA: valA
+      keyB: valB
+  - name: taskTwo
+    type: typeMock
+    properties:
+      keyA: valA
+      keyB: valB
+    dependsOn: ["taskOne"]

@@ -32,7 +32,6 @@ public class SchedulerConfig {
      */
     private StoreServiceConfig storeServiceConfig;
 
-
     /**
      * configuration required by {@link MailService} to configure itself
      */
@@ -70,7 +69,7 @@ public class SchedulerConfig {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof SchedulerConfig)) return false;
         SchedulerConfig that = (SchedulerConfig) o;
         return enableConfigurationService == that.enableConfigurationService &&
                 Objects.equals(storeServiceConfig, that.storeServiceConfig) &&

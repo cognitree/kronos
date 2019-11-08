@@ -18,6 +18,7 @@
 package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.Service;
+import com.cognitree.kronos.ServiceException;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.scheduler.model.Job;
@@ -298,6 +299,29 @@ public class JobService implements Service {
                 logger.error("error notifying job status change from {}, to {} for job {}", from, to, job, e);
             }
         });
+    }
+
+    public void abortJob(JobId jobId) throws ServiceException, ValidationException {
+        logger.debug("Received request to abort job {}", jobId);
+        validateWorkflow(jobId.getNamespace(), jobId.getWorkflow());
+        final Job job;
+        try {
+            job = jobStore.load(jobId);
+        } catch (StoreException e) {
+            logger.error("No job found with id {}", jobId, e);
+            throw new ServiceException(e.getMessage(), e.getCause());
+        }
+        if (job == null) {
+            throw JOB_NOT_FOUND.createException(jobId.getId(), jobId.getWorkflow(), jobId.getNamespace());
+        }
+        if (job.getStatus().isFinal()) {
+            return;
+        }
+        final List<Task> tasks =
+                TaskService.getService().get(jobId.getNamespace(), jobId.getId(), job.getWorkflow());
+        for (Task task : tasks) {
+            TaskService.getService().abortTask(task);
+        }
     }
 
     public void delete(JobId jobId) throws ServiceException, ValidationException {

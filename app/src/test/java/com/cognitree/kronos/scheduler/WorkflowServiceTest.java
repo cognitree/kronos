@@ -17,16 +17,15 @@
 
 package com.cognitree.kronos.scheduler;
 
+import com.cognitree.kronos.ServiceException;
 import com.cognitree.kronos.executor.handlers.MockSuccessTaskHandler;
 import com.cognitree.kronos.model.Task;
-import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.WorkflowStatistics;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import org.junit.Assert;
 import org.junit.Test;
-import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 
 import java.io.IOException;
@@ -38,14 +37,14 @@ import java.util.UUID;
 import static com.cognitree.kronos.TestUtil.createNamespace;
 import static com.cognitree.kronos.TestUtil.createWorkflow;
 import static com.cognitree.kronos.TestUtil.scheduleWorkflow;
-import static com.cognitree.kronos.TestUtil.waitForTriggerToComplete;
+import static com.cognitree.kronos.TestUtil.waitForJobsToTriggerAndComplete;
 
 public class WorkflowServiceTest extends ServiceTest {
 
     @Test(expected = ValidationException.class)
     public void testAddWorkflowWithoutNamespace() throws ValidationException, ServiceException, IOException {
         final WorkflowService workflowService = WorkflowService.getService();
-        final Workflow workflow = createWorkflow("workflows/workflow-template.yaml",
+        final Workflow workflow = createWorkflow(WORKFLOW_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), UUID.randomUUID().toString());
         workflowService.add(workflow);
         Assert.fail();
@@ -53,7 +52,7 @@ public class WorkflowServiceTest extends ServiceTest {
 
     @Test(expected = ValidationException.class)
     public void testAddInValidWorkflowMissingTasks() throws Exception {
-        Workflow invalidWorkflow = createWorkflow("workflows/invalid-workflow-missing-tasks-template.yaml",
+        Workflow invalidWorkflow = createWorkflow(INVALID_WORKFLOW_MISSING_TASKS_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), UUID.randomUUID().toString());
         WorkflowService.getService().add(invalidWorkflow);
         Assert.fail();
@@ -61,7 +60,7 @@ public class WorkflowServiceTest extends ServiceTest {
 
     @Test(expected = ValidationException.class)
     public void testAddInValidWorkflowDisabledTaskDependency() throws Exception {
-        Workflow invalidWorkflow = createWorkflow("workflows/invalid-workflow-disabled-tasks-template.yaml",
+        Workflow invalidWorkflow = createWorkflow(INVALID_WORKFLOW_DISABLED_TASKS_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), UUID.randomUUID().toString());
         WorkflowService.getService().add(invalidWorkflow);
         Assert.fail();
@@ -73,7 +72,7 @@ public class WorkflowServiceTest extends ServiceTest {
         NamespaceService.getService().add(namespaceOne);
 
         final WorkflowService workflowService = WorkflowService.getService();
-        final Workflow workflowOne = createWorkflow("workflows/workflow-template.yaml",
+        final Workflow workflowOne = createWorkflow(WORKFLOW_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), namespaceOne.getName());
         workflowService.add(workflowOne);
 
@@ -81,7 +80,7 @@ public class WorkflowServiceTest extends ServiceTest {
         Assert.assertNotNull(workflowOneFromDB);
         Assert.assertEquals(workflowOne, workflowOneFromDB);
 
-        final Workflow workflowTwo = createWorkflow("workflows/workflow-template.yaml",
+        final Workflow workflowTwo = createWorkflow(WORKFLOW_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), namespaceOne.getName());
         workflowService.add(workflowTwo);
 
@@ -92,7 +91,7 @@ public class WorkflowServiceTest extends ServiceTest {
         Namespace namespaceTwo = createNamespace(UUID.randomUUID().toString());
         NamespaceService.getService().add(namespaceTwo);
 
-        final Workflow workflowThree = createWorkflow("workflows/workflow-template.yaml",
+        final Workflow workflowThree = createWorkflow(WORKFLOW_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), namespaceTwo.getName());
         workflowService.add(workflowThree);
 
@@ -115,7 +114,7 @@ public class WorkflowServiceTest extends ServiceTest {
         final NamespaceService namespaceService = NamespaceService.getService();
         final Namespace namespace = createNamespace(UUID.randomUUID().toString());
         namespaceService.add(namespace);
-        final Workflow workflow = createWorkflow("workflows/workflow-template.yaml",
+        final Workflow workflow = createWorkflow(WORKFLOW_TEMPLATE_YAML,
                 UUID.randomUUID().toString(), namespace.getName());
         WorkflowService.getService().add(workflow);
         WorkflowService.getService().add(workflow);
@@ -123,18 +122,16 @@ public class WorkflowServiceTest extends ServiceTest {
     }
 
     @Test
-    public void testUpdateWorkflow() throws ServiceException, ValidationException, SchedulerException, IOException {
+    public void testUpdateWorkflow() throws ServiceException, ValidationException, IOException {
         final NamespaceService namespaceService = NamespaceService.getService();
         final Namespace namespace = createNamespace(UUID.randomUUID().toString());
         namespaceService.add(namespace);
 
         final WorkflowService workflowService = WorkflowService.getService();
-        final Workflow workflow = createWorkflow("workflows/workflow-template.yaml",
-                UUID.randomUUID().toString(), namespace.getName());
+        final Workflow workflow = createWorkflow(WORKFLOW_TEMPLATE_YAML, UUID.randomUUID().toString(), namespace.getName());
         workflowService.add(workflow);
 
-        final Workflow updatedWorkflow = createWorkflow("workflows/workflow-template.yaml",
-                workflow.getName(), namespace.getName());
+        final Workflow updatedWorkflow = createWorkflow(WORKFLOW_TEMPLATE_YAML, workflow.getName(), namespace.getName());
         Workflow.WorkflowTask workflowTaskFour = new Workflow.WorkflowTask();
         workflowTaskFour.setName("taskFour");
         workflowTaskFour.setType("typeSuccess");
@@ -150,8 +147,7 @@ public class WorkflowServiceTest extends ServiceTest {
         final NamespaceService namespaceService = NamespaceService.getService();
         final Namespace namespace = createNamespace(UUID.randomUUID().toString());
         namespaceService.add(namespace);
-        final Workflow workflow = createWorkflow("workflows/workflow-template.yaml",
-                UUID.randomUUID().toString(), namespace.getName());
+        final Workflow workflow = createWorkflow(WORKFLOW_TEMPLATE_YAML, UUID.randomUUID().toString(), namespace.getName());
         WorkflowService.getService().add(workflow);
         final WorkflowService workflowService = WorkflowService.getService();
         workflowService.delete(workflow);
@@ -164,19 +160,17 @@ public class WorkflowServiceTest extends ServiceTest {
         workflowProps.put("valOne", 1234);
         workflowProps.put("valTwo", "abcd");
 
-        final WorkflowTrigger workflowTrigger = scheduleWorkflow("workflows/workflow-template-with-properties.yaml",
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow(WORKFLOW_TEMPLATE_WITH_PROPERTIES_YAML,
                 workflowProps, null);
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        waitForTriggerToComplete(workflowTrigger, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForJobsToTriggerAndComplete(workflowTrigger);
+
 
         TaskService taskService = TaskService.getService();
         final List<Task> workflowTasks = taskService.get(workflowTrigger.getNamespace());
         Assert.assertEquals(3, workflowTasks.size());
         for (Task workflowTask : workflowTasks) {
-            Assert.assertEquals(workflowTask.getContext(), MockSuccessTaskHandler.CONTEXT);
+            Assert.assertEquals(MockSuccessTaskHandler.CONTEXT, workflowTask.getContext());
             if (workflowTask.getName().equals("taskTwo")) {
                 Assert.assertEquals(1234, workflowTask.getProperties().get("keyB"));
             }
@@ -190,81 +184,74 @@ public class WorkflowServiceTest extends ServiceTest {
 
     @Test
     public void testGetWorkflowStatistics() throws Exception {
-        final WorkflowTrigger workflowTriggerOne = scheduleWorkflow("workflows/workflow-template.yaml");
-        final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow("workflows/workflow-template-failed-handler.yaml");
+        final WorkflowTrigger workflowTriggerOne = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
+        final WorkflowTrigger workflowTriggerTwo = scheduleWorkflow(WORKFLOW_TEMPLATE_FAILED_HANDLER_YAML);
 
-        final Scheduler scheduler = WorkflowSchedulerService.getService().getScheduler();
-        // wait for both the job to be triggered
-        waitForTriggerToComplete(workflowTriggerOne, scheduler);
-        waitForTriggerToComplete(workflowTriggerTwo, scheduler);
-        // wait for tasks status to be consumed from queue
-        Thread.sleep(5000);
+        waitForJobsToTriggerAndComplete(workflowTriggerOne);
+        waitForJobsToTriggerAndComplete(workflowTriggerTwo);
 
         WorkflowStatistics workflowOneStatistics = WorkflowService.getService()
                 .getStatistics(workflowTriggerOne.getNamespace(), workflowTriggerOne.getWorkflow(),
                         0, System.currentTimeMillis());
-        Assert.assertEquals(workflowOneStatistics.getJobs().getTotal(), 1);
-        Assert.assertEquals(workflowOneStatistics.getJobs().getActive(), 0);
-        Assert.assertEquals(workflowOneStatistics.getJobs().getFailed(), 0);
-        Assert.assertEquals(workflowOneStatistics.getJobs().getSkipped(), 0);
+        Assert.assertEquals(1, workflowOneStatistics.getJobs().getTotal());
+        Assert.assertEquals(0, workflowOneStatistics.getJobs().getActive());
+        Assert.assertEquals(0, workflowOneStatistics.getJobs().getFailed());
         Assert.assertEquals(workflowOneStatistics.getJobs().getSuccessful(), 1);
 
-        Assert.assertEquals(workflowOneStatistics.getTasks().getTotal(), 3);
-        Assert.assertEquals(workflowOneStatistics.getTasks().getActive(), 0);
-        Assert.assertEquals(workflowOneStatistics.getTasks().getFailed(), 0);
-        Assert.assertEquals(workflowOneStatistics.getTasks().getSkipped(), 0);
-        Assert.assertEquals(workflowOneStatistics.getTasks().getSuccessful(), 3);
+        Assert.assertEquals(3, workflowOneStatistics.getTasks().getTotal());
+        Assert.assertEquals(0, workflowOneStatistics.getTasks().getActive());
+        Assert.assertEquals(0, workflowOneStatistics.getTasks().getFailed());
+        Assert.assertEquals(0, workflowOneStatistics.getTasks().getSkipped());
+        Assert.assertEquals(3, workflowOneStatistics.getTasks().getSuccessful());
+        Assert.assertEquals(0, workflowOneStatistics.getTasks().getAborted());
 
         WorkflowStatistics workflowOneStatisticsByNs = WorkflowService.getService()
                 .getStatistics(workflowTriggerOne.getNamespace(), 0, System.currentTimeMillis());
-        Assert.assertEquals(workflowOneStatisticsByNs.getJobs().getTotal(), 1);
-        Assert.assertEquals(workflowOneStatisticsByNs.getJobs().getActive(), 0);
-        Assert.assertEquals(workflowOneStatisticsByNs.getJobs().getFailed(), 0);
-        Assert.assertEquals(workflowOneStatisticsByNs.getJobs().getSkipped(), 0);
-        Assert.assertEquals(workflowOneStatisticsByNs.getJobs().getSuccessful(), 1);
+        Assert.assertEquals(1, workflowOneStatisticsByNs.getJobs().getTotal());
+        Assert.assertEquals(0, workflowOneStatisticsByNs.getJobs().getActive());
+        Assert.assertEquals(0, workflowOneStatisticsByNs.getJobs().getFailed());
+        Assert.assertEquals(1, workflowOneStatisticsByNs.getJobs().getSuccessful());
 
-        Assert.assertEquals(workflowOneStatisticsByNs.getTasks().getTotal(), 3);
-        Assert.assertEquals(workflowOneStatisticsByNs.getTasks().getActive(), 0);
-        Assert.assertEquals(workflowOneStatisticsByNs.getTasks().getFailed(), 0);
-        Assert.assertEquals(workflowOneStatisticsByNs.getTasks().getSkipped(), 0);
-        Assert.assertEquals(workflowOneStatisticsByNs.getTasks().getSuccessful(), 3);
-
+        Assert.assertEquals(3, workflowOneStatisticsByNs.getTasks().getTotal());
+        Assert.assertEquals(0, workflowOneStatisticsByNs.getTasks().getActive());
+        Assert.assertEquals(0, workflowOneStatisticsByNs.getTasks().getFailed());
+        Assert.assertEquals(0, workflowOneStatisticsByNs.getTasks().getSkipped());
+        Assert.assertEquals(3, workflowOneStatisticsByNs.getTasks().getSuccessful());
+        Assert.assertEquals(0, workflowOneStatisticsByNs.getTasks().getAborted());
 
         WorkflowStatistics workflowTwoStatistics = WorkflowService.getService()
                 .getStatistics(workflowTriggerTwo.getNamespace(), workflowTriggerTwo.getWorkflow(),
                         0, System.currentTimeMillis());
-        Assert.assertEquals(workflowTwoStatistics.getJobs().getTotal(), 1);
-        Assert.assertEquals(workflowTwoStatistics.getJobs().getActive(), 0);
-        Assert.assertEquals(workflowTwoStatistics.getJobs().getFailed(), 1);
-        Assert.assertEquals(workflowTwoStatistics.getJobs().getSkipped(), 0);
-        Assert.assertEquals(workflowTwoStatistics.getJobs().getSuccessful(), 0);
+        Assert.assertEquals(1, workflowTwoStatistics.getJobs().getTotal());
+        Assert.assertEquals(0, workflowTwoStatistics.getJobs().getActive());
+        Assert.assertEquals(1, workflowTwoStatistics.getJobs().getFailed());
+        Assert.assertEquals(0, workflowTwoStatistics.getJobs().getSuccessful());
 
-        Assert.assertEquals(workflowTwoStatistics.getTasks().getTotal(), 3);
-        Assert.assertEquals(workflowTwoStatistics.getTasks().getActive(), 0);
-        Assert.assertEquals(workflowTwoStatistics.getTasks().getFailed(), 1);
-        Assert.assertEquals(workflowTwoStatistics.getTasks().getSkipped(), 1);
-        Assert.assertEquals(workflowTwoStatistics.getTasks().getSuccessful(), 1);
+        Assert.assertEquals(3, workflowTwoStatistics.getTasks().getTotal());
+        Assert.assertEquals(0, workflowTwoStatistics.getTasks().getActive());
+        Assert.assertEquals(1, workflowTwoStatistics.getTasks().getFailed());
+        Assert.assertEquals(1, workflowTwoStatistics.getTasks().getSkipped());
+        Assert.assertEquals(1, workflowTwoStatistics.getTasks().getSuccessful());
+        Assert.assertEquals(0, workflowTwoStatistics.getTasks().getAborted());
 
         WorkflowStatistics workflowTwoStatisticsByNs = WorkflowService.getService()
                 .getStatistics(workflowTriggerTwo.getNamespace(), 0, System.currentTimeMillis());
-        Assert.assertEquals(workflowTwoStatisticsByNs.getJobs().getTotal(), 1);
-        Assert.assertEquals(workflowTwoStatisticsByNs.getJobs().getActive(), 0);
-        Assert.assertEquals(workflowTwoStatisticsByNs.getJobs().getFailed(), 1);
-        Assert.assertEquals(workflowTwoStatisticsByNs.getJobs().getSkipped(), 0);
-        Assert.assertEquals(workflowTwoStatisticsByNs.getJobs().getSuccessful(), 0);
+        Assert.assertEquals(1, workflowTwoStatisticsByNs.getJobs().getTotal());
+        Assert.assertEquals(0, workflowTwoStatisticsByNs.getJobs().getActive());
+        Assert.assertEquals(1, workflowTwoStatisticsByNs.getJobs().getFailed());
+        Assert.assertEquals(0, workflowTwoStatisticsByNs.getJobs().getSuccessful());
 
-
-        Assert.assertEquals(workflowTwoStatisticsByNs.getTasks().getTotal(), 3);
-        Assert.assertEquals(workflowTwoStatisticsByNs.getTasks().getActive(), 0);
-        Assert.assertEquals(workflowTwoStatisticsByNs.getTasks().getFailed(), 1);
-        Assert.assertEquals(workflowTwoStatisticsByNs.getTasks().getSkipped(), 1);
-        Assert.assertEquals(workflowTwoStatisticsByNs.getTasks().getSuccessful(), 1);
+        Assert.assertEquals(3, workflowTwoStatisticsByNs.getTasks().getTotal());
+        Assert.assertEquals(0, workflowTwoStatisticsByNs.getTasks().getActive());
+        Assert.assertEquals(1, workflowTwoStatisticsByNs.getTasks().getFailed());
+        Assert.assertEquals(1, workflowTwoStatisticsByNs.getTasks().getSkipped());
+        Assert.assertEquals(1, workflowTwoStatisticsByNs.getTasks().getSuccessful());
+        Assert.assertEquals(0, workflowTwoStatisticsByNs.getTasks().getAborted());
     }
 
     @Test(expected = ValidationException.class)
     public void testDuplicatePolicyOfSameType() throws Exception {
-        scheduleWorkflow("workflows/workflow-template-with-duplicate-policy.yaml",
-                null, null);
+        scheduleWorkflow(WORKFLOW_TEMPLATE_WITH_DUPLICATE_POLICY_YAML, null, null);
         Assert.fail();
     }
 
@@ -272,7 +259,7 @@ public class WorkflowServiceTest extends ServiceTest {
     public void testMissingWorkflowPropertiesShouldFail() throws Exception {
         HashMap<String, Object> workflowProps = new HashMap<>();
         workflowProps.put("valOne", 1234);
-        scheduleWorkflow("workflows/workflow-template-with-properties.yaml", workflowProps, null);
+        scheduleWorkflow(WORKFLOW_TEMPLATE_WITH_PROPERTIES_YAML, workflowProps, null);
         Assert.fail();
     }
 }

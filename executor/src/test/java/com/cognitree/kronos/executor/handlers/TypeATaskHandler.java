@@ -28,17 +28,19 @@ import java.util.Set;
 public class TypeATaskHandler implements TaskHandler {
     private static final Set<String> handledTasks = Collections.synchronizedSet(new HashSet<>());
 
+    private Task task;
+
     public static boolean isHandled(String taskId) {
         return handledTasks.contains(taskId);
     }
 
     @Override
-    public void init(ObjectNode handlerConfig) {
-
+    public void init(Task task, ObjectNode config) {
+        this.task = task;
     }
 
     @Override
-    public TaskResult handle(Task task) {
+    public TaskResult execute() {
         handledTasks.add(task.getName());
         return TaskResult.SUCCESS;
     }

@@ -18,6 +18,7 @@
 package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.Service;
+import com.cognitree.kronos.ServiceException;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.Policy;
 import com.cognitree.kronos.model.RetryPolicy;
@@ -46,11 +47,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import static com.cognitree.kronos.model.Task.Status.ABORTED;
 import static com.cognitree.kronos.model.Task.Status.CREATED;
 import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.RUNNING;
 import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
-import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
 import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
 import static com.cognitree.kronos.model.Task.Status.UP_FOR_RETRY;
 import static com.cognitree.kronos.model.Task.Status.WAITING;
@@ -135,7 +136,7 @@ public class TaskService implements Service {
         try {
             taskStore.store(task);
         } catch (StoreException e) {
-            logger.error("unable to add task {}", task, e);
+            logger.error("unable to add task {}", task.getIdentity(), e);
             throw new ServiceException(e.getMessage(), e.getCause());
         }
         return task;
@@ -162,7 +163,9 @@ public class TaskService implements Service {
                 valueToReplace = valueToReplace.substring(WORKFLOW_NAMESPACE_PREFIX.length());
                 modifiedTaskProperties.put(entry.getKey(), propertiesToOverride.get(valueToReplace));
             } else if (value instanceof Map) {
-                modifiedTaskProperties.put(entry.getKey(), modifyAndGetTaskProperties((Map<String, Object>) value, propertiesToOverride));
+                final Map<String, Object> nestedProperties =
+                        modifyAndGetTaskProperties((Map<String, Object>) value, propertiesToOverride);
+                modifiedTaskProperties.put(entry.getKey(), nestedProperties);
             } else {
                 modifiedTaskProperties.put(entry.getKey(), value);
             }
@@ -221,6 +224,27 @@ public class TaskService implements Service {
         }
     }
 
+    public void abortTask(TaskId taskId) throws ServiceException, ValidationException {
+        logger.debug("Received request to abort task {}", taskId);
+        validateJob(taskId.getNamespace(), taskId.getJob(), taskId.getWorkflow());
+        final Task task;
+        try {
+            task = taskStore.load(taskId);
+        } catch (StoreException e) {
+            logger.error("No task found with id {}", taskId, e);
+            throw new ServiceException(e.getMessage(), e.getCause());
+        }
+        if (task == null) {
+            throw TASK_NOT_FOUND.createException(taskId.getName(), taskId.getJob(),
+                    taskId.getWorkflow(), taskId.getNamespace());
+        }
+        if (task.getStatus().isFinal()) {
+            logger.warn("Task {} is already in its final state {}", task.getIdentity(), task.getStatus());
+            return;
+        }
+        TaskSchedulerService.getService().abort(task);
+    }
+
     public Map<Status, Integer> countByStatus(String namespace, long createdAfter, long createdBefore)
             throws ServiceException, ValidationException {
         logger.debug("Received request to count tasks by status under namespace {} created between {} to {}",
@@ -249,23 +273,22 @@ public class TaskService implements Service {
         }
     }
 
-    void updateStatus(Task task, Status status, String statusMessage, Map<String, Object> context)
-            throws ServiceException, ValidationException {
+    boolean updateStatus(Task task, Status status, String statusMessage, Map<String, Object> context)
+            throws ServiceException {
         try {
-            if (taskStore.load(task) == null) {
-                throw TASK_NOT_FOUND.createException(task.getName(), task.getJob(), task.getWorkflow(), task.getNamespace());
-            }
-            validateJob(task.getNamespace(), task.getJob(), task.getWorkflow());
             Status currentStatus = task.getStatus();
+            if(status == currentStatus) {
+                logger.warn("Desired state transition is same as current state {}. Ignoring state transition", currentStatus);
+                return false;
+            }
             if (!isValidTransition(currentStatus, status)) {
-                logger.error("Invalid state transition for task {} from status {}, to {}", task, currentStatus, status);
+                logger.error("Invalid state transition for task {} from status {}, to {}",
+                        task.getIdentity(), currentStatus, status);
                 throw new ServiceException("Invalid state transition from " + currentStatus + " to " + status);
             }
-
             if (status == FAILED && isRetryEnabled(task)) {
                 logger.info("Resubmit the task {} for retry", task);
-                updateStatus(task, UP_FOR_RETRY, null, context);
-                return;
+                return updateStatus(task, UP_FOR_RETRY, null, context);
             }
 
             task.setStatus(status);
@@ -275,23 +298,26 @@ public class TaskService implements Service {
                 case UP_FOR_RETRY:
                     task.setRetryCount(task.getRetryCount() + 1);
                     break;
-                case SUBMITTED:
-                    if (task.getSubmittedAt() == null) { // TODO fix me: support for retry
+                case RUNNING:
+                    if (task.getSubmittedAt() == null) {
                         task.setSubmittedAt(System.currentTimeMillis());
                     }
                     break;
                 case SUCCESSFUL:
                 case SKIPPED:
                 case FAILED:
+                case ABORTED:
                     task.setCompletedAt(System.currentTimeMillis());
                     break;
             }
             taskStore.update(task);
             notifyListeners(task, currentStatus, status);
         } catch (StoreException e) {
-            logger.error("unable to update task {}", task, e);
+            logger.error("unable to update task {} status to {} with status message {}",
+                    task.getIdentity(), status, statusMessage, e);
             throw new ServiceException(e.getMessage(), e.getCause());
         }
+        return true;
     }
 
     private boolean isValidTransition(Status currentStatus, Status desiredStatus) {
@@ -302,17 +328,17 @@ public class TaskService implements Service {
                 return currentStatus == CREATED;
             case SCHEDULED:
                 return currentStatus == WAITING || currentStatus == UP_FOR_RETRY;
-            case SUBMITTED:
-                return currentStatus == SCHEDULED;
             case RUNNING:
-                return currentStatus == SUBMITTED;
+                return currentStatus == SCHEDULED;
+            case UP_FOR_RETRY:
+                return currentStatus == RUNNING;
             case SKIPPED:
                 return currentStatus == CREATED || currentStatus == WAITING;
             case SUCCESSFUL:
-            case FAILED:
-                return currentStatus != SUCCESSFUL && currentStatus != FAILED;
-            case UP_FOR_RETRY:
                 return currentStatus == RUNNING;
+            case ABORTED:
+            case FAILED:
+                return currentStatus != SUCCESSFUL && currentStatus != FAILED && currentStatus != ABORTED;
             default:
                 return false;
         }
@@ -333,7 +359,8 @@ public class TaskService implements Service {
             try {
                 listener.statusChanged(task, from, to);
             } catch (Exception e) {
-                logger.error("error notifying task status change from {}, to {} for task {}", from, to, task, e);
+                logger.error("error notifying task status change from {}, to {} for task {}",
+                        from, to, task.getIdentity(), e);
             }
         });
     }

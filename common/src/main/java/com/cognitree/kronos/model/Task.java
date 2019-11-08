@@ -184,11 +184,11 @@ public class Task extends TaskId {
         WAITING(false),
         UP_FOR_RETRY(false),
         SCHEDULED(false),
-        SUBMITTED(false),
         RUNNING(false),
         SUCCESSFUL(true),
         SKIPPED(true), // a task is marked as skipped it the task it depends on fails.
-        FAILED(true);
+        FAILED(true),
+        ABORTED(true);
 
         private final boolean isFinal;
 
@@ -199,5 +199,9 @@ public class Task extends TaskId {
         public boolean isFinal() {
             return this.isFinal;
         }
+    }
+
+    public enum Action {
+        ABORT, TIME_OUT
     }
 }

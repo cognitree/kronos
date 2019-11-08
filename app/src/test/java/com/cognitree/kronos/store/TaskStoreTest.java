@@ -40,7 +40,6 @@ import static com.cognitree.kronos.model.Task.Status.FAILED;
 import static com.cognitree.kronos.model.Task.Status.RUNNING;
 import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
 import static com.cognitree.kronos.model.Task.Status.SKIPPED;
-import static com.cognitree.kronos.model.Task.Status.SUBMITTED;
 import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
 import static com.cognitree.kronos.model.Task.Status.UP_FOR_RETRY;
 import static com.cognitree.kronos.model.Task.Status.WAITING;
@@ -78,10 +77,9 @@ public class TaskStoreTest extends StoreTest {
         Assert.assertTrue(tasksByStatusCreated.contains(taskOne));
         Assert.assertTrue(tasksByStatusCreated.contains(taskTwo));
 
-        assertEquals(Collections.emptyList(), taskStore.loadByStatus(namespace, Collections.singletonList(RUNNING)));
         assertEquals(Collections.emptyList(), taskStore.loadByStatus(namespace, Collections.singletonList(WAITING)));
         assertEquals(Collections.emptyList(), taskStore.loadByStatus(namespace, Collections.singletonList(SCHEDULED)));
-        assertEquals(Collections.emptyList(), taskStore.loadByStatus(namespace, Collections.singletonList(SUBMITTED)));
+        assertEquals(Collections.emptyList(), taskStore.loadByStatus(namespace, Collections.singletonList(RUNNING)));
         assertEquals(Collections.emptyList(), taskStore.loadByStatus(namespace, Collections.singletonList(FAILED)));
         assertEquals(Collections.emptyList(), taskStore.loadByStatus(namespace, Collections.singletonList(SKIPPED)));
         assertEquals(Collections.emptyList(), taskStore.loadByStatus(namespace, Collections.singletonList(UP_FOR_RETRY)));
@@ -93,15 +91,14 @@ public class TaskStoreTest extends StoreTest {
         Assert.assertTrue(tasksByWorkflowName.contains(taskTwo));
 
         Map<Task.Status, Integer> countTasksByStatus = taskStore.countByStatus(namespace, 0, System.currentTimeMillis());
-        assertEquals(2, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED).intValue());
-        assertEquals(0, countTasksByStatus.get(WAITING) == null ? 0 : countTasksByStatus.get(WAITING).intValue());
-        assertEquals(0, countTasksByStatus.get(SCHEDULED) == null ? 0 : countTasksByStatus.get(SCHEDULED).intValue());
-        assertEquals(0, countTasksByStatus.get(SUBMITTED) == null ? 0 : countTasksByStatus.get(SUBMITTED).intValue());
-        assertEquals(0, countTasksByStatus.get(RUNNING) == null ? 0 : countTasksByStatus.get(RUNNING).intValue());
-        assertEquals(0, countTasksByStatus.get(SKIPPED) == null ? 0 : countTasksByStatus.get(SKIPPED).intValue());
-        assertEquals(0, countTasksByStatus.get(FAILED) == null ? 0 : countTasksByStatus.get(FAILED).intValue());
-        assertEquals(0, countTasksByStatus.get(SUCCESSFUL) == null ? 0 : countTasksByStatus.get(SUCCESSFUL).intValue());
-        assertEquals(0, countTasksByStatus.get(UP_FOR_RETRY) == null ? 0 : countTasksByStatus.get(UP_FOR_RETRY).intValue());
+        assertEquals(2, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED));
+        assertEquals(0, countTasksByStatus.get(WAITING) == null ? 0 : countTasksByStatus.get(WAITING));
+        assertEquals(0, countTasksByStatus.get(SCHEDULED) == null ? 0 : countTasksByStatus.get(SCHEDULED));
+        assertEquals(0, countTasksByStatus.get(RUNNING) == null ? 0 : countTasksByStatus.get(RUNNING));
+        assertEquals(0, countTasksByStatus.get(SKIPPED) == null ? 0 : countTasksByStatus.get(SKIPPED));
+        assertEquals(0, countTasksByStatus.get(FAILED) == null ? 0 : countTasksByStatus.get(FAILED));
+        assertEquals(0, countTasksByStatus.get(SUCCESSFUL) == null ? 0 : countTasksByStatus.get(SUCCESSFUL));
+        assertEquals(0, countTasksByStatus.get(UP_FOR_RETRY) == null ? 0 : countTasksByStatus.get(UP_FOR_RETRY));
 
         ArrayList<Task> tasksAfterCreate = loadExistingTasks();
         tasksAfterCreate.remove(taskOne);
@@ -193,15 +190,14 @@ public class TaskStoreTest extends StoreTest {
         assertEquals(6, tasksByNs.size());
 
         Map<Task.Status, Integer> countTasksByStatus = taskStore.countByStatus(namespace, 0, System.currentTimeMillis());
-        assertEquals(6, countTasksByStatus.get(CREATED).intValue());
-        assertEquals(0, countTasksByStatus.get(WAITING) == null ? 0 : countTasksByStatus.get(WAITING).intValue());
-        assertEquals(0, countTasksByStatus.get(SCHEDULED) == null ? 0 : countTasksByStatus.get(SCHEDULED).intValue());
-        assertEquals(0, countTasksByStatus.get(SUBMITTED) == null ? 0 : countTasksByStatus.get(SUBMITTED).intValue());
-        assertEquals(0, countTasksByStatus.get(RUNNING) == null ? 0 : countTasksByStatus.get(RUNNING).intValue());
-        assertEquals(0, countTasksByStatus.get(SKIPPED) == null ? 0 : countTasksByStatus.get(SKIPPED).intValue());
-        assertEquals(0, countTasksByStatus.get(FAILED) == null ? 0 : countTasksByStatus.get(FAILED).intValue());
-        assertEquals(0, countTasksByStatus.get(SUCCESSFUL) == null ? 0 : countTasksByStatus.get(SUCCESSFUL).intValue());
-        assertEquals(0, countTasksByStatus.get(UP_FOR_RETRY) == null ? 0 : countTasksByStatus.get(UP_FOR_RETRY).intValue());
+        assertEquals(6, countTasksByStatus.get(CREATED));
+        assertEquals(0, countTasksByStatus.get(WAITING) == null ? 0 : countTasksByStatus.get(WAITING));
+        assertEquals(0, countTasksByStatus.get(SCHEDULED) == null ? 0 : countTasksByStatus.get(SCHEDULED));
+        assertEquals(0, countTasksByStatus.get(RUNNING) == null ? 0 : countTasksByStatus.get(RUNNING));
+        assertEquals(0, countTasksByStatus.get(SKIPPED) == null ? 0 : countTasksByStatus.get(SKIPPED));
+        assertEquals(0, countTasksByStatus.get(FAILED) == null ? 0 : countTasksByStatus.get(FAILED));
+        assertEquals(0, countTasksByStatus.get(SUCCESSFUL) == null ? 0 : countTasksByStatus.get(SUCCESSFUL));
+        assertEquals(0, countTasksByStatus.get(UP_FOR_RETRY) == null ? 0 : countTasksByStatus.get(UP_FOR_RETRY));
 
         taskOne.setStatus(RUNNING);
         taskStore.update(taskOne);
@@ -211,21 +207,20 @@ public class TaskStoreTest extends StoreTest {
         taskStore.update(taskThree);
         taskFour.setStatus(SCHEDULED);
         taskStore.update(taskFour);
-        taskFive.setStatus(SUBMITTED);
+        taskFive.setStatus(RUNNING);
         taskStore.update(taskFive);
         taskSix.setStatus(UP_FOR_RETRY);
         taskStore.update(taskSix);
 
         countTasksByStatus = taskStore.countByStatus(namespace, 0, System.currentTimeMillis());
-        assertEquals(0, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED).intValue());
-        assertEquals(0, countTasksByStatus.get(WAITING) == null ? 0 : countTasksByStatus.get(WAITING).intValue());
-        assertEquals(1, countTasksByStatus.get(SCHEDULED) == null ? 0 : countTasksByStatus.get(SCHEDULED).intValue());
-        assertEquals(1, countTasksByStatus.get(SUBMITTED) == null ? 0 : countTasksByStatus.get(SUBMITTED).intValue());
-        assertEquals(1, countTasksByStatus.get(RUNNING) == null ? 0 : countTasksByStatus.get(RUNNING).intValue());
-        assertEquals(0, countTasksByStatus.get(SKIPPED) == null ? 0 : countTasksByStatus.get(SKIPPED).intValue());
-        assertEquals(1, countTasksByStatus.get(FAILED) == null ? 0 : countTasksByStatus.get(FAILED).intValue());
-        assertEquals(1, countTasksByStatus.get(SUCCESSFUL) == null ? 0 : countTasksByStatus.get(SUCCESSFUL).intValue());
-        assertEquals(1, countTasksByStatus.get(UP_FOR_RETRY) == null ? 0 : countTasksByStatus.get(UP_FOR_RETRY).intValue());
+        assertEquals(0, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED));
+        assertEquals(0, countTasksByStatus.get(WAITING) == null ? 0 : countTasksByStatus.get(WAITING));
+        assertEquals(1, countTasksByStatus.get(SCHEDULED) == null ? 0 : countTasksByStatus.get(SCHEDULED));
+        assertEquals(2, countTasksByStatus.get(RUNNING) == null ? 0 : countTasksByStatus.get(RUNNING));
+        assertEquals(0, countTasksByStatus.get(SKIPPED) == null ? 0 : countTasksByStatus.get(SKIPPED));
+        assertEquals(1, countTasksByStatus.get(FAILED) == null ? 0 : countTasksByStatus.get(FAILED));
+        assertEquals(1, countTasksByStatus.get(SUCCESSFUL) == null ? 0 : countTasksByStatus.get(SUCCESSFUL));
+        assertEquals(1, countTasksByStatus.get(UP_FOR_RETRY) == null ? 0 : countTasksByStatus.get(UP_FOR_RETRY));
 
         taskOne.setStatus(WAITING);
         taskStore.update(taskOne);
@@ -233,15 +228,14 @@ public class TaskStoreTest extends StoreTest {
         taskStore.update(taskFour);
 
         countTasksByStatus = taskStore.countByStatus(namespace, 0, System.currentTimeMillis());
-        assertEquals(0, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED).intValue());
-        assertEquals(1, countTasksByStatus.get(WAITING) == null ? 0 : countTasksByStatus.get(WAITING).intValue());
-        assertEquals(0, countTasksByStatus.get(SCHEDULED) == null ? 0 : countTasksByStatus.get(SCHEDULED).intValue());
-        assertEquals(1, countTasksByStatus.get(SUBMITTED) == null ? 0 : countTasksByStatus.get(SUBMITTED).intValue());
-        assertEquals(0, countTasksByStatus.get(RUNNING) == null ? 0 : countTasksByStatus.get(RUNNING).intValue());
-        assertEquals(1, countTasksByStatus.get(SKIPPED) == null ? 0 : countTasksByStatus.get(SKIPPED).intValue());
-        assertEquals(1, countTasksByStatus.get(FAILED) == null ? 0 : countTasksByStatus.get(FAILED).intValue());
-        assertEquals(1, countTasksByStatus.get(SUCCESSFUL) == null ? 0 : countTasksByStatus.get(SUCCESSFUL).intValue());
-        assertEquals(1, countTasksByStatus.get(UP_FOR_RETRY) == null ? 0 : countTasksByStatus.get(UP_FOR_RETRY).intValue());
+        assertEquals(0, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED));
+        assertEquals(1, countTasksByStatus.get(WAITING) == null ? 0 : countTasksByStatus.get(WAITING));
+        assertEquals(0, countTasksByStatus.get(SCHEDULED) == null ? 0 : countTasksByStatus.get(SCHEDULED));
+        assertEquals(1, countTasksByStatus.get(RUNNING) == null ? 0 : countTasksByStatus.get(RUNNING));
+        assertEquals(1, countTasksByStatus.get(SKIPPED) == null ? 0 : countTasksByStatus.get(SKIPPED));
+        assertEquals(1, countTasksByStatus.get(FAILED) == null ? 0 : countTasksByStatus.get(FAILED));
+        assertEquals(1, countTasksByStatus.get(SUCCESSFUL) == null ? 0 : countTasksByStatus.get(SUCCESSFUL));
+        assertEquals(1, countTasksByStatus.get(UP_FOR_RETRY) == null ? 0 : countTasksByStatus.get(UP_FOR_RETRY));
 
         ArrayList<Task> tasksAfterCreate = loadExistingTasks();
         tasksAfterCreate.remove(taskOne);
@@ -275,18 +269,18 @@ public class TaskStoreTest extends StoreTest {
         assertEquals(6, tasksByNs.size());
 
         Map<Task.Status, Integer> countTasksByStatus = taskStore.countByStatus(namespace, createdAt, createdAt + 100);
-        assertEquals(0, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED).intValue());
+        assertEquals(0, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED));
 
         countTasksByStatus = taskStore.countByStatus(namespace, createdAt - 100, createdAt);
-        assertEquals(0, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED).intValue());
+        assertEquals(0, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED));
 
         countTasksByStatus = taskStore.countByStatus(namespace, createdAt - 1, createdAt + 1);
-        assertEquals(4, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED).intValue());
+        assertEquals(4, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED));
 
         Task taskSeven = createTask(namespace, workflow, trigger, job, UUID.randomUUID().toString(), createdAt);
 
         countTasksByStatus = taskStore.countByStatus(namespace, createdAt - 1, createdAt + 1);
-        assertEquals(5, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED).intValue());
+        assertEquals(5, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED));
 
         ArrayList<Task> tasksAfterCreate = loadExistingTasks();
         tasksAfterCreate.remove(taskOne);
@@ -322,26 +316,26 @@ public class TaskStoreTest extends StoreTest {
 
         Map<Task.Status, Integer> countTasksByStatus = taskStore.countByStatusForWorkflowName(namespace, workflow,
                 createdAt - 100, createdAt);
-        assertEquals(0, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED).intValue());
+        assertEquals(0, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED));
 
         countTasksByStatus = taskStore.countByStatusForWorkflowName(namespace, workflow, createdAt, createdAt + 100);
-        assertEquals(0, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED).intValue());
+        assertEquals(0, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED));
 
         countTasksByStatus = taskStore.countByStatusForWorkflowName(namespace, workflow, createdAt - 1, createdAt + 1);
-        assertEquals(2, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED).intValue());
+        assertEquals(2, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED));
 
         Task taskSeven = createTask(namespace, workflow, trigger, job, UUID.randomUUID().toString(), createdAt);
 
         countTasksByStatus = taskStore.countByStatusForWorkflowName(namespace, workflow, createdAt - 1, createdAt + 1);
-        assertEquals(3, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED).intValue());
+        assertEquals(3, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED));
 
         countTasksByStatus = taskStore.countByStatusForWorkflowName(namespace, taskFour.getWorkflow(), createdAt - 1,
                 createdAt + 1);
-        assertEquals(1, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED).intValue());
+        assertEquals(1, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED));
 
         countTasksByStatus = taskStore.countByStatusForWorkflowName(namespace, taskSix.getWorkflow(), createdAt - 1,
                 createdAt + 1);
-        assertEquals(1, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED).intValue());
+        assertEquals(1, countTasksByStatus.get(CREATED) == null ? 0 : countTasksByStatus.get(CREATED));
 
         ArrayList<Task> tasksAfterCreate = loadExistingTasks();
         tasksAfterCreate.remove(taskOne);

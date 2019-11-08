@@ -2,6 +2,7 @@ producerConfig:
   producerClass: com.cognitree.kronos.queue.producer.RAMProducer
 consumerConfig:
   consumerClass: com.cognitree.kronos.queue.consumer.RAMConsumer
-  pollIntervalInMs: 100
 taskStatusQueue: taskstatus
 configurationQueue: configurations
+controlMessageQueue: controlmessages
+pollIntervalInMs: 1000

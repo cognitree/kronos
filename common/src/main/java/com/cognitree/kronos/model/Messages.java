@@ -15,12 +15,15 @@
  * limitations under the License.
  */
 
-package com.cognitree.kronos.scheduler.model;
+package com.cognitree.kronos.model;
 
 public interface Messages {
-    String FAILED_TO_RESOLVE_DEPENDENCY = "failed to resolve task dependency";
-    String FAILED_DEPENDEE_TASK = FAILED_TO_RESOLVE_DEPENDENCY + ", dependee task has failed";
-    String SKIPPED_DEPENDEE_TASK = FAILED_TO_RESOLVE_DEPENDENCY + ", dependee task has been skipped";
-    String TIMED_OUT = "timed out executing task";
-    String TASK_SUBMISSION_FAILED = "error submitting task to queue";
+    String FAILED_TO_RESOLVE_DEPENDENCY_MESSAGE = "failed to resolve task dependency";
+    String FAILED_DEPENDEE_TASK_MESSAGE = FAILED_TO_RESOLVE_DEPENDENCY_MESSAGE + ", dependee task has failed";
+    String ABORTED_DEPENDEE_TASK_MESSAGE = FAILED_TO_RESOLVE_DEPENDENCY_MESSAGE + ", dependee task has been aborted";
+    String SKIPPED_DEPENDEE_TASK_MESSAGE = FAILED_TO_RESOLVE_DEPENDENCY_MESSAGE + ", dependee task has been skipped";
+    String TIMED_OUT_EXECUTING_TASK_MESSAGE = "timed out executing task";
+    String TASK_SCHEDULING_FAILED_MESSAGE = "error scheduling task for execution";
+    String TASK_ABORTED_MESSAGE = "task has been aborted";
+    String MISSING_TASK_HANDLER_MESSAGE = "failed to resolve handler for the task";
 }
