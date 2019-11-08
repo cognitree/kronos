@@ -29,7 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 @JsonSerialize(as = Workflow.class)
 @JsonDeserialize(as = Workflow.class)
@@ -125,7 +124,7 @@ public class Workflow extends WorkflowId {
         private Map<String, Object> properties = new HashMap<>();
         private List<Policy> policies = new ArrayList<>();
 
-        private long maxExecutionTimeInMs = TimeUnit.DAYS.toMillis(1);
+        private long maxExecutionTimeInMs = -1;
         private boolean enabled = true;
 
         public String getName() {

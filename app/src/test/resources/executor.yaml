@@ -5,6 +5,9 @@ taskHandlerConfig:
   typeFailure:
     handlerClass: com.cognitree.kronos.executor.handlers.MockFailureTaskHandler
     maxParallelTasks: 4
-  typeMock:
-    handlerClass: com.cognitree.kronos.executor.handlers.MockTaskHandler
+  typeMockAbort:
+    handlerClass: com.cognitree.kronos.executor.handlers.MockAbortTaskHandler
+    maxParallelTasks: 4
+  typeMockRetry:
+    handlerClass: com.cognitree.kronos.executor.handlers.MockRetryTaskHandler
     maxParallelTasks: 4

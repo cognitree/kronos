@@ -22,23 +22,33 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.LinkedBlockingQueue;
+
 public class RAMProducer implements Producer {
     private static final Logger logger = LoggerFactory.getLogger(RAMProducer.class);
 
-    public void init(ObjectNode config) {
-        logger.info("Initializing producer for RAM(in-memory) queue with config {}", config);
+    private LinkedBlockingQueue<String> blockingQueue;
+
+    @Override
+    public void init(String topic, ObjectNode config) {
+        logger.info("Initializing producer for RAM(in-memory) queue for topic {} with config {}", topic, config);
+        blockingQueue = RAMQueueFactory.getQueue(topic);
     }
 
     @Override
-    public void send(String topic, String record) {
-        sendInOrder(topic, record, null);
+    public void broadcast(String record) {
+        send(record);
     }
 
     @Override
-    public void sendInOrder(String topic, String record, String orderingKey) {
-        logger.trace("Received request to send message {} on topic {} with orderingKey {}",
-                record, topic, orderingKey);
-        RAMQueueFactory.getQueue(topic).add(record);
+    public void send(String record) {
+        sendInOrder(record, null);
+    }
+
+    @Override
+    public void sendInOrder(String record, String orderingKey) {
+        logger.trace("Received request to send message {} with orderingKey {}", record, orderingKey);
+        blockingQueue.add(record);
     }
 
     @Override

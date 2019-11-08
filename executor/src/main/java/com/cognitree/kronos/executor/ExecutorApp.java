@@ -18,12 +18,15 @@
 package com.cognitree.kronos.executor;
 
 import com.cognitree.kronos.queue.QueueConfig;
+import com.cognitree.kronos.queue.QueueService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
+
+import static com.cognitree.kronos.queue.QueueService.EXECUTOR_QUEUE;
 
 /**
  * starts the executor app by reading configurations from classpath.
@@ -48,14 +51,19 @@ public class ExecutorApp {
     public void start() throws Exception {
         final InputStream executorConfigAsStream =
                 getClass().getClassLoader().getResourceAsStream("executor.yaml");
-        ExecutorConfig executorConfig = MAPPER.readValue(executorConfigAsStream, ExecutorConfig.class);
+        final ExecutorConfig executorConfig = MAPPER.readValue(executorConfigAsStream, ExecutorConfig.class);
         final InputStream queueConfigAsStream =
                 getClass().getClassLoader().getResourceAsStream("queue.yaml");
-        QueueConfig queueConfig = MAPPER.readValue(queueConfigAsStream, QueueConfig.class);
-        TaskExecutionService taskExecutionService = new TaskExecutionService(executorConfig, queueConfig);
+        final QueueConfig queueConfig = MAPPER.readValue(queueConfigAsStream, QueueConfig.class);
+
+        final QueueService queueService = new QueueService(queueConfig, EXECUTOR_QUEUE);
+        final TaskExecutionService taskExecutionService =
+                new TaskExecutionService(executorConfig.getTaskHandlerConfig(), queueConfig.getPollIntervalInMs());
         logger.info("Initializing executor app");
+        queueService.init();
         taskExecutionService.init();
         logger.info("Starting executor app");
+        queueService.start();
         taskExecutionService.start();
     }
 
@@ -63,6 +71,9 @@ public class ExecutorApp {
         logger.info("Stopping executor app");
         if (TaskExecutionService.getService() != null) {
             TaskExecutionService.getService().stop();
+        }
+        if (QueueService.getService(EXECUTOR_QUEUE) != null) {
+            QueueService.getService(EXECUTOR_QUEUE).stop();
         }
     }
 }

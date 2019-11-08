@@ -2,18 +2,13 @@
 description: sample workflow
 tasks:
   - name: taskOne
-    type: typeSuccess
-    properties:
-      keyA: valA
-      keyB: valB
-  - name: taskTwo
-    type: typeSuccess
-    properties:
-      keyA: valA
-      keyB: valB
-  - name: taskThree
     type: typeMockAbort
     properties:
       keyA: valA
       keyB: valB
-    maxExecutionTimeInMs: 100
+  - name: taskTwo
+    type: typeMockAbort
+    properties:
+      keyA: valA
+      keyB: valB
+    dependsOn: ["taskOne"]

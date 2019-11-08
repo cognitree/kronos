@@ -15,53 +15,49 @@
  * limitations under the License.
  */
 
-package com.cognitree.kronos.scheduler.model;
+package com.cognitree.kronos.model;
 
-public class WorkflowStatistics {
-    private JobExecutionCounters jobs;
-    private TaskExecutionCounters tasks;
-    private long from;
-    private long to;
+import java.util.Objects;
 
-    public JobExecutionCounters getJobs() {
-        return jobs;
+public class ControlMessage {
+    private Task task;
+    private Task.Action action;
+
+    public Task getTask() {
+        return task;
     }
 
-    public void setJobs(JobExecutionCounters jobs) {
-        this.jobs = jobs;
+    public void setTask(Task task) {
+        this.task = task;
     }
 
-    public TaskExecutionCounters getTasks() {
-        return tasks;
+    public Task.Action getAction() {
+        return action;
     }
 
-    public void setTasks(TaskExecutionCounters tasks) {
-        this.tasks = tasks;
+    public void setAction(Task.Action action) {
+        this.action = action;
     }
 
-    public long getFrom() {
-        return from;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ControlMessage)) return false;
+        ControlMessage message = (ControlMessage) o;
+        return Objects.equals(task, message.task) &&
+                action == message.action;
     }
 
-    public void setFrom(long from) {
-        this.from = from;
-    }
-
-    public long getTo() {
-        return to;
-    }
-
-    public void setTo(long to) {
-        this.to = to;
+    @Override
+    public int hashCode() {
+        return Objects.hash(task, action);
     }
 
     @Override
     public String toString() {
-        return "WorkflowStatistics{" +
-                "jobs=" + jobs +
-                ", tasks=" + tasks +
-                ", from=" + from +
-                ", to=" + to +
+        return "ControlMessage{" +
+                "task=" + task +
+                ", action=" + action +
                 '}';
     }
 }

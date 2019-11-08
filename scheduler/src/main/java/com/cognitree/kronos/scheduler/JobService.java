@@ -18,6 +18,7 @@
 package com.cognitree.kronos.scheduler;
 
 import com.cognitree.kronos.Service;
+import com.cognitree.kronos.ServiceException;
 import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.scheduler.model.Job;
@@ -39,6 +40,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
+import static com.cognitree.kronos.scheduler.ValidationError.CANNOT_ABORT_JOB_WITH_SCHEDULED_TASK;
 import static com.cognitree.kronos.scheduler.ValidationError.JOB_NOT_FOUND;
 import static com.cognitree.kronos.scheduler.ValidationError.NAMESPACE_NOT_FOUND;
 import static com.cognitree.kronos.scheduler.ValidationError.WORKFLOW_NOT_FOUND;
@@ -298,6 +301,32 @@ public class JobService implements Service {
                 logger.error("error notifying job status change from {}, to {} for job {}", from, to, job, e);
             }
         });
+    }
+
+    public void abortJob(JobId jobId) throws ServiceException, ValidationException {
+        logger.debug("Received request to abort job {}", jobId);
+        validateWorkflow(jobId.getNamespace(), jobId.getWorkflow());
+        final Job job;
+        try {
+            job = jobStore.load(jobId);
+        } catch (StoreException e) {
+            logger.error("Error retrieving job from store with id {}", jobId, e);
+            throw new ServiceException(e.getMessage(), e.getCause());
+        }
+        if (job == null) {
+            throw JOB_NOT_FOUND.createException(jobId.getId(), jobId.getWorkflow(), jobId.getNamespace());
+        }
+        if (job.getStatus().isFinal()) {
+            return;
+        }
+        final List<Task> tasks =
+                TaskService.getService().get(jobId.getNamespace(), jobId.getId(), job.getWorkflow());
+        if (tasks.stream().anyMatch(task -> task.getStatus() == SCHEDULED)) {
+            throw CANNOT_ABORT_JOB_WITH_SCHEDULED_TASK.createException();
+        }
+        for (Task task : tasks) {
+            TaskService.getService().abortTask(task);
+        }
     }
 
     public void delete(JobId jobId) throws ServiceException, ValidationException {

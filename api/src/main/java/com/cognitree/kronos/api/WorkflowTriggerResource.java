@@ -17,7 +17,7 @@
 
 package com.cognitree.kronos.api;
 
-import com.cognitree.kronos.scheduler.ServiceException;
+import com.cognitree.kronos.ServiceException;
 import com.cognitree.kronos.scheduler.ValidationException;
 import com.cognitree.kronos.scheduler.WorkflowTriggerService;
 import com.cognitree.kronos.scheduler.model.WorkflowId;

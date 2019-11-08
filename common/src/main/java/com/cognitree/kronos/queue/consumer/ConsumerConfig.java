@@ -20,7 +20,6 @@ package com.cognitree.kronos.queue.consumer;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 /**
  * defines configuration for a {@link Consumer}.
@@ -34,14 +33,9 @@ public class ConsumerConfig {
 
     /**
      * Configuration to be passed to consumer to instantiate itself.
-     * This will be passed as an arg to {@link Consumer#init(ObjectNode)} at the time of instantiation.
+     * This will be passed as an arg to {@link Consumer#init(String, ObjectNode)} at the time of instantiation.
      */
     private ObjectNode config;
-
-    /**
-     * time duration between successive poll to queue in millisecond, defaults to 1000ms.
-     */
-    private long pollIntervalInMs = TimeUnit.SECONDS.toMillis(1);
 
     public String getConsumerClass() {
         return consumerClass;
@@ -59,28 +53,19 @@ public class ConsumerConfig {
         this.config = config;
     }
 
-    public long getPollIntervalInMs() {
-        return pollIntervalInMs;
-    }
-
-    public void setPollIntervalInMs(long pollIntervalInMs) {
-        this.pollIntervalInMs = pollIntervalInMs;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof ConsumerConfig)) return false;
         ConsumerConfig that = (ConsumerConfig) o;
         return Objects.equals(consumerClass, that.consumerClass) &&
-                Objects.equals(config, that.config) &&
-                Objects.equals(pollIntervalInMs, that.pollIntervalInMs);
+                Objects.equals(config, that.config);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(consumerClass, config, pollIntervalInMs);
+        return Objects.hash(consumerClass, config);
     }
 
     @Override
@@ -88,7 +73,6 @@ public class ConsumerConfig {
         return "ConsumerConfig{" +
                 "consumerClass='" + consumerClass + '\'' +
                 ", config=" + config +
-                ", pollIntervalInMs='" + pollIntervalInMs + '\'' +
                 '}';
     }
 }

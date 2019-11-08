@@ -17,7 +17,6 @@
 
 package com.cognitree.kronos.scheduler.store.impl;
 
-import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.scheduler.store.JobStore;
 import com.cognitree.kronos.scheduler.store.NamespaceStore;
 import com.cognitree.kronos.scheduler.store.StoreService;
@@ -86,6 +85,11 @@ public class RAMStoreService extends StoreService {
     @Override
     public org.quartz.spi.JobStore getQuartzJobStore() {
         return quartzJobStore;
+    }
+
+    @Override
+    public boolean isPersistent() {
+        return false;
     }
 
     @Override

@@ -17,17 +17,21 @@
 
 package com.cognitree.kronos;
 
+import com.cognitree.kronos.model.Task;
+import com.cognitree.kronos.scheduler.JobService;
 import com.cognitree.kronos.scheduler.NamespaceService;
+import com.cognitree.kronos.scheduler.TaskService;
+import com.cognitree.kronos.scheduler.ValidationException;
 import com.cognitree.kronos.scheduler.WorkflowService;
 import com.cognitree.kronos.scheduler.WorkflowTriggerService;
 import com.cognitree.kronos.scheduler.model.CronSchedule;
+import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.scheduler.model.Namespace;
 import com.cognitree.kronos.scheduler.model.Workflow;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
 import com.cognitree.kronos.scheduler.model.events.ConfigUpdate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.junit.Assert;
 import org.quartz.CronExpression;
 import org.quartz.Scheduler;
 import org.quartz.TriggerKey;
@@ -36,14 +40,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+
+import static com.cognitree.kronos.model.Task.Status.RUNNING;
 
 public class TestUtil {
 
     private static final ObjectMapper YAML_MAPPER = new ObjectMapper(new YAMLFactory());
 
     private static final CronSchedule SCHEDULE = new CronSchedule();
+
     static {
         SCHEDULE.setCronExpression("0/2 * * * * ?");
     }
@@ -113,17 +122,41 @@ public class TestUtil {
         return workflowTrigger;
     }
 
-    public static void waitForTriggerToComplete(WorkflowTrigger workflowTriggerOne, Scheduler scheduler) throws Exception {
-        // wait for both the job to be triggered
-        TriggerKey workflowOneTriggerKey = new TriggerKey(workflowTriggerOne.getName(),
-                workflowTriggerOne.getWorkflow() + ":" + workflowTriggerOne.getNamespace());
-        int maxCount = 50;
-        while (maxCount > 0 && scheduler.checkExists(workflowOneTriggerKey)) {
-            Thread.sleep(100);
+    public static void waitForJobsToTriggerAndComplete(WorkflowTrigger workflowTrigger) throws Exception {
+        int maxCount = 120;
+        while (maxCount > 0) {
+            final List<Job> jobs = JobService.getService().get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
+                    workflowTrigger.getName(), 0, System.currentTimeMillis());
+            if (jobs.size() > 0) {
+                Optional<Job> optionalJob = jobs.stream().filter(job -> !job.getStatus().isFinal()).findFirst();
+                if (!optionalJob.isPresent()) {
+                    break;
+                }
+            }
+            Thread.sleep(1000);
             maxCount--;
         }
-        if (maxCount < 0) {
-            Assert.fail("failed while waiting for trigger to complete");
+    }
+
+    public static void waitForTriggerToComplete(WorkflowTrigger workflowTrigger, Scheduler scheduler) throws Exception {
+        // wait for both the job to be triggered
+        TriggerKey workflowOneTriggerKey = new TriggerKey(workflowTrigger.getName(),
+                workflowTrigger.getWorkflow() + ":" + workflowTrigger.getNamespace());
+        int maxCount = 120;
+        while (maxCount > 0 && scheduler.checkExists(workflowOneTriggerKey)) {
+            Thread.sleep(1000);
+            maxCount--;
+        }
+    }
+
+    public static void waitForTaskToBeRunning(Task task) throws ServiceException, ValidationException, InterruptedException {
+        int maxCount = 120;
+        while (maxCount > 0) {
+            if (TaskService.getService().get(task).getStatus() == RUNNING) {
+                break;
+            }
+            Thread.sleep(1000);
+            maxCount--;
         }
     }
 }
