@@ -180,23 +180,28 @@ public class Task extends TaskId {
     }
 
     public enum Status {
-        CREATED(false),
-        WAITING(false),
-        UP_FOR_RETRY(false),
-        SCHEDULED(false),
-        RUNNING(false),
-        SUCCESSFUL(true),
-        SKIPPED(true), // a task is marked as skipped it the task it depends on fails.
-        FAILED(true),
-        TIMED_OUT(true),
-        ABORTED(true);
+        CREATED(false, 9),
+        WAITING(false, 8),
+        UP_FOR_RETRY(false, 2),
+        SCHEDULED(false, 7),
+        RUNNING(false, 6),
+        SUCCESSFUL(true, 0),
+        SKIPPED(true, 4), // a task is marked as skipped it the task it depends on fails.
+        FAILED(true, 1),
+        TIMED_OUT(true, 3),
+        ABORTED(true, 5);
 
         private final boolean isFinal;
+        private final int order;
 
-        Status(boolean isFinal) {
+        Status(boolean isFinal, int order) {
             this.isFinal = isFinal;
+            this.order = order;
         }
 
+        public int getOrder(){
+            return this.order;
+        }
         public boolean isFinal() {
             return this.isFinal;
         }
