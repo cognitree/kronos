@@ -58,8 +58,8 @@ public class QueueServiceTest {
         QUEUE_SERVICE.init();
         QUEUE_SERVICE.start();
         // initial call so that the topics are created
-        QUEUE_SERVICE.consumeTask(TASK_TYPE_A, 1);
-        QUEUE_SERVICE.consumeTask(TASK_TYPE_B, 1);
+        QUEUE_SERVICE.consumeTasks(TASK_TYPE_A, 1);
+        QUEUE_SERVICE.consumeTasks(TASK_TYPE_B, 1);
         QUEUE_SERVICE.consumeTaskStatusUpdates();
         QUEUE_SERVICE.consumeControlMessages();
     }
@@ -192,7 +192,7 @@ public class QueueServiceTest {
     private List<Task> getTasks(String taskType, int size) throws ServiceException {
         int count = 10;
         while (count > 0) {
-            List<Task> tasks = QUEUE_SERVICE.consumeTask(taskType, size);
+            List<Task> tasks = QUEUE_SERVICE.consumeTasks(taskType, size);
             if (!tasks.isEmpty()) {
                 return tasks;
             }

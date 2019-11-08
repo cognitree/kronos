@@ -141,7 +141,7 @@ public class QueueService implements Service {
         }
     }
 
-    public List<Task> consumeTask(String type, int maxTasksToPoll) throws ServiceException {
+    public List<Task> consumeTasks(String type, int maxTasksToPoll) throws ServiceException {
         logger.debug("Received request to consume {} tasks of type {}", maxTasksToPoll, type);
         if (!consumers.containsKey(type)) {
             createConsumer(type, type);

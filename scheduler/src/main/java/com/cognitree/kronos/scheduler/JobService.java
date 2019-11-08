@@ -40,6 +40,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import static com.cognitree.kronos.model.Task.Status.SCHEDULED;
+import static com.cognitree.kronos.scheduler.ValidationError.CANNOT_ABORT_JOB_WITH_SCHEDULED_TASK;
 import static com.cognitree.kronos.scheduler.ValidationError.JOB_NOT_FOUND;
 import static com.cognitree.kronos.scheduler.ValidationError.NAMESPACE_NOT_FOUND;
 import static com.cognitree.kronos.scheduler.ValidationError.WORKFLOW_NOT_FOUND;
@@ -308,7 +310,7 @@ public class JobService implements Service {
         try {
             job = jobStore.load(jobId);
         } catch (StoreException e) {
-            logger.error("No job found with id {}", jobId, e);
+            logger.error("Error retrieving job from store with id {}", jobId, e);
             throw new ServiceException(e.getMessage(), e.getCause());
         }
         if (job == null) {
@@ -319,6 +321,9 @@ public class JobService implements Service {
         }
         final List<Task> tasks =
                 TaskService.getService().get(jobId.getNamespace(), jobId.getId(), job.getWorkflow());
+        if (tasks.stream().anyMatch(task -> task.getStatus() == SCHEDULED)) {
+            throw CANNOT_ABORT_JOB_WITH_SCHEDULED_TASK.createException();
+        }
         for (Task task : tasks) {
             TaskService.getService().abortTask(task);
         }

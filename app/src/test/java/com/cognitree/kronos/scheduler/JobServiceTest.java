@@ -17,14 +17,17 @@
 
 package com.cognitree.kronos.scheduler;
 
+import com.cognitree.kronos.ServiceProvider;
 import com.cognitree.kronos.executor.handlers.MockAbortTaskHandler;
 import com.cognitree.kronos.executor.handlers.MockFailureTaskHandler;
+import com.cognitree.kronos.executor.handlers.MockRetryTaskHandler;
 import com.cognitree.kronos.executor.handlers.MockSuccessTaskHandler;
 import com.cognitree.kronos.model.Messages;
 import com.cognitree.kronos.model.Task;
 import com.cognitree.kronos.scheduler.model.Job;
 import com.cognitree.kronos.scheduler.model.JobId;
 import com.cognitree.kronos.scheduler.model.WorkflowTrigger;
+import com.cognitree.kronos.scheduler.store.StoreService;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -33,7 +36,10 @@ import java.util.UUID;
 
 import static com.cognitree.kronos.TestUtil.scheduleWorkflow;
 import static com.cognitree.kronos.TestUtil.waitForJobsToTriggerAndComplete;
+import static com.cognitree.kronos.TestUtil.waitForTaskToBeRunning;
 import static com.cognitree.kronos.TestUtil.waitForTriggerToComplete;
+import static com.cognitree.kronos.model.Task.Status.ABORTED;
+import static com.cognitree.kronos.model.Task.Status.SKIPPED;
 
 public class JobServiceTest extends ServiceTest {
 
@@ -167,9 +173,44 @@ public class JobServiceTest extends ServiceTest {
                     Assert.assertTrue(MockSuccessTaskHandler.isHandled(task.getIdentity()));
                     break;
                 case "taskThree":
-                    Assert.assertEquals(Task.Status.ABORTED, task.getStatus());
+                    Assert.assertEquals(Task.Status.TIMED_OUT, task.getStatus());
                     Assert.assertEquals(Messages.TIMED_OUT_EXECUTING_TASK_MESSAGE, task.getStatusMessage());
                     Assert.assertTrue(MockAbortTaskHandler.isHandled(task.getIdentity()));
+                    break;
+                default:
+                    Assert.fail();
+            }
+        }
+    }
+
+    @Test
+    public void testGetJobTasksFailedDueToTimeoutWithRetry() throws Exception {
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow(WORKFLOW_TEMPLATE_TIMEOUT_TASKS_WITH_RETRY_YAML);
+
+        waitForJobsToTriggerAndComplete(workflowTrigger);
+
+        JobService jobService = JobService.getService();
+        final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
+                workflowTrigger.getName(), 0, System.currentTimeMillis());
+        Assert.assertEquals(1, workflowOneJobs.size());
+
+        final Job job = workflowOneJobs.get(0);
+        final List<Task> tasks = jobService.getTasks(job);
+        Assert.assertEquals(3, tasks.size());
+        for (Task task : tasks) {
+            switch (task.getName()) {
+                case "taskOne":
+                    Assert.assertEquals(Task.Status.SUCCESSFUL, task.getStatus());
+                    Assert.assertTrue(MockSuccessTaskHandler.isHandled(task.getIdentity()));
+                    break;
+                case "taskTwo":
+                    Assert.assertEquals(Task.Status.SUCCESSFUL, task.getStatus());
+                    Assert.assertEquals(2, task.getRetryCount());
+                    Assert.assertTrue(MockRetryTaskHandler.isHandled(task.getIdentity()));
+                    break;
+                case "taskThree":
+                    Assert.assertEquals(Task.Status.SUCCESSFUL, task.getStatus());
+                    Assert.assertTrue(MockSuccessTaskHandler.isHandled(task.getIdentity()));
                     break;
                 default:
                     Assert.fail();
@@ -203,7 +244,7 @@ public class JobServiceTest extends ServiceTest {
                     Assert.assertTrue(MockFailureTaskHandler.isHandled(task.getIdentity()));
                     break;
                 case "taskThree":
-                    Assert.assertEquals(Task.Status.SKIPPED, task.getStatus());
+                    Assert.assertEquals(SKIPPED, task.getStatus());
                     Assert.assertEquals(Messages.FAILED_DEPENDEE_TASK_MESSAGE, task.getStatusMessage());
                     break;
                 default:
@@ -229,6 +270,10 @@ public class JobServiceTest extends ServiceTest {
 
         waitForTriggerToComplete(workflowTrigger, WorkflowSchedulerService.getService().getScheduler());
 
+        Task taskOne = TaskService.getService().get(workflowTrigger.getNamespace())
+                .stream().filter(task -> task.getName().equals("taskOne")).findFirst().get();
+        waitForTaskToBeRunning(taskOne);
+
         List<Job> jobs = JobService.getService().get(workflowTrigger.getNamespace());
         JobService.getService().abortJob(jobs.get(0).getIdentity());
 
@@ -237,11 +282,12 @@ public class JobServiceTest extends ServiceTest {
         for (Task tsk : tasks) {
             switch (tsk.getName()) {
                 case "taskOne":
-                    Assert.assertEquals(Task.Status.ABORTED, tsk.getStatus());
+                    Assert.assertEquals(ABORTED, tsk.getStatus());
                     Assert.assertTrue(MockAbortTaskHandler.isHandled(tsk.getIdentity()));
                     break;
                 case "taskTwo":
-                    Assert.assertEquals(Task.Status.ABORTED, tsk.getStatus());
+                    Assert.assertTrue((tsk.getStatus() == ABORTED) ||
+                            (tsk.getStatus() == SKIPPED));
                     break;
                 default:
                     Assert.fail();
@@ -252,6 +298,22 @@ public class JobServiceTest extends ServiceTest {
                 JobService.getService().get(workflowTrigger.getNamespace()).get(0).getStatus());
     }
 
+    @Test(expected = ValidationException.class)
+    public void testAbortJobWithTaskInScheduledState() throws Exception {
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);
+        waitForJobsToTriggerAndComplete(workflowTrigger);
+
+        List<Job> jobs = JobService.getService().get(workflowTrigger.getNamespace());
+        Assert.assertFalse(jobs.isEmpty());
+        StoreService storeService = (StoreService) ServiceProvider.getService(StoreService.class.getSimpleName());
+        List<Task> tasks = TaskService.getService().get(workflowTrigger.getNamespace());
+        // move back the job to running state and task to scheduled state
+        JobService.getService().updateStatus(jobs.get(0).getIdentity(), Job.Status.RUNNING);
+        Task task = tasks.get(0);
+        task.setStatus(Task.Status.SCHEDULED);
+        storeService.getTaskStore().update(task);
+        JobService.getService().abortJob(jobs.get(0));
+    }
 
     @Test
     public void testDeleteJob() throws Exception {
