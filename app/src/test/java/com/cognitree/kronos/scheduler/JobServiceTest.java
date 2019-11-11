@@ -253,6 +253,103 @@ public class JobServiceTest extends ServiceTest {
         }
     }
 
+    @Test
+    public void testConditionSuccessJob() throws Exception {
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow(CONDITION_WORKFLOW_TEMPLATE_SUCCESS_YAML);
+
+        waitForJobsToTriggerAndComplete(workflowTrigger);
+
+        JobService jobService = JobService.getService();
+        final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
+                workflowTrigger.getName(), 0, System.currentTimeMillis());
+        Assert.assertEquals(1, workflowOneJobs.size());
+
+        final Job job = workflowOneJobs.get(0);
+        final List<Task> tasks = jobService.getTasks(job);
+        Assert.assertEquals(3, tasks.size());
+        for (Task task : tasks) {
+            switch (task.getName()) {
+                case "taskOne":
+                case "taskTwo":
+                case "taskThree":
+                    Assert.assertEquals(Task.Status.SUCCESSFUL, task.getStatus());
+                    Assert.assertTrue(MockSuccessTaskHandler.isHandled(task.getIdentity()));
+                    Assert.assertEquals(0, task.getRetryCount());
+                    break;
+                default:
+                    Assert.fail();
+            }
+        }
+    }
+
+    @Test
+    public void testLastConditionFailsJob() throws Exception {
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow(CONDITION_WORKFLOW_TEMPLATE_FAILURE_LASTCONDITION_YAML);
+
+        waitForJobsToTriggerAndComplete(workflowTrigger);
+
+        JobService jobService = JobService.getService();
+        final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
+                workflowTrigger.getName(), 0, System.currentTimeMillis());
+        Assert.assertEquals(1, workflowOneJobs.size());
+
+        final Job job = workflowOneJobs.get(0);
+        final List<Task> tasks = jobService.getTasks(job);
+        Assert.assertEquals(3, tasks.size());
+        for (Task task : tasks) {
+            switch (task.getName()) {
+                case "taskOne":
+                case "taskTwo":
+                    Assert.assertEquals(Task.Status.SUCCESSFUL, task.getStatus());
+                    Assert.assertTrue(MockSuccessTaskHandler.isHandled(task.getIdentity()));
+                    break;
+                case "taskThree":
+                    Assert.assertEquals(SKIPPED, task.getStatus());
+                    Assert.assertEquals(Messages.TASK_SKIPPED_CONDITION_FAILS, task.getStatusMessage());
+                    Assert.assertEquals(0, task.getRetryCount());
+                    break;
+                default:
+                    Assert.fail();
+            }
+        }
+    }
+
+    @Test
+    public void testSecondConditionFails() throws Exception {
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow(CONDITION_WORKFLOW_TEMPLATE_FAILURE_SECONDCONDITION_YAML);
+
+        waitForJobsToTriggerAndComplete(workflowTrigger);
+
+        JobService jobService = JobService.getService();
+        final List<Job> workflowOneJobs = jobService.get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
+                workflowTrigger.getName(), 0, System.currentTimeMillis());
+        Assert.assertEquals(1, workflowOneJobs.size());
+
+        final Job job = workflowOneJobs.get(0);
+        final List<Task> tasks = jobService.getTasks(job);
+        Assert.assertEquals(3, tasks.size());
+        for (Task task : tasks) {
+            switch (task.getName()) {
+                case "taskOne":
+                    Assert.assertEquals(Task.Status.SUCCESSFUL, task.getStatus());
+                    Assert.assertTrue(MockSuccessTaskHandler.isHandled(task.getIdentity()));
+                    break;
+                case "taskTwo":
+                    Assert.assertEquals(SKIPPED, task.getStatus());
+                    Assert.assertEquals(Messages.TASK_SKIPPED_CONDITION_FAILS, task.getStatusMessage());
+                    Assert.assertEquals(0, task.getRetryCount());
+                    break;
+                case "taskThree":
+                    Assert.assertEquals(SKIPPED, task.getStatus());
+                    Assert.assertEquals(Messages.SKIPPED_DEPENDEE_TASK_MESSAGE, task.getStatusMessage());
+                    Assert.assertEquals(0, task.getRetryCount());
+                    break;
+                default:
+                    Assert.fail();
+            }
+        }
+    }
+
     @Test(expected = ValidationException.class)
     public void testAbortJobNotFound() throws Exception {
         final WorkflowTrigger workflowTrigger = scheduleWorkflow(WORKFLOW_TEMPLATE_YAML);

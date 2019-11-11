@@ -24,11 +24,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @JsonSerialize(as = Workflow.class)
 @JsonDeserialize(as = Workflow.class)
@@ -120,6 +116,7 @@ public class Workflow extends WorkflowId {
 
         private String name;
         private String type;
+        private String condition;
         private List<String> dependsOn = new ArrayList<>();
         private Map<String, Object> properties = new HashMap<>();
         private List<Policy> policies = new ArrayList<>();
@@ -141,6 +138,14 @@ public class Workflow extends WorkflowId {
 
         public void setType(String type) {
             this.type = type;
+        }
+
+        public String getCondition() {
+            return condition;
+        }
+
+        public void setCondition(String condition) {
+            this.condition = condition;
         }
 
         public List<String> getDependsOn() {
@@ -186,12 +191,13 @@ public class Workflow extends WorkflowId {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof WorkflowTask)) return false;
+            if (o == null || getClass() != o.getClass()) return false;
             WorkflowTask that = (WorkflowTask) o;
             return maxExecutionTimeInMs == that.maxExecutionTimeInMs &&
                     enabled == that.enabled &&
                     Objects.equals(name, that.name) &&
                     Objects.equals(type, that.type) &&
+                    Objects.equals(condition, that.condition) &&
                     Objects.equals(dependsOn, that.dependsOn) &&
                     Objects.equals(properties, that.properties) &&
                     Objects.equals(policies, that.policies);
@@ -199,7 +205,7 @@ public class Workflow extends WorkflowId {
 
         @Override
         public int hashCode() {
-            return Objects.hash(name, type, dependsOn, properties, policies, maxExecutionTimeInMs, enabled);
+            return Objects.hash(name, type, condition, dependsOn, properties, policies, maxExecutionTimeInMs, enabled);
         }
 
         @Override
@@ -207,6 +213,7 @@ public class Workflow extends WorkflowId {
             return "WorkflowTask{" +
                     "name='" + name + '\'' +
                     ", type='" + type + '\'' +
+                    ", condition='" + condition + '\'' +
                     ", dependsOn=" + dependsOn +
                     ", properties=" + properties +
                     ", policies=" + policies +

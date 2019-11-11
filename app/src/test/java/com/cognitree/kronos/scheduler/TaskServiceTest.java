@@ -33,10 +33,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-import static com.cognitree.kronos.TestUtil.scheduleWorkflow;
-import static com.cognitree.kronos.TestUtil.waitForJobsToTriggerAndComplete;
-import static com.cognitree.kronos.TestUtil.waitForTaskToBeRunning;
-import static com.cognitree.kronos.TestUtil.waitForTriggerToComplete;
+import static com.cognitree.kronos.TestUtil.*;
 
 public class TaskServiceTest extends ServiceTest {
 
@@ -151,6 +148,38 @@ public class TaskServiceTest extends ServiceTest {
                     break;
                 default:
                     Assert.fail();
+            }
+        }
+    }
+
+    @Test
+    public void testFailedBranchTasks() throws Exception {
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow(WORKFLOW_TEMPLATE_FAILED_PARALLEL_BRANCH_YAML);
+
+        waitForJobsToTriggerAndComplete(workflowTrigger);
+        TaskService taskService = TaskService.getService();
+        List<Task> tasks = taskService.get(workflowTrigger.getNamespace());
+        for (Task task : tasks) {
+            if (task.getName().equals("B") || task.getName().equals("C")) {
+                Assert.assertNotEquals(Task.Status.SUCCESSFUL, task.getStatus());
+            } else {
+                Assert.assertEquals(Task.Status.SUCCESSFUL, task.getStatus());
+            }
+        }
+    }
+
+    @Test
+    public void testConditionFailedBranchTasks() throws Exception {
+        final WorkflowTrigger workflowTrigger = scheduleWorkflow(CONDITION_WORKFLOW_TEMPLATE_FAILED_PARALLEL_BRANCH_YAML);
+
+        waitForJobsToTriggerAndComplete(workflowTrigger);
+        TaskService taskService = TaskService.getService();
+        List<Task> tasks = taskService.get(workflowTrigger.getNamespace());
+        for (Task task : tasks) {
+            if (task.getName().equals("B") || task.getName().equals("C")) {
+                Assert.assertNotEquals(Task.Status.SUCCESSFUL, task.getStatus());
+            } else {
+                Assert.assertEquals(Task.Status.SUCCESSFUL, task.getStatus());
             }
         }
     }

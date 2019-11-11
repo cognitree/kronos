@@ -13,6 +13,7 @@ tasks:
       keyB: valB
     dependsOn:
       - taskOne
+    condition: 2 == 2
   - name: taskThree
     type: typeSuccess
     properties:

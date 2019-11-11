@@ -66,7 +66,7 @@ public class JobResource {
                                @DefaultValue(DEFAULT_DAYS) @QueryParam("date_range") int numberOfDays,
                                @HeaderParam("namespace") String namespace) throws ServiceException, ValidationException {
         logger.info("Received request to get all jobs under namespace {} with param status in {}, date range {}, " +
-                "from {}, to {}", namespace, statuses, numberOfDays, createdAfter, createdBefore, namespace);
+                "from {}, to {}", namespace, statuses, numberOfDays, createdAfter, createdBefore);
         if (namespace == null || namespace.isEmpty()) {
             return Response.status(BAD_REQUEST).entity("missing namespace header").build();
         }
