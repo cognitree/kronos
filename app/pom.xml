@@ -118,7 +118,7 @@
                             <goal>wget</goal>
                         </goals>
                         <configuration>
-                            <url>https://github.com/swagger-api/swagger-ui/archive/v2.1.1.tar.gz</url>
+                            <url>https://github.com/swagger-api/swagger-ui/archive/v3.24.2.tar.gz</url>
                             <unpack>true</unpack>
                             <outputDirectory>${project.build.directory}</outputDirectory>
                         </configuration>
