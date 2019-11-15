@@ -37,6 +37,7 @@
         <jackson.version>2.9.9</jackson.version>
         <junit.version>4.12</junit.version>
         <log4j2.version>2.11.1</log4j2.version>
+        <maven-source-plugin>3.2.0</maven-source-plugin>
     </properties>
 
     <dependencies>
@@ -90,6 +91,19 @@
                     <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>${maven-source-plugin}</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
