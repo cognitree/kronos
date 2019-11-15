@@ -184,8 +184,7 @@ public final class TaskExecutionService implements Service {
                     .getConstructor()
                     .newInstance();
             taskHandler.init(task, taskHandlerConfig.getConfig());
-        } catch (InstantiationException | InvocationTargetException | NoSuchMethodException
-                | IllegalAccessException | ClassNotFoundException e) {
+        } catch (Exception e) {
             logger.error("Error initializing handler for task {}", task, e);
             sendTaskStatusUpdate(task, FAILED, MISSING_TASK_HANDLER_MESSAGE);
             return;
