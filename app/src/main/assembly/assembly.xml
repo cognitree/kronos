@@ -50,7 +50,7 @@
             <outputDirectory>webapp</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>${project.build.directory}/swagger-ui-2.1.1/dist</directory>
+            <directory>${project.build.directory}/swagger-ui-3.24.2/dist</directory>
             <outputDirectory>webapp</outputDirectory>
             <excludes>
                 <exclude>index.html</exclude>

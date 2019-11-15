@@ -123,7 +123,7 @@ public class TestUtil {
     }
 
     public static void waitForJobsToTriggerAndComplete(WorkflowTrigger workflowTrigger) throws Exception {
-        int maxCount = 120;
+        int maxCount = 180;
         while (maxCount > 0) {
             final List<Job> jobs = JobService.getService().get(workflowTrigger.getNamespace(), workflowTrigger.getWorkflow(),
                     workflowTrigger.getName(), 0, System.currentTimeMillis());

@@ -22,7 +22,7 @@
     <parent>
         <artifactId>kronos</artifactId>
         <groupId>com.cognitree</groupId>
-        <version>3.0.0</version>
+        <version>3.0.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -32,6 +32,7 @@
     <properties>
         <jetty.version>9.4.18.v20190429</jetty.version>
         <commons-cli.version>1.4</commons-cli.version>
+        <maven-source-plugin>3.2.0</maven-source-plugin>
     </properties>
 
     <dependencies>
@@ -117,10 +118,23 @@
                             <goal>wget</goal>
                         </goals>
                         <configuration>
-                            <url>https://github.com/swagger-api/swagger-ui/archive/v2.1.1.tar.gz</url>
+                            <url>https://github.com/swagger-api/swagger-ui/archive/v3.24.2.tar.gz</url>
                             <unpack>true</unpack>
                             <outputDirectory>${project.build.directory}</outputDirectory>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>${maven-source-plugin}</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
