@@ -1,0 +1,25 @@
+# name and namespace is set as part of test case
+description: Workflow with condition only last conditions fails
+tasks:
+  - name: taskOne
+    type: typeSuccess
+    properties:
+      keyA: valA
+      keyB: valB
+  - name: taskTwo
+    type: typeSuccess
+    dependsOn:
+      - taskOne
+    condition: taskOne.get("valOne") == 1234 && taskOne.get("valTwo") == 'abcd'
+    properties:
+      keyA: valA
+      keyB: valB
+  - name: taskThree
+    type: typeSuccess
+    dependsOn:
+      - taskTwo
+      - taskOne
+    condition: taskOne.get("valOne") + taskTwo.get("valOne") == 0 || taskOne.get("valTwo") != taskTwo.get("valTwo")
+    properties:
+      keyA: valA
+      keyB: valB

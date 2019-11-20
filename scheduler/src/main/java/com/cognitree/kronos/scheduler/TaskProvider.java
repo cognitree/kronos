@@ -25,22 +25,12 @@ import com.google.common.graph.MutableGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.cognitree.kronos.model.Task.Status.FAILED;
-import static com.cognitree.kronos.model.Task.Status.RUNNING;
-import static com.cognitree.kronos.model.Task.Status.SUCCESSFUL;
-import static com.cognitree.kronos.model.Task.Status.UP_FOR_RETRY;
-import static com.cognitree.kronos.model.Task.Status.WAITING;
+import static com.cognitree.kronos.model.Task.Status.*;
 
 /**
  * Task provider manages/ resolves task dependencies and exposes APIs to add, remove, retrieve tasks in active and
