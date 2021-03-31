@@ -31,7 +31,7 @@
 
     <properties>
         <quartz.version>2.3.0</quartz.version>
-        <guava.version>23.5-jre</guava.version>
+        <guava.version>29.0-jre</guava.version>
         <simple-java-mail.version>5.0.3</simple-java-mail.version>
         <velocity.version>1.7</velocity.version>
     </properties>
