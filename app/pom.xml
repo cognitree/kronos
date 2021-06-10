@@ -30,7 +30,7 @@
     <artifactId>app</artifactId>
 
     <properties>
-        <jetty.version>9.4.18.v20190429</jetty.version>
+        <jetty.version>9.4.41.v20210516</jetty.version>
         <commons-cli.version>1.4</commons-cli.version>
     </properties>
 
